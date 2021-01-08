@@ -1,0 +1,21 @@
+{
+  "name": "api-conseiller-numerique",
+  "version": "0.0.1",
+  "description": "API Conseiller Numérique",
+  "main": "index.js",
+  "author": "Loïc Guillois <loic@fitlab.fr>",
+  "contributors": [
+    "Loïc Guillois <loic@fitlab.fr>",
+    "Jean-Yves Stervinou <jy@stervinou.com>"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "commander": "^6.2.1",
+    "csvtojson": "^2.0.10",
+    "pg": "^8.5.1"
+  },
+  "engines": {
+    "node": ">= 14.15.3"
+  }
+}
