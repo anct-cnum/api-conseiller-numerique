@@ -1,13 +1,12 @@
 const axios = require('axios');
 const CSVToJSON = require('csvtojson');
-const fs = require('fs');
 const { Pool } = require('pg');
 const { program } = require('commander');
 program.version('0.0.1');
 
 program
-  .option('-t, --token <token>', 'token api entreprise')
-  .option('-c, --csv <path>', 'CSV file path')
+.option('-t, --token <token>', 'token api entreprise')
+.option('-c, --csv <path>', 'CSV file path');
 
 program.parse(process.argv);
 
@@ -21,7 +20,7 @@ const params = {
 const pool = new Pool();
 
 // Vérifie un SIRET (établissement) avec l'API Entreprise
-const checkSiret = async (siret) => {
+const checkSiret = async siret => {
   const url = `https://entreprise.api.gouv.fr/v2/etablissements/${siret}`;
 
   try {
@@ -33,7 +32,7 @@ const checkSiret = async (siret) => {
 };
 
 // Vérifie un SIREN (entreprise) avec l'API Entreprise
-const checkSiren = async (siren) => {
+const checkSiren = async siren => {
   const url = `https://entreprise.api.gouv.fr/v2/entreprises/${siren}`;
 
   try {
@@ -45,8 +44,9 @@ const checkSiren = async (siren) => {
 };
 
 // CSV LimeSurvey
-const readCSV = async (filePath) => {
+const readCSV = async filePath => {
   try {
+    // eslint-disable-next-line new-cap
     const users = await CSVToJSON().fromFile(filePath);
     return users;
   } catch (err) {
@@ -56,19 +56,20 @@ const readCSV = async (filePath) => {
 
 const updateDB = async (email, entreprise, conseillers) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM djapp_hostorganization WHERE LOWER(contact_email) LIKE LOWER('%' || $1 || '%')", [email])
+    const { rows } = await pool.query('SELECT * FROM djapp_hostorganization WHERE LOWER(contact_email) LIKE LOWER(\'%\' || $1 || \'%\')', [email]);
     if (rows.length > 0) {
       console.log(`Email trouvé : ${rows[0].contact_email} ${rows[0].id}`);
-      const { result } = await pool.query("UPDATE djapp_hostorganization SET siret=$1, coaches_requested=$2 WHERE id=$3", [entreprise.siret_siege_social, ~~conseillers, rows[0].id])
+      const { result } = await pool.query('UPDATE djapp_hostorganization SET siret=$1, coaches_requested=$2 WHERE id=$3',
+        [entreprise.siret_siege_social, ~~conseillers, rows[0].id]);
     } else {
       console.log(`Email inconnu : ${email}`);
     }
   } catch (error) {
     console.log(`Erreur DB : ${error.message} pour l'adresse ${email}`);
   }
-}
+};
 
-readCSV(program.csv).then(async (replies) => {
+readCSV(program.csv).then(async replies => {
   for (const reply of replies) {
     const siret = reply['Quel est votre numéro SIRET ?'].replace(/\s/g, '');
     const id = reply['ID de la réponse'];
@@ -93,4 +94,6 @@ readCSV(program.csv).then(async (replies) => {
       console.log(`KO ${id} ${siret} : siret mauvais format`);
     }
   }
-}).catch((error) => { console.log(error.message); });
+}).catch(error => {
+  console.log(error.message);
+});
