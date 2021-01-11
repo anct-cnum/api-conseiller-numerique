@@ -11,23 +11,34 @@ program
 
 program.parse(process.argv);
 
+const params =  {
+  token: program.token,
+  context: 'cnum',
+  recipient: 'cnum',
+  object: 'checkSiret',
+};
+
 const pool = new Pool();
 
-// Vérifie un siren avec l'API Entreprise
-const checkSiren = async (siren) => {
-
-  const url = `https://entreprise.api.gouv.fr/v2/entreprises/${siren}`;
-
-  const params =  {
-    token: program.token,
-    context: 'cnum',
-    recipient: 'cnum',
-    object: 'checkSiret',
-  };
+// Vérifie un SIRET (établissement) avec l'API Entreprise
+const checkSiret = async (siret) => {
+  const url = `https://entreprise.api.gouv.fr/v2/etablissements/${siret}`;
 
   try {
     const res = await axios.get(url, { params: params });
-    return res.data.entreprise;
+    return res.data.etablissement;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Vérifie un SIREN (entreprise) avec l'API Entreprise
+const checkSiren = async (siren) => {
+  const url = `https://entreprise.api.gouv.fr/v2/entreprises/${siren}`;
+
+  try {
+    const res = await axios.get(url, { params: params });
+    return res.data;
   } catch (err) {
     throw err;
   }
@@ -48,8 +59,7 @@ const updateDB = async (email, entreprise, conseillers) => {
     const { rows } = await pool.query("SELECT * FROM djapp_hostorganization WHERE LOWER(contact_email) LIKE LOWER('%' || $1 || '%')", [email])
     if (rows.length > 0) {
       console.log(`Email trouvé : ${rows[0].contact_email} ${rows[0].id}`);
-      //const { result } = await pool.query("UPDATE djapp_hostorganization SET siret=$1, coach_desired=$2 WHERE id=$3", [entreprise.siret_siege_social, conseillers, rows[0].id])
-      const { result } = await pool.query("UPDATE djapp_hostorganization SET siret=$1 WHERE id=$2", [entreprise.siret_siege_social, rows[0].id])
+      const { result } = await pool.query("UPDATE djapp_hostorganization SET siret=$1, coaches_requested=$2 WHERE id=$3", [entreprise.siret_siege_social, ~~conseillers, rows[0].id])
     } else {
       console.log(`Email inconnu : ${email}`);
     }
@@ -67,18 +77,20 @@ readCSV(program.csv).then(async (replies) => {
 
     if (/\d{14}/.test(siret)) {
       const siren = siret.substring(0,9);
-
       try {
-        const result = await checkSiren(siren);
-        // result.siret_siege_social
-        // result.raison_sociale
-        console.log(`OK ${id} ${siret} ${result.raison_sociale}`);
-        await updateDB(email, result, conseillers);
+        const infosEtablissement = await checkSiret(siret);
+        // infosEtablissement.adresse
+        const infosEntreprise = await checkSiren(siren);
+        // infosEntreprise.entreprise.siret_siege_social
+        // infosEntreprise.entreprise.raison_sociale
+        console.log(`OK ${id} ${siret} ${infosEntreprise.entreprise.raison_sociale}`);
+
+        await updateDB(email, infosEntreprise.entreprise, conseillers);
       } catch (error) {
-        console.log(error);
+        console.log(`KO ${id} ${siret} : ${error.message}`);
       }
     } else {
-      console.log(`KO ${id} ${siret}`);
+      console.log(`KO ${id} ${siret} : siret mauvais format`);
     }
   }
 }).catch((error) => {console.log(error.message);});
