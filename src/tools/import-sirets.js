@@ -11,7 +11,7 @@ program
 
 program.parse(process.argv);
 
-const params =  {
+const params = {
   token: program.token,
   context: 'cnum',
   recipient: 'cnum',
@@ -70,13 +70,13 @@ const updateDB = async (email, entreprise, conseillers) => {
 
 readCSV(program.csv).then(async (replies) => {
   for (const reply of replies) {
-    const siret = reply['Quel est votre numéro SIRET ?'].replace(/\s/g,'');
+    const siret = reply['Quel est votre numéro SIRET ?'].replace(/\s/g, '');
     const id = reply['ID de la réponse'];
     const email = reply['Pouvez-vous nous rappeler l’adresse mail avec laquelle vous avez reçu ce message ?'];
     const conseillers = reply['Combien de conseillers numériques souhaitez-vous accueillir ?'];
 
     if (/\d{14}/.test(siret)) {
-      const siren = siret.substring(0,9);
+      const siren = siret.substring(0, 9);
       try {
         const infosEtablissement = await checkSiret(siret);
         // infosEtablissement.adresse
@@ -93,5 +93,4 @@ readCSV(program.csv).then(async (replies) => {
       console.log(`KO ${id} ${siret} : siret mauvais format`);
     }
   }
-}).catch((error) => {console.log(error.message);});
-
+}).catch((error) => { console.log(error.message); });

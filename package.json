@@ -9,6 +9,10 @@
     "Jean-Yves Stervinou <jy@stervinou.com>"
   ],
   "license": "MIT",
+  "scripts": {
+    "test": "npm run lint",
+    "lint": "eslint src"
+  },
   "dependencies": {
     "axios": "^0.21.1",
     "commander": "^6.2.1",
