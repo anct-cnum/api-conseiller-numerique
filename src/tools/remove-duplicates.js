@@ -32,7 +32,7 @@ execute(async ({ exit }) => {
     console.log(`${rows.length} Doublons`);
     for (const row of rows) {
       const prefixMatching = table === 'hostorganization' ? 'host' : 'coach';
-      const select = `select id from djapp_${table} where ${prefix}email = '${row.email}' order by id DESC limit ${row.count - 1}`;
+      const select = `select id from djapp_${table} where ${prefix}email = '${row.email}' order by id ASC limit ${row.count - 1}`;
       await pool.query(`delete from djapp_matching where ${prefixMatching}_id in (${select})`);
       await pool.query(`delete from djapp_${table} where id in (${select})`);
     }
