@@ -59,7 +59,7 @@ const updateDB = async (email, entreprise, conseillers) => {
     const { rows } = await pool.query('SELECT * FROM djapp_hostorganization WHERE LOWER(contact_email) LIKE LOWER(\'%\' || $1 || \'%\')', [email]);
     if (rows.length > 0) {
       console.log(`Email trouvé : ${rows[0].contact_email} ${rows[0].id}`);
-      const { result } = await pool.query('UPDATE djapp_hostorganization SET siret=$1, coaches_requested=$2 WHERE id=$3',
+      await pool.query('UPDATE djapp_hostorganization SET siret=$1, coaches_requested=$2 WHERE id=$3',
         [entreprise.siret_siege_social, ~~conseillers, rows[0].id]);
     } else {
       console.log(`Email inconnu : ${email}`);
@@ -79,7 +79,8 @@ readCSV(program.csv).then(async replies => {
     if (/\d{14}/.test(siret)) {
       const siren = siret.substring(0, 9);
       try {
-        const infosEtablissement = await checkSiret(siret);
+        await checkSiret(siret);
+        //const infosEtablissement = await checkSiret(siret);
         // infosEtablissement.adresse
         const infosEntreprise = await checkSiren(siren);
         // infosEntreprise.entreprise.siret_siege_social
