@@ -290,7 +290,7 @@ const createWorkbook = (departement, structuresPubliques, structuresPrivees) => 
 
 const createExcelForDep = async departement => {
   const structuresPrivees = await getStructures(departement, 'PRIVATE');
-  const structuresPubliques = await getStructures(departement, 'COLLECTIVITE,COMMUNE,EPCI,DEPARTEMENT');
+  const structuresPubliques = await getStructures(departement, 'COLLECTIVITE,COMMUNE,EPCI,DEPARTEMENT,REGION');
   const wb = await createWorkbook(departement, structuresPubliques, structuresPrivees);
   wb.write(`conseiller-numerique-${departement}-${deps.get(String(departement)).dep_name.replace(' ', '-')
   .normalize('NFD')
