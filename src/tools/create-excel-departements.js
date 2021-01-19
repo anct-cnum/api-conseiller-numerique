@@ -1,11 +1,15 @@
+const fs = require('fs');
+const path = require('path');
 const xl = require('excel4node');
 const { Pool } = require('pg');
+const csv = require('csvtojson');
 const { program } = require('commander');
 program.version('0.0.1');
 
 program
 .option('-d, --departement <departement>', 'département')
-.option('-v, --vague <vague>', 'vague');
+.option('-v, --vague <vague>', 'vague')
+.option('-f, --dotations <dotations>', 'CSV file path');
 
 program.parse(process.argv);
 
@@ -19,19 +23,23 @@ for (const value of departements) {
 
 const validation = Array.from({ length: 250 }, (_, i) => `${++i}`).join(','); // '1,2,3,..,250'
 
+const dotations = new Map();
+
 const pool = new Pool();
 
 const styleConf = {
   font: {
-    color: '#073763',
-    size: 12,
+    name: 'Arial',
+    color: '#3F58B7',
+    size: 10,
   },
 };
 
 const styleHeaderConf = {
   font: {
-    color: '#FFFFFF',
-    size: 11,
+    name: 'Arial',
+    color: '#3F58B7',
+    size: 10,
     bold: true,
   },
   alignment: {
@@ -41,14 +49,14 @@ const styleHeaderConf = {
   fill: {
     type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
     patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-    bgColor: '#0B5394', // HTML style hex value. defaults to black
-    fgColor: '#0B5394' // HTML style hex value. defaults to black.
+    bgColor: '#E9EDF7', // HTML style hex value. defaults to black
+    fgColor: '#E9EDF7', // HTML style hex value. defaults to black
   }
 };
 
 const getStructures = async (departement, types) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM djapp_hostorganization WHERE departement_code = $1 AND type = ANY ($2) ORDER BY id ASC',
+    const { rows } = await pool.query('SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC',
       [departement, types.split(',')]);
     return rows;
   } catch (error) {
@@ -57,7 +65,27 @@ const getStructures = async (departement, types) => {
 };
 
 const buildWorksheet = (ws, structures, conf) => {
-  ws.cell(1, 1, 2, 6, true)
+  ws.addImage({
+    image: fs.readFileSync(path.resolve(__dirname, './logo-cn.jpg')),
+    type: 'picture',
+    position: {
+      type: 'twoCellAnchor',
+      from: {
+        col: 1,
+        colOff: 0,
+        row: 1,
+        rowOff: 0,
+      },
+      to: {
+        col: 3,
+        colOff: 0,
+        row: 5,
+        rowOff: 0,
+      },
+    },
+  });
+
+  ws.cell(1, 1, 1, 9, true)
   .string(conf.titre)
   .style(styleConf)
   .style(
@@ -69,13 +97,13 @@ const buildWorksheet = (ws, structures, conf) => {
       alignment: {
         wrapText: true,
         horizontal: 'center',
-        vertical: 'top',
+        vertical: 'center',
       },
       fill: { // §18.8.20 fill (Fill)
         type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
         patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-        bgColor: '#EFEFEF', // HTML style hex value. defaults to black
-        fgColor: '#EFEFEF' // HTML style hex value. defaults to black.
+        bgColor: '#E9EDF7', // HTML style hex value. defaults to black
+        fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
       }
     });
 
@@ -83,13 +111,15 @@ const buildWorksheet = (ws, structures, conf) => {
   // Doc title
   ws.row(1).setHeight(30);
 
-  ws.cell(3, 1, 3, 6, true)
+  ws.cell(2, 1, 2, 9, true)
   .string(conf.departement)
+  .style(styleConf)
   .style(
     {
       font: {
-        color: '#4A86E8',
+        //color: '#000091',
         size: 14,
+        bold: true,
       },
       alignment: {
         wrapText: true,
@@ -98,12 +128,12 @@ const buildWorksheet = (ws, structures, conf) => {
       fill: { // §18.8.20 fill (Fill)
         type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
         patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-        bgColor: '#EFEFEF', // HTML style hex value. defaults to black
-        fgColor: '#EFEFEF' // HTML style hex value. defaults to black.
+        bgColor: '#E9EDF7', // HTML style hex value. defaults to black
+        fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
       }
     });
 
-  ws.cell(4, 1, 5, 6, true)
+  ws.cell(3, 1, 4, 9, true)
   .string(conf.nombre)
   .style(
     {
@@ -119,12 +149,12 @@ const buildWorksheet = (ws, structures, conf) => {
       fill: { // §18.8.20 fill (Fill)
         type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
         patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-        bgColor: '#EFEFEF', // HTML style hex value. defaults to black
-        fgColor: '#EFEFEF' // HTML style hex value. defaults to black.
+        bgColor: '#E9EDF7', // HTML style hex value. defaults to black
+        fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
       }
     });
-
-  ws.cell(6, 1)
+  /*
+  ws.cell(5, 1)
   .string(conf.liste)
   .style(styleConf)
   .style({
@@ -132,62 +162,131 @@ const buildWorksheet = (ws, structures, conf) => {
       bold: true
     }
   });
-
-  ws.cell(8, 1, 8, 5, true)
-  .string('Les nouvelles structures doivent s\'inscrire sur  https://www.conseiller-numerique.gouv.fr, merci de ne pas les ajouter dans ce fichier.')
+*/
+  ws.cell(7, 1, 8, 9, true)
+  .string(`Si toutefois vous identifiez d'autres structures pouvant intégrer le dispositif conseiller numérique,\nmerci de les inviter à ` +
+    `s'inscrire directement sur le site https://www.conseiller-numérique.gouv.fr. Merci de ne pas les ajouter dans ce fichier.`)
   .style(styleConf)
   .style({
     font: {
-      color: '#FF0000',
+      color: '#E1000F',
       bold: true
+    },
+    alignment: {
+      horizontal: 'center',
+      vertical: 'center',
+      wrapText: true,
     }
   });
 
+  ws.cell(10, 1, 10, 9, true)
+  .string('Le fichier est à retourner avant le XX/XX/2021 à xxx@xxx.gouv.fr')
+  .style(styleConf)
+  .style({
+    font: {
+      //color: '#FF0000',
+      bold: true
+    },
+    alignment: {
+      horizontal: 'center',
+      vertical: 'center',
+      wrapText: true,
+    }
+  });
+
+  // Dotations
+  if (dotations.get(conf.departementNumero)) {
+    ws.cell(12, 6, 12, 6, true)
+    .string('Nombre de dotations :')
+    .style(styleConf)
+    .style({
+      font: {
+        //color: '#FF0000',
+        bold: true
+      }
+    });
+
+    ws.cell(12, 7, 12, 7, true)
+    .number(dotations.get(conf.departementNumero))
+    .style(styleConf)
+    .style({
+      font: {
+        //color: '#FF0000',
+        bold: true
+      }
+    });
+  }
+
   // List Header
 
-  const start = 10;
+  const start = 13;
+
+  const styleVertical = {
+    alignment: {
+      vertical: 'center',
+    }
+  };
 
   ws.row(start).setHeight(30);
 
   ws.column(1).setWidth(10);
   ws.cell(start, 1)
   .string('identifiant structure')
-  .style(styleHeaderConf);
+  .style(styleHeaderConf)
+  .style(styleVertical);
 
   ws.column(2).setWidth(20);
   ws.cell(start, 2)
   .string('SIRET')
-  .style(styleHeaderConf);
+  .style(styleHeaderConf)
+  .style(styleVertical);
 
   ws.column(3).setWidth(50);
   ws.cell(start, 3)
   .string('Nom Structure')
-  .style(styleHeaderConf);
+  .style(styleHeaderConf)
+  .style(styleVertical);
 
-  ws.column(4).setWidth(20);
+  ws.column(4).setWidth(10);
   ws.cell(start, 4)
-  .string('Nombre de CN souhaité')
-  .style(styleHeaderConf);
+  .string('Code postal')
+  .style(styleHeaderConf)
+  .style(styleVertical);
 
-  ws.column(5).setWidth(25);
+  ws.column(5).setWidth(20);
   ws.cell(start, 5)
-  .string('Avis positif')
-  .style(styleHeaderConf);
+  .string('Ville')
+  .style(styleHeaderConf)
+  .style(styleVertical);
 
-  ws.column(6).setWidth(20);
+  ws.column(6).setWidth(30);
   ws.cell(start, 6)
-  .string('Nombre de CN attribué')
-  .style(styleHeaderConf);
+  .string('Email')
+  .style(styleHeaderConf)
+  .style(styleVertical);
 
-  ws.column(7).setWidth(70);
+  ws.column(7).setWidth(22);
   ws.cell(start, 7)
+  .string('Nombre de conseillers')
+  .style(styleHeaderConf)
+  .style(styleVertical);
+
+  ws.column(8).setWidth(30);
+  ws.cell(start, 8)
+  .string('Avis')
+  .style(styleHeaderConf)
+  .style(styleVertical);
+
+  ws.column(9).setWidth(70);
+  ws.cell(start, 9)
   .string('Si avis négatif ou examen complémentaire : Commentaires')
-  .style(styleHeaderConf);
+  .style(styleHeaderConf)
+  .style(styleVertical);
 
   // Add all structures
   structures.forEach(function(s, i) {
     ws.cell(i + start + 1, 1)
-    .number(s.id)
+    .string(String(s.id))
     .style(styleConf);
 
     ws.cell(i + start + 1, 2)
@@ -196,37 +295,27 @@ const buildWorksheet = (ws, structures, conf) => {
 
     ws.cell(i + start + 1, 3)
     .string(s.name)
-    .style(styleConf);
+    .style(styleConf)
+    .style(
+      {
+        alignment: {
+          //wrapText: true,
+        }
+      });
 
     ws.cell(i + start + 1, 4)
-    .number(~~s.coaches_requested)
+    .string(s.zip_code)
     .style(styleConf);
-
-    ws.addDataValidation({
-      type: 'list',
-      allowBlank: true,
-      prompt: 'Choisissez dans la liste',
-      error: 'Choix non valide',
-      showDropDown: true,
-      sqref: `D${i + start + 1}:D${i + start + 1}`,
-      formulas: [validation],
-    });
 
     ws.cell(i + start + 1, 5)
-    .string('')
+    .string(s.geo_name)
     .style(styleConf);
 
-    ws.addDataValidation({
-      type: 'list',
-      allowBlank: true,
-      prompt: 'Choisissez dans la liste',
-      error: 'Choix non valide',
-      showDropDown: true,
-      sqref: `E${i + start + 1}:E${i + start + 1}`,
-      formulas: ['OUI,NON,EXAMEN COMPLEMENTAIRE'],
-    });
-
     ws.cell(i + start + 1, 6)
+    .string(s.contact_email)
+    .style(styleConf);
+
+    ws.cell(i + start + 1, 7)
     .number(0)
     .style(styleConf);
 
@@ -236,20 +325,40 @@ const buildWorksheet = (ws, structures, conf) => {
       prompt: 'Choisissez dans la liste',
       error: 'Choix non valide',
       showDropDown: true,
-      sqref: `F${i + start + 1}:F${i + start + 1}`,
+      sqref: `G${i + start + 1}:G${i + start + 1}`,
       formulas: [validation],
     });
 
-    ws.cell(i + start + 1, 7)
+    ws.cell(i + start + 1, 8)
     .string('')
     .style(styleConf);
+
+    ws.addDataValidation({
+      type: 'list',
+      allowBlank: true,
+      prompt: 'Choisissez dans la liste',
+      error: 'Choix non valide',
+      showDropDown: true,
+      sqref: `H${i + start + 1}:H${i + start + 1}`,
+      formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE'],
+    });
+
+    ws.cell(i + start + 1, 9)
+    .string('')
+    .style(styleConf)
+    .style(
+      {
+        alignment: {
+          wrapText: true,
+        }
+      });
   });
 };
 
 const createWorkbook = (departement, structuresPubliques, structuresPrivees) => {
   const wb = new xl.Workbook({
     defaultFont: {
-      size: 12,
+      size: 10,
       name: 'Arial',
       color: '00000000',
     },
@@ -271,6 +380,7 @@ const createWorkbook = (departement, structuresPubliques, structuresPrivees) => 
   const confPubliques = {
     titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
     departement: `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+    departementNumero: String(departement),
     nombre: `Nombre de structures publiques candidates : ${structuresPubliques.length}`,
     liste: 'Liste A : Structures publiques',
   };
@@ -278,6 +388,7 @@ const createWorkbook = (departement, structuresPubliques, structuresPrivees) => 
   const confPrivees = {
     titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
     departement: `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+    departementNumero: String(departement),
     nombre: `Nombre de structures privées candidates : ${structuresPrivees.length}`,
     liste: 'Liste B : Structures privées',
   };
@@ -304,6 +415,12 @@ const createExcelForAllDeps = async () => {
 };
 
 (async () => {
+  if (program.dotations) {
+    const dotationsCSV = await csv().fromFile(program.dotations);
+    for (const d of dotationsCSV) {
+      dotations.set(String(d['departement']), ~~d['dotation']);
+    }
+  }
   if (program.departement) {
     await createExcelForDep(program.departement);
   } else {
