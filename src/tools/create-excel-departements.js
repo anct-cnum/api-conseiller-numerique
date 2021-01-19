@@ -195,7 +195,7 @@ const buildWorksheet = (ws, structures, conf) => {
   });
 
   // Dotations
-  if (dotations.get(conf.departementNumero)) {
+  if (conf.dotations && dotations.get(conf.departementNumero)) {
     ws.cell(12, 6, 12, 6, true)
     .string('Nombre de dotations :')
     .style(styleConf)
@@ -383,6 +383,7 @@ const createWorkbook = (departement, structuresPubliques, structuresPrivees) => 
     departementNumero: String(departement),
     nombre: `Nombre de structures publiques candidates : ${structuresPubliques.length}`,
     liste: 'Liste A : Structures publiques',
+    dotations: true
   };
 
   const confPrivees = {
