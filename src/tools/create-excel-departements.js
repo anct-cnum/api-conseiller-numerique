@@ -9,7 +9,8 @@ program.version('0.0.1');
 program
 .option('-d, --departement <departement>', 'département')
 .option('-v, --vague <vague>', 'vague')
-.option('-f, --dotations <dotations>', 'CSV file path');
+.option('-f, --dotations <dotations>', 'CSV file path')
+.option('-a, --accords <accords>', 'CSV file path');
 
 program.parse(process.argv);
 
@@ -21,9 +22,8 @@ for (const value of departements) {
   deps.set(String(value.num_dep), value);
 }
 
-const validation = Array.from({ length: 250 }, (_, i) => `${++i}`).join(','); // '1,2,3,..,250'
-
 const dotations = new Map();
+const accords = new Map();
 
 const pool = new Pool();
 
@@ -153,17 +153,56 @@ const buildWorksheet = (ws, structures, conf) => {
         fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
       }
     });
-  /*
-  ws.cell(5, 1)
-  .string(conf.liste)
-  .style(styleConf)
-  .style({
-    font: {
-      bold: true
-    }
-  });
-*/
-  ws.cell(7, 1, 8, 9, true)
+
+  ws.row(5).setHeight(30);
+
+  ws.cell(5, 1, 5, 9, true)
+  .string(conf.dotations && dotations.get(conf.departementNumero) ?
+    `Nombre de dotations : ${dotations.get(conf.departementNumero)}` : '')
+  .style(
+    {
+      font: {
+        size: 14,
+        bold: true,
+      },
+      alignment: {
+        wrapText: true,
+        horizontal: 'center',
+        vertical: 'center',
+      },
+      fill: { // §18.8.20 fill (Fill)
+        type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
+        patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
+        bgColor: '#E9EDF7', // HTML style hex value. defaults to black
+        fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
+      }
+    });
+
+  ws.row(6).setHeight(30);
+
+  ws.cell(6, 1, 6, 9, true)
+  .string(conf.accords && accords.get(conf.departementNumero) ?
+    `Accord préalable de principe : ${accords.get(conf.departementNumero)}` : '')
+  .style(
+    {
+      font: {
+        size: 14,
+        bold: true,
+      },
+      alignment: {
+        wrapText: true,
+        horizontal: 'center',
+        vertical: 'center',
+      },
+      fill: { // §18.8.20 fill (Fill)
+        type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
+        patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
+        bgColor: '#E9EDF7', // HTML style hex value. defaults to black
+        fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
+      }
+    });
+
+  ws.cell(8, 1, 10, 9, true)
   .string(`Si toutefois vous identifiez d'autres structures pouvant intégrer le dispositif conseiller numérique,\nmerci de les inviter à ` +
     `s'inscrire directement sur le site https://www.conseiller-numérique.gouv.fr. Merci de ne pas les ajouter dans ce fichier.`)
   .style(styleConf)
@@ -179,8 +218,8 @@ const buildWorksheet = (ws, structures, conf) => {
     }
   });
 
-  ws.cell(10, 1, 10, 9, true)
-  .string('Le fichier est à retourner avant le XX/XX/2021 à xxx@xxx.gouv.fr')
+  ws.cell(11, 1, 11, 9, true)
+  .string('Le fichier est à retourner au plus tard le 19/02/2021 à xxx@xxx.gouv.fr')
   .style(styleConf)
   .style({
     font: {
@@ -196,17 +235,20 @@ const buildWorksheet = (ws, structures, conf) => {
 
   // Dotations
   if (conf.dotations && dotations.get(conf.departementNumero)) {
-    ws.cell(12, 6, 12, 6, true)
+    ws.cell(13, 7, 13, 7, true)
     .string('Nombre de dotations :')
     .style(styleConf)
     .style({
       font: {
         //color: '#FF0000',
         bold: true
+      },
+      alignment: {
+        horizontal: 'right'
       }
     });
 
-    ws.cell(12, 7, 12, 7, true)
+    ws.cell(13, 8, 13, 8, true)
     .number(dotations.get(conf.departementNumero))
     .style(styleConf)
     .style({
@@ -217,9 +259,23 @@ const buildWorksheet = (ws, structures, conf) => {
     });
   }
 
+  // Total des affectations
+  ws.cell(14, 7, 14, 7, true)
+  .string('Nombre d\'affectations :')
+  .style(styleConf)
+  .style({
+    font: {
+      //color: '#FF0000',
+      //bold: true
+    },
+    alignment: {
+      horizontal: 'right'
+    }
+  });
+
   // List Header
 
-  const start = 13;
+  const start = 15;
 
   const styleVertical = {
     alignment: {
@@ -231,7 +287,7 @@ const buildWorksheet = (ws, structures, conf) => {
 
   ws.column(1).setWidth(10);
   ws.cell(start, 1)
-  .string('identifiant structure')
+  .string('Identifiant structure')
   .style(styleHeaderConf)
   .style(styleVertical);
 
@@ -241,7 +297,7 @@ const buildWorksheet = (ws, structures, conf) => {
   .style(styleHeaderConf)
   .style(styleVertical);
 
-  ws.column(3).setWidth(50);
+  ws.column(3).setWidth(60);
   ws.cell(start, 3)
   .string('Nom Structure')
   .style(styleHeaderConf)
@@ -259,29 +315,46 @@ const buildWorksheet = (ws, structures, conf) => {
   .style(styleHeaderConf)
   .style(styleVertical);
 
-  ws.column(6).setWidth(30);
+  ws.column(6).setWidth(35);
   ws.cell(start, 6)
   .string('Email')
   .style(styleHeaderConf)
   .style(styleVertical);
 
-  ws.column(7).setWidth(22);
+  ws.column(7).setWidth(25);
   ws.cell(start, 7)
+  .string('Labellisé France Services')
+  .style(styleHeaderConf)
+  .style(styleVertical);
+
+  ws.column(8).setWidth(22);
+  ws.cell(start, 8)
   .string('Nombre de conseillers')
   .style(styleHeaderConf)
   .style(styleVertical);
 
-  ws.column(8).setWidth(30);
-  ws.cell(start, 8)
+  ws.column(9).setWidth(30);
+  ws.cell(start, 9)
   .string('Avis')
   .style(styleHeaderConf)
   .style(styleVertical);
 
-  ws.column(9).setWidth(70);
-  ws.cell(start, 9)
+  ws.column(10).setWidth(70);
+  ws.cell(start, 10)
   .string('Si avis négatif ou examen complémentaire : Commentaires')
   .style(styleHeaderConf)
   .style(styleVertical);
+
+  ws.cell(start - 1, 8, start - 1, 8, true)
+  .formula(`SUM(H${start + 1}:H${start + structures.length})`)
+  .style(styleConf)
+  .style({
+    font: {
+      //color: '#FF0000',
+      bold: true
+    }
+  })
+  .style({ numberFormat: '0' });
 
   // Add all structures
   structures.forEach(function(s, i) {
@@ -293,13 +366,15 @@ const buildWorksheet = (ws, structures, conf) => {
     .string(s.siret || '')
     .style(styleConf);
 
+    //ws.row(i + start + 1).setHeight(30);
+
     ws.cell(i + start + 1, 3)
     .string(s.name)
     .style(styleConf)
     .style(
       {
         alignment: {
-          //wrapText: true,
+          wrapText: true,
         }
       });
 
@@ -313,23 +388,15 @@ const buildWorksheet = (ws, structures, conf) => {
 
     ws.cell(i + start + 1, 6)
     .string(s.contact_email)
-    .style(styleConf);
+    .style(styleConf)
+    .style(
+      {
+        alignment: {
+          wrapText: true,
+        }
+      });
 
     ws.cell(i + start + 1, 7)
-    .number(0)
-    .style(styleConf);
-
-    ws.addDataValidation({
-      type: 'list',
-      allowBlank: true,
-      prompt: 'Choisissez dans la liste',
-      error: 'Choix non valide',
-      showDropDown: true,
-      sqref: `G${i + start + 1}:G${i + start + 1}`,
-      formulas: [validation],
-    });
-
-    ws.cell(i + start + 1, 8)
     .string('')
     .style(styleConf);
 
@@ -339,11 +406,40 @@ const buildWorksheet = (ws, structures, conf) => {
       prompt: 'Choisissez dans la liste',
       error: 'Choix non valide',
       showDropDown: true,
+      sqref: `G${i + start + 1}:G${i + start + 1}`,
+      formulas: ['OUI,NON'],
+    });
+
+    ws.cell(i + start + 1, 8)
+    .number(0)
+    .style({ numberFormat: '0' })
+    .style(styleConf);
+
+    ws.addDataValidation({
+      type: 'whole',
+      operator: 'between',
+      allowBlank: true,
+      prompt: 'Saisissez un nombre',
+      error: 'Nombre obligatoire',
       sqref: `H${i + start + 1}:H${i + start + 1}`,
-      formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE'],
+      formulas: [0, 500],
     });
 
     ws.cell(i + start + 1, 9)
+    .string('')
+    .style(styleConf);
+
+    ws.addDataValidation({
+      type: 'list',
+      allowBlank: true,
+      prompt: 'Choisissez dans la liste',
+      error: 'Choix non valide',
+      showDropDown: true,
+      sqref: `I${i + start + 1}:I${i + start + 1}`,
+      formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE'],
+    });
+
+    ws.cell(i + start + 1, 10)
     .string('')
     .style(styleConf)
     .style(
@@ -383,7 +479,8 @@ const createWorkbook = (departement, structuresPubliques, structuresPrivees) => 
     departementNumero: String(departement),
     nombre: `Nombre de structures publiques candidates : ${structuresPubliques.length}`,
     liste: 'Liste A : Structures publiques',
-    dotations: true
+    dotations: true,
+    accords: true
   };
 
   const confPrivees = {
@@ -422,6 +519,14 @@ const createExcelForAllDeps = async () => {
       dotations.set(String(d['departement']), ~~d['dotation']);
     }
   }
+
+  if (program.accords) {
+    const accordsCSV = await csv().fromFile(program.accords);
+    for (const a of accordsCSV) {
+      accords.set(String(a['departement']), ~~a['accord']);
+    }
+  }
+
   if (program.departement) {
     await createExcelForDep(program.departement);
   } else {
