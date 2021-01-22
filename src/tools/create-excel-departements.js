@@ -9,7 +9,8 @@ program.version('0.0.1');
 program
 .option('-d, --departement <departement>', 'département')
 .option('-v, --vague <vague>', 'vague')
-.option('-f, --dotations <dotations>', 'CSV file path')
+.option('-w, --revision <revision>', 'révision')
+.option('-r, --referents <referents>', 'CSV file path')
 .option('-a, --accords <accords>', 'CSV file path');
 
 program.parse(process.argv);
@@ -22,7 +23,7 @@ for (const value of departements) {
   deps.set(String(value.num_dep), value);
 }
 
-const dotations = new Map();
+const referents = new Map();
 const accords = new Map();
 
 const pool = new Pool();
@@ -157,30 +158,6 @@ const buildWorksheet = (ws, structures, conf) => {
   ws.row(5).setHeight(30);
 
   ws.cell(5, 1, 5, 9, true)
-  .string(conf.dotations && dotations.get(conf.departementNumero) ?
-    `Nombre de dotations : ${dotations.get(conf.departementNumero)}` : '')
-  .style(
-    {
-      font: {
-        size: 14,
-        bold: true,
-      },
-      alignment: {
-        wrapText: true,
-        horizontal: 'center',
-        vertical: 'center',
-      },
-      fill: { // §18.8.20 fill (Fill)
-        type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
-        patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-        bgColor: '#E9EDF7', // HTML style hex value. defaults to black
-        fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
-      }
-    });
-
-  ws.row(6).setHeight(30);
-
-  ws.cell(6, 1, 6, 9, true)
   .string(conf.accords && accords.get(conf.departementNumero) ?
     `Accord préalable de principe : ${accords.get(conf.departementNumero)}` : '')
   .style(
@@ -202,7 +179,17 @@ const buildWorksheet = (ws, structures, conf) => {
       }
     });
 
-  ws.cell(8, 1, 10, 9, true)
+
+  ws.cell(6, 1, 6, 9, true)
+  .string(program.revision ? `Version ${program.revision}` : '')
+  .style(styleConf)
+  .style({
+    alignment: {
+      horizontal: 'left'
+    }
+  });
+
+  ws.cell(7, 1, 9, 9, true)
   .string(`Si toutefois vous identifiez d'autres structures pouvant intégrer le dispositif conseiller numérique,\nmerci de les inviter à ` +
     `s'inscrire directement sur le site https://www.conseiller-numérique.gouv.fr. Merci de ne pas les ajouter dans ce fichier.`)
   .style(styleConf)
@@ -218,8 +205,9 @@ const buildWorksheet = (ws, structures, conf) => {
     }
   });
 
-  ws.cell(11, 1, 11, 9, true)
-  .string('Le fichier est à retourner au plus tard le 19/02/2021 à xxx@xxx.gouv.fr')
+  ws.cell(10, 1, 10, 9, true)
+  .string(`Le fichier est à retourner au plus tard le 19/02/2021 à conseiller-numerique@anct.gouv.fr, copie votre ` +
+    `${referents.get(conf.departementNumero).sexe === 'f' ? 'référente' : 'référent'} ${referents.get(conf.departementNumero).email}`)
   .style(styleConf)
   .style({
     font: {
@@ -233,35 +221,9 @@ const buildWorksheet = (ws, structures, conf) => {
     }
   });
 
-  // Dotations
-  if (conf.dotations && dotations.get(conf.departementNumero)) {
-    ws.cell(13, 7, 13, 7, true)
-    .string('Nombre de dotations :')
-    .style(styleConf)
-    .style({
-      font: {
-        //color: '#FF0000',
-        bold: true
-      },
-      alignment: {
-        horizontal: 'right'
-      }
-    });
-
-    ws.cell(13, 8, 13, 8, true)
-    .number(dotations.get(conf.departementNumero))
-    .style(styleConf)
-    .style({
-      font: {
-        //color: '#FF0000',
-        bold: true
-      }
-    });
-  }
-
   // Total des affectations
-  ws.cell(14, 7, 14, 7, true)
-  .string('Nombre d\'affectations :')
+  ws.cell(12, 7, 12, 7, true)
+  .string('Nombre d\'affectations total :')
   .style(styleConf)
   .style({
     font: {
@@ -275,7 +237,7 @@ const buildWorksheet = (ws, structures, conf) => {
 
   // List Header
 
-  const start = 15;
+  const start = 13;
 
   const styleVertical = {
     alignment: {
@@ -479,7 +441,6 @@ const createWorkbook = (departement, structuresPubliques, structuresPrivees) => 
     departementNumero: String(departement),
     nombre: `Nombre de structures publiques candidates : ${structuresPubliques.length}`,
     liste: 'Liste A : Structures publiques',
-    dotations: true,
     accords: true
   };
 
@@ -503,7 +464,7 @@ const createExcelForDep = async departement => {
   const wb = await createWorkbook(departement, structuresPubliques, structuresPrivees);
   wb.write(`conseiller-numerique-${departement}-${deps.get(String(departement)).dep_name.replace(' ', '-')
   .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')}-vague-${program.vague}.xlsx`);
+  .replace(/[\u0300-\u036f]/g, '')}-vague-${program.vague}-version-${program.revision}.xlsx`);
 };
 
 const createExcelForAllDeps = async () => {
@@ -513,10 +474,13 @@ const createExcelForAllDeps = async () => {
 };
 
 (async () => {
-  if (program.dotations) {
-    const dotationsCSV = await csv().fromFile(program.dotations);
-    for (const d of dotationsCSV) {
-      dotations.set(String(d['departement']), ~~d['dotation']);
+  if (program.referents) {
+    const referentsCSV = await csv().fromFile(program.referents);
+    for (const r of referentsCSV) {
+      referents.set(String(r['departement']),
+        { 'email': r['email'],
+          'sexe': r['sexe']
+        });
     }
   }
 
