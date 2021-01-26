@@ -1,0 +1,20 @@
+{
+	"env": "dev",
+	"app": {
+		"name": "siret",
+		"port": 8080
+	},
+	"logger": {
+		"defaultLevel": "info",
+		"productionFormat": "`${timestamp} ${level.toUpperCase()} ${service} (env ${env}) - ${message}`"
+	},
+	"documentation": {
+		"enabled": true
+  },
+	"cors": {
+		"whitelist": "api.conseiller-numerique.gouv.fr.cleverapps.io"
+  },
+  "token": {
+    "apiEntreprise":"eyJhbGciOiJIUzI1NiJ9.eyJ1aWQiOiI4ZDRjNWNmOC00YjI5LTRhZmYtODQ0OS0zOGY0MmI3NTYwZGUiLCJqdGkiOiJkOTJlZDRkMy0wYjYyLTRkY2QtOTM5Yy01NDBmNWQwZWUxYmYiLCJyb2xlcyI6WyJhc3NvY2lhdGlvbnMiLCJldGFibGlzc2VtZW50cyIsImVudHJlcHJpc2VzIl0sInN1YiI6ImNvbnNlaWxsZXItbnVtZXJpcXVlLmdvdXYuZnIgIiwiaWF0IjoxNjA3OTYxMTE0LCJ2ZXJzaW9uIjoiMS4wIiwiZXhwIjoxNjU1MjE4MzE0fQ.aHJzcRt5uwsD-PgK2BRw5qIo5itfRSN7mS9hrhwUk4c"
+  }
+}
