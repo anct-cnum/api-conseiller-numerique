@@ -8,18 +8,18 @@ module.exports = components => {
   app.disable('x-powered-by');
   app.use(express.json());
 
-//  try {
-//    if (configuration.documentation.enabled) {
-//      logger.info('Documentation available on /api/doc');
-//      app.use('/api', require('./routes/swagger.js')(components));
-//    }
-//  } catch (e) {
-//    // catch bad YAML format + missing configuration
-//    logger.error(e);
-//  }
+  //  try {
+  //    if (configuration.documentation.enabled) {
+  //      logger.info('Documentation available on /api/doc');
+  //      app.use('/api', require('./routes/swagger.js')(components));
+  //    }
+  //  } catch (e) {
+  //    // catch bad YAML format + missing configuration
+  //    logger.error(e);
+  //  }
 
   app.use('/api', require('./routes/api.js')(components));
-//  app.use('/ping', require('./routes/healthcheck.js')(components));
+  //  app.use('/ping', require('./routes/healthcheck.js')(components));
 
   app.use((rawError, req, res, next) => { // eslint-disable-line no-unused-vars
     let error = req.err = rawError;
