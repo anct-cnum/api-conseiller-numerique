@@ -1,6 +1,6 @@
 {
   "name": "api-conseiller-numerique",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "API Conseiller Numérique",
   "main": "index.js",
   "author": "Loïc Guillois <loic@fitlab.fr>",
@@ -10,17 +10,24 @@
   ],
   "license": "MIT",
   "scripts": {
+    "start": "node src/index.js",
     "test": "npm run lint",
     "lint": "eslint src"
   },
   "dependencies": {
+    "@hapi/boom": "9.1.1",
     "axios": "^0.21.1",
     "commander": "^6.2.1",
+    "config": "3.3.3",
+    "cors": "2.8.5",
     "csvtojson": "^2.0.10",
     "dotenv": "8.2.0",
     "eslint": "7.17.0",
     "moment": "2.29.1",
     "excel4node": "1.7.2",
+    "express": "4.17.1",
+    "joi": "17.3.0",
+    "winston": "3.3.3",
     "pg": "^8.5.1"
   },
   "engines": {

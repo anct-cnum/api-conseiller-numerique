@@ -1,0 +1,17 @@
+{
+	"env": "dev",
+	"app": {
+		"name": "siret",
+		"port": 8080
+	},
+	"logger": {
+		"defaultLevel": "info",
+		"productionFormat": "`${timestamp} ${level.toUpperCase()} ${service} (env ${env}) - ${message}`"
+	},
+	"documentation": {
+		"enabled": true
+  },
+	"cors": {
+		"whitelist": "https://app.conseiller-numerique.gouv.fr"
+  }
+}
