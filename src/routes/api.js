@@ -3,13 +3,14 @@ const cors = require('cors');
 const Joi = require('joi');
 const axios = require('axios');
 const configuration = require('config');
+require('dotenv').config();
 
 module.exports = ({ logger }) => {
 
   const router = express.Router(); // eslint-disable-line new-cap
 
 	const params = {
-		token: configuration.token.apiEntreprise,
+		token: process.env.API_ENTREPRISE_KEY,
 		context: 'cnum',
 		recipient: 'cnum',
 		object: 'checkSiret',
