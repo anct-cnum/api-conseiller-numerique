@@ -159,7 +159,7 @@ const buildWorksheet = (ws, structures, conf) => {
 
   ws.cell(5, 1, 5, 9, true)
   .string(conf.accords && accords.get(conf.departementNumero) ?
-    `Accord préalable de principe : ${accords.get(conf.departementNumero)}` : '')
+    `Accord préalable de principe : ${accords.get(conf.departementNumero)} Conseillers numériques` : '')
   .style(
     {
       font: {
@@ -450,6 +450,7 @@ const createWorkbook = (departement, structuresPubliques, structuresPrivees) => 
     departementNumero: String(departement),
     nombre: `Nombre de structures privées candidates : ${structuresPrivees.length}`,
     liste: 'Liste B : Structures privées',
+    accords: true
   };
 
   buildWorksheet(ws1, structuresPubliques, confPubliques);
