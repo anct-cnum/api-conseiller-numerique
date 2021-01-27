@@ -1,0 +1,14 @@
+{
+  "host": "HOST",
+  "port": "PORT",
+  "authentication": {
+    "secret": "AUTHENTICATION_SECRET",
+    "jwtOptions": {
+      "audience": "AUTHENTICATION_JWTOPTIONS_AUDIENCE"
+    }
+  },
+  "mongodb": "MONGODB_ADDON_URI",
+  "cors": {
+    "whitelist": "CORS_WHITELIST"
+  }
+}
