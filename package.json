@@ -9,28 +9,62 @@
     "Jean-Yves Stervinou <jy@stervinou.com>"
   ],
   "license": "MIT",
+  "directories": {
+    "lib": "src",
+    "test": "test/",
+    "config": "config/"
+  },
   "scripts": {
-    "start": "node src/index.js",
-    "test": "npm run lint",
-    "lint": "eslint src"
+    "test": "npm run lint && npm run mocha",
+    "lint": "eslint src/. test/. --config .eslintrc.json --fix",
+    "dev": "nodemon src/",
+    "start": "node src/",
+    "mocha": "mocha test/ --recursive --exit"
+  },
+  "standard": {
+    "env": [
+      "mocha"
+    ],
+    "ignore": []
   },
   "dependencies": {
+    "@feathersjs/authentication": "4.5.11",
+    "@feathersjs/authentication-local": "4.5.11",
+    "@feathersjs/authentication-oauth": "4.5.11",
+    "@feathersjs/configuration": "4.5.11",
+    "@feathersjs/errors": "4.5.11",
+    "@feathersjs/express": "4.5.11",
+    "@feathersjs/feathers": "4.5.11",
+    "@feathersjs/transport-commons": "4.5.11",
     "@hapi/boom": "9.1.1",
-    "axios": "^0.21.1",
-    "commander": "^6.2.1",
+    "axios": "0.21.1",
+    "commander": "6.2.1",
+    "compression": "1.7.4",
     "config": "3.3.3",
     "cors": "2.8.5",
-    "csvtojson": "^2.0.10",
+    "csvtojson": "2.0.10",
     "dotenv": "8.2.0",
     "eslint": "7.17.0",
-    "moment": "2.29.1",
     "excel4node": "1.7.2",
     "express": "4.17.1",
+    "feathers-mongodb": "6.3.0",
+    "feathers-permissions": "2.1.4",
+    "helmet": "4.4.1",
     "joi": "17.3.0",
-    "winston": "3.3.3",
-    "pg": "^8.5.1"
+    "moment": "2.29.1",
+    "mongodb": "3.6.3",
+    "mongodb-core": "3.2.7",
+    "pg": "8.5.1",
+    "serve-favicon": "2.5.0",
+    "winston": "3.3.3"
   },
   "engines": {
     "node": ">= 14.15.3"
+  },
+  "devDependencies": {
+    "axios": "^0.21.1",
+    "eslint": "^7.18.0",
+    "mocha": "^8.2.1",
+    "nodemon": "^2.0.7"
   }
 }
