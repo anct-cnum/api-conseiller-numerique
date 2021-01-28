@@ -11,7 +11,8 @@ execute(async ({ feathers, db, logger, exit }) => {
 
   program.option('-n, --username <username>', 'username');
   program.option('-p, --password <password>', 'password');
-  program.option('-r, --role <role>', 'role');
+  program.option('-r, --role <role>', 'role : choisir entre admin, structure, conseiller');
+  program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   const username = program.username;
