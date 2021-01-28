@@ -11,13 +11,20 @@ execute(async ({ feathers, db, logger, exit }) => {
 
   program.option('-n, --username <username>', 'username');
   program.option('-p, --password <password>', 'password');
+  program.option('-r, --role <role>', 'role : choisir entre admin, structure, conseiller');
+  program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   const username = program.username;
   const password = program.password;
+  const role = program.role;
 
-  if (!username || !password) {
-    exit('Paramètre invalide');
+  if (!username || !password || !role) {
+    exit('Paramètres invalides');
+  }
+
+  if (!['admin', 'structure', 'conseiller'].includes(role)) {
+    exit('Rôle non reconnu');
   }
 
   const count = await db.collection('users').countDocuments({ name: username});
@@ -26,7 +33,8 @@ execute(async ({ feathers, db, logger, exit }) => {
   }
   await feathers.service('users').create({
     name: username,
-    password: password
+    password: password,
+    roles: Array(role)
   });
   logger.info('Utilisateur créé');
 });
