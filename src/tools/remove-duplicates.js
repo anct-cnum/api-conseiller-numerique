@@ -23,10 +23,10 @@ execute(async ({ exit }) => {
 
   const prefix = table === 'hostorganization' ? 'contact_' : '';
 
-  const { rows } = await pool.query(`select ${prefix}email as email, ${prefix}last_name, ${prefix}first_name, count(${prefix}email) as count \
+  const { rows } = await pool.query(`select lower(${prefix}email) as email, lower(${prefix}last_name) as ln, lower(${prefix}first_name) as fn, count(lower(${prefix}email)) as count \
   from djapp_${table} \
-  group by email, ${prefix}last_name, ${prefix}first_name\
-  having count(${prefix}email) > 1`);
+  group by email, ln, fn\
+  having count(lower(${prefix}email)) > 1`);
 
   if (rows.length > 0) {
     console.log(`${rows.length} Doublons`);
