@@ -56,8 +56,26 @@ const styleHeaderConf = {
 };
 
 const getStructures = async (departement, types) => {
+  let query;
+  switch (departement) {
+    case '2A': {
+      query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'200\' OR' +
+      ' SUBSTRING(zip_code,1,3) = \'201\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
+      break;
+    }
+    case '2B': {
+      query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'202\' OR' +
+      ' SUBSTRING(zip_code,1,3) = \'206\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
+      break;
+    }
+    default: {
+      query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC';
+      break;
+    }
+  }
+
   try {
-    const { rows } = await pool.query('SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC',
+    const { rows } = await pool.query(query,
       [departement, types.split(',')]);
     return rows;
   } catch (error) {
