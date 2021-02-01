@@ -29,6 +29,6 @@
   },
   "mongodb": "mongodb://localhost:27017/conseiller-numerique",
   "cors": {
-    "whitelist": "https://app.conseiller-numerique.gouv.fr"
+    "whitelist": "*"
   }
 }
