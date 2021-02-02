@@ -57,21 +57,20 @@ const styleHeaderConf = {
 
 const getStructures = async (departement, types) => {
   let query;
-  switch (departement) {
-    case '2A': {
-      query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'200\' OR' +
+  if (departement == '2A') {
+    // Corse du Sud
+    query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'200\' OR' +
       ' SUBSTRING(zip_code,1,3) = \'201\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
-      break;
-    }
-    case '2B': {
-      query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'202\' OR' +
+  } else if (departement == '2B') {
+    // Haute-Corse
+    query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'202\' OR' +
       ' SUBSTRING(zip_code,1,3) = \'206\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
-      break;
-    }
-    default: {
-      query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC';
-      break;
-    }
+  } else if (/^\d\d\d$/.test(departement)) {
+    // DOM sur 3 chiffres
+    query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,3) = $1 AND type = ANY ($2) ORDER BY id ASC';
+  } else if (/^\d\d$/.test(departement)) {
+    // Les autres sur 2 chiffres
+    query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC';
   }
 
   try {
