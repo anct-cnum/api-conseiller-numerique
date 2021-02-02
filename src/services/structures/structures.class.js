@@ -27,8 +27,7 @@ exports.Structures = class Structures extends Service {
       };
 
       getData().then(data => {
-        conseillers.data = data;
-        res.send(conseillers);
+        res.send(data[0]);
       });
     });
   }
