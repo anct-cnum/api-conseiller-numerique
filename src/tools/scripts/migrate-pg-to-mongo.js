@@ -41,7 +41,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         emailConfirmationKey: s.email_confirmation_key,
         emailConfirmed: s.email_confirmed,
         validated: s.validated,
-        unsubscribeExtras: s.unsubscribe_extras,
+        unsubscribeExtras: s.unsubscribe_extras, // xxx object ?
         unsubscribed: s.unsubscribed,
         siret: s.siret,
         nombreConseillersSouhaites: s.coaches_requested,
@@ -59,13 +59,38 @@ execute(async ({ feathers, db, logger, exit }) => {
   };
 
   const moveCandidat = async c => {
-    console.dir(c);
     logger.info(`Candidat: ${c.name}`);
 
     const match = await db.collection('conseillers').findOne({ idPG: c.id});
     if (!match) {
       const doc = {
         idPG: c.id, // xxx Ajouter tous les champs
+        demandeurEmploi: c.situation_looking,
+        enEmploi: c.situation_job,
+        enFormation: c.situation_learning,
+        diplomeMedNum: c.situation_graduated,
+        nomDiplomeMedNum: c.formation,
+        experienceMedNum: c.has_experience,
+        codePostal: c.zip_code,
+        distanceMax: c.max_distance,
+        dateDisponibilite: c.start_date,
+        prenom: c.first_name,
+        nom: c.last_name,
+        email: c.email,
+        telephone: c.phone,
+        location: c.location,
+        updated: c.updated,
+        created: c.created,
+        emailConfirmed: c.email_confirmed,
+        emailConfirmationKey: c.email_confirmation_key,
+        blocked: c.blocked,
+        codeCommune: c.commune_code,
+        codeDepartement: c.departement_code,
+        nomGeo: c.geo_name, // xxx ???
+        codeRegion: c.region_code,
+        unsubscribeExtras: c.unsubscribe_extras, // xxx object ?
+        unsubscribed: c.unsubscribed,
+        disponible: c.disponible // xxx ???
       };
 
       const result = await db.collection('conseillers').insertOne(doc);
