@@ -33,6 +33,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         location: s.location, // xxx stocker en GEOJson
         updated: s.updated,
         created: s.created,
+        imported: new Date(),
         codeCommune: s.commune_code,
         codeDepartement: s.departement_code,
         nomGeo: s.geo_name, // xxx ???
@@ -82,6 +83,7 @@ execute(async ({ feathers, db, logger, exit }) => {
 
         updated: c.updated,
         created: c.created,
+        imported: new Date(),
         emailConfirmed: c.email_confirmed,
         emailConfirmationKey: c.email_confirmation_key,
         blocked: c.blocked,
