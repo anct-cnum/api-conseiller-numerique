@@ -1,5 +1,7 @@
 const { ObjectID } = require('mongodb');
 
+const { BadRequest } = require('@feathersjs/errors');
+
 const { Service } = require('feathers-mongodb');
 
 exports.Structures = class Structures extends Service {
@@ -16,18 +18,43 @@ exports.Structures = class Structures extends Service {
     app.get('/structures/:id/misesEnRelation', async (req, res) => {
       const misesEnRelationService = app.service('misesEnRelation');
       const conseillersService = app.service('conseillers');
-      const conseillers = await misesEnRelationService.find();
+
+      let queryFilter = {};
+      const { filter } = req.query;
+      if (filter) {
+        const allowedFilters = ['nouvelle', 'acceptee', 'refusee', 'toutes'];
+        if (allowedFilters.includes(filter)) {
+          if (filter !== 'toutes') {
+            queryFilter = { statut: filter };
+          }
+        } else {
+          res.status(400).send(new BadRequest('Invalid filter', {
+            filter
+          }).toJSON());
+          return;
+        }
+      }
+      const misesEnRelation = await misesEnRelationService.find({ query: queryFilter });
+      if (misesEnRelation.total === 0) {
+        res.send(misesEnRelation);
+        return;
+      }
 
       const findConseiller = async miseEnRelation => {
         return conseillersService.find({ query: { _id: new ObjectID(miseEnRelation.conseiller.oid) } });
       };
 
       const getData = async () => {
-        return Promise.all(conseillers.data.map(miseEnRelation => findConseiller(miseEnRelation)));
+        return Promise.all(misesEnRelation.data.map(miseEnRelation => findConseiller(miseEnRelation)));
       };
 
-      getData().then(data => {
-        res.send(data[0]);
+      getData().then(conseillers => {
+        misesEnRelation.data = misesEnRelation.data.map((miseEnRelation, idx) => {
+          let item = Object.assign(miseEnRelation, { conseiller: conseillers[0].data[idx] });
+          delete item.structure;
+          return item;
+        });
+        res.send(misesEnRelation);
       });
     });
   }
