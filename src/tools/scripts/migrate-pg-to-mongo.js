@@ -30,7 +30,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         contactEmail: s.contact_email,
         contactTelephone: s.contact_phone,
         codePostal: s.zip_code,
-        location: s.location, // xxx stocker autre format lat long
+        location: s.location, // xxx stocker en GEOJson
         updated: s.updated,
         created: s.created,
         codeCommune: s.commune_code,
@@ -78,7 +78,8 @@ execute(async ({ feathers, db, logger, exit }) => {
         nom: c.last_name,
         email: c.email,
         telephone: c.phone,
-        location: c.location,
+        location: c.location, // xxx stocker en GEOJson
+
         updated: c.updated,
         created: c.created,
         emailConfirmed: c.email_confirmed,
