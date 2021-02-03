@@ -53,29 +53,60 @@ execute(async ({ feathers, db, logger, exit }) => {
 
       const result = await db.collection('structures').insertOne(doc);
       logger.info(
-        `${result.insertedCount} documents were inserted with the _id: ${result.insertedId}`
+        `${result.insertedCount} structures insérées avec _id: ${result.insertedId}`
       );
     }
   };
 
-  // Loop threw all Structures in PG
+  const moveCandidat = async c => {
+    console.dir(c);
+    logger.info(`Candidat: ${c.name}`);
+
+    const match = await db.collection('conseillers').findOne({ idPG: c.id});
+    if (!match) {
+      const doc = {
+        idPG: c.id, // xxx Ajouter tous les champs
+      };
+
+      const result = await db.collection('conseillers').insertOne(doc);
+      logger.info(
+        `${result.insertedCount} conseillers insérés avec _id: ${result.insertedId}`
+      );
+    }
+  };
+
+  // Récupère toutes les structures dans PG
   const getStructures = async () => {
     try {
       const { rows } = await pool.query('SELECT * FROM djapp_hostorganization ORDER BY id ASC LIMIT $1',
         [program.limit]);
       return rows;
     } catch (error) {
-      logger.info(`Erreur DB : ${error.message} pour le département ${departement}`);
+      logger.info(`Erreur DB : ${error.message}`);
     }
   };
 
-  // Récupère toutes les structures dans PG
+  // Récupère toutes les candidatures dans PG
+  const getCandidats = async () => {
+    try {
+      const { rows } = await pool.query('SELECT * FROM djapp_coach ORDER BY id ASC LIMIT $1',
+        [program.limit]);
+      return rows;
+    } catch (error) {
+      logger.info(`Erreur DB : ${error.message}`);
+    }
+  };
+
   const structures = await getStructures();
-
-  await logger.info(structures.count());
-
+  await logger.info(structures.length);
   for (let s of structures) {
     await moveStructure(s);
+  }
+
+  const candidats = await getCandidats();
+  await logger.info(candidats.length);
+  for (let c of candidats) {
+    await moveCandidat(c);
   }
 });
 
