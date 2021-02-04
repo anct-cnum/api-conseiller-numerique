@@ -1,10 +1,9 @@
-const checkPermissions = require('feathers-permissions');
+const { authenticate } = require('@feathersjs/authentication').hooks;
 
+// TODO seul les admin doivent pouvoir tout faire, les structures ne peuvent modifier que les donneés qui les concernent, les conseillers ne peuvent lire les infos que sur la mise en relation qui le concerne
 module.exports = {
   before: {
-    all: [checkPermissions({
-      roles: ['admin']
-    })],
+    all: authenticate('jwt'),
     find: [],
     get: [],
     create: [],
