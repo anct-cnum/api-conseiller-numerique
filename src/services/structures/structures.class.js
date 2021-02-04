@@ -15,6 +15,7 @@ exports.Structures = class Structures extends Service {
       this.Model = db.collection('structures');
     });
 
+    // TODO : n'est pas filtré par les hooks (pas d'authentification)
     app.get('/structures/:id/misesEnRelation', async (req, res) => {
       const misesEnRelationService = app.service('misesEnRelation');
       const conseillersService = app.service('conseillers');
@@ -73,7 +74,7 @@ exports.Structures = class Structures extends Service {
 
       getData().then(conseillers => {
         misesEnRelation.data = misesEnRelation.data.map((miseEnRelation, idx) => {
-          let item = Object.assign(miseEnRelation, { conseiller: conseillers[0].data[idx] });
+          let item = Object.assign(miseEnRelation, { conseiller: conseillers[idx].data[0] });
           delete item.structure;
           return item;
         });
