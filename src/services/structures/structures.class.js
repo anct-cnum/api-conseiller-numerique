@@ -1,6 +1,6 @@
 const { ObjectID } = require('mongodb');
 
-const { BadRequest } = require('@feathersjs/errors');
+const { BadRequest, NotFound } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
 
@@ -19,6 +19,29 @@ exports.Structures = class Structures extends Service {
       const misesEnRelationService = app.service('misesEnRelation');
       const conseillersService = app.service('conseillers');
 
+      let structureId = null;
+      try {
+        structureId = new ObjectID(req.params.id);
+      } catch (e) {
+        res.status(404).send(new NotFound('Structure not found', {
+          id: req.params.id
+        }).toJSON());
+        return;
+      }
+
+      const structureCount = await this.find({
+        query: {
+          _id: structureId,
+          $limit: 0,
+        }
+      });
+      if (structureCount.total === 0) {
+        res.status(404).send(new NotFound('Structure not found', {
+          structureId
+        }).toJSON());
+        return;
+      }
+
       let queryFilter = {};
       const { filter } = req.query;
       if (filter) {
@@ -34,7 +57,7 @@ exports.Structures = class Structures extends Service {
           return;
         }
       }
-      const misesEnRelation = await misesEnRelationService.find({ query: queryFilter });
+      const misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
       if (misesEnRelation.total === 0) {
         res.send(misesEnRelation);
         return;
