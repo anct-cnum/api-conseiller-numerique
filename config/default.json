@@ -1,5 +1,8 @@
 {
   "host": "localhost",
+  "public_hostname": "https://www.conseiller-numerique.gouv.fr",
+  "help_url": "https://aide.conseiller-numerique.gouv.fr/fr/",
+  "backoffice_hostname":  "https://admin.conseiller-numerique.gouv.fr",
   "port": 8080,
   "paginate": {
     "default": 10,
@@ -30,5 +33,17 @@
   "mongodb": "mongodb://localhost:27017/conseiller-numerique",
   "cors": {
     "whitelist": "*"
+  },
+  "smtp": {
+    "host": "localhost",
+    "port": "1025",
+    "secure": false,
+    "hostname": "localhost",
+    "greetingTimeout": 300000,
+    "from": "communication@email.conseiller-numerique.gouv.fr",
+    "replyTo": "conseiller-numerique@anct.gouv.fr",
+    "structure": {
+      "accountsRelaunchDelay": 7
+    }
   }
 }

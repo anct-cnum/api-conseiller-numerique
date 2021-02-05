@@ -13,6 +13,9 @@ const authentication = require('../authentication');
 
 const mongodb = require('../mongodb');
 
+const createEmails = require('../emails/emails');
+const createMailer = require('../mailer');
+
 const f = feathers();
 const app = express(f);
 
@@ -27,6 +30,10 @@ app.hooks(appHooks);
 const logger = require('../logger');
 
 module.exports = {
+  delay: milliseconds => {
+    return new Promise(resolve => setTimeout(() => resolve(), milliseconds));
+  },
+  capitalizeFirstLetter: string => string.charAt(0).toUpperCase() + string.slice(1),
   execute: async job => {
 
     process.on('unhandledRejection', e => console.log(e));
@@ -41,7 +48,10 @@ module.exports = {
     };
 
     const db = await app.get('mongoClient');
-    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit });
+    let mailer = createMailer(app);
+
+    const emails = createEmails(db, mailer);
+    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app });
 
     try {
       let launchTime = new Date().getTime();
