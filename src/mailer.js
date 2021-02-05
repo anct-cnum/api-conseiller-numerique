@@ -66,8 +66,8 @@ module.exports = app => {
           return transporter.sendMail(_.merge({}, {
             to: emailAddress,
             subject,
-            from: `Conseiller numérique France Services <${configuration.from}>`,
-            replyTo: `Conseiller numérique France Services <${configuration.replyTo}>`,
+            from: `Conseiller Numérique France Services <${configuration.from}>`,
+            replyTo: `Conseiller Numérique France Services <${configuration.replyTo}>`,
             list: {
               help: getPublicUrl('/faq'),
             },
