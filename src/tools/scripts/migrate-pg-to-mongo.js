@@ -16,7 +16,9 @@ const pool = new Pool();
 execute(async ({ feathers, db, logger, exit }) => {
   const moveStructure = async s => {
     logger.info(`Siret: ${s.siret}`);
+    logger.info(`Location: ${JSON.stringify(s.location)}`);
     const match = await db.collection('structures').findOne({ idPG: s.id});
+    //const match = await db.collection('structures').findOne({ siret: s.siret});
     if (!match) {
       const doc = {
         idPG: s.id,
@@ -30,7 +32,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         contactEmail: s.contact_email,
         contactTelephone: s.contact_phone,
         codePostal: s.zip_code,
-        location: s.location, // xxx stocker en GEOJson
+        location: s.location,
         updated: s.updated,
         created: s.created,
         imported: new Date(),
@@ -45,8 +47,8 @@ execute(async ({ feathers, db, logger, exit }) => {
         unsubscribeExtras: s.unsubscribe_extras, // xxx object ?
         unsubscribed: s.unsubscribed,
         siret: s.siret,
-        nombreConseillersSouhaites: s.coaches_requested,
-        labelFranceService: s.labelFranceService,
+        nombreConseillersSouhaites: 0,
+        labelFranceService: false,
         avis: '',
         commentaire: '' ,
         statut: 'CREEE',
@@ -79,8 +81,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         nom: c.last_name,
         email: c.email,
         telephone: c.phone,
-        location: c.location, // xxx stocker en GEOJson
-
+        location: c.location,
         updated: c.updated,
         created: c.created,
         imported: new Date(),
@@ -106,7 +107,35 @@ execute(async ({ feathers, db, logger, exit }) => {
   // Récupère toutes les structures dans PG
   const getStructures = async () => {
     try {
-      const { rows } = await pool.query('SELECT * FROM djapp_hostorganization ORDER BY id ASC LIMIT $1',
+      const { rows } = await pool.query(`
+        SELECT
+          id,
+          type,
+          has_candidate,
+          start_date,
+          name,
+          contact_first_name,
+          contact_last_name,
+          contact_job,
+          contact_email,
+          contact_phone,
+          zip_code,
+          ST_AsGeoJSON(ST_Transform(location::geometry, 4326),15,0)::json AS location,
+          updated,
+          created,
+          commune_code,
+          departement_code,
+          geo_name,
+          region_code,
+          blocked,
+          email_confirmation_key,
+          email_confirmed,
+          validated,
+          unsubscribe_extras,
+          unsubscribed,
+          siret,
+          coaches_requested
+        FROM djapp_hostorganization ORDER BY id ASC LIMIT $1`,
         [program.limit]);
       return rows;
     } catch (error) {
@@ -117,7 +146,34 @@ execute(async ({ feathers, db, logger, exit }) => {
   // Récupère toutes les candidatures dans PG
   const getCandidats = async () => {
     try {
-      const { rows } = await pool.query('SELECT * FROM djapp_coach ORDER BY id ASC LIMIT $1',
+      const { rows } = await pool.query(`
+        SELECT
+          situation_looking,
+          situation_job,
+          situation_learning,
+          situation_graduated,
+          formation,
+          has_experience,
+          zip_code,
+          max_distance,
+          start_date,
+          last_name,
+          email,
+          phone,
+          ST_AsGeoJSON(ST_Transform(location::geometry, 4326),15,0)::json AS location,
+          updated,
+          created,
+          email_confirmed,
+          email_confirmation_key,
+          blocked,
+          commune_code,
+          departement_code,
+          geo_name,
+          region_code,
+          unsubscribe_extras,
+          unsubscribed,
+          disponible
+        FROM djapp_coach ORDER BY id ASC LIMIT $1`,
         [program.limit]);
       return rows;
     } catch (error) {
