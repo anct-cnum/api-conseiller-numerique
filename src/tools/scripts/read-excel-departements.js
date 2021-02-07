@@ -33,10 +33,10 @@ execute(async ({ feathers, db, logger, exit }) => {
       const updateDoc = {
         $set: {
           siret: s.siret,
-          labelFranceServices: s.labelFranceServices,
-          nombreConseillersSouhaites: s.nombreConseillers,
-          avis: s.avis,
-          commentaire: s.commentaire,
+          estLabelliseFranceServices: s.labelFranceServices,
+          nombreConseillersPrefet: s.nombreConseillers,
+          avisPrefet: s.avis,
+          commentairePrefet: s.commentaire,
           statut: 'PREFET',
         },
       };
@@ -53,10 +53,10 @@ execute(async ({ feathers, db, logger, exit }) => {
         const filter = { siret: s.siret};
         const updateDoc = {
           $set: {
-            labelFranceServices: s.labelFranceServices,
-            nombreConseillersSouhaites: s.nombreConseillers,
-            avis: s.avis,
-            commentaire: s.commentaire
+            estLabelliseFranceServices: s.labelFranceServices,
+            nombreConseillersPrefet: s.nombreConseillers,
+            avisPrefet: s.avis,
+            commentairePrefet: s.commentaire
             statut: 'PREFET',
           },
         };
