@@ -140,7 +140,7 @@ execute(async ({ db, logger }) => {
           siret,
           coaches_requested
         FROM djapp_hostorganization ORDER BY id ASC LIMIT $1`,
-        [program.limit]);
+      [program.limit]);
       return rows;
     } catch (error) {
       logger.info(`Erreur DB : ${error.message}`);
@@ -180,7 +180,7 @@ execute(async ({ db, logger }) => {
           unsubscribed,
           disponible
         FROM djapp_coach ORDER BY id ASC LIMIT $1`,
-        [program.limit]);
+      [program.limit]);
       return rows;
     } catch (error) {
       logger.info(`Erreur DB : ${error.message}`);

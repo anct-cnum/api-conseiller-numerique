@@ -2,7 +2,7 @@
 const { Conseillers } = require('./conseillers.class');
 const hooks = require('./conseillers.hooks');
 
-module.exports = function (app) {
+module.exports = function(app) {
   const options = {
     paginate: app.get('paginate')
   };

@@ -40,7 +40,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     exit('Paramètre id obligatoire pour ce rôle');
   }
 
-  const count = await db.collection('users').countDocuments({ name: username});
+  const count = await db.collection('users').countDocuments({ name: username });
   if (count > 0) {
     exit('Un utilisateur avec nom existe déjà');
   }

@@ -44,8 +44,8 @@ module.exports = (db, mailer) => {
           body: await render(structure),
         },
       )
-        .then(onSuccess)
-        .catch(onError);
+      .then(onSuccess)
+      .catch(onError);
     },
   };
 };

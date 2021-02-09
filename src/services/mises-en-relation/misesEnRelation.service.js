@@ -2,7 +2,7 @@
 const { MisesEnRelation } = require('./misesEnRelation.class');
 const hooks = require('./misesEnRelation.hooks');
 
-module.exports = function (app) {
+module.exports = function(app) {
   const options = {
     paginate: app.get('paginate')
   };
