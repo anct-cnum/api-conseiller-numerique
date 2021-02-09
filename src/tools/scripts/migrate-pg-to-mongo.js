@@ -25,7 +25,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         type: s.type,
         statut: 'CREEE',
         nom: s.name,
-        siret: s.siret,
+        siret: '' + s.siret,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
         nombreConseillersSouhaites: 0,
@@ -42,7 +42,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         location: s.location,
         nomCommune: s.geo_name,
         codeCommune: s.commune_code,
-        codeDepartement: s.departement_code,
+        codeDepartement: '' + s.departement_code,
         codeRegion: s.region_code,
         emailConfirmedAt: s.email_confirmed,
         emailConfirmationKey: s.email_confirmation_key,
@@ -52,7 +52,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         updatedAt: s.updated,
         validatedAt: s.validated, // pas utilisé ?
         importedAt: new Date(),
-        deleted_at: c.blocked,
+        deleted_at: s.blocked,
       };
 
       const result = await db.collection('structures').insertOne(doc);
@@ -63,7 +63,7 @@ execute(async ({ feathers, db, logger, exit }) => {
   };
 
   const moveCandidat = async c => {
-    logger.info(`Candidat: ${c.name}`);
+    logger.info(`Candidat: ${c.first_name} ${c.last_name}`);
 
     const match = await db.collection('conseillers').findOne({ idPG: c.id});
     if (!match) {
@@ -149,6 +149,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     try {
       const { rows } = await pool.query(`
         SELECT
+          id,
           situation_looking,
           situation_job,
           situation_learning,
@@ -158,6 +159,7 @@ execute(async ({ feathers, db, logger, exit }) => {
           zip_code,
           max_distance,
           start_date,
+          first_name,
           last_name,
           email,
           phone,
