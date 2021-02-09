@@ -21,15 +21,15 @@ for (const value of departements) {
   deps.set(String(value.num_dep), value);
 }
 
-execute(async ({ feathers, db, logger, exit }) => {
+execute(async ({ db, logger }) => {
   const processStructure = async s => {
     //await logger.info(s.email);
-    const match = await db.collection('structures').findOne({ idPG: s.id});
+    const match = await db.collection('structures').findOne({ idPG: s.id });
     // xxx mode dryrun pour valider le fichier Excel
 
     // Si on a un id
     if (match) {
-      const filter = { idPG: s.id};
+      const filter = { idPG: s.id };
       const updateDoc = {
         $set: {
           siret: s.siret,
@@ -47,18 +47,18 @@ execute(async ({ feathers, db, logger, exit }) => {
       );
     } else if (s.siret && /^\d{14}$/.test(s.siret)) {
       // Si on a un siret
-      const match = await db.collection('structures').findOne({ siret: s.siret});
+      const match = await db.collection('structures').findOne({ siret: s.siret });
 
       if (match) {
-        const filter = { siret: s.siret};
+        const filter = { siret: s.siret };
         const updateDoc = {
           $set: {
             estLabelliseFranceServices: s.labelFranceServices,
             nombreConseillersPrefet: s.nombreConseillers,
             avisPrefet: s.avis,
-            commentairePrefet: s.commentaire
+            commentairePrefet: s.commentaire,
             statut: 'PREFET',
-          },
+          }
         };
 
         const result = await db.collection('structures').updateOne(filter, updateDoc);
@@ -66,15 +66,11 @@ execute(async ({ feathers, db, logger, exit }) => {
           `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
         );
       }
-  };
-
-  const readExcelForAllDeps = async () => {
-    for (const d of departements) {
-      await readExcelForDep(d.num_dep);
     }
   };
 
-  const readExcelForDep = async (departement) => {
+  const readExcelForDep = async departement => {
+    logger.info(`Département : ${departement}`);
     const start = 13; // Début de la liste des structures
 
     // Colonnes Excel
@@ -91,11 +87,15 @@ execute(async ({ feathers, db, logger, exit }) => {
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(program.file); // xxx utiliser le departement+version
     for await (const worksheetReader of workbookReader) {
-      let i=0;
+      let i = 0;
       for await (const row of worksheetReader) {
-        if (++i<start) continue;
+        if (++i < start) {
+          continue;
+        }
         let id = row.getCell(ID).value;
-        if (!/^\d+$/.test(id)) continue;
+        if (!/^\d+$/.test(id)) {
+          continue;
+        }
 
         await processStructure({
           id: row.getCell(ID).value,
@@ -109,11 +109,17 @@ execute(async ({ feathers, db, logger, exit }) => {
           avis: row.getCell(AVIS).value,
           commentaire: row.getCell(COMMENTAIRE).value,
         });
-        //logger.info(`${row.getCell(ID).value} ${row.getCell(EMAIL).value} ${row.getCell(LABEL_FRANCE_SERVICE).value} ${row.getCell(NOMBRE_CONSEILLERS).value} ${row.getCell(AVIS).value} ${row.getCell(COMMENTAIRE).value}`);
+        //logger.info(`${row.getCell(ID).value} ${row.getCell(EMAIL).value} ${row.getCell(LABEL_FRANCE_SERVICE).value}
+        //${row.getCell(NOMBRE_CONSEILLERS).value} ${row.getCell(AVIS).value} ${row.getCell(COMMENTAIRE).value}`);
       }
     }
   };
 
+  //  const readExcelForAllDeps = async () => {
+  //    for (const d of departements) {
+  //      await readExcelForDep(d.num_dep);
+  //    }
+  //  };
 
   if (program.departement) {
     await readExcelForDep(program.departement);
