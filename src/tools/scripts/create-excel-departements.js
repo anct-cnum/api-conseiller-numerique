@@ -57,11 +57,11 @@ const styleHeaderConf = {
 
 const getStructures = async (departement, types) => {
   let query;
-  if (departement == '2A') {
+  if (departement === '2A') {
     // Corse du Sud
     query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'200\' OR' +
       ' SUBSTRING(zip_code,1,3) = \'201\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
-  } else if (departement == '2B') {
+  } else if (departement === '2B') {
     // Haute-Corse
     query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'202\' OR' +
       ' SUBSTRING(zip_code,1,3) = \'206\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
