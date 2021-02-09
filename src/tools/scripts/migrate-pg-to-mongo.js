@@ -13,11 +13,12 @@ program.parse(process.argv);
 
 const pool = new Pool();
 
-execute(async ({ feathers, db, logger, exit }) => {
+execute(async ({ db, logger }) => {
   const moveStructure = async s => {
     logger.info(`Siret: ${s.siret}`);
     logger.info(`Location: ${JSON.stringify(s.location)}`);
-    const match = await db.collection('structures').findOne({ idPG: s.id});
+    const match = await db.collection('structures').findOne({ idPG: s.id });
+
     //const match = await db.collection('structures').findOne({ siret: s.siret});
     if (!match) {
       const doc = {
@@ -25,13 +26,13 @@ execute(async ({ feathers, db, logger, exit }) => {
         type: s.type,
         statut: 'CREEE',
         nom: s.name,
-        siret: '' + s.siret,
+        siret: `${s.siret}`,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
         nombreConseillersSouhaites: 0,
         estLabelliseFranceServices: false,
         avisPrefet: '',
-        commentairePrefet: '' ,
+        commentairePrefet: '',
         nombreConseillersPrefet: 0,
         contactPrenom: s.contact_first_name,
         contactNom: s.contact_last_name,
@@ -42,7 +43,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         location: s.location,
         nomCommune: s.geo_name,
         codeCommune: s.commune_code,
-        codeDepartement: '' + s.departement_code,
+        codeDepartement: `${s.departement_code}`,
         codeRegion: s.region_code,
         emailConfirmedAt: s.email_confirmed,
         emailConfirmationKey: s.email_confirmation_key,
@@ -53,6 +54,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         validatedAt: s.validated, // pas utilisé ?
         importedAt: new Date(),
         deleted_at: s.blocked,
+        userCreated: false
       };
 
       const result = await db.collection('structures').insertOne(doc);
@@ -65,7 +67,7 @@ execute(async ({ feathers, db, logger, exit }) => {
   const moveCandidat = async c => {
     logger.info(`Candidat: ${c.first_name} ${c.last_name}`);
 
-    const match = await db.collection('conseillers').findOne({ idPG: c.id});
+    const match = await db.collection('conseillers').findOne({ idPG: c.id });
     if (!match) {
       const doc = {
         idPG: c.id,
@@ -96,6 +98,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         updatedAt: c.updated,
         importedAt: new Date(),
         deletedAt: c.blocked,
+        userCreated: false,
       };
 
       const result = await db.collection('conseillers').insertOne(doc);
@@ -137,7 +140,7 @@ execute(async ({ feathers, db, logger, exit }) => {
           siret,
           coaches_requested
         FROM djapp_hostorganization ORDER BY id ASC LIMIT $1`,
-        [program.limit]);
+      [program.limit]);
       return rows;
     } catch (error) {
       logger.info(`Erreur DB : ${error.message}`);
@@ -177,7 +180,7 @@ execute(async ({ feathers, db, logger, exit }) => {
           unsubscribed,
           disponible
         FROM djapp_coach ORDER BY id ASC LIMIT $1`,
-        [program.limit]);
+      [program.limit]);
       return rows;
     } catch (error) {
       logger.info(`Erreur DB : ${error.message}`);

@@ -4,7 +4,7 @@ const { NotFound, BadRequest } = require('@feathersjs/errors');
 
 /* eslint-disable no-unused-vars */
 exports.Siret = class Siret {
-  constructor (options) {
+  constructor(options) {
     this.options = options || {};
   }
 

@@ -2,7 +2,7 @@
 const { Siret } = require('./siret.class');
 const hooks = require('./siret.hooks');
 
-module.exports = function (app) {
+module.exports = function(app) {
   const options = {
     paginate: app.get('paginate')
   };

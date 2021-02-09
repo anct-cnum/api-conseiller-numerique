@@ -2,7 +2,7 @@
 const { Structures } = require('./structures.class');
 const hooks = require('./structures.hooks');
 
-module.exports = function (app) {
+module.exports = function(app) {
   const options = {
     paginate: app.get('paginate')
   };
