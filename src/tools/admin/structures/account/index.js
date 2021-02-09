@@ -7,11 +7,11 @@ const sendActivationCompteEmails = require('./tasks/sendCreateAccountEmail');
 const { capitalizeFirstLetter, execute } = require('../../../utils');
 
 cli.description('Send new account emails')
-  .option('--siret [siret]', 'Siret of a specific organisme')
-  .option('--type [type]', 'resend,send (default: send))', capitalizeFirstLetter)
-  .option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
-  .option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
-  .parse(process.argv);
+.option('--siret [siret]', 'Siret of a specific organisme')
+.option('--type [type]', 'resend,send (default: send))', capitalizeFirstLetter)
+.option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
+.option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
+.parse(process.argv);
 
 execute(async ({ logger, db, app, emails }) => {
 

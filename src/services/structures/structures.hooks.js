@@ -1,6 +1,10 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 
-// TODO seul les admin doivent pouvoir tout faire, les structures ne peuvent modifier que les donneés qui les concernent, les conseillers ne peuvent lire les infos que sur la structure qui le concerne
+/* TODO:
+- seul les admin doivent pouvoir tout faire
+- les structures ne peuvent modifier que les donneés qui les concernent
+- les conseillers ne peuvent lire les infos que sur la structure qui le concerne
+*/
 module.exports = {
   before: {
     all: [authenticate('jwt')],

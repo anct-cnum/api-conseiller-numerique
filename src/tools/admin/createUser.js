@@ -4,6 +4,8 @@
 const ObjectID = require('mongodb').ObjectID;
 const { program } = require('commander');
 
+const { v4: uuidv4 } = require('uuid');
+
 require('dotenv').config();
 
 const { execute } = require('../utils');
@@ -38,7 +40,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     exit('Paramètre id obligatoire pour ce rôle');
   }
 
-  const count = await db.collection('users').countDocuments({ name: username});
+  const count = await db.collection('users').countDocuments({ name: username });
   if (count > 0) {
     exit('Un utilisateur avec nom existe déjà');
   }
@@ -49,10 +51,13 @@ execute(async ({ feathers, db, logger, exit }) => {
     roles: Array(role),
     entity: {
       '$ref': `${role}s`,
-      '$id': new ObjectID('5126bc054aed4daf9e2ab772'),
+      '$id': new ObjectID(id),
       '$db': dbName
     },
-    createdAt: new Date()
+    token: uuidv4(),
+    mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
+    passwordCreated: true,
+    createdAt: new Date(),
   });
   logger.info('Utilisateur créé');
 });
