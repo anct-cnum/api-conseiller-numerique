@@ -46,7 +46,7 @@ exports.Structures = class Structures extends Service {
       let queryFilter = {};
       const { filter } = req.query;
       if (filter) {
-        const allowedFilters = ['nouvelle', 'acceptee', 'refusee', 'toutes'];
+        const allowedFilters = ['nouvelle', 'acceptee', 'refusee', 'retenue', 'toutes'];
         if (allowedFilters.includes(filter)) {
           if (filter !== 'toutes') {
             queryFilter = { statut: filter };
