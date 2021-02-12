@@ -3,7 +3,7 @@
 
 const { execute } = require('../utils');
 const { program } = require('commander');
-const { ObjectID, DBRef } = require('mongodb');
+const { DBRef } = require('mongodb');
 const configuration = require('@feathersjs/configuration');
 const feathers = require('@feathersjs/feathers');
 
