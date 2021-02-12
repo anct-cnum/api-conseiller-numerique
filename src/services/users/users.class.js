@@ -1,6 +1,4 @@
 const { Service } = require('feathers-mongodb');
-const { LocalStrategy } = require('@feathersjs/authentication-local');
-
 const { NotFound } = require('@feathersjs/errors');
 
 exports.Users = class Users extends Service {
