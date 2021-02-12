@@ -16,10 +16,7 @@ exports.Structures = class Structures extends Service {
     });
 
     // TODO : n'est pas filtré par les hooks (pas d'authentification)
-    app.get('/structures/:id/misesEnRelation', async (req, res) => {
-      const misesEnRelationService = app.service('misesEnRelation');
-      const conseillersService = app.service('conseillers');
-
+    app.get('/structures/:id/misesEnRelation/stats', async (req, res) => {
       let structureId = null;
       try {
         structureId = new ObjectID(req.params.id);
@@ -30,15 +27,29 @@ exports.Structures = class Structures extends Service {
         return;
       }
 
-      const structureCount = await this.find({
-        query: {
-          _id: structureId,
-          $limit: 0,
-        }
-      });
-      if (structureCount.total === 0) {
+      const stats = await db.collection('misesEnRelation').aggregate([
+        { '$match': { 'structure.$id': structureId } },
+        { '$group': { _id: '$statut', count: { $sum: 1 } } }
+      ]).toArray();
+
+      res.send(stats.map(item => {
+        item.statut = item._id;
+        delete item._id;
+        return item;
+      }));
+    });
+
+    // TODO : n'est pas filtré par les hooks (pas d'authentification)
+    app.get('/structures/:id/misesEnRelation', async (req, res) => {
+      const misesEnRelationService = app.service('misesEnRelation');
+      const conseillersService = app.service('conseillers');
+
+      let structureId = null;
+      try {
+        structureId = new ObjectID(req.params.id);
+      } catch (e) {
         res.status(404).send(new NotFound('Structure not found', {
-          structureId
+          id: req.params.id
         }).toJSON());
         return;
       }
