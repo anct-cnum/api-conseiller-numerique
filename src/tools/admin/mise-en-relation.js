@@ -4,6 +4,9 @@
 const { execute } = require('../utils');
 const { program } = require('commander');
 const { ObjectID, DBRef } = require('mongodb');
+const configuration = require('@feathersjs/configuration');
+const feathers = require('@feathersjs/feathers');
+
 program.version('0.0.1');
 
 program
@@ -12,6 +15,10 @@ program
 program.parse(process.argv);
 
 execute(async ({ db, logger }) => {
+  const app = feathers().configure(configuration());
+  const connection = app.get('mongodb');
+  const database = connection.substr(connection.lastIndexOf('/') + 1);
+
   // Pour chaque structure, générer ses mises en relation
   const miseEnRelation = async (s, c) => {
     logger.info(c.nom);
@@ -32,8 +39,8 @@ execute(async ({ db, logger }) => {
     // Insere seulement si pas encore de mise en relation
     const updateDoc = {
       $set: {
-        structure: new DBRef('structures', s._id, 'conseiller-numerique'),
-        conseiller: new DBRef('conseillers', c._id, 'conseiller-numerique'),
+        structure: new DBRef('structures', s._id, database),
+        conseiller: new DBRef('conseillers', c._id, database),
       },
       $setOnInsert: {
         statut: 'nouvelle',
