@@ -7,11 +7,6 @@ const { DBRef } = require('mongodb');
 const configuration = require('@feathersjs/configuration');
 const feathers = require('@feathersjs/feathers');
 
-program.version('0.0.1');
-
-program
-.option('-f, --file <file>', 'file path');
-
 program.parse(process.argv);
 
 execute(async ({ db, logger }) => {
@@ -21,8 +16,8 @@ execute(async ({ db, logger }) => {
 
   // Pour chaque structure, générer ses mises en relation
   const miseEnRelation = async (s, c) => {
-    logger.info(c.nom);
-    logger.info(c.dist.calculated);
+    logger.debug(c.nom);
+    logger.debug(c.dist.calculated);
 
     // Respecte la distance max du conseiller
     if (c.dist.calculated > c.distanceMax) {
@@ -51,15 +46,12 @@ execute(async ({ db, logger }) => {
 
     const options = { upsert: true };
 
-    const result = await db.collection('misesEnRelation').updateOne(filter, updateDoc, options);
-    console.log(
-      `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
-    );
+    await db.collection('misesEnRelation').updateOne(filter, updateDoc, options);
   };
 
   const creation = async s => {
-    logger.info(`Nom : ${s.nom}`);
-    logger.info(`Lieu : ${JSON.stringify(s.location)}`);
+    logger.debug(`Nom : ${s.nom}`);
+    logger.debug(`Lieu : ${JSON.stringify(s.location)}`);
  
     // On recherche les candidats dans un périmètre autour de la structure
     // classés par distance
@@ -82,7 +74,7 @@ execute(async ({ db, logger }) => {
   };
 
   // Chercher les structures pour lesquelles on doit créer des mises ne relation
-  const match = await db.collection('structures').find({ statut: 'CREEE' }).limit(500); // xxx 'PREFET'
+  const match = await db.collection('structures').find({ statut: 'CREEE' }); // xxx 'PREFET'
 
   let s;
   while ((s = await match.next())) {
