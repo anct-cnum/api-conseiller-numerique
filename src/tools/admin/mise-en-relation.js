@@ -25,18 +25,21 @@ execute(async ({ db, logger }) => {
     // xxx Vérifie les dates de dispo
 
     const filter = {
-      'structure.$id': new ObjectID(s._id),
-      'conseiller.$id': new ObjectID(c._id)
+      'structure.$id': s._id,
+      'conseiller.$id': c._id
     };
 
+    // Insere seulement si pas encore de mise en relation
     const updateDoc = {
       $set: {
         structure: new DBRef('structures', s._id, 'conseiller-numerique'),
         conseiller: new DBRef('conseillers', c._id, 'conseiller-numerique'),
+      },
+      $setOnInsert: {
         statut: 'nouvelle',
         createdAt: new Date(),
         conseillerCreatedAt: c.createdAt
-      },
+      }
     };
 
     const options = { upsert: true };
