@@ -45,5 +45,10 @@
     "structure": {
       "accountsRelaunchDelay": 7
     }
+  },
+  "gandi": {
+    "token": "1234",
+    "endPoint": "https://api.gandi.net/v5/email",
+    "domain": "conseiller-numerique.fr"
   }
 }
