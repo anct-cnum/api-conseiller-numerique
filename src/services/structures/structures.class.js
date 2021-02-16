@@ -69,6 +69,15 @@ exports.Structures = class Structures extends Service {
           return;
         }
       }
+      const skip = req.query['$skip'];
+      if (skip) {
+        queryFilter['$skip'] = skip;
+      }
+      const sort = req.query['$sort'];
+      if (sort) {
+        queryFilter['$sort'] = sort;
+      }
+
       const misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
       if (misesEnRelation.total === 0) {
         res.send(misesEnRelation);
