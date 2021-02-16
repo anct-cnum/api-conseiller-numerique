@@ -11,9 +11,9 @@ const { execute } = require('../../utils');
 
 execute(async ({ feathers, logger, exit, app }) => {
 
-  program.option('-p, --password <password>', 'password');
-  program.option('-i, --id <id>', 'id');
-  program.option('-a, --operation <operation>', 'operation');
+  program.option('-p, --password <password>', 'password: clear text');
+  program.option('-i, --id <id>', 'id: MongoDB ObjecID');
+  program.option('-a, --operation <operation>', 'operation: create / updatePassword');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
