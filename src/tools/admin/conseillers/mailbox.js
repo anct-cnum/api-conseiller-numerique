@@ -43,19 +43,25 @@ execute(async ({ feathers, logger, exit, app }) => {
 
   const gandi = app.get('gandi');
   if (operation === 'create') {
-    const uri = `${gandi.endPoint}/mailboxes/${gandi.domain}`;
     try {
-      const result = await axios({
+      await axios({
         method: 'post',
-        url: uri,
+        url: `${gandi.endPoint}/mailboxes/${gandi.domain}`,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Apikey ${gandi.token}`
         },
         data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
       });
-      // TODO : récupérer l'uuid de la boite créé (problème dans l'api)
-      await feathers.service('conseillers').patch(conseiller._id, { emailCN: `${login}@${gandi.domain}` });
+      const result = await axios({
+        method: 'get',
+        url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Apikey ${gandi.token}`
+        }
+      });
+      await feathers.service('conseillers').patch(conseiller._id, { emailCN: { address: result.data[0].address, id: result.data[0].id } });
       logger.info('Boite email créée');
     } catch (e) {
       e.response.data.errors.forEach(error => {
@@ -63,20 +69,16 @@ execute(async ({ feathers, logger, exit, app }) => {
       });
     }
   } else if (operation === 'updatePassword') {
-    // TODO: ajouter l'uuid dans l'url
-    // https://api.gandi.net/docs/email/
-    const uri = `${gandi.endPoint}/mailboxes/${gandi.domain}`;
     try {
       await axios({
         method: 'patch',
-        url: uri,
+        url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${conseiller.emailCN.id}`,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Apikey ${gandi.token}`
         },
         data: { 'login': login, 'password': password, 'aliases': [] }
       });
-
       logger.info('Boite email mise à jour');
     } catch (e) {
       e.response.data.errors.forEach(error => {
