@@ -40,7 +40,8 @@ execute(async ({ db, logger }) => {
       $setOnInsert: {
         statut: 'nouvelle',
         createdAt: new Date(),
-        conseillerCreatedAt: c.createdAt
+        conseillerCreatedAt: c.createdAt,
+        distance: c.dist.calculated
       }
     };
 
