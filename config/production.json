@@ -27,5 +27,10 @@
     "structure": {
       "accountsRelaunchDelay": "SMTP_STRUCTURE_ACCOUNTRELAUNCHDELAY"
     }
+  },
+  "gandi": {
+    "token": "GANDI_TOKEN",
+    "endPoint": "GANDI_ENDPOINT",
+    "domain": "GANDI_DOMAIN"
   }
 }
