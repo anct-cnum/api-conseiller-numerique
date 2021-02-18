@@ -41,7 +41,7 @@ execute(async ({ db, logger }) => {
         statut: 'nouvelle',
         createdAt: new Date(),
         conseillerCreatedAt: c.createdAt,
-        distance: c.dist.calculated
+        distance: Math.round(c.dist.calculated)
       }
     };
 
