@@ -207,7 +207,8 @@ execute(async ({ db, logger }) => {
       }
     });
 
-    ws.cell(7, 1, 9, 9, true)
+    /*
+    ws.cell(7, 1, 9, 1, true)
     .string('')
     .style(styleConf)
     .style({
@@ -236,7 +237,7 @@ execute(async ({ db, logger }) => {
         wrapText: true,
       }
     });
-
+*/
     // Total des affectations
     ws.cell(12, 7, 12, 7, true)
     .string('')
@@ -263,19 +264,19 @@ execute(async ({ db, logger }) => {
 
     ws.row(start).setHeight(30);
 
-    ws.column(1).setWidth(15);
+    ws.column(1).setWidth(13);
     ws.cell(start, 1)
     .string('Identifiant structure')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(2).setWidth(20);
+    ws.column(2).setWidth(18);
     ws.cell(start, 2)
     .string('SIRET')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(3).setWidth(70);
+    ws.column(3).setWidth(50);
     ws.cell(start, 3)
     .string('Nom Structure')
     .style(styleHeaderConf)
@@ -360,7 +361,18 @@ execute(async ({ db, logger }) => {
     .style(styleVertical);
 
     ws.cell(start - 1, 10, start - 1, 10, true)
-    .formula(`SUM(J${start + 1}:J${start + structures.length})`)
+    .formula(`SUBTOTAL(109,J${start + 1}:J${start + structures.length})`)
+    .style(styleConf)
+    .style({
+      font: {
+      //color: '#FF0000',
+        bold: true
+      }
+    })
+    .style({ numberFormat: '0' });
+
+    ws.cell(start - 1, 13, start - 1, 13, true)
+    .formula(`SUBTOTAL(109,M${start + 1}:M${start + structures.length})`)
     .style(styleConf)
     .style({
       font: {
@@ -509,6 +521,26 @@ execute(async ({ db, logger }) => {
           }
         });
 
+      ws.cell(i + start + 1, 16)
+      .string('')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.addDataValidation({
+        type: 'list',
+        allowBlank: true,
+        prompt: 'Choisissez dans la liste',
+        error: 'Choix non valide',
+        showDropDown: true,
+        sqref: `N${i + start + 1}:N${i + start + 1}`,
+        formulas: ['POSITIF,NÉGATIF'],
+      });
+
       ws.addDataValidation({
         type: 'list',
         allowBlank: true,
@@ -520,6 +552,8 @@ execute(async ({ db, logger }) => {
       });
 
     });
+
+    ws.column(3).freeze(4);
   };
 
 
@@ -635,15 +669,15 @@ execute(async ({ db, logger }) => {
 
         await processStructure({
           id: ~~row.getCell(ID).value,
-          siret: row.getCell(SIRET).value,
-          nom: row.getCell(NOM).value,
-          codePostal: row.getCell(CODE_POSTAL).value,
-          ville: row.getCell(VILLE).value,
-          email: row.getCell(EMAIL).value,
+          siret: row.getCell(SIRET).text,
+          nom: row.getCell(NOM).text,
+          codePostal: row.getCell(CODE_POSTAL).text,
+          ville: row.getCell(VILLE).text,
+          email: row.getCell(EMAIL).text,
           labelFranceServices: row.getCell(LABEL_FRANCE_SERVICES).value,
           nombreConseillers: row.getCell(NOMBRE_CONSEILLERS).value,
           avis: row.getCell(AVIS).value,
-          commentaire: row.getCell(COMMENTAIRE).value,
+          commentaire: row.getCell(COMMENTAIRE).text,
         });
         //logger.info(`${row.getCell(ID).value} ${row.getCell(EMAIL).value} ${row.getCell(LABEL_FRANCE_SERVICES).value}
         //        ${row.getCell(NOMBRE_CONSEILLERS).value} ${row.getCell(AVIS).value} ${row.getCell(COMMENTAIRE).value}`);
