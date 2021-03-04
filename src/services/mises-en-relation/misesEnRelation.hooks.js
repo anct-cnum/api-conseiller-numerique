@@ -11,8 +11,18 @@ module.exports = {
     find: [],
     get: [],
     create: [],
-    update: [],
-    patch: [],
+    update: [
+      context => {
+        context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
+        return context;
+      }
+    ],
+    patch: [
+      context => {
+        context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
+        return context;
+      }
+    ],
     remove: []
   },
 
@@ -36,3 +46,11 @@ module.exports = {
     remove: []
   }
 };
+
+//Parse string to date
+function parseStringToDate(date) {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
+  return date;
+}
