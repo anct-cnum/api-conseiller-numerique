@@ -284,84 +284,90 @@ execute(async ({ db, logger }) => {
 
     ws.column(4).setWidth(10);
     ws.cell(start, 4)
-    .string('Code postal')
+    .string('Type Structure')
     .style(styleHeaderConf)
     .style(styleVertical);
 
     ws.column(5).setWidth(10);
     ws.cell(start, 5)
-    .string('Département')
+    .string('Code postal')
     .style(styleHeaderConf)
     .style(styleVertical);
 
     ws.column(6).setWidth(10);
     ws.cell(start, 6)
+    .string('Département')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(7).setWidth(10);
+    ws.cell(start, 7)
     .string('Région')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(7).setWidth(20);
-    ws.cell(start, 7)
+    ws.column(8).setWidth(20);
+    ws.cell(start, 8)
     .string('Ville')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(8).setWidth(35);
-    ws.cell(start, 8)
+    ws.column(9).setWidth(35);
+    ws.cell(start, 9)
     .string('Email')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(9).setWidth(25);
-    ws.cell(start, 9)
+    ws.column(10).setWidth(25);
+    ws.cell(start, 10)
     .string('Labellisé France Services')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(10).setWidth(22);
-    ws.cell(start, 10)
+    ws.column(11).setWidth(22);
+    ws.cell(start, 11)
     .string('Nombre de conseillers')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(11).setWidth(30);
-    ws.cell(start, 11)
+    ws.column(12).setWidth(30);
+    ws.cell(start, 12)
     .string('Avis')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(12).setWidth(70);
-    ws.cell(start, 12)
+    ws.column(13).setWidth(70);
+    ws.cell(start, 13)
     .string('Si avis négatif ou examen complémentaire : Commentaires')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(13).setWidth(22);
-    ws.cell(start, 13)
+    ws.column(14).setWidth(22);
+    ws.cell(start, 14)
     .string('Nombre de conseillers Coselec')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(14).setWidth(30);
-    ws.cell(start, 14)
-    .string('Avis Coselec')
-    .style(styleHeaderConf)
-    .style(styleVertical);
-
-    ws.column(15).setWidth(20);
+    ws.column(15).setWidth(30);
     ws.cell(start, 15)
-    .string('Prioritaire')
+    .string('Avis Coselec')
     .style(styleHeaderConf)
     .style(styleVertical);
 
     ws.column(16).setWidth(20);
     ws.cell(start, 16)
+    .string('Prioritaire')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(17).setWidth(20);
+    ws.cell(start, 17)
     .string('Commentaire Coselec')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.cell(start - 1, 10, start - 1, 10, true)
-    .formula(`SUBTOTAL(109,J${start + 1}:J${start + structures.length})`)
+    ws.cell(start - 1, 11, start - 1, 11, true)
+    .formula(`SUBTOTAL(109,K${start + 1}:K${start + structures.length})`)
     .style(styleConf)
     .style({
       font: {
@@ -371,8 +377,8 @@ execute(async ({ db, logger }) => {
     })
     .style({ numberFormat: '0' });
 
-    ws.cell(start - 1, 13, start - 1, 13, true)
-    .formula(`SUBTOTAL(109,M${start + 1}:M${start + structures.length})`)
+    ws.cell(start - 1, 14, start - 1, 14, true)
+    .formula(`SUBTOTAL(109,N${start + 1}:N${start + structures.length})`)
     .style(styleConf)
     .style({
       font: {
@@ -408,22 +414,26 @@ execute(async ({ db, logger }) => {
         });
 
       ws.cell(i + start + 1, 4)
-      .string(String(s.codePostal))
+      .string(s.type)
       .style(styleConf);
 
       ws.cell(i + start + 1, 5)
-      .string(s.departement)
+      .string(String(s.codePostal))
       .style(styleConf);
 
       ws.cell(i + start + 1, 6)
-      .string(s.region)
+      .string(s.departement)
       .style(styleConf);
 
       ws.cell(i + start + 1, 7)
-      .string(s.ville ? s.ville : '')
+      .string(s.region)
       .style(styleConf);
 
       ws.cell(i + start + 1, 8)
+      .string(s.ville ? s.ville : '')
+      .style(styleConf);
+
+      ws.cell(i + start + 1, 9)
       .string(s.email)
       .style(styleConf)
       .style(
@@ -433,7 +443,7 @@ execute(async ({ db, logger }) => {
           }
         });
 
-      ws.cell(i + start + 1, 9)
+      ws.cell(i + start + 1, 10)
       .string(s.labelFranceServices || '')
       .style(styleConf);
 
@@ -443,11 +453,11 @@ execute(async ({ db, logger }) => {
         prompt: 'Choisissez dans la liste',
         error: 'Choix non valide',
         showDropDown: true,
-        sqref: `I${i + start + 1}:I${i + start + 1}`,
+        sqref: `J${i + start + 1}:J${i + start + 1}`,
         formulas: ['OUI,NON'],
       });
 
-      ws.cell(i + start + 1, 10)
+      ws.cell(i + start + 1, 11)
       .number(s.nombreConseillers)
       .style({ numberFormat: '0' })
       .style(styleConf);
@@ -458,11 +468,11 @@ execute(async ({ db, logger }) => {
         allowBlank: true,
         prompt: 'Saisissez un nombre',
         error: 'Nombre obligatoire',
-        sqref: `J${i + start + 1}:J${i + start + 1}`,
+        sqref: `K${i + start + 1}:K${i + start + 1}`,
         formulas: [0, 500],
       });
 
-      ws.cell(i + start + 1, 11)
+      ws.cell(i + start + 1, 12)
       .string(s.avis || '')
       .style(styleConf);
 
@@ -472,11 +482,11 @@ execute(async ({ db, logger }) => {
         prompt: 'Choisissez dans la liste',
         error: 'Choix non valide',
         showDropDown: true,
-        sqref: `K${i + start + 1}:K${i + start + 1}`,
+        sqref: `L${i + start + 1}:L${i + start + 1}`,
         formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE'],
       });
 
-      ws.cell(i + start + 1, 12)
+      ws.cell(i + start + 1, 13)
       .string(s.commentaire || '')
       .style(styleConf)
       .style(
@@ -486,7 +496,7 @@ execute(async ({ db, logger }) => {
           }
         });
 
-      ws.cell(i + start + 1, 13)
+      ws.cell(i + start + 1, 14)
       .number(s.nombreConseillers)
       .style({ numberFormat: '0' })
       .style(styleConf);
@@ -497,19 +507,9 @@ execute(async ({ db, logger }) => {
         allowBlank: true,
         prompt: 'Saisissez un nombre',
         error: 'Nombre obligatoire',
-        sqref: `M${i + start + 1}:M${i + start + 1}`,
+        sqref: `N${i + start + 1}:N${i + start + 1}`,
         formulas: [0, 500],
       });
-
-      ws.cell(i + start + 1, 14)
-      .string('')
-      .style(styleConf)
-      .style(
-        {
-          alignment: {
-            wrapText: true,
-          }
-        });
 
       ws.cell(i + start + 1, 15)
       .string('')
@@ -531,13 +531,23 @@ execute(async ({ db, logger }) => {
           }
         });
 
+      ws.cell(i + start + 1, 17)
+      .string('')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
       ws.addDataValidation({
         type: 'list',
         allowBlank: true,
         prompt: 'Choisissez dans la liste',
         error: 'Choix non valide',
         showDropDown: true,
-        sqref: `N${i + start + 1}:N${i + start + 1}`,
+        sqref: `O${i + start + 1}:O${i + start + 1}`,
         formulas: ['POSITIF,NÉGATIF'],
       });
 
@@ -547,7 +557,7 @@ execute(async ({ db, logger }) => {
         prompt: 'Choisissez dans la liste',
         error: 'Choix non valide',
         showDropDown: true,
-        sqref: `O${i + start + 1}:O${i + start + 1}`,
+        sqref: `P${i + start + 1}:P${i + start + 1}`,
         formulas: ['OUI,NON'],
       });
 
