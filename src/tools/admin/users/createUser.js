@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 
 require('dotenv').config();
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 
 execute(async ({ feathers, db, logger, exit }) => {
 
@@ -45,6 +45,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     exit('Un utilisateur avec nom existe déjà');
   }
   const dbName = db.serverConfig.s.options.dbName;
+
   await feathers.service('users').create({
     name: username,
     password: password,
