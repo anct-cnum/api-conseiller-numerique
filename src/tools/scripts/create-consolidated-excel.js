@@ -34,23 +34,19 @@ execute(async ({ db, logger }) => {
     }
     let dep;
     if ((dep = cp.match(/^9[78]\d/))) {
-      logger.info('DOM');
-      logger.info(dep[0]);
+      // DOM
       return deps.get(dep[0]);
     } else if ((dep = cp.match(/^20\d/))) {
       if (['200', '201'].includes(dep[0])) {
-        logger.info('Corse du sud');
+        // Corse du sud
         return deps.get('2A');
       }
       if (['202', '206'].includes(dep[0])) {
-        logger.info('Haute Corse');
+        // Haute Corse
         return deps.get('2B');
       }
-      logger.info('Corse');
-      logger.info(dep[0]);
     } else if ((dep = cp.match(/^\d\d/))) {
-      logger.info('Le reste');
-      logger.info(dep[0]);
+      // Le reste
       return deps.get(String(dep[0]));
     }
     return null;
@@ -207,37 +203,6 @@ execute(async ({ db, logger }) => {
       }
     });
 
-    /*
-    ws.cell(7, 1, 9, 1, true)
-    .string('')
-    .style(styleConf)
-    .style({
-      font: {
-        color: '#E1000F',
-        bold: true
-      },
-      alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true,
-      }
-    });
-
-    ws.cell(10, 1, 10, 9, true)
-    .string('')
-    .style(styleConf)
-    .style({
-      font: {
-      //color: '#FF0000',
-        bold: true
-      },
-      alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true,
-      }
-    });
-*/
     // Total des affectations
     ws.cell(12, 7, 12, 7, true)
     .string('')
@@ -602,9 +567,7 @@ execute(async ({ db, logger }) => {
     return Promise.resolve(wb);
   };
 
-
   // Fin fichier Excel consolidé
-
 
   const processStructure = async s => {
     // On ne conserve que les avis positifs
@@ -621,13 +584,8 @@ execute(async ({ db, logger }) => {
       s.type = match.type;
       const depReg = codePostal2departementRegion(String(match.codePostal));
       s.departement = depReg.dep_name;
-      logger.info('Dep : ' + s.departement);
       s.region = depReg.region_name;
-      //logger.info(`Type: ${s.type}`);
       structures.push(s);
-      //      logger.info(
-      //        `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
-      //      );
     } else if (s.siret && /^\d{14}$/.test(s.siret)) {
       // Si on a un siret
       const match = await db.collection('structures').findOne({ siret: s.siret.toString() });
@@ -638,13 +596,8 @@ execute(async ({ db, logger }) => {
         s.id = match.idPG;
         const depReg = codePostal2departementRegion(String(match.codePostal));
         s.departement = depReg.dep_name;
-        logger.info('Dep : ' + s.departement);
         s.region = depReg.region_name;
-        //logger.info(`Type2: ${s.type}`);
         structures.push(s);
-        //        logger.info(
-        //          `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
-        //       );
       }
     }
   };
@@ -689,17 +642,9 @@ execute(async ({ db, logger }) => {
           avis: row.getCell(AVIS).value,
           commentaire: row.getCell(COMMENTAIRE).text,
         });
-        //logger.info(`${row.getCell(ID).value} ${row.getCell(EMAIL).value} ${row.getCell(LABEL_FRANCE_SERVICES).value}
-        //        ${row.getCell(NOMBRE_CONSEILLERS).value} ${row.getCell(AVIS).value} ${row.getCell(COMMENTAIRE).value}`);
       }
     }
   };
-
-  //  const readExcelForAllDeps = async () => {
-  //    for (const d of departements) {
-  //      await readExcelForDep(d.num_dep);
-  //    }
-  //  };
 
   const writeExcel = async structures => {
     const wb = await createWorkbook(structures);
@@ -707,7 +652,7 @@ execute(async ({ db, logger }) => {
     // xxx Réussir à se passer de la version synchrone
     await fs.writeFileSync(`prefets-consolide-vague-${program.vague}-version-${program.revision}.xlsx`, buffer, function(err) {
       if (err) {
-        logger.info('Erreur ' + err);
+        logger.warn('Erreur ' + err);
         throw err;
       }
     });
@@ -715,12 +660,6 @@ execute(async ({ db, logger }) => {
 
   if (program.repertoire) {
     const arrayOfFiles = fs.readdirSync(program.repertoire);
-    logger.info(arrayOfFiles);
-    logger.info(codePostal2departementRegion('977809'));
-    logger.info(codePostal2departementRegion('97180'));
-    logger.info(codePostal2departementRegion('20180'));
-    logger.info(codePostal2departementRegion('20680'));
-    logger.info(codePostal2departementRegion('44880'));
     for (const f of arrayOfFiles) {
       // Seulement les fichiers Excel en xlsx
       if (!/xlsx$/.test(f)) {
@@ -728,10 +667,7 @@ execute(async ({ db, logger }) => {
       }
       await readExcelForDep(path.resolve(program.repertoire, f));
     }
-    //logger.info(JSON.stringify(structures));
     logger.info(`${structures.length} structures`);
     await writeExcel(structures);
-  } else {
-    //await readExcelForAllDeps();
   }
 });
