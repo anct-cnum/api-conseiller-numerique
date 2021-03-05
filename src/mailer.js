@@ -17,8 +17,8 @@ module.exports = app => {
     name: configuration.hostname,
     host: configuration.host,
     port: configuration.port,
-    secure: configuration.secure,
-    greetingTimeout: configuration.greetingTimeout,
+    secure: configuration.secure === 'true',
+    greetingTimeout: parseInt(configuration.greetingTimeout),
     tls: {
       rejectUnauthorized: false
     },
