@@ -11,6 +11,7 @@ program
 program.parse(process.argv);
 
 execute(async ({ db, logger }) => {
+  let avisPositif = 0;
   const processStructure = async s => {
     logger.info(JSON.stringify(s));
     
@@ -35,6 +36,7 @@ execute(async ({ db, logger }) => {
 
       if (s.avisCoselec === 'POSITIF') {
         updateDoc.$set = { ...updateDoc.$set, ...{ statut: 'VALIDATION_COSELEC', coselecAt: new Date() } };
+        avisPositif++;
       }
 
       const result = await db.collection('structures').updateOne(filter, updateDoc);
@@ -62,6 +64,7 @@ execute(async ({ db, logger }) => {
 
         if (s.avisCoselec === 'POSITIF') {
           updateDoc.$set = { ...updateDoc.$set, ...{ statut: 'VALIDATION_COSELEC', coselecAt: new Date() } };
+          avisPositif++;
         }
 
         const result = await db.collection('structures').updateOne(filter, updateDoc);
@@ -101,8 +104,9 @@ execute(async ({ db, logger }) => {
         }
 
         let id = row.getCell(ID).value;
+        let siret = row.getCell(SIRET).value;
 
-        if (!/^\d+$/.test(id)) {
+        if (!/^\d+$/.test(id) && !/^\d{14}$/.test(siret)) {
           continue;
         }
 
@@ -121,5 +125,6 @@ execute(async ({ db, logger }) => {
   };
 
   await readExcel(program.file);
+  logger.info(`Nombre d'avis POSITIF ${avisPositif}`);
 });
 
