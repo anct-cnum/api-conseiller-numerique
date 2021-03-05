@@ -62,7 +62,7 @@ execute(async ({ db, logger }) => {
         'near': s.location,
         'distanceField': 'dist.calculated',
         'maxDistance': 500000,
-        'query': {},
+        'query': { disponible: true },
         'num': 500, // xxx use $limit
         'spherical': false
       }
