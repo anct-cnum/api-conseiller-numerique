@@ -15,7 +15,6 @@ class ResendAction {
         { mailSentDate: { $ne: null } },
         { mailSentDate: { $lte: moment().subtract(delay, 'days').toDate() } },
       ],
-      'passwordHash': null,
       'resend': { $ne: true },
     };
   }
