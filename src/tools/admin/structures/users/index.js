@@ -73,7 +73,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     await doCreateUser(db, feathers, dbName, _id);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('structures').find({ userCreated: null }).toArray();
+    const structures = await db.collection('structures').find({ userCreated: false }).toArray();
     for (const idx in structures) {
       const structure = structures[idx];
       const count = await db.collection('misesEnRelation').countDocuments({ 'structure': {
