@@ -76,7 +76,6 @@ module.exports = app => {
             ...options,
             ...(process.env.CNUM_MAIL_BCC ? { bcc: process.env.CNUM_MAIL_BCC } : {}),
           }));
-          console.log("arg")
         }
       };
     }
