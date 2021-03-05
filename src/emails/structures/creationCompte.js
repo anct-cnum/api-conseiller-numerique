@@ -6,7 +6,7 @@ module.exports = (db, mailer) => {
   let render = structure => {
     return mailer.render(__dirname, templateName, {
       structure,
-      link: utils.getBackofficeUrl(`/creation-compte?token=${(structure.token)}`),
+      link: utils.getBackofficeUrl(`/inscription/${(structure.token)}`),
     });
   };
 
@@ -38,9 +38,9 @@ module.exports = (db, mailer) => {
         throw err;
       };
       return mailer.createMailer().sendEmail(
-        structure.email,
+        structure.name,
         {
-          subject: 'Créer votre compte utilisateur conseiller numérique France services',
+          subject: 'Créer votre compte utilisateur Conseiller Numérique France services',
           body: await render(structure),
         },
       )
