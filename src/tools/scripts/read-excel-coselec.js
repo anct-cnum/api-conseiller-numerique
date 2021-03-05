@@ -99,8 +99,9 @@ execute(async ({ db, logger }) => {
         if (++i < start) {
           continue;
         }
+
         let id = row.getCell(ID).value;
-        logger.info(JSON.stringify(id));
+
         if (!/^\d+$/.test(id)) {
           continue;
         }
