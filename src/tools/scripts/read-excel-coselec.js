@@ -4,19 +4,11 @@
 const { execute } = require('../utils');
 const { program } = require('commander');
 const ExcelJS = require('exceljs');
-program.version('0.0.1');
 
 program
 .option('-f, --file <file>', 'Excel file path');
 
 program.parse(process.argv);
-
-// Liste des départements
-const departements = require('./departements-region.json');
-const deps = new Map();
-for (const value of departements) {
-  deps.set(String(value.num_dep), value);
-}
 
 execute(async ({ db, logger }) => {
   const processStructure = async s => {
