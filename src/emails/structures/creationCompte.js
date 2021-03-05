@@ -40,7 +40,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         structure.name,
         {
-          subject: 'Créer votre compte utilisateur conseiller numérique France services',
+          subject: 'Créer votre compte utilisateur Conseiller Numérique France services',
           body: await render(structure),
         },
       )
