@@ -19,7 +19,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
 
   while (await cursor.hasNext()) {
     let structure = await cursor.next();
-    logger.info(`Sending email to Structure SIRET ${structure.siret}/${structure.email}`);
+    logger.info(`Sending email to Structure user ${structure.name}`);
 
     stats.total++;
     try {

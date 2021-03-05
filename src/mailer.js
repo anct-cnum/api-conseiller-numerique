@@ -29,6 +29,22 @@ module.exports = app => {
       }
     })
   });
+  console.log({
+    name: configuration.hostname,
+    host: configuration.host,
+    port: configuration.port,
+    secure: configuration.secure,
+    greetingTimeout: configuration.greetingTimeout,
+    tls: {
+      rejectUnauthorized: false
+    },
+    ...(!configuration.user ? {} : {
+      auth: {
+        user: configuration.user,
+        pass: configuration.password
+      }
+    })
+  })
   transporter.use('compile', htmlToText({ ignoreImage: true }));
 
   let getPublicUrl = path => `${app.get('public_hostname')}${path}`;
@@ -62,7 +78,7 @@ module.exports = app => {
             body: Joi.string().required(),
           }, { abortEarly: false });
           let { subject, body } = schema.validate(message).value;
-
+console.log("coucou")
           return transporter.sendMail(_.merge({}, {
             to: emailAddress,
             subject,
@@ -76,6 +92,7 @@ module.exports = app => {
             ...options,
             ...(process.env.CNUM_MAIL_BCC ? { bcc: process.env.CNUM_MAIL_BCC } : {}),
           }));
+          console.log("arg")
         }
       };
     }
