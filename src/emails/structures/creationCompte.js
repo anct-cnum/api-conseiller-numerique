@@ -6,7 +6,7 @@ module.exports = (db, mailer) => {
   let render = structure => {
     return mailer.render(__dirname, templateName, {
       structure,
-      link: utils.getBackofficeUrl(`/creation-compte?token=${(structure.token)}`),
+      link: utils.getBackofficeUrl(`/inscription/${(structure.token)}`),
     });
   };
 
