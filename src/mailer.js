@@ -29,6 +29,7 @@ module.exports = app => {
       }
     })
   });
+
   transporter.use('compile', htmlToText({ ignoreImage: true }));
 
   let getPublicUrl = path => `${app.get('public_hostname')}${path}`;
@@ -62,7 +63,6 @@ module.exports = app => {
             body: Joi.string().required(),
           }, { abortEarly: false });
           let { subject, body } = schema.validate(message).value;
-
           return transporter.sendMail(_.merge({}, {
             to: emailAddress,
             subject,
