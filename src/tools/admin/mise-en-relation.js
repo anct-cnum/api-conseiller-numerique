@@ -16,8 +16,8 @@ execute(async ({ db, logger }) => {
 
   // Pour chaque structure, générer ses mises en relation
   const miseEnRelation = async (s, c) => {
-    logger.debug(c.nom);
-    logger.debug(c.dist.calculated);
+    logger.info(c.nom);
+    logger.info(c.dist.calculated);
 
     // Respecte la distance max du conseiller
     if (c.dist.calculated > c.distanceMax) {
@@ -51,8 +51,8 @@ execute(async ({ db, logger }) => {
   };
 
   const creation = async s => {
-    logger.debug(`Nom : ${s.nom}`);
-    logger.debug(`Lieu : ${JSON.stringify(s.location)}`);
+    logger.info(`Nom : ${s.nom}`);
+    logger.info(`Lieu : ${JSON.stringify(s.location)}`);
  
     // On recherche les candidats dans un périmètre autour de la structure
     // classés par distance
@@ -62,7 +62,7 @@ execute(async ({ db, logger }) => {
         'near': s.location,
         'distanceField': 'dist.calculated',
         'maxDistance': 500000,
-        'query': {},
+        'query': { disponible: true },
         'num': 500, // xxx use $limit
         'spherical': false
       }
@@ -74,8 +74,8 @@ execute(async ({ db, logger }) => {
     }
   };
 
-  // Chercher les structures pour lesquelles on doit créer des mises ne relation
-  const match = await db.collection('structures').find({ statut: 'CREEE' }); // xxx 'PREFET'
+  // Chercher les structures pour lesquelles on doit créer des mises en relation
+  const match = await db.collection('structures').find({ statut: 'VALIDATION_COSELEC' });
 
   let s;
   while ((s = await match.next())) {
