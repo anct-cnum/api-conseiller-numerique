@@ -49,7 +49,6 @@ execute(async ({ feathers, db, logger, exit }) => {
   };
 
   let { all, limit = 1, id } = program;
-  console.log(limit, all);
 
   let usersCreatedCount = 0;
 
