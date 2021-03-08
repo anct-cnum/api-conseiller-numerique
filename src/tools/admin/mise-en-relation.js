@@ -24,7 +24,10 @@ execute(async ({ db, logger }) => {
       return;
     }
 
-    // xxx Vérifie les dates de dispo
+    // Vérifie les dates de dispo
+    if (c.dateDisponibilite > s.dateDebutMission) {
+      return;
+    }
 
     const filter = {
       'structure.$id': s._id,
@@ -53,7 +56,7 @@ execute(async ({ db, logger }) => {
   const creation = async s => {
     logger.info(`Nom : ${s.nom}`);
     logger.info(`Lieu : ${JSON.stringify(s.location)}`);
- 
+
     // On recherche les candidats dans un périmètre autour de la structure
     // classés par distance
 
