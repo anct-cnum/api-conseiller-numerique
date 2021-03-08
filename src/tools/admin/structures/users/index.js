@@ -38,7 +38,7 @@ const doCreateUser = async (db, feathers, dbName, _id) => {
 execute(async ({ feathers, db, logger, exit }) => {
 
   program.option('-a, --all', 'all: toutes les structures');
-  program.option('-l, --limit', 'limit: limite le nombre de structures à traiter', 1);
+  program.option('-l, --limit <limit>', 'limit: limite le nombre de structures à traiter', parseInt);
   program.option('-i, --id <id>', 'id: une seule structure');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
@@ -48,9 +48,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     exit();
   };
 
-  const all = program.all;
-  const limit = program.limit;
-  const id = program.id;
+  let { all, limit = 1, id } = program;
 
   let usersCreatedCount = 0;
 
