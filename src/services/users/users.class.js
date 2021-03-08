@@ -42,7 +42,7 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
-      app.service('users').patch(user._id, { password: password });
+      app.service('users').patch(user._id, { password: password, passwordCreated: true });
       res.send(user);
     });
   }
