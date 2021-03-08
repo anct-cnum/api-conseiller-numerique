@@ -1,0 +1,36 @@
+{
+  "host": "HOST",
+  "public_hostname": "PUBLIC_HOSTNAME",
+  "help_url": "HELP_URL",
+  "backoffice_hostname": "BACKOFFICE_HOSTNAME",
+  "port": "PORT",
+  "authentication": {
+    "secret": "AUTHENTICATION_SECRET",
+    "jwtOptions": {
+      "audience": "AUTHENTICATION_JWTOPTIONS_AUDIENCE"
+    }
+  },
+  "mongodb": "MONGODB_ADDON_URI",
+  "cors": {
+    "whitelist": "CORS_WHITELIST"
+  },
+  "smtp": {
+    "host": "SMTP_HOST",
+    "port": "SMTP_PORT",
+    "secure": "SMTP_SECURE",
+    "hostname": "SMTP_HOSTNAME",
+    "user": "SMTP_USER",
+    "password": "SMTP_PASSWORD",
+    "greetingTimeout": "SMTP_GREETINGTIMEOUT",
+    "from": "SMTP_FROM",
+    "replyTo": "SMTP_REPLYTO",
+    "structure": {
+      "accountsRelaunchDelay": "SMTP_STRUCTURE_ACCOUNTRELAUNCHDELAY"
+    }
+  },
+  "gandi": {
+    "token": "GANDI_TOKEN",
+    "endPoint": "GANDI_ENDPOINT",
+    "domain": "GANDI_DOMAIN"
+  }
+}

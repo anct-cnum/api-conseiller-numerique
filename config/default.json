@@ -1,17 +1,54 @@
 {
-	"env": "dev",
-	"app": {
-		"name": "siret",
-		"port": 8080
-	},
-	"logger": {
-		"defaultLevel": "info",
-		"productionFormat": "`${timestamp} ${level.toUpperCase()} ${service} (env ${env}) - ${message}`"
-	},
-	"documentation": {
-		"enabled": true
+  "host": "localhost",
+  "public_hostname": "https://www.conseiller-numerique.gouv.fr",
+  "help_url": "https://aide.conseiller-numerique.gouv.fr/fr/",
+  "backoffice_hostname":  "https://admin.conseiller-numerique.gouv.fr",
+  "port": 8080,
+  "paginate": {
+    "default": 10,
+    "max": 50
   },
-	"cors": {
-		"whitelist": "https://app.conseiller-numerique.gouv.fr"
+  "authentication": {
+    "entity": "user",
+    "service": "users",
+    "secret": "ZgJ37mNnN45o3Hn6nsZ9GiVcOTg=",
+    "authStrategies": [
+      "jwt",
+      "local"
+    ],
+    "jwtOptions": {
+      "header": {
+        "typ": "access"
+      },
+      "audience": "https://www.conseiller-numerique.gouv.fr",
+      "issuer": "feathers",
+      "algorithm": "HS256",
+      "expiresIn": "1d"
+    },
+    "local": {
+      "usernameField": "name",
+      "passwordField": "password"
+    }
+  },
+  "mongodb": "mongodb://localhost:27017/conseiller-numerique",
+  "cors": {
+    "whitelist": "*"
+  },
+  "smtp": {
+    "host": "localhost",
+    "port": "1025",
+    "secure": false,
+    "hostname": "localhost",
+    "greetingTimeout": 300000,
+    "from": "communication@email.conseiller-numerique.gouv.fr",
+    "replyTo": "conseiller-numerique@anct.gouv.fr",
+    "structure": {
+      "accountsRelaunchDelay": 7
+    }
+  },
+  "gandi": {
+    "token": "1234",
+    "endPoint": "https://api.gandi.net/v5/email",
+    "domain": "conseiller-numerique.fr"
   }
 }

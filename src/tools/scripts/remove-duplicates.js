@@ -6,7 +6,7 @@ const { program } = require('commander');
 
 require('dotenv').config();
 
-const { execute } = require('./utils');
+const { execute } = require('../utils');
 
 execute(async ({ exit }) => {
 
@@ -23,7 +23,10 @@ execute(async ({ exit }) => {
 
   const prefix = table === 'hostorganization' ? 'contact_' : '';
 
-  const { rows } = await pool.query(`select lower(${prefix}email) as email, lower(${prefix}last_name) as ln, lower(${prefix}first_name) as fn, count(lower(${prefix}email)) as count \
+  const { rows } = await pool.query(`select lower(${prefix}email) as email, \
+  lower(${prefix}last_name) as ln, \
+  lower(${prefix}first_name) as fn, \
+  count(lower(${prefix}email)) as count \
   from djapp_${table} \
   group by email, ln, fn\
   having count(lower(${prefix}email)) > 1`);
