@@ -25,7 +25,7 @@ execute(async ({ db, logger }) => {
     }
 
     // Vérifie les dates de dispo
-    if (new Date(c.dateDisponibilite) > new Date(s.dateDebutMission)) {
+    if (c.dateDisponibilite > s.dateDebutMission) {
       return;
     }
 
