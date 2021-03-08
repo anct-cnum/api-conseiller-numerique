@@ -20,7 +20,7 @@ execute(async ({ db, logger }) => {
     logger.info(c.dist.calculated);
 
     // Respecte la distance max du conseiller
-    if (c.dist.calculated > c.distanceMax) {
+    if (c.dist.calculated > c.distanceMax*1000) {
       return;
     }
 
