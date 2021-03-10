@@ -1,6 +1,8 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound } = require('@feathersjs/errors');
 
+const { v4: uuidv4 } = require('uuid');
+
 exports.Users = class Users extends Service {
   constructor(options, app) {
     super(options);
@@ -39,7 +41,10 @@ exports.Users = class Users extends Service {
         let userInfo = {
           email: email,
           roles: ['prefet'],
-          departement: req.body.departement
+          departement: req.body.departement,
+          token: uuidv4(),
+          passwordCreated: false,
+          createdAt: new Date()
         };
         await app.service('users').create(userInfo);
       });
