@@ -36,7 +36,7 @@ execute(async ({ logger, db, app, emails }) => {
 
     return stats;
   } catch (stats) {
-    logger.info(`[PREFET] Une erreur est survenue lors de l'envoi des emails de création de compte aux structures : ` +
+    logger.info(`[PREFET] Une erreur est survenue lors de l'envoi des emails de création de compte aux préfets : ` +
         `${stats.sent} envoyés / ${stats.error} erreurs`);
 
     throw stats;
