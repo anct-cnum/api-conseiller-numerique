@@ -10,7 +10,7 @@ class ResendAction {
     let delay = this.configuration.structure.accountsRelaunchDelay;
 
     return {
-      'roles': { $elemMatch: { '$eq': 'structure' } },
+      'roles': { $elemMatch: { '$eq': 'prefet' } },
       '$and': [
         { mailSentDate: { $ne: null } },
         { mailSentDate: { $lte: moment().subtract(delay, 'days').toDate() } },

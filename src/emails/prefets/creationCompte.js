@@ -1,25 +1,25 @@
 module.exports = (db, mailer) => {
 
-  const templateName = 'creationCompteStructure';
+  const templateName = 'creationComptePrefet';
   let { utils } = mailer;
 
-  let render = structure => {
+  let render = user => {
     return mailer.render(__dirname, templateName, {
-      structure,
-      link: utils.getBackofficeUrl(`/inscription/${(structure.token)}`),
+      user,
+      link: utils.getBackofficeUrl(`/inscription/${(user.token)}`),
     });
   };
 
   return {
     templateName,
     render,
-    send: async structure => {
+    send: async user => {
 
       let onSuccess = () => {
-        return db.collection('users').updateOne({ '_id': structure._id }, {
+        return db.collection('users').updateOne({ '_id': user._id }, {
           $set: {
             mailSentDate: new Date(),
-            resend: !!structure.mailSentDate,
+            resend: !!user.mailSentDate,
           },
           $unset: {
             mailError: '',
@@ -29,7 +29,7 @@ module.exports = (db, mailer) => {
       };
 
       let onError = async err => {
-        await db.collection('users').updateOne({ '_id': structure._id }, {
+        await db.collection('users').updateOne({ '_id': user._id }, {
           $set: {
             mailError: 'smtpError',
             mailErrorDetail: err.message
@@ -38,10 +38,10 @@ module.exports = (db, mailer) => {
         throw err;
       };
       return mailer.createMailer().sendEmail(
-        structure.name,
+        user.name,
         {
           subject: 'Créer votre compte utilisateur Conseiller Numérique France services',
-          body: await render(structure),
+          body: await render(user),
         },
       )
       .then(onSuccess)

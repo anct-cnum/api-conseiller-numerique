@@ -20,7 +20,7 @@ exports.Users = class Users extends Service {
         }
       });
       if (users.total === 0) {
-        res.status(404).send(new NotFound('Structure not found', {
+        res.status(404).send(new NotFound('User not found', {
           token
         }).toJSON());
         return;
@@ -67,7 +67,7 @@ exports.Users = class Users extends Service {
         }
       });
       if (users.total === 0) {
-        res.status(404).send(new NotFound('Structure not found', {
+        res.status(404).send(new NotFound('User not found', {
           token
         }).toJSON());
         return;

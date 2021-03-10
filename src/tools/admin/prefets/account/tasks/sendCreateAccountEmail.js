@@ -23,7 +23,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
 
     stats.total++;
     try {
-      let message = emails.getEmailMessageByTemplateName('creationCompte');
+      let message = emails.getEmailMessageByTemplateName('creationComptePrefet');
       await message.send(user);
 
       if (options.delay) {
