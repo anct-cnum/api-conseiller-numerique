@@ -26,6 +26,12 @@ exports.Users = class Users extends Service {
       res.send(users.data[0]);
     });
 
+    app.get('/users/verifyPrefetToken/:token', async (req, res) => {
+      const token = req.params.token;
+      const expectedToken = app.get('authentication').prefet.token;
+      res.send({ isValid: token === expectedToken });
+    });
+
     app.post('/users/choosePassword/:token', async (req, res) => {
       const token = req.params.token;
       const password = req.body.password;
