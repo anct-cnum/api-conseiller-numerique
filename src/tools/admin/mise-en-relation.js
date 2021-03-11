@@ -56,7 +56,9 @@ execute(async ({ db, logger }) => {
     const result = await db.collection('misesEnRelation').updateOne(filter, updateDoc, options);
 
     logger.info(
-      `misesEnRelation,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},${result.modifiedCount}`
+      `misesEnRelation,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},` +
+      `${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null}` +
+      `,${result.modifiedCount}`
     );
   };
 

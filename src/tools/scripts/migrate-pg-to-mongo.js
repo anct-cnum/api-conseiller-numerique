@@ -108,7 +108,9 @@ execute(async ({ db, logger }) => {
     const result = await db.collection('conseillers').updateOne(filter, updateDoc, options);
 
     logger.info(
-      `candidat,${c.id},${c.first_name},${c.last_name},${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},${result.modifiedCount}`
+      `candidat,${c.id},${c.first_name},${c.last_name},${result.matchedCount},` +
+      `${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},` +
+      `${result.modifiedCount}`
     );
   };
 
