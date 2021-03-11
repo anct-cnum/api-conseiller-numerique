@@ -18,9 +18,9 @@ execute(async ({ db, logger }) => {
 
     const updateDoc = {
       $set: {
+        type: s.type,
         nom: s.name,
         siret: s.siret === null ? null : `${s.siret}`,
-        type: s.type,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
         nombreConseillersSouhaites: 0,
