@@ -1,5 +1,5 @@
-const creationCompteStructure = require('./structures/creationCompte');
-const creationComptePrefet = require('./structures/creationCompte');
+const creationCompteStructure = require('./structures/creationCompteStructure');
+const creationComptePrefet = require('./prefets/creationComptePrefet');
 
 module.exports = (db, mailer) => {
 

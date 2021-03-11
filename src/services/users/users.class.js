@@ -39,7 +39,7 @@ exports.Users = class Users extends Service {
       }
       req.body.emails.forEach(async email => {
         let userInfo = {
-          email: email,
+          name: email,
           roles: ['prefet'],
           departement: req.body.departement,
           token: uuidv4(),
