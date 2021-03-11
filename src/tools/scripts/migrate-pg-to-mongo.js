@@ -61,7 +61,7 @@ execute(async ({ db, logger }) => {
     const result = await db.collection('structures').updateOne(filter, updateDoc, options);
 
     logger.info(
-      `structure,${s.siret},${result.insertedId},${result.insertedCount},${result.upsertedCount}`
+      `structure,${s.id},${s.siret},${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},${result.modifiedCount}`
     );
   };
 
@@ -108,7 +108,7 @@ execute(async ({ db, logger }) => {
     const result = await db.collection('conseillers').updateOne(filter, updateDoc, options);
 
     logger.info(
-      `candidat,${c.id},${c.first_name},${c.last_name},${result.insertedId},${result.insertedCount},${result.upsertedCount}`
+      `candidat,${c.id},${c.first_name},${c.last_name},${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},${result.modifiedCount}`
     );
   };
 
