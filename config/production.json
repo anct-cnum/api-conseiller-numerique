@@ -8,6 +8,9 @@
     "secret": "AUTHENTICATION_SECRET",
     "jwtOptions": {
       "audience": "AUTHENTICATION_JWTOPTIONS_AUDIENCE"
+    },
+    "prefet": {
+      "token": "PREFET_TOKEN"
     }
   },
   "mongodb": "MONGODB_ADDON_URI",

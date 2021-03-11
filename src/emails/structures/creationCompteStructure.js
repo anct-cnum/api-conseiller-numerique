@@ -1,6 +1,6 @@
 module.exports = (db, mailer) => {
 
-  const templateName = 'creationCompte';
+  const templateName = 'creationCompteStructure';
   let { utils } = mailer;
 
   let render = structure => {
