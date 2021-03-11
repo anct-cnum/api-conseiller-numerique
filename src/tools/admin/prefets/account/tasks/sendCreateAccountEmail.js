@@ -10,7 +10,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
 
   let cursor = await db.collection('users').find({
     ...action.getQuery(),
-    ...(options.siret ? { siret: options.siret } : {})
+    ...(options.departement ? { siret: options.departement } : {})
   });
   if (options.limit) {
     cursor.limit(options.limit);
@@ -18,13 +18,13 @@ module.exports = async (db, logger, emails, action, options = {}) => {
   cursor.batchSize(10);
 
   while (await cursor.hasNext()) {
-    let structure = await cursor.next();
-    logger.info(`Sending email to Structure user ${structure.name}`);
+    let user = await cursor.next();
+    logger.info(`Sending email to préfecture user ${user.name}`);
 
     stats.total++;
     try {
-      let message = emails.getEmailMessageByTemplateName('creationCompteStructure');
-      await message.send(structure);
+      let message = emails.getEmailMessageByTemplateName('creationComptePrefet');
+      await message.send(user);
 
       if (options.delay) {
         await delay(options.delay);

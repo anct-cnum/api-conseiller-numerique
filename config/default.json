@@ -28,6 +28,9 @@
     "local": {
       "usernameField": "name",
       "passwordField": "password"
+    },
+    "prefet": {
+      "token": "1234"
     }
   },
   "mongodb": "mongodb://localhost:27017/conseiller-numerique",

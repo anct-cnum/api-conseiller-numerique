@@ -1,7 +1,7 @@
 class ForceAction {
 
   getQuery() {
-    return { 'roles': { $elemMatch: { '$eq': 'structure' } } };
+    return { 'roles': { $elemMatch: { '$eq': 'prefet' } } };
   }
 }
 
