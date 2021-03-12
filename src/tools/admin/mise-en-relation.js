@@ -16,16 +16,31 @@ execute(async ({ db, logger }) => {
 
   // Pour chaque structure, générer ses mises en relation
   const miseEnRelation = async (s, c) => {
-    logger.info(c.nom);
-    logger.info(c.dist.calculated);
-
     // Respecte la distance max du conseiller
     if (c.dist.calculated > c.distanceMax * 1000) {
+      logger.info(
+        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
+        `,distancefail,${c.distanceMax},${c.dist.calculated}`
+      );
       return;
     }
 
     // Vérifie les dates de dispo
-    if (c.dateDisponibilite > s.dateDebutMission) {
+    const maintenant = new Date();
+
+    if (s.dateDebutMission < maintenant && c.dateDisponibilite > maintenant) {
+      logger.info(
+        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
+        `,datefail1,${s.dateDebutMission},${c.dateDisponibilite}`
+      );
+      return;
+    }
+
+    if (s.dateDebutMission >= maintenant && c.dateDisponibilite > s.dateDebutMission) {
+      logger.info(
+        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
+        `,datefail2,${s.dateDebutMission},${c.dateDisponibilite}`
+      );
       return;
     }
 
@@ -39,24 +54,27 @@ execute(async ({ db, logger }) => {
       $set: {
         structure: new DBRef('structures', s._id, database),
         conseiller: new DBRef('conseillers', c._id, database),
+        distance: Math.round(c.dist.calculated)
       },
       $setOnInsert: {
         statut: 'nouvelle',
         createdAt: new Date(),
-        conseillerCreatedAt: c.createdAt,
-        distance: Math.round(c.dist.calculated)
+        conseillerCreatedAt: c.createdAt
       }
     };
 
     const options = { upsert: true };
 
-    await db.collection('misesEnRelation').updateOne(filter, updateDoc, options);
+    const result = await db.collection('misesEnRelation').updateOne(filter, updateDoc, options);
+
+    logger.info(
+      `misesEnRelation,OK,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},` +
+      `${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null}` +
+      `,${result.modifiedCount}`
+    );
   };
 
   const creation = async s => {
-    logger.info(`Nom : ${s.nom}`);
-    logger.info(`Lieu : ${JSON.stringify(s.location)}`);
-
     // On recherche les candidats dans un périmètre autour de la structure
     // classés par distance
 

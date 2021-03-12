@@ -4,7 +4,6 @@
 const { execute } = require('../utils');
 const { program } = require('commander');
 const { Pool } = require('pg');
-program.version('0.0.1');
 
 program
 .option('-l, --limit <limit>', 'Nombre de structures', 1);
@@ -15,25 +14,17 @@ const pool = new Pool();
 
 execute(async ({ db, logger }) => {
   const moveStructure = async s => {
-    logger.info(`Siret: ${s.siret}`);
-    logger.info(`Location: ${JSON.stringify(s.location)}`);
-    const match = await db.collection('structures').findOne({ idPG: s.id });
+    const filter = { idPG: s.id };
 
-    //const match = await db.collection('structures').findOne({ siret: s.siret});
-    if (!match) {
-      const doc = {
-        idPG: s.id,
+    const updateDoc = {
+      $set: {
         type: s.type,
-        statut: 'CREEE',
         nom: s.name,
         siret: s.siret === null ? null : `${s.siret}`,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
         nombreConseillersSouhaites: 0,
         estLabelliseFranceServices: false,
-        avisPrefet: '',
-        commentairePrefet: '',
-        nombreConseillersPrefet: 0,
         contactPrenom: s.contact_first_name,
         contactNom: s.contact_last_name,
         contactFonction: s.contact_job,
@@ -52,25 +43,33 @@ execute(async ({ db, logger }) => {
         createdAt: s.created,
         updatedAt: s.updated,
         validatedAt: s.validated, // pas utilisé ?
-        importedAt: new Date(),
         deleted_at: s.blocked,
-        userCreated: false
-      };
+      },
+      $setOnInsert: {
+        idPG: s.id,
+        statut: 'CREEE',
+        avisPrefet: '',
+        commentairePrefet: '',
+        nombreConseillersPrefet: 0,
+        userCreated: false,
+        importedAt: new Date(),
+      }
+    };
 
-      const result = await db.collection('structures').insertOne(doc);
-      logger.info(
-        `${result.insertedCount} structures insérées avec _id: ${result.insertedId}`
-      );
-    }
+    const options = { upsert: true };
+
+    const result = await db.collection('structures').updateOne(filter, updateDoc, options);
+
+    logger.info(
+      `structure,${s.id},${s.siret},${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},${result.modifiedCount}`
+    );
   };
 
   const moveCandidat = async c => {
-    logger.info(`Candidat: ${c.first_name} ${c.last_name}`);
+    const filter = { idPG: c.id };
 
-    const match = await db.collection('conseillers').findOne({ idPG: c.id });
-    if (!match) {
-      const doc = {
-        idPG: c.id,
+    const updateDoc = {
+      $set: {
         prenom: c.first_name,
         nom: c.last_name,
         email: c.email,
@@ -96,16 +95,23 @@ execute(async ({ db, logger }) => {
         unsubscribeExtras: c.unsubscribe_extras, // JSON, pas utilisé
         createdAt: c.created,
         updatedAt: c.updated,
-        importedAt: new Date(),
         deletedAt: c.blocked,
+      },
+      $setOnInsert: {
+        idPG: c.id,
+        importedAt: new Date(),
         userCreated: false,
-      };
+      }
+    };
 
-      const result = await db.collection('conseillers').insertOne(doc);
-      logger.info(
-        `${result.insertedCount} conseillers insérés avec _id: ${result.insertedId}`
-      );
-    }
+    const options = { upsert: true };
+    const result = await db.collection('conseillers').updateOne(filter, updateDoc, options);
+
+    logger.info(
+      `candidat,${c.id},${c.first_name},${c.last_name},${result.matchedCount},` +
+      `${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},` +
+      `${result.modifiedCount}`
+    );
   };
 
   // Récupère toutes les structures dans PG
