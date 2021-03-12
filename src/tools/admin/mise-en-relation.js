@@ -18,6 +18,10 @@ execute(async ({ db, logger }) => {
   const miseEnRelation = async (s, c) => {
     // Respecte la distance max du conseiller
     if (c.dist.calculated > c.distanceMax * 1000) {
+      logger.info(
+        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
+        `,distancefail,${c.distanceMax},${c.dist.calculated}`
+      );
       return;
     }
 
@@ -25,10 +29,18 @@ execute(async ({ db, logger }) => {
     const maintenant = new Date();
 
     if (s.dateDebutMission < maintenant && c.dateDisponibilite > maintenant) {
+      logger.info(
+        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
+        `,datefail1,${s.dateDebutMission},${c.dateDisponibilite}`
+      );
       return;
     }
 
     if (s.dateDebutMission >= maintenant && c.dateDisponibilite > s.dateDebutMission) {
+      logger.info(
+        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
+        `,datefail2,${s.dateDebutMission},${c.dateDisponibilite}`
+      );
       return;
     }
 
@@ -56,7 +68,7 @@ execute(async ({ db, logger }) => {
     const result = await db.collection('misesEnRelation').updateOne(filter, updateDoc, options);
 
     logger.info(
-      `misesEnRelation,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},` +
+      `misesEnRelation,OK,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},` +
       `${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null}` +
       `,${result.modifiedCount}`
     );
