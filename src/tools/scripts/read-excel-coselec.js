@@ -12,39 +12,48 @@ program.parse(process.argv);
 
 execute(async ({ db, logger }) => {
   let avisPositif = 0;
+
   const processStructure = async s => {
-    logger.info(JSON.stringify(s));
-    
     const match = await db.collection('structures').findOne({ idPG: s.id });
     // xxx mode dryrun pour valider le fichier Excel
 
     // Si on a un id
     if (s.id !== null && match) {
+      logger.info(`OKID,${s.id},${s.siret}`);
+
       const filter = { idPG: s.id };
       const updateDoc = {
         $set: {
-          siret: s.siret,
           estLabelliseFranceServices: s.labelFranceServices,
           nombreConseillersPrefet: s.nombreConseillers,
           nombreConseillersCoselec: s.nombreConseillersCoselec,
           avisPrefet: s.avis,
-          avisCoselec: s.avisCoselec,
           commentairePrefet: s.commentaire,
+          avisCoselec: s.avisCoselec,
+          observationsReferent: s.observationsReferent,
+          prioritaireCoselec: s.prioritaireCoselec,
           updatedAt: new Date(),
         },
       };
 
+      // xxx Vérifier le SIRET avec l'API Entreprise
+      if (/^\d{14}$/.test(s.siret)) {
+        updateDoc.$set = { ...updateDoc.$set, ...{ siret: s.siret } };
+      }
+
       if (s.avisCoselec === 'POSITIF') {
         updateDoc.$set = { ...updateDoc.$set, ...{ statut: 'VALIDATION_COSELEC', coselecAt: new Date() } };
         avisPositif++;
+        logger.info(`OKPOSITIF,${s.id},${s.siret}`);
       }
 
       const result = await db.collection('structures').updateOne(filter, updateDoc);
 
-      logger.info(
-        `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
-      );
+      logger.info(`OKUPDATE,${s.id},${s.siret},${result.matchedCount},${result.modifiedCount}`);
     } else if (s.siret && /^\d{14}$/.test(s.siret)) {
+      // xxx Vérifier le SIRET avec l'API Entreprise
+      logger.info(`OKSIRET,${s.id},${s.siret}`);
+
       // Si on a un siret
       const match = await db.collection('structures').findOne({ siret: s.siret });
 
@@ -56,8 +65,10 @@ execute(async ({ db, logger }) => {
             nombreConseillersPrefet: s.nombreConseillers,
             nombreConseillersCoselec: s.nombreConseillersCoselec,
             avisPrefet: s.avis,
-            avisCoselec: s.avisCoselec,
             commentairePrefet: s.commentaire,
+            avisCoselec: s.avisCoselec,
+            observationsReferent: s.observationsReferent,
+            prioritaireCoselec: s.prioritaireCoselec,
             updatedAt: new Date(),
           }
         };
@@ -65,14 +76,15 @@ execute(async ({ db, logger }) => {
         if (s.avisCoselec === 'POSITIF') {
           updateDoc.$set = { ...updateDoc.$set, ...{ statut: 'VALIDATION_COSELEC', coselecAt: new Date() } };
           avisPositif++;
+          logger.info(`OKPOSITIF,${s.id},${s.siret}`);
         }
 
         const result = await db.collection('structures').updateOne(filter, updateDoc);
 
-        logger.info(
-          `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
-        );
+        logger.info(`OKUPDATE,${s.id},${s.siret},${result.matchedCount},${result.modifiedCount}`);
       }
+    } else {
+      logger.info(`KO,${s.id},${s.siret},${s.nom}`);
     }
   };
 
@@ -82,12 +94,16 @@ execute(async ({ db, logger }) => {
     // Colonnes Excel
     const ID = 1;
     const SIRET = 2;
+    const NOM = 3;
     const LABEL_FRANCE_SERVICES = 7;
     const NOMBRE_CONSEILLERS = 8;
     const AVIS = 9;
     const COMMENTAIRE = 10;
-    const AVIS_COSELEC = 12;
-    const NOMBRE_CONSEILLERS_COSELEC = 13;
+    const OBSERVATIONS_REFERENT = 11;
+    const AVIS_COSELEC = 13;
+    const NOMBRE_CONSEILLERS_COSELEC = 14;
+    const PRIORITAIRE_COSELEC = 15;
+    const NUMERO_COSELEC = 16;
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
 
@@ -113,12 +129,16 @@ execute(async ({ db, logger }) => {
         await processStructure({
           id: !/^0$/.test(row.getCell(ID).value) ? ~~row.getCell(ID).value : null,
           siret: /^\d{14}$/.test(row.getCell(SIRET).value) ? String(row.getCell(SIRET).value) : null,
+          nom: row.getCell(NOM).value, // Juste pour loguer si pas trouvée avec id et siret
           labelFranceServices: /^OUI|NON$/.test(row.getCell(LABEL_FRANCE_SERVICES).value) ? (row.getCell(LABEL_FRANCE_SERVICES).value === 'OUI') : null,
           nombreConseillers: /^\d+$/.test(row.getCell(NOMBRE_CONSEILLERS).value) ? row.getCell(NOMBRE_CONSEILLERS).value : 0,
           avis: row.getCell(AVIS).value,
-          commentaire: !/^0$/.test() ? row.getCell(COMMENTAIRE).value : '',
+          commentaire: !/^0$/.test(row.getCell(COMMENTAIRE).value) ? row.getCell(COMMENTAIRE).value : '',
           avisCoselec: /^POSITIF|NÉGATIF|EXAMEN COMPLÉMENTAIRE$/.test(row.getCell(AVIS_COSELEC).value) ? row.getCell(AVIS_COSELEC).value : null,
           nombreConseillersCoselec: /^\d+$/.test(row.getCell(NOMBRE_CONSEILLERS_COSELEC).value) ? row.getCell(NOMBRE_CONSEILLERS_COSELEC).value : 0,
+          observationsReferent: !/^0$/.test(row.getCell(OBSERVATIONS_REFERENT).value) ? row.getCell(OBSERVATIONS_REFERENT).value : '',
+          prioritaireCoselec: /^OUI|NON$/.test(row.getCell(PRIORITAIRE_COSELEC).value) ? (row.getCell(PRIORITAIRE_COSELEC).value === 'OUI') : null,
+          numeroCoselec: !/^0$/.test(row.getCell(NUMERO_COSELEC).value) ? row.getCell(NUMERO_COSELEC).value : '',
         });
       }
     }
