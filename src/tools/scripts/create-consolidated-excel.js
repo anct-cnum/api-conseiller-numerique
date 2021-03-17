@@ -10,8 +10,8 @@ const xl = require('excel4node'); // Ecrire du Excel
 
 program
 .option('-r, --repertoire <repertoire>', 'répertoire')
-.option('-v, --vague <vague>', 'vague')
-.option('-w, --revision <revision>', 'révision')
+.option('-c, --coselec <coselec>', 'coselec')
+.option('-v, --revision <revision>', 'révision')
 .option('-f, --file <file>', 'Excel file path');
 
 program.parse(process.argv);
@@ -53,12 +53,19 @@ execute(async ({ db, logger }) => {
   };
 
 
+  let styleVert;
+  let styleOrange;
+  let styleRouge;
+
   const styleConf = {
     font: {
       name: 'Arial',
       color: '#3F58B7',
       size: 10,
     },
+    alignment: {
+      vertical: 'top',
+    }
   };
 
   const styleHeaderConf = {
@@ -259,15 +266,15 @@ execute(async ({ db, logger }) => {
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(6).setWidth(10);
+    ws.column(6).setWidth(20);
     ws.cell(start, 6)
-    .string('Département')
+    .string('Région')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(7).setWidth(10);
+    ws.column(7).setWidth(20);
     ws.cell(start, 7)
-    .string('Région')
+    .string('Département')
     .style(styleHeaderConf)
     .style(styleVertical);
 
@@ -307,29 +314,43 @@ execute(async ({ db, logger }) => {
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(14).setWidth(22);
+    ws.column(14).setWidth(20);
     ws.cell(start, 14)
-    .string('Nombre de conseillers Coselec')
+    .string('Observations')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(15).setWidth(30);
+    ws.column(15).setWidth(20);
     ws.cell(start, 15)
+    .string(`Existence d'un accord préaliable de principe`)
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(16).setWidth(30);
+    ws.cell(start, 16)
     .string('Avis Coselec')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(16).setWidth(20);
-    ws.cell(start, 16)
+    ws.column(17).setWidth(22);
+    ws.cell(start, 17)
+    .string('Nombre de conseillers Coselec')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(18).setWidth(20);
+    ws.cell(start, 18)
     .string('Prioritaire')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(17).setWidth(20);
-    ws.cell(start, 17)
-    .string('Commentaire Coselec')
+    ws.column(19).setWidth(20);
+    ws.cell(start, 19)
+    .string('Date COSELEC')
     .style(styleHeaderConf)
     .style(styleVertical);
+
+    // Formules
 
     ws.cell(start - 1, 11, start - 1, 11, true)
     .formula(`SUBTOTAL(109,K${start + 1}:K${start + structures.length})`)
@@ -357,7 +378,8 @@ execute(async ({ db, logger }) => {
 
     // Add all structures
     structures.forEach(function(s, i) {
-      ws.row(i + start + 1).setHeight(30);
+      let height = s.commentaire === '' ? 1 : Math.ceil(s.commentaire.length/80);
+      ws.row(i + start + 1).setHeight(height*30);
       ws.cell(i + start + 1, 1)
       .string(String(s.id))
       .style(styleConf);
@@ -387,11 +409,11 @@ execute(async ({ db, logger }) => {
       .style(styleConf);
 
       ws.cell(i + start + 1, 6)
-      .string(s.departement)
+      .string(s.region)
       .style(styleConf);
 
       ws.cell(i + start + 1, 7)
-      .string(s.region)
+      .string(s.departement)
       .style(styleConf);
 
       ws.cell(i + start + 1, 8)
@@ -461,21 +483,18 @@ execute(async ({ db, logger }) => {
           }
         });
 
+      // Observations
       ws.cell(i + start + 1, 14)
-      .number(s.nombreConseillers)
-      .style({ numberFormat: '0' })
-      .style(styleConf);
+      .string('')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
 
-      ws.addDataValidation({
-        type: 'whole',
-        operator: 'between',
-        allowBlank: true,
-        prompt: 'Saisissez un nombre',
-        error: 'Nombre obligatoire',
-        sqref: `N${i + start + 1}:N${i + start + 1}`,
-        formulas: [0, 500],
-      });
-
+      // Existence d'un APP
       ws.cell(i + start + 1, 15)
       .string('')
       .style(styleConf)
@@ -496,7 +515,32 @@ execute(async ({ db, logger }) => {
           }
         });
 
+      ws.addDataValidation({
+        type: 'list',
+        allowBlank: true,
+        prompt: 'Choisissez dans la liste',
+        error: 'Choix non valide',
+        showDropDown: true,
+        sqref: `P${i + start + 1}:P${i + start + 1}`,
+        formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE'],
+      });
+
       ws.cell(i + start + 1, 17)
+      .number(s.nombreConseillers)
+      .style({ numberFormat: '0' })
+      .style(styleConf);
+
+      ws.addDataValidation({
+        type: 'whole',
+        operator: 'between',
+        allowBlank: true,
+        prompt: 'Saisissez un nombre',
+        error: 'Nombre obligatoire',
+        sqref: `Q${i + start + 1}:Q${i + start + 1}`,
+        formulas: [0, 500],
+      });
+
+      ws.cell(i + start + 1, 18)
       .string('')
       .style(styleConf)
       .style(
@@ -512,23 +556,49 @@ execute(async ({ db, logger }) => {
         prompt: 'Choisissez dans la liste',
         error: 'Choix non valide',
         showDropDown: true,
-        sqref: `O${i + start + 1}:O${i + start + 1}`,
-        formulas: ['POSITIF,NÉGATIF'],
-      });
-
-      ws.addDataValidation({
-        type: 'list',
-        allowBlank: true,
-        prompt: 'Choisissez dans la liste',
-        error: 'Choix non valide',
-        showDropDown: true,
-        sqref: `P${i + start + 1}:P${i + start + 1}`,
+        sqref: `R${i + start + 1}:R${i + start + 1}`,
         formulas: ['OUI,NON'],
       });
 
+      ws.cell(i + start + 1, 19)
+      .string('COSELEC ' + program.coselec)
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      for (let j=1; j < 19; j++) {
+        let cell1 = xl.getExcelCellRef(i + start + 1, j);
+        ws.addConditionalFormattingRule(cell1, {
+          type: 'expression',
+          priority: 1, // rule priority order (required)
+          formula: `IF(AND(L${i + start + 1}="POSITIF",P${i + start + 1}="POSITIF"),1,0)`, // formula that returns nonzero or 0
+          style: styleVert,
+        });
+        ws.addConditionalFormattingRule(cell1, {
+          type: 'expression',
+          priority: 2, // rule priority order (required)
+          formula: `IF(L${i + start + 1}="EXAMEN COMPLÉMENTAIRE",1,0)`, // formula that returns nonzero or 0
+          style: styleOrange,
+        });
+        ws.addConditionalFormattingRule(cell1, {
+          type: 'expression',
+          priority: 3, // rule priority order (required)
+          formula: `IF(L${i + start + 1}="NÉGATIF",1,0)`, // formula that returns nonzero or 0
+          style: styleRouge,
+        });
+      }
     });
 
     ws.column(3).freeze(4);
+    ws.column(5).hide(); // Code postal
+    ws.column(9).hide(); // Email
+
+    // Couleur conditionnelle
+
   };
 
 
@@ -539,7 +609,7 @@ execute(async ({ db, logger }) => {
         name: 'Arial',
         color: '00000000',
       },
-      dateFormat: 'm/d/yy hh:mm:ss',
+      dateFormat: 'd/m/yy hh:mm:ss',
       workbookView: {
         activeTab: 0, // Specifies an unsignedInt that contains the index to the active sheet in this book view.
         firstSheet: 1, // Specifies the index to the first sheet in this book view.
@@ -550,8 +620,41 @@ execute(async ({ db, logger }) => {
       author: 'ANCT Conseiller Numérique',
     });
 
+    styleVert = wb.createStyle({
+      fill: {
+        type:'pattern',
+        patternType:'solid',
+        bgColor:'#63BE7B',
+        fgColor:'#63BE7B',
+      },
+    });
+
+    styleOrange = wb.createStyle({
+      fill: {
+        type:'pattern',
+        patternType:'solid',
+        bgColor:'#FFEB84',
+        fgColor:'#FFEB84',
+      },
+    });
+
+    styleRouge = wb.createStyle({
+      fill: {
+        type:'pattern',
+        patternType:'solid',
+        bgColor:'#F8696B',
+        fgColor:'#F8696B',
+      },
+    });
+
     // Add Worksheets to the workbook
-    const ws1 = wb.addWorksheet('Structures');
+    const ws1 = wb.addWorksheet('Structures', {
+      'sheetView': {
+        'zoomScale': 50, // Defaults to 100
+        'zoomScaleNormal': 50, // Defaults to 100
+        'zoomScalePageLayoutView': 50 // Defaults to 100
+      }
+    });
 
     const confPubliques = {
       titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
@@ -569,42 +672,63 @@ execute(async ({ db, logger }) => {
 
   // Fin fichier Excel consolidé
 
+  const types = {
+    'PRIVATE': 'Privée',
+    'COMMUNE': 'Publique',
+    'EPCI': 'Publique',
+    'DEPARTEMENT': 'Publique',
+    'REGION': 'Publique',
+    'COLLECTIVITE': 'Publique',
+  };
+
   const processStructure = async s => {
     // On ne conserve que les avis positifs
-    if (s.avis !== 'POSITIF') {
-      return;
-    }
+//    if (s.avis !== 'POSITIF') {
+//      logger.info(`REJETEE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
+//      return;
+//    }
 
     const match = await db.collection('structures').findOne({ idPG: s.id });
-    // xxx mode dryrun pour valider le fichier Excel
 
     // Si on a un id
     if (match) {
       // On récupère le type de la structure
-      s.type = match.type;
+      s.type = types[match.type] ? types[match.type] : '';
       const depReg = codePostal2departementRegion(String(match.codePostal));
       s.departement = depReg.dep_name;
       s.region = depReg.region_name;
+      s.siret = match.siret;
+
       structures.push(s);
+
+      logger.info(`POSITIFID,${s.id},${s.siret},${s.ligne},${s.fichier}`);
     } else if (s.siret && /^\d{14}$/.test(s.siret)) {
       // Si on a un siret
       const match = await db.collection('structures').findOne({ siret: s.siret.toString() });
 
       if (match) {
         // On récupère le type de la structure
-        s.type = match.type;
+        s.type = types[match.type] ? types[match.type] : '';
         s.id = match.idPG;
         const depReg = codePostal2departementRegion(String(match.codePostal));
         s.departement = depReg.dep_name;
         s.region = depReg.region_name;
+
         structures.push(s);
+
+        logger.info(`POSITIFSIRET,${s.id},${s.siret},${s.ligne},${s.fichier}`);
+      } else {
+        structures.push(s);
+        logger.info(`SIRETNONTROUVE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
       }
+    } else {
+        structures.push(s); // Pour le moment on conserve les SA sans compte
+        logger.info(`INTROUVABLE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
     }
   };
 
   const readExcelForDep = async f => {
     logger.info(`Fichier : ${f}`);
-    const start = 13; // Début de la liste des structures
 
     // Colonnes Excel
     const ID = 1;
@@ -622,15 +746,21 @@ execute(async ({ db, logger }) => {
     for await (const worksheetReader of workbookReader) {
       let i = 0;
       for await (const row of worksheetReader) {
-        if (++i < start) {
+        i++;
+        let nom = row.getCell(NOM).text;
+
+        // On cherche les lignes avec les vraies données
+        if (nom === 'Nom Structure') {
           continue;
         }
-        let id = row.getCell(ID).value;
-        if (!/^\d+$/.test(id)) {
-          //continue;
+
+        if (/^\s*$/.test(nom)) {
+          continue;
         }
 
         await processStructure({
+          fichier: f, // Nom du fichier, pour log et audit
+          ligne: i+1, // Ligne dans le fichier Excel, pour log et audit
           id: ~~row.getCell(ID).value,
           siret: row.getCell(SIRET).text,
           nom: row.getCell(NOM).text,
@@ -638,9 +768,12 @@ execute(async ({ db, logger }) => {
           ville: row.getCell(VILLE).text,
           email: row.getCell(EMAIL).text,
           labelFranceServices: row.getCell(LABEL_FRANCE_SERVICES).value,
-          nombreConseillers: row.getCell(NOMBRE_CONSEILLERS).value,
+          nombreConseillers: ~~row.getCell(NOMBRE_CONSEILLERS).value,
           avis: row.getCell(AVIS).value,
           commentaire: row.getCell(COMMENTAIRE).text,
+          type: '',
+          departement: '',
+          region: '',
         });
       }
     }
@@ -650,7 +783,7 @@ execute(async ({ db, logger }) => {
     const wb = await createWorkbook(structures);
     const buffer = await wb.writeToBuffer();
     // xxx Réussir à se passer de la version synchrone
-    await fs.writeFileSync(`prefets-consolide-vague-${program.vague}-version-${program.revision}.xlsx`, buffer, function(err) {
+    await fs.writeFileSync(`prefets-coselec-${program.coselec}-version-${program.revision}.xlsx`, buffer, function(err) {
       if (err) {
         logger.warn('Erreur ' + err);
         throw err;
