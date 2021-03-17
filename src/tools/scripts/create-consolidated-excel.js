@@ -744,7 +744,9 @@ execute(async ({ db, logger }) => {
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f); // xxx utiliser le departement+version
     for await (const worksheetReader of workbookReader) {
+      let i = 0;
       for await (const row of worksheetReader) {
+        i++;
         let nom = row.getCell(NOM).text;
 
         // On cherche les lignes avec les vraies données
