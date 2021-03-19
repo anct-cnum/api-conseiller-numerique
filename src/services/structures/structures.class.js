@@ -73,13 +73,13 @@ exports.Structures = class Structures extends Service {
       let { pix, diplome, emploi } = req.query;
       if (pix !== undefined) {
         pix = pix.split(',').map(k => parseInt(k));
-        queryFilter['conseillers.pix.palier'] = { $in: pix };
+        queryFilter['conseillerObj.pix.palier'] = { $in: pix };
       }
       if (diplome !== undefined) {
-        queryFilter['conseillers.estDiplomeMedNum'] = (diplome === 'true');
+        queryFilter['conseillerObj.estDiplomeMedNum'] = (diplome === 'true');
       }
       if (emploi !== undefined) {
-        queryFilter['conseillers.estEnEmploi'] = (emploi === 'true');
+        queryFilter['conseillerObj.estEnEmploi'] = (emploi === 'true');
       }
 
       const skip = req.query['$skip'];
