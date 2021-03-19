@@ -54,6 +54,8 @@ execute(async ({ db, logger }) => {
       $set: {
         structure: new DBRef('structures', s._id, database),
         conseiller: new DBRef('conseillers', c._id, database),
+        structureObj: s,
+        conseillerObj: c,
         distance: Math.round(c.dist.calculated)
       },
       $setOnInsert: {
