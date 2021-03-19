@@ -13,7 +13,7 @@ execute(async ({ logger, db }) => {
   let promises = [];
 
   logger.info(`Generating CSV file...`);
-  let csvFile = path.join(__dirname, '../../../data', 'candidats.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'candidats.csv');
 
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
