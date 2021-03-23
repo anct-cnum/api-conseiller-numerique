@@ -70,16 +70,13 @@ exports.Structures = class Structures extends Service {
         }
       }
       //User Filters
-      let { pix, diplome, emploi } = req.query;
+      let { pix, diplome } = req.query;
       if (pix !== undefined) {
         pix = pix.split(',').map(k => parseInt(k));
         queryFilter['conseillerObj.pix.palier'] = { $in: pix };
       }
       if (diplome !== undefined) {
         queryFilter['conseillerObj.estDiplomeMedNum'] = (diplome === 'true');
-      }
-      if (emploi !== undefined) {
-        queryFilter['conseillerObj.estEnEmploi'] = (emploi === 'true');
       }
 
       const skip = req.query['$skip'];
