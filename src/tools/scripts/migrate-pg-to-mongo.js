@@ -23,8 +23,6 @@ execute(async ({ db, logger }) => {
         siret: s.siret === null ? null : `${s.siret}`,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
-        nombreConseillersSouhaites: 0,
-        estLabelliseFranceServices: false,
         contactPrenom: s.contact_first_name,
         contactNom: s.contact_last_name,
         contactFonction: s.contact_job,
@@ -40,6 +38,7 @@ execute(async ({ db, logger }) => {
         emailConfirmationKey: s.email_confirmation_key,
         unsubscribedAt: s.unsubscribed, // "cliquez ici pour ne plus recevoir de propositions"
         unsubscribeExtras: s.unsubscribe_extras, // JSON, pas utilisé
+        nombreConseillersSouhaites: s.coaches_requested,
         createdAt: s.created,
         updatedAt: s.updated,
         validatedAt: s.validated, // pas utilisé ?
@@ -48,9 +47,14 @@ execute(async ({ db, logger }) => {
       $setOnInsert: {
         idPG: s.id,
         statut: 'CREEE',
+        estLabelliseFranceServices: null,
         avisPrefet: '',
         commentairePrefet: '',
         nombreConseillersPrefet: 0,
+        nombreConseillersCoselec: 0,
+        avisCoselec: '',
+        observationsReferent: '',
+        prioritaireCoselec: null,
         userCreated: false,
         importedAt: new Date(),
       }

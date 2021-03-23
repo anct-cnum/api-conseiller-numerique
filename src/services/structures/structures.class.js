@@ -69,6 +69,16 @@ exports.Structures = class Structures extends Service {
           return;
         }
       }
+      //User Filters
+      let { pix, diplome } = req.query;
+      if (pix !== undefined) {
+        pix = pix.split(',').map(k => parseInt(k));
+        queryFilter['conseillerObj.pix.palier'] = { $in: pix };
+      }
+      if (diplome !== undefined) {
+        queryFilter['conseillerObj.estDiplomeMedNum'] = (diplome === 'true');
+      }
+
       const skip = req.query['$skip'];
       if (skip) {
         queryFilter['$skip'] = skip;
