@@ -2,7 +2,7 @@
 const { Stats } = require('./stats.class');
 const hooks = require('./stats.hooks');
 
-module.exports = function (app) {
+module.exports = function(app) {
   const options = {
     paginate: app.get('paginate')
   };
