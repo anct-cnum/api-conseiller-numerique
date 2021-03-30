@@ -8,8 +8,8 @@ const createIndexes = require('./tasks/createIndexes');
 const findUnusedIndexes = require('./tasks/findUnusedIndexes');
 
 cli.description('Manage indexes')
-.option('-f, --find', 'Find unused indexex')
-.option('-d, --drop', 'Drop all indexesx')
+.option('-f, --find', 'Find unused indexes')
+.option('-d, --drop', 'Drop all indexes')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
