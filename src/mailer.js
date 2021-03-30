@@ -52,7 +52,7 @@ module.exports = app => {
         templateName,
         utils: { moment, ...utils },
       });
-      return mjml(mjmlTemplate, { minify: true }).html;
+      return mjml(mjmlTemplate, { }).html;
     },
     createMailer: () => {
       return {
