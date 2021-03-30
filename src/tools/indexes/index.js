@@ -10,6 +10,7 @@ const findUnusedIndexes = require('./tasks/findUnusedIndexes');
 cli.description('Manage indexes')
 .option('-f, --find', 'Find unused indexex')
 .option('-d, --drop', 'Drop all indexesx')
+.helpOption('-e', 'HELP command')
 .parse(process.argv);
 
 execute(async ({ db, logger }) => {
