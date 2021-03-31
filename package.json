@@ -52,6 +52,7 @@
     "excel4node": "1.7.2",
     "exceljs": "4.2.0",
     "feathers-mongodb": "6.3.0",
+    "feathers-mongodb-fuzzy-search": "2.0.1",
     "feathers-permissions": "2.1.4",
     "helmet": "4.4.1",
     "joi": "17.3.0",
