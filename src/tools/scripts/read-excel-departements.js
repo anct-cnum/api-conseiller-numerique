@@ -4,12 +4,10 @@
 const { execute } = require('../utils');
 const { program } = require('commander');
 const ExcelJS = require('exceljs');
-program.version('0.0.1');
 
 program
+.option('-r, --repertoire <repertoire>', 'répertoire')
 .option('-d, --departement <departement>', 'département')
-.option('-v, --vague <vague>', 'vague')
-.option('-w, --revision <revision>', 'révision')
 .option('-f, --file <file>', 'Excel file path');
 
 program.parse(process.argv);
@@ -23,29 +21,40 @@ for (const value of departements) {
 
 execute(async ({ db, logger }) => {
   const processStructure = async s => {
-    //await logger.info(s.email);
     const match = await db.collection('structures').findOne({ idPG: s.id });
-    // xxx mode dryrun pour valider le fichier Excel
 
     // Si on a un id
-    if (match) {
+    if (s.id !== null && match) {
+      logger.info(`OKID,${s.id},${s.siret}`);
+
       const filter = { idPG: s.id };
       const updateDoc = {
         $set: {
-          siret: s.siret,
           estLabelliseFranceServices: s.labelFranceServices,
-          nombreConseillersPrefet: s.nombreConseillers,
-          avisPrefet: s.avis,
-          commentairePrefet: s.commentaire,
-          statut: 'PREFET',
+          updatedAt: new Date(),
         },
+        $push: {
+          prefet: {
+            avisPrefet: s.avis,
+            commentairePrefet: s.commentaire,
+            nombreConseillersPrefet: s.nombreConseillers,
+            insertedAt: new Date()
+          },
+        }
       };
 
+      // xxx Vérifier le SIRET avec l'API Entreprise
+      if (/^\d{14}$/.test(s.siret)) {
+        updateDoc.$set = { ...updateDoc.$set, ...{ siret: s.siret } };
+      }
+
       const result = await db.collection('structures').updateOne(filter, updateDoc);
-      logger.info(
-        `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
-      );
+
+      logger.info(`OKUPDATE,${s.id},${s.siret},${result.matchedCount},${result.modifiedCount}`);
     } else if (s.siret && /^\d{14}$/.test(s.siret)) {
+      // xxx Vérifier le SIRET avec l'API Entreprise
+      logger.info(`OKSIRET,${s.id},${s.siret}`);
+
       // Si on a un siret
       const match = await db.collection('structures').findOne({ siret: s.siret });
 
@@ -54,24 +63,29 @@ execute(async ({ db, logger }) => {
         const updateDoc = {
           $set: {
             estLabelliseFranceServices: s.labelFranceServices,
-            nombreConseillersPrefet: s.nombreConseillers,
-            avisPrefet: s.avis,
-            commentairePrefet: s.commentaire,
-            statut: 'PREFET',
+            updatedAt: new Date(),
+          },
+          $push: {
+            prefet: {
+              avisPrefet: s.avis,
+              commentairePrefet: s.commentaire,
+              nombreConseillersPrefet: s.nombreConseillers,
+              insertedAt: new Date()
+            },
           }
         };
 
         const result = await db.collection('structures').updateOne(filter, updateDoc);
-        logger.info(
-          `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
-        );
+
+        logger.info(`OKUPDATE,${s.id},${s.siret},${result.matchedCount},${result.modifiedCount}`);
       }
+    } else {
+      logger.info(`KO,${s.id},${s.siret},${s.nom}`);
     }
   };
 
-  const readExcelForDep = async departement => {
-    logger.info(`Département : ${departement}`);
-    const start = 13; // Début de la liste des structures
+  const readExcelForDep = async f => {
+    logger.info(`Fichier : ${f}`);
 
     // Colonnes Excel
     const ID = 1;
@@ -85,46 +99,55 @@ execute(async ({ db, logger }) => {
     const AVIS = 9;
     const COMMENTAIRE = 10;
 
-    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(program.file); // xxx utiliser le departement+version
+    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f);
+
     for await (const worksheetReader of workbookReader) {
       let i = 0;
       for await (const row of worksheetReader) {
-        if (++i < start) {
+        i++;
+        let nom = row.getCell(NOM).text;
+
+        // On cherche les lignes avec les vraies données
+        if (nom === 'Nom Structure') {
           continue;
         }
-        let id = row.getCell(ID).value;
-        if (!/^\d+$/.test(id)) {
+
+        if (/^\s*$/.test(nom)) {
           continue;
         }
 
         await processStructure({
-          id: row.getCell(ID).value,
-          siret: row.getCell(SIRET).value,
-          nom: row.getCell(NOM).value,
-          codePostal: row.getCell(CODE_POSTAL).value,
-          ville: row.getCell(VILLE).value,
-          email: row.getCell(EMAIL).value,
+          fichier: f, // Nom du fichier, pour log et audit
+          ligne: i+1, // Ligne dans le fichier Excel, pour log et audit
+          id: ~~row.getCell(ID).value,
+          siret: row.getCell(SIRET).text,
+          nom: row.getCell(NOM).text,
+          codePostal: row.getCell(CODE_POSTAL).text,
+          ville: row.getCell(VILLE).text,
+          email: row.getCell(EMAIL).text,
           labelFranceServices: row.getCell(LABEL_FRANCE_SERVICES).value,
-          nombreConseillers: row.getCell(NOMBRE_CONSEILLERS).value,
+          nombreConseillers: ~~row.getCell(NOMBRE_CONSEILLERS).value,
           avis: row.getCell(AVIS).value,
-          commentaire: row.getCell(COMMENTAIRE).value,
+          commentaire: row.getCell(COMMENTAIRE).text,
         });
-        //logger.info(`${row.getCell(ID).value} ${row.getCell(EMAIL).value} ${row.getCell(LABEL_FRANCE_SERVICE).value}
-        //${row.getCell(NOMBRE_CONSEILLERS).value} ${row.getCell(AVIS).value} ${row.getCell(COMMENTAIRE).value}`);
       }
     }
   };
 
-  //  const readExcelForAllDeps = async () => {
-  //    for (const d of departements) {
-  //      await readExcelForDep(d.num_dep);
-  //    }
-  //  };
+  if (program.repertoire) {
+    const arrayOfFiles = fs.readdirSync(program.repertoire);
+    for (const f of arrayOfFiles) {
+      // Seulement les fichiers Excel en xlsx
+      if (!/xlsx$/.test(f)) {
+        continue;
+      }
+      await readExcelForDep(path.resolve(program.repertoire, f));
+    }
+    logger.info(`${structures.length} structures`);
+  }
 
-  if (program.departement) {
-    await readExcelForDep(program.departement);
-  } else {
-    //await readExcelForAllDeps();
+  if (program.file) {
+    await readExcelForDep(program.file);
   }
 });
 
