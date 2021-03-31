@@ -3,6 +3,8 @@
 
 const { execute } = require('../utils');
 const { program } = require('commander');
+const fs = require('fs');
+const path = require('path');
 const ExcelJS = require('exceljs');
 
 program
@@ -118,7 +120,7 @@ execute(async ({ db, logger }) => {
 
         await processStructure({
           fichier: f, // Nom du fichier, pour log et audit
-          ligne: i+1, // Ligne dans le fichier Excel, pour log et audit
+          ligne: i + 1, // Ligne dans le fichier Excel, pour log et audit
           id: ~~row.getCell(ID).value,
           siret: row.getCell(SIRET).text,
           nom: row.getCell(NOM).text,
@@ -143,7 +145,6 @@ execute(async ({ db, logger }) => {
       }
       await readExcelForDep(path.resolve(program.repertoire, f));
     }
-    logger.info(`${structures.length} structures`);
   }
 
   if (program.file) {
