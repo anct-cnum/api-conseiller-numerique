@@ -62,15 +62,17 @@ execute(async ({ db, logger }) => {
         const filter = { siret: s.siret };
         const updateDoc = {
           $set: {
-            estLabelliseFranceServices: s.labelFranceServices,
-            nombreConseillersPrefet: s.nombreConseillers,
-            nombreConseillersCoselec: s.nombreConseillersCoselec,
-            avisPrefet: s.avis,
-            commentairePrefet: s.commentaire,
-            avisCoselec: s.avisCoselec,
-            observationsReferent: s.observationsReferent,
-            prioritaireCoselec: s.prioritaireCoselec,
             updatedAt: new Date(),
+          },
+          $push: {
+            coselec: {
+              nombreConseillersCoselec: s.nombreConseillersCoselec,
+              avisCoselec: s.avisCoselec,
+              observationsReferent: s.observationsReferent,
+              prioritaireCoselec: s.prioritaireCoselec,
+              numero: s.numeroCoselec,
+              insertedAt: new Date()
+            },
           }
         };
 
