@@ -4,7 +4,8 @@ const hooks = require('./misesEnRelation.hooks');
 
 module.exports = function(app) {
   const options = {
-    paginate: app.get('paginate')
+    paginate: app.get('paginate'),
+    whitelist: ['$text', '$search'], // fields used by feathers-mongodb-fuzzy-search
   };
 
   // Initialize our service with any options it requires
