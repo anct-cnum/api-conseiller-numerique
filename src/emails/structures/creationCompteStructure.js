@@ -3,9 +3,17 @@ module.exports = (db, mailer) => {
   const templateName = 'creationCompteStructure';
   let { utils } = mailer;
 
-  let render = structure => {
+  let render = async structure => {
+    const structureObj = await db.collection('structures').findOne({ _id: structure.entity.oid });
+    let nombreConseillersCoselec = 0;
+    if (structureObj.coselec !== undefined && structureObj.coselec.length > 0) {
+      nombreConseillersCoselec = structureObj.coselec[structureObj.coselec.length - 1].nombreConseillersCoselec;
+    } else {
+      nombreConseillersCoselec = structureObj.nombreConseillersPrefet;
+    }
     return mailer.render(__dirname, templateName, {
       structure,
+      nombreConseillersCoselec,
       link: utils.getBackofficeUrl(`/inscription/${(structure.token)}`),
     });
   };
