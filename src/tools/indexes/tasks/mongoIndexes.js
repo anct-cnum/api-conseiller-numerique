@@ -31,7 +31,7 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'idPG': 1 }),
       db.collection('conseillers').createIndex({ 'codeDepartement': 1 }),
       db.collection('conseillers').createIndex({ 'codeRegion': 1 }),
-      db.collection('conseillers').createIndex( { location : "2dsphere" } ),
+      db.collection('conseillers').createIndex({ 'location': '2dsphere' }),
       db.collection('conseillers').createIndex({
         'nom': 'text',
         'prenom': 'text',
