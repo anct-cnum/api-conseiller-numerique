@@ -5,7 +5,6 @@ module.exports = (db, mailer) => {
 
   let render = async structure => {
     const structureObj = await db.collection('structures').findOne({ _id: structure.entity.oid });
-    console.log(structureObj);
     let nombreConseillersCoselec = 0;
     if (structureObj.coselec !== undefined && structureObj.coselec.length > 0) {
       nombreConseillersCoselec = structureObj.coselec[structureObj.coselec.length - 1].nombreConseillersCoselec;
