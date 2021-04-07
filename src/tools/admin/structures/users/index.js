@@ -13,7 +13,7 @@ const { execute } = require('../../../utils');
 
 const doCreateUser = async (db, feathers, dbName, _id) => {
   return new Promise(async resolve => {
-    const structure = await db.collection('structures').findOne({ _id: _id });
+    const structure = await db.collection('structures').findOne({ _id: _id, statut: 'VALIDATION_COSELEC' });
     await feathers.service('users').create({
       name: structure.contactEmail,
       password: uuidv4(), // mandatory param
@@ -71,7 +71,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     await doCreateUser(db, feathers, dbName, _id);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('structures').find({ userCreated: false }).toArray();
+    const structures = await db.collection('structures').find({ userCreated: false, statut: 'VALIDATION_COSELEC' }).toArray();
     for (const idx in structures) {
       const structure = structures[idx];
       const count = await db.collection('misesEnRelation').countDocuments({ 'structure': {
