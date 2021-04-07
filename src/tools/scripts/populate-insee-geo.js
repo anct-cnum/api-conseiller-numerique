@@ -56,7 +56,6 @@ execute(async ({ db, logger, exit }) => {
 
     try {
       let adresse = await getGeo(s.insee.etablissement.adresse);
-      console.log(JSON.stringify(adresse));
       await store(s, adresse);
     } catch (e) {
       logger.info(`geo,KOAPI,${s._id},${s.idPG},${s.nom},${s.siret},`);
