@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 const { ObjectID } = require('mongodb');
-const _ = require('lodash');
 const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
