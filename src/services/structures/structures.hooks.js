@@ -20,7 +20,14 @@ module.exports = {
   after: {
     all: [],
     find: [],
-    get: [],
+    get: [async context => {
+      let lastCoselec = {};
+      if (context.result.coselec !== undefined && context.result.coselec.length > 0) {
+        lastCoselec = context.result.coselec[context.result.coselec.length - 1];
+      }
+      Object.assign(context.result, lastCoselec);
+      return context;
+    }],
     create: [],
     update: [],
     patch: [],
