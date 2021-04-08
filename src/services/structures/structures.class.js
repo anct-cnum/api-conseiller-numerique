@@ -93,7 +93,6 @@ exports.Structures = class Structures extends Service {
       if (sort) {
         queryFilter['$sort'] = sort;
       }
-      console.log(Object.assign({ 'structure.$id': structureId }, queryFilter));
       const misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
       if (misesEnRelation.total === 0) {
         res.send(misesEnRelation);
