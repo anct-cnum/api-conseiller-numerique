@@ -56,6 +56,7 @@ exports.Structures = class Structures extends Service {
 
       let queryFilter = {};
       const { filter } = req.query;
+      const search = req.query['$search'];
       if (filter) {
         const allowedFilters = ['nouvelle', 'interessee', 'nonInteressee', 'recrutee', 'toutes'];
         if (allowedFilters.includes(filter)) {
@@ -69,6 +70,11 @@ exports.Structures = class Structures extends Service {
           return;
         }
       }
+
+      if (search) {
+        queryFilter['$text'] = { $search: search };
+      }
+
       //User Filters
       let { pix, diplome } = req.query;
       if (pix !== undefined) {
@@ -87,7 +93,7 @@ exports.Structures = class Structures extends Service {
       if (sort) {
         queryFilter['$sort'] = sort;
       }
-
+      console.log(Object.assign({ 'structure.$id': structureId }, queryFilter));
       const misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
       if (misesEnRelation.total === 0) {
         res.send(misesEnRelation);
