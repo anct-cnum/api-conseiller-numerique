@@ -12,7 +12,7 @@ module.exports = {
       db.collection('structures').createIndex({
         'siret': 'text',
         'nom': 'text',
-        'email': 'text',
+        'contactEmail': 'text',
       }, { name: 'bo-search-fulltext' }),
     ]);
   },
