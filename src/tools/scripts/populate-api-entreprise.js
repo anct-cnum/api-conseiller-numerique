@@ -52,6 +52,7 @@ execute(async ({ db, logger }) => {
         etablissement: resultEtablissement.data.etablissement,
       };
     } catch (e) {
+      logger.info(e);
       throw new Error('SIRET not found');
     }
   };
@@ -66,10 +67,11 @@ execute(async ({ db, logger }) => {
   while ((s = await match.next())) {
     try {
       let insee = await getINSEE(s.siret);
-      if (insee !== null) {
+      if (insee !== undefined && insee !== null) {
         await store(s, insee);
       }
     } catch (e) {
+      logger.info(e);
       logger.info(
         `insee,KO,${s._id},${s.idPG},${s.nom},${s.siret},`
       );
