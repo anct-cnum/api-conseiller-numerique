@@ -11,8 +11,7 @@ const xl = require('excel4node'); // Ecrire du Excel
 program
 .option('-r, --repertoire <repertoire>', 'répertoire')
 .option('-c, --coselec <coselec>', 'coselec')
-.option('-v, --revision <revision>', 'révision')
-.option('-f, --file <file>', 'Excel file path');
+.option('-v, --revision <revision>', 'révision');
 
 program.parse(process.argv);
 
@@ -378,8 +377,8 @@ execute(async ({ db, logger }) => {
 
     // Add all structures
     structures.forEach(function(s, i) {
-      let height = s.commentaire === '' ? 1 : Math.ceil(s.commentaire.length/80);
-      ws.row(i + start + 1).setHeight(height*30);
+      let height = s.commentaire === '' ? 1 : Math.ceil(s.commentaire.length / 80);
+      ws.row(i + start + 1).setHeight(height * 30);
       ws.cell(i + start + 1, 1)
       .string(String(s.id))
       .style(styleConf);
@@ -570,7 +569,7 @@ execute(async ({ db, logger }) => {
           }
         });
 
-      for (let j=1; j < 19; j++) {
+      for (let j = 1; j < 19; j++) {
         let cell1 = xl.getExcelCellRef(i + start + 1, j);
         ws.addConditionalFormattingRule(cell1, {
           type: 'expression',
@@ -622,28 +621,28 @@ execute(async ({ db, logger }) => {
 
     styleVert = wb.createStyle({
       fill: {
-        type:'pattern',
-        patternType:'solid',
-        bgColor:'#63BE7B',
-        fgColor:'#63BE7B',
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#63BE7B',
+        fgColor: '#63BE7B',
       },
     });
 
     styleOrange = wb.createStyle({
       fill: {
-        type:'pattern',
-        patternType:'solid',
-        bgColor:'#FFEB84',
-        fgColor:'#FFEB84',
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#FFEB84',
+        fgColor: '#FFEB84',
       },
     });
 
     styleRouge = wb.createStyle({
       fill: {
-        type:'pattern',
-        patternType:'solid',
-        bgColor:'#F8696B',
-        fgColor:'#F8696B',
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#F8696B',
+        fgColor: '#F8696B',
       },
     });
 
@@ -683,10 +682,10 @@ execute(async ({ db, logger }) => {
 
   const processStructure = async s => {
     // On ne conserve que les avis positifs
-//    if (s.avis !== 'POSITIF') {
-//      logger.info(`REJETEE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
-//      return;
-//    }
+    //    if (s.avis !== 'POSITIF') {
+    //      logger.info(`REJETEE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
+    //      return;
+    //    }
 
     const match = await db.collection('structures').findOne({ idPG: s.id });
 
@@ -722,8 +721,8 @@ execute(async ({ db, logger }) => {
         logger.info(`SIRETNONTROUVE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
       }
     } else {
-        structures.push(s); // Pour le moment on conserve les SA sans compte
-        logger.info(`INTROUVABLE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
+      structures.push(s); // Pour le moment on conserve les SA sans compte
+      logger.info(`INTROUVABLE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
     }
   };
 
@@ -742,7 +741,8 @@ execute(async ({ db, logger }) => {
     const AVIS = 9;
     const COMMENTAIRE = 10;
 
-    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f); // xxx utiliser le departement+version
+    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f);
+
     for await (const worksheetReader of workbookReader) {
       let i = 0;
       for await (const row of worksheetReader) {
@@ -760,7 +760,7 @@ execute(async ({ db, logger }) => {
 
         await processStructure({
           fichier: f, // Nom du fichier, pour log et audit
-          ligne: i+1, // Ligne dans le fichier Excel, pour log et audit
+          ligne: i + 1, // Ligne dans le fichier Excel, pour log et audit
           id: ~~row.getCell(ID).value,
           siret: row.getCell(SIRET).text,
           nom: row.getCell(NOM).text,
