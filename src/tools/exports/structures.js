@@ -25,10 +25,8 @@ execute(async ({ logger, db, exit }) => {
     query = { userCreated: true };
   }
 
-  console.log(query);
   const structures = await db.collection('structures').find(query).toArray();
   let promises = [];
-  console.log(structures.length);
   logger.info(`Generating CSV file...`);
 
   let type = 'toutes';
@@ -47,10 +45,9 @@ execute(async ({ logger, db, exit }) => {
   });
 
   // eslint-disable-next-line max-len
-  file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation\n');
+  file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Nombre de conseillers validés par le COSELEC\n');
 
   structures.forEach(structure => {
-    console
     promises.push(new Promise(async resolve => {
       const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
       let matchingsValidated = 0;
@@ -60,7 +57,7 @@ execute(async ({ logger, db, exit }) => {
       if (!cli.matchingValidated || matchingsValidated > 0) {
         const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
         // eslint-disable-next-line max-len
-        file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings}\n`);
+        file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.avisCoselec === 'POSITIF' ? structure.nombreConseillersCoselec : 0}\n`);
         count++;
       }
       resolve();
