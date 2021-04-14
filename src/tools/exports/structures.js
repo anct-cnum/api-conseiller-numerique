@@ -13,7 +13,7 @@ cli.description('Export structures')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
-execute(async ({ logger, db }) => {
+execute(async ({ logger, db, exit }) => {
 
   let query = {};
   let count = 0;
@@ -29,7 +29,16 @@ execute(async ({ logger, db }) => {
   let promises = [];
 
   logger.info(`Generating CSV file...`);
-  let type = cli.activated ? 'activees' : (cli.matchingValidated ? 'recrutees' : 'toutes');
+
+  let type = 'toutes';
+  if (cli.activated) {
+    type = 'activees';
+  }
+
+  if (cli.matchingValidated) {
+    type = 'recrutees';
+  }
+
   let csvFile = path.join(__dirname, '../../../data/exports', `structures_${type}.csv`);
 
   let file = fs.createWriteStream(csvFile, {
@@ -44,19 +53,19 @@ execute(async ({ logger, db }) => {
       const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
       let matchingsValidated = 0;
       if (cli.matchingValidated) {
-        matchingsValidated = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id), statut: 'recrutee' });
-      } 
+        matchingsValidated = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id), 'statut': 'recrutee' });
+      }
       if (matchingsValidated > 0) {
         const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
         // eslint-disable-next-line max-len
         file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings}\n`);
-        count++;        
+        count++;
       }
       resolve();
     }));
   });
 
   await Promise.all(promises);
-  console.log(`${count} structures exported`);
+  logger.info(`${count} structures exported`);
   file.close();
 });

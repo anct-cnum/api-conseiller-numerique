@@ -60,7 +60,7 @@ execute(async ({ db, logger }) => {
   // Chercher les structures dont on n'a pas encore les infos de l'INSEE
   const match = await db.collection('structures').find({
     siret: { $ne: null },
-    insee : { '$exists' : false }
+    insee: { '$exists': false }
   });
 
   let s;
