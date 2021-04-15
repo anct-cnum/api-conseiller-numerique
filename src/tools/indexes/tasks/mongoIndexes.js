@@ -1,4 +1,9 @@
 module.exports = {
+  users: db => {
+    return Promise.all([
+      db.collection('users').createIndex({ 'name': 1 }, { unique: true })
+    ]);
+  },
   structures: db => {
     return Promise.all([
       db.collection('structures').createIndex({ 'idPG': 1 }),
