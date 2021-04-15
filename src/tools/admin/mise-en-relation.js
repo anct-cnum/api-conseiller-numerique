@@ -84,9 +84,9 @@ execute(async ({ db, logger }) => {
       '$geoNear': {
         'near': s.location,
         'distanceField': 'dist.calculated',
-        'maxDistance': 500000,
+        'maxDistance': 2000001,
         'query': { disponible: true },
-        'num': 500, // xxx use $limit
+        'num': 1000, // xxx use $limit
         'spherical': false
       }
     }]);
