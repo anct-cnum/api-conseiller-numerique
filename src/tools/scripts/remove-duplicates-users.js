@@ -22,7 +22,6 @@ execute(async ({ db, logger }) => {
 
   for (let idx = 0; idx < duplicates.length; idx++) {
     let duplicate = duplicates[idx];
-    console.log({ name: duplicate._id, passwordCreated: false });
     await db.collection('users').deleteMany({ name: duplicate._id, passwordCreated: false });
     count++;
   }
