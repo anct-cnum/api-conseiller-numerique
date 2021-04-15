@@ -1,4 +1,5 @@
 [
-  "*/10 * * * * $ROOT/src/tools/jobs/migrate-pg-to-mongo.sh"
+  "*/10 * * * * $ROOT/src/tools/jobs/migrate-pg-to-mongo.sh",
+  "*/1 * * * * node $ROOT/src/tools/admin/prefets/account"
 ]
 
