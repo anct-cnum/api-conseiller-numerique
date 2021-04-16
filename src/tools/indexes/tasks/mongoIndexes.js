@@ -11,6 +11,7 @@ module.exports = {
       db.collection('structures').createIndex({ 'type': 1 }),
       db.collection('structures').createIndex({ 'statut': 1 }),
       db.collection('structures').createIndex({ 'avisPrefet': 1 }),
+      db.collection('structures').createIndex({ 'avisCoselec': 1 }),
       db.collection('structures').createIndex({ 'codeDepartement': 1 }),
       db.collection('structures').createIndex({ 'codeRegion': 1 }),
       db.collection('structures').createIndex({ 'userCreated': 1 }),
