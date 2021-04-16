@@ -58,7 +58,7 @@ execute(async ({ logger, db, exit }) => {
         const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
         try {
           // eslint-disable-next-line max-len
-          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.avisCoselec === 'POSITIF' ? [...structure.coselec].pop().nombreConseillersCoselec : 0}\n`);
+          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.avisCoselec === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0}\n`);
         } catch (e) {
           logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG}`);
         }
