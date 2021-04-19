@@ -73,10 +73,8 @@ execute(async ({ feathers, db, logger, exit }) => {
   } else {
     const structures = await db.collection('structures').find({ userCreated: false, statut: 'VALIDATION_COSELEC' }).toArray();
     let promises = [];
-    /*eslint no-loop-func: "error"*/
-    for (const idx in structures) {
+    structures.forEach(structure => {
       const p = new Promise(async (resolve, reject) => {
-        const structure = structures[idx];
         const count = await db.collection('misesEnRelation').countDocuments({ 'structure': {
           '$ref': `structures`,
           '$id': structure._id,
@@ -98,7 +96,7 @@ execute(async ({ feathers, db, logger, exit }) => {
         }
       });
       promises.push(p);
-    }
+    });
     await Promise.all(promises);
   }
 
