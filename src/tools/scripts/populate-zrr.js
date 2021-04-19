@@ -52,13 +52,26 @@ execute(async ({ db, logger }) => {
   logger.info(zrr.length);
 
   // Chercher les structures dont on n'a pas encore les infos de ZRR
-  const match = await db.collection('structures').find({
+  // On utilise le code commune principal si dispo
+  const matchCodeCommune = await db.collection('structures').find({
     codeCommune: { $ne: '' },
     zrr: { '$exists': false }
   });
 
   let s;
-  while ((s = await match.next())) {
+  while ((s = await matchCodeCommune.next())) {
     await store(s, zrr.includes(s.codeCommune));
+  }
+
+  // On utilise le code commune INSEE
+  const matchSansCodeCommune = await db.collection('structures').find({
+    codeCommune: { $eq: '' },
+    zrr: { '$exists': false }
+  });
+
+  while ((s = await matchSansCodeCommune.next())) {
+    if (s?.insee?.etablissement?.commune_implantation?.code) {
+      await store(s, zrr.includes(s.insee.etablissement.commune_implantation.code));
+    }
   }
 });
