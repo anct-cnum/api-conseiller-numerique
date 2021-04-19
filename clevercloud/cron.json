@@ -1,4 +1,5 @@
 [
-  "0 * * * * $ROOT/src/tools/jobs/migrate-pg-to-mongo.sh"
+  "0 * * * * $ROOT/src/tools/jobs/migrate-pg-to-mongo.sh",
+  "*/1 * * * * $ROOT/src/tools/jobs/send-email-prefets.sh"
 ]
 
