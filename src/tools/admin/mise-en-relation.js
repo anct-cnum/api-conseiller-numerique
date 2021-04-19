@@ -14,8 +14,25 @@ execute(async ({ db, logger }) => {
   const connection = app.get('mongodb');
   const database = connection.substr(connection.lastIndexOf('/') + 1);
 
+  const oneWeekAgo = new Date(new Date() - 60 * 60 * 24 * 7 * 1000);
+
   // Pour chaque structure, générer ses mises en relation
   const miseEnRelation = async (s, c) => {
+    // Vérifie les dates de mise à jour du candidat et de la structure
+    // Si pas de modifications récentes...
+    if (s.updatedAt < oneWeekAgo && c.updatedAt < oneWeekAgo) {
+      // ... et Coselec ancien, on ne fait rien
+      if (s.coselecAt < oneWeekAgo) {
+        logger.info(
+          `misesEnRelation,NC,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
+          `,nochange`
+        );
+        return;
+      }
+      // ... si Coselec récent, on continue
+    }
+
+
     // Respecte la distance max du conseiller
     if (c.dist.calculated > c.distanceMax * 1000) {
       logger.info(
@@ -65,15 +82,19 @@ execute(async ({ db, logger }) => {
       }
     };
 
-    const options = { upsert: true };
-
-    const result = await db.collection('misesEnRelation').updateOne(filter, updateDoc, options);
+    const u = {
+      updateOne: {
+        filter: filter,
+        update: updateDoc,
+        upsert: true
+      }
+    };
 
     logger.info(
-      `misesEnRelation,OK,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},` +
-      `${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null}` +
-      `,${result.modifiedCount}`
+      `misesEnRelation,OK,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},`
     );
+
+    return u;
   };
 
   const creation = async s => {
@@ -86,22 +107,39 @@ execute(async ({ db, logger }) => {
         'distanceField': 'dist.calculated',
         'maxDistance': 500000,
         'query': { disponible: true },
-        'num': 500, // xxx use $limit
+        'num': 1000, // xxx use $limit
         'spherical': false
       }
-    }]);
+    }]).toArray();
 
-    let c;
-    while ((c = await match.next())) {
-      await miseEnRelation(s, c);
+    logger.info(`${s.nom} ${match.length} found`);
+
+    let work = [];
+
+    for (const c of match) {
+      let r = await miseEnRelation(s, c);
+      if (r) {
+        work.push(r);
+      }
+    }
+
+    logger.info(`${s.nom} ${work.length} to upsert`);
+
+    if (work.length > 0) {
+      const result = await db.collection('misesEnRelation').bulkWrite(work);
+
+      logger.info(
+        `misesEnRelation,BULK,${s._id},${s.nom},${s.idPG},` +
+        `${result.ok},${result.nMatched},${result.nInserted},${result.nUpserted}` +
+        `,${result.nModified}`
+      );
     }
   };
 
   // Chercher les structures pour lesquelles on doit créer des mises en relation
-  const match = await db.collection('structures').find({ statut: 'VALIDATION_COSELEC' });
+  const match = await db.collection('structures').find({ statut: 'VALIDATION_COSELEC' }).toArray();
 
-  let s;
-  while ((s = await match.next())) {
+  for (const s of match) {
     await creation(s);
   }
 });

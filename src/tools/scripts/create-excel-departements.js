@@ -223,7 +223,7 @@ const buildWorksheet = (ws, structures, conf) => {
   });
 
   ws.cell(10, 1, 10, 9, true)
-  .string(`Le fichier est à retourner au plus tard le 19/02/2021 à conseiller-numerique@anct.gouv.fr, copie votre ` +
+  .string(`Le fichier est à retourner à conseiller-numerique@anct.gouv.fr, copie votre ` +
     `${referents.get(conf.departementNumero).sexe === 'f' ? 'référente' : 'référent'} ${referents.get(conf.departementNumero).email}`)
   .style(styleConf)
   .style({

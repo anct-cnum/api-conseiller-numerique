@@ -47,6 +47,9 @@
     "replyTo": "conseiller-numerique@anct.gouv.fr",
     "structure": {
       "accountsRelaunchDelay": 7
+    },
+    "admin": {
+      "accountsRelaunchDelay": 7
     }
   },
   "gandi": {

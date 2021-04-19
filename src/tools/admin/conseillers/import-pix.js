@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-const axios = require('axios');
 const CSVToJSON = require('csvtojson');
-const { Pool } = require('pg');
 const { execute } = require('../../utils');
 const { program } = require('commander');
 
 program
-  .option('-t, --token <token>', 'token api entreprise')
-  .option('-c, --csv <path>', 'CSV file path');
+.option('-t, --token <token>', 'token api entreprise')
+.option('-c, --csv <path>', 'CSV file path');
 
 program.parse(process.argv);
 
@@ -26,41 +24,43 @@ const readCSV = async filePath => {
 
 function removeAccentsRegex(string = '') {
   const reg = string.replace(/[á,à,ä]/g, 'a')
-    .replace(/[é,è,ê,ë]/g, 'e')
-    .replace(/[í,ï]/g, 'i')
-    .replace(/[ó,ö,ò]/g, 'o')
-    .replace(/[ü,ú,ù]/g, 'u');
+  .replace(/[é,è,ê,ë]/g, 'e')
+  .replace(/[í,ï]/g, 'i')
+  .replace(/[ó,ö,ò]/g, 'o')
+  .replace(/[ü,ú,ù]/g, 'u');
   //console.log(reg);
   return reg;
 }
 
 function diacriticSensitiveRegex(string = '') {
   const reg = string.replace(/a/g, '[a,á,à,ä]')
-    .replace(/e/g, '[e,é,è,ê,ë]')
-    .replace(/i/g, '[i,í,ï]')
-    .replace(/o/g, '[o,ó,ö,ò]')
-    .replace(/u/g, '[u,ü,ú,ù]');
+  .replace(/e/g, '[e,é,è,ê,ë]')
+  .replace(/i/g, '[i,í,ï]')
+  .replace(/o/g, '[o,ó,ö,ò]')
+  .replace(/u/g, '[u,ü,ú,ù]');
   //console.log(reg);
   return reg;
 }
 
 execute(async ({ db, logger }) => {
-  let j=0;
+  let j = 0;
   const insertPix = async pix => {
     try {
       // 1- Chercher avec nom et prénom (ignorer casse et accents)
       // Si ça match, on stocke
       const match = await db.collection('conseillers').findOne({
-        nom : { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`)), $options: "i" },
-        prenom : { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`)), $options: "i" },
+        nom: { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`)), $options: 'i' },
+        prenom: { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`)), $options: 'i' },
       });
 
-//      const match = await db.collection('conseillers').findOne({
-//        $text: { $search: `${pix.nom} ${pix.prenom}`, $caseSensitive: true }
-//      });
+      //      const match = await db.collection('conseillers').findOne({
+      //        $text: { $search: `${pix.nom} ${pix.prenom}`, $caseSensitive: true }
+      //      });
       if (match) {
         logger.info(`OK;${match.nom};${match.prenom};${pix.nom};${pix.prenom};${pix.id};${match._id}`);
-        //if (!new RegExp(`^${pix.nom}`, 'i').test(match.nom) || !new RegExp(`^${pix.prenom}`, 'i').test(match.prenom)) console.log(` no Match ! ${match.nom} ${match.prenom} ${match.idPG} ${pix.nom} ${pix.prenom} ${pix.id}`);
+        //if (!new RegExp(`^${pix.nom}`, 'i').test(match.nom)
+        //  || !new RegExp(`^${pix.prenom}`, 'i').test(match.prenom)) {
+        //  console.log(` no Match ! ${match.nom} ${match.prenom} ${match.idPG} ${pix.nom} ${pix.prenom} ${pix.id}`)};
 
         // Import dans Mongo
 
@@ -103,7 +103,7 @@ execute(async ({ db, logger }) => {
 
   const replies = await readCSV(program.csv);
 
-  let i=0;
+  let i = 0;
   for (const reply of replies) {
     const nom = reply['Nom du Participant'].replace(/\s/g, '');
     const prenom = reply['Prénom du Participant'].replace(/\s/g, '');
@@ -120,7 +120,7 @@ execute(async ({ db, logger }) => {
     //logger.info(nom + ' ' + prenom + ' ' + partage + ' ' + palier);
     try {
       if (partage === 'Oui') {
-        await insertPix( {
+        await insertPix({
           nom: nom,
           prenom: prenom,
           id: id,

@@ -13,7 +13,7 @@ const { execute } = require('../../../utils');
 
 const doCreateUser = async (db, feathers, dbName, _id) => {
   return new Promise(async resolve => {
-    const structure = await db.collection('structures').findOne({ _id: _id });
+    const structure = await db.collection('structures').findOne({ _id: _id, statut: 'VALIDATION_COSELEC' });
     await feathers.service('users').create({
       name: structure.contactEmail,
       password: uuidv4(), // mandatory param
@@ -71,22 +71,33 @@ execute(async ({ feathers, db, logger, exit }) => {
     await doCreateUser(db, feathers, dbName, _id);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('structures').find({ userCreated: false }).toArray();
-    for (const idx in structures) {
-      const structure = structures[idx];
-      const count = await db.collection('misesEnRelation').countDocuments({ 'structure': {
-        '$ref': `structures`,
-        '$id': structure._id,
-        '$db': dbName
-      } });
-      if (count > 0) {
-        await doCreateUser(db, feathers, dbName, structure._id);
-        usersCreatedCount++;
-        if (usersCreatedCount === limit) {
-          quit(usersCreatedCount);
+    const structures = await db.collection('structures').find({ userCreated: false, statut: 'VALIDATION_COSELEC' }).toArray();
+    let promises = [];
+    structures.forEach(structure => {
+      const p = new Promise(async (resolve, reject) => {
+        const count = await db.collection('misesEnRelation').countDocuments({ 'structure': {
+          '$ref': `structures`,
+          '$id': structure._id,
+          '$db': dbName
+        } });
+        if (count > 0) {
+          doCreateUser(db, feathers, dbName, structure._id).then(() => {
+            usersCreatedCount++;
+            resolve();
+            if (usersCreatedCount === limit) {
+              quit(usersCreatedCount);
+            }
+          }).catch(e => {
+            logger.error(e);
+            reject();
+          });
+        } else {
+          resolve();
         }
-      }
-    }
+      });
+      promises.push(p);
+    });
+    await Promise.all(promises);
   }
 
   quit(usersCreatedCount);

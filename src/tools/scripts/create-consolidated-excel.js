@@ -11,8 +11,7 @@ const xl = require('excel4node'); // Ecrire du Excel
 program
 .option('-r, --repertoire <repertoire>', 'répertoire')
 .option('-c, --coselec <coselec>', 'coselec')
-.option('-v, --revision <revision>', 'révision')
-.option('-f, --file <file>', 'Excel file path');
+.option('-v, --revision <revision>', 'révision');
 
 program.parse(process.argv);
 
@@ -87,146 +86,9 @@ execute(async ({ db, logger }) => {
     }
   };
 
-  const buildWorksheet = (ws, structures, conf) => {
-    ws.addImage({
-      image: fs.readFileSync(path.resolve(__dirname, './logo-cn.jpg')),
-      type: 'picture',
-      position: {
-        type: 'twoCellAnchor',
-        from: {
-          col: 1,
-          colOff: 0,
-          row: 1,
-          rowOff: 0,
-        },
-        to: {
-          col: 3,
-          colOff: 0,
-          row: 5,
-          rowOff: 0,
-        },
-      },
-    });
-
-    ws.cell(1, 1, 1, 16, true)
-    .string(conf.titre)
-    .style(styleConf)
-    .style(
-      {
-        font: {
-          size: 14,
-          bold: true,
-        },
-        alignment: {
-          wrapText: true,
-          horizontal: 'center',
-          vertical: 'center',
-        },
-        fill: { // §18.8.20 fill (Fill)
-          type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
-          patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-          bgColor: '#E9EDF7', // HTML style hex value. defaults to black
-          fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
-        }
-      });
-
-
-    // Doc title
-    ws.row(1).setHeight(30);
-
-    ws.cell(2, 1, 2, 16, true)
-    .string('FICHIER PRÉFETS CONSOLIDÉ')
-    .style(styleConf)
-    .style(
-      {
-        font: {
-        //color: '#000091',
-          size: 14,
-          bold: true,
-        },
-        alignment: {
-          wrapText: true,
-          horizontal: 'center',
-        },
-        fill: { // §18.8.20 fill (Fill)
-          type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
-          patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-          bgColor: '#E9EDF7', // HTML style hex value. defaults to black
-          fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
-        }
-      });
-
-    ws.cell(3, 1, 4, 16, true)
-    .string('')
-    .style(
-      {
-        font: {
-          size: 14,
-          bold: true,
-        },
-        alignment: {
-          wrapText: true,
-          horizontal: 'center',
-          vertical: 'center',
-        },
-        fill: { // §18.8.20 fill (Fill)
-          type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
-          patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-          bgColor: '#E9EDF7', // HTML style hex value. defaults to black
-          fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
-        }
-      });
-
-    ws.row(5).setHeight(30);
-
-    ws.cell(5, 1, 5, 16, true)
-    .string('')
-    .style(
-      {
-        font: {
-          size: 14,
-          bold: true,
-        },
-        alignment: {
-          wrapText: true,
-          horizontal: 'center',
-          vertical: 'center',
-        },
-        fill: { // §18.8.20 fill (Fill)
-          type: 'pattern', // Currently only 'pattern' is implemented. Non-implemented option is 'gradient'
-          patternType: 'solid', //§18.18.55 ST_PatternType (Pattern Type)
-          bgColor: '#E9EDF7', // HTML style hex value. defaults to black
-          fgColor: '#E9EDF7' // HTML style hex value. defaults to black.
-        }
-      });
-
-
-    ws.cell(6, 1, 6, 16, true)
-    .string(program.revision ? `Version ${program.revision}` : '')
-    .style(styleConf)
-    .style({
-      alignment: {
-        horizontal: 'left'
-      }
-    });
-
-    // Total des affectations
-    ws.cell(12, 7, 12, 7, true)
-    .string('')
-    .style(styleConf)
-    .style({
-      font: {
-      //color: '#FF0000',
-      //bold: true
-      },
-      alignment: {
-        horizontal: 'right'
-      }
-    });
-
+  const buildWorksheet = (ws, structures) => {
     // List Header
-
-    const start = 13;
+    const start = 1;
 
     const styleVertical = {
       alignment: {
@@ -350,8 +212,44 @@ execute(async ({ db, logger }) => {
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    // Formules
+    ws.column(20).setWidth(50);
+    ws.cell(start, 20)
+    .string('Raison Sociale')
+    .style(styleHeaderConf)
+    .style(styleVertical);
 
+    ws.column(21).setWidth(20);
+    ws.cell(start, 21)
+    .string('Commune INSEE')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(22).setWidth(20);
+    ws.cell(start, 22)
+    .string('Statut SA')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(23).setWidth(20);
+    ws.cell(start, 23)
+    .string('Coselec précédent')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(24).setWidth(20);
+    ws.cell(start, 24)
+    .string('Avis Coselec précédent')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(25).setWidth(20);
+    ws.cell(start, 25)
+    .string('ZRR')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    // Formules
+ 
     ws.cell(start - 1, 11, start - 1, 11, true)
     .formula(`SUBTOTAL(109,K${start + 1}:K${start + structures.length})`)
     .style(styleConf)
@@ -376,10 +274,12 @@ execute(async ({ db, logger }) => {
 
     ws.row(start).filter();
 
-    // Add all structures
+    // Fin des headers
+
+    // Toutes les tructures
     structures.forEach(function(s, i) {
-      let height = s.commentaire === '' ? 1 : Math.ceil(s.commentaire.length/80);
-      ws.row(i + start + 1).setHeight(height*30);
+      let height = s.commentaire === '' ? 1 : Math.ceil(s.commentaire.length / 80);
+      ws.row(i + start + 1).setHeight(height * 30);
       ws.cell(i + start + 1, 1)
       .string(String(s.id))
       .style(styleConf);
@@ -570,7 +470,77 @@ execute(async ({ db, logger }) => {
           }
         });
 
-      for (let j=1; j < 19; j++) {
+      ws.cell(i + start + 1, 20)
+      .string(s.raisonSociale)
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 21)
+      .string(s.communeInsee)
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 22)
+      .string(s.statut)
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 23)
+      .string(s?.coselecPrecedent?.numero ? s.coselecPrecedent.numero : '')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 24)
+      .string(s?.coselecPrecedent?.avisCoselec ? s.coselecPrecedent.avisCoselec : '')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      let estZRR;
+
+      if (s.hasOwnProperty('estZRR')) {
+        estZRR = s.estZRR ? 'OUI' : 'NON';
+      } else {
+        estZRR = '';
+      }
+
+      ws.cell(i + start + 1, 25)
+      .string(estZRR)
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      // Fin des valeurs
+
+      for (let j = 1; j < 19; j++) {
         let cell1 = xl.getExcelCellRef(i + start + 1, j);
         ws.addConditionalFormattingRule(cell1, {
           type: 'expression',
@@ -622,28 +592,28 @@ execute(async ({ db, logger }) => {
 
     styleVert = wb.createStyle({
       fill: {
-        type:'pattern',
-        patternType:'solid',
-        bgColor:'#63BE7B',
-        fgColor:'#63BE7B',
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#63BE7B',
+        fgColor: '#63BE7B',
       },
     });
 
     styleOrange = wb.createStyle({
       fill: {
-        type:'pattern',
-        patternType:'solid',
-        bgColor:'#FFEB84',
-        fgColor:'#FFEB84',
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#FFEB84',
+        fgColor: '#FFEB84',
       },
     });
 
     styleRouge = wb.createStyle({
       fill: {
-        type:'pattern',
-        patternType:'solid',
-        bgColor:'#F8696B',
-        fgColor:'#F8696B',
+        type: 'pattern',
+        patternType: 'solid',
+        bgColor: '#F8696B',
+        fgColor: '#F8696B',
       },
     });
 
@@ -656,16 +626,7 @@ execute(async ({ db, logger }) => {
       }
     });
 
-    const confPubliques = {
-      titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
-      departement: `Département`,
-      departementNumero: '',
-      nombre: `Nombre de structures publiques candidates : ${structures.length}`,
-      liste: 'Liste A : Structures publiques',
-      accords: true
-    };
-
-    buildWorksheet(ws1, structures, confPubliques);
+    buildWorksheet(ws1, structures);
 
     return Promise.resolve(wb);
   };
@@ -683,10 +644,10 @@ execute(async ({ db, logger }) => {
 
   const processStructure = async s => {
     // On ne conserve que les avis positifs
-//    if (s.avis !== 'POSITIF') {
-//      logger.info(`REJETEE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
-//      return;
-//    }
+    //    if (s.avis !== 'POSITIF') {
+    //      logger.info(`REJETEE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
+    //      return;
+    //    }
 
     const match = await db.collection('structures').findOne({ idPG: s.id });
 
@@ -694,10 +655,41 @@ execute(async ({ db, logger }) => {
     if (match) {
       // On récupère le type de la structure
       s.type = types[match.type] ? types[match.type] : '';
+
+      // Département et région
       const depReg = codePostal2departementRegion(String(match.codePostal));
       s.departement = depReg.dep_name;
       s.region = depReg.region_name;
+
+      // Siret
       s.siret = match.siret;
+
+      // Statut
+      s.statut = match.statut;
+
+      // ZRR
+      s.estZRR = match.estZRR;
+
+      // Commune
+      s.nomCommune = match.nomCommune;
+
+      // France Services
+      s.estLabelliseFranceServices = match.estLabelliseFranceServices;
+
+      // Raison sociale
+      s.raisonSociale = match?.insee?.entreprise?.raison_sociale ?
+        match?.insee?.entreprise?.raison_sociale : '';
+
+      // Commune INSEE
+      s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
+        match?.insee?.etablissement?.commune_implantation?.value : '';
+
+      // Coselec précédent
+      if (match.coselec && match.coselec.length > 0) {
+        s.coselecPrecedent = match.coselec.slice(-1)[0];
+      } else {
+        s.coselecPrecedent = '';
+      }
 
       structures.push(s);
 
@@ -709,21 +701,59 @@ execute(async ({ db, logger }) => {
       if (match) {
         // On récupère le type de la structure
         s.type = types[match.type] ? types[match.type] : '';
+
+        // On récupère l'id Postgres
         s.id = match.idPG;
+
+        // Département et région
         const depReg = codePostal2departementRegion(String(match.codePostal));
         s.departement = depReg.dep_name;
         s.region = depReg.region_name;
+
+        // Statut
+        s.statut = match.statut;
+
+        // ZRR
+        s.estZRR = match.estZRR;
+
+        // Commune
+        s.nomCommune = match.nomCommune;
+
+        // Raison sociale
+        s.raison_sociale = match?.insee?.entreprise?.raison_sociale ?
+          match?.insee?.entreprise?.raison_sociale : '';
+
+        // Commune INSEE
+        s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
+          match?.insee?.etablissement?.commune_implantation?.value : '';
+
+        // Coselec précédent
+        if (match.coselec && match.coselec.length > 0) {
+          s.coselecPrecedent = match.coselec.slice(-1)[0];
+        } else {
+          s.coselecPrecedent = '';
+        }
 
         structures.push(s);
 
         logger.info(`POSITIFSIRET,${s.id},${s.siret},${s.ligne},${s.fichier}`);
       } else {
+        // Pour le moment, on garde telles quelles
+        // les structures non inscrites
+        // pour les laisser dans le fichier Coselec
+        // Quand le fichier Coselec sera généré à partir de l'appli
+        // ça ne sera plus possible
         structures.push(s);
         logger.info(`SIRETNONTROUVE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
       }
     } else {
-        structures.push(s); // Pour le moment on conserve les SA sans compte
-        logger.info(`INTROUVABLE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
+      // Pour le moment, on garde telles quelles
+      // les structures non inscrites
+      // pour les laisser dans le fichier Coselec
+      // Quand le fichier Coselec sera généré à partir de l'appli
+      // ça ne sera plus possible
+      structures.push(s);
+      logger.info(`INTROUVABLE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
     }
   };
 
@@ -742,7 +772,8 @@ execute(async ({ db, logger }) => {
     const AVIS = 9;
     const COMMENTAIRE = 10;
 
-    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f); // xxx utiliser le departement+version
+    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f);
+
     for await (const worksheetReader of workbookReader) {
       let i = 0;
       for await (const row of worksheetReader) {
@@ -760,7 +791,7 @@ execute(async ({ db, logger }) => {
 
         await processStructure({
           fichier: f, // Nom du fichier, pour log et audit
-          ligne: i+1, // Ligne dans le fichier Excel, pour log et audit
+          ligne: i + 1, // Ligne dans le fichier Excel, pour log et audit
           id: ~~row.getCell(ID).value,
           siret: row.getCell(SIRET).text,
           nom: row.getCell(NOM).text,

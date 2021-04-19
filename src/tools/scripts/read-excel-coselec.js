@@ -15,7 +15,6 @@ execute(async ({ db, logger }) => {
 
   const processStructure = async s => {
     const match = await db.collection('structures').findOne({ idPG: s.id });
-    // xxx mode dryrun pour valider le fichier Excel
 
     // Si on a un id
     if (s.id !== null && match) {
@@ -24,16 +23,18 @@ execute(async ({ db, logger }) => {
       const filter = { idPG: s.id };
       const updateDoc = {
         $set: {
-          estLabelliseFranceServices: s.labelFranceServices,
-          nombreConseillersPrefet: s.nombreConseillers,
-          nombreConseillersCoselec: s.nombreConseillersCoselec,
-          avisPrefet: s.avis,
-          commentairePrefet: s.commentaire,
-          avisCoselec: s.avisCoselec,
-          observationsReferent: s.observationsReferent,
-          prioritaireCoselec: s.prioritaireCoselec,
           updatedAt: new Date(),
         },
+        $push: {
+          coselec: {
+            nombreConseillersCoselec: s.nombreConseillersCoselec,
+            avisCoselec: s.avisCoselec,
+            observationsReferent: s.observationsReferent,
+            prioritaireCoselec: s.prioritaireCoselec,
+            numero: s.numeroCoselec,
+            insertedAt: new Date()
+          },
+        }
       };
 
       // xxx Vérifier le SIRET avec l'API Entreprise
@@ -61,15 +62,17 @@ execute(async ({ db, logger }) => {
         const filter = { siret: s.siret };
         const updateDoc = {
           $set: {
-            estLabelliseFranceServices: s.labelFranceServices,
-            nombreConseillersPrefet: s.nombreConseillers,
-            nombreConseillersCoselec: s.nombreConseillersCoselec,
-            avisPrefet: s.avis,
-            commentairePrefet: s.commentaire,
-            avisCoselec: s.avisCoselec,
-            observationsReferent: s.observationsReferent,
-            prioritaireCoselec: s.prioritaireCoselec,
             updatedAt: new Date(),
+          },
+          $push: {
+            coselec: {
+              nombreConseillersCoselec: s.nombreConseillersCoselec,
+              avisCoselec: s.avisCoselec,
+              observationsReferent: s.observationsReferent,
+              prioritaireCoselec: s.prioritaireCoselec,
+              numero: s.numeroCoselec,
+              insertedAt: new Date()
+            },
           }
         };
 
@@ -95,15 +98,15 @@ execute(async ({ db, logger }) => {
     const ID = 1;
     const SIRET = 2;
     const NOM = 3;
-    const LABEL_FRANCE_SERVICES = 7;
-    const NOMBRE_CONSEILLERS = 8;
-    const AVIS = 9;
-    const COMMENTAIRE = 10;
-    const OBSERVATIONS_REFERENT = 11;
-    const AVIS_COSELEC = 13;
-    const NOMBRE_CONSEILLERS_COSELEC = 14;
-    const PRIORITAIRE_COSELEC = 15;
-    const NUMERO_COSELEC = 16;
+    const LABEL_FRANCE_SERVICES = 10;
+    const NOMBRE_CONSEILLERS = 13;
+    const AVIS = 14;
+    const COMMENTAIRE = 15;
+    const OBSERVATIONS_REFERENT = 16;
+    const AVIS_COSELEC = 18;
+    const NOMBRE_CONSEILLERS_COSELEC = 19;
+    const PRIORITAIRE_COSELEC = 20;
+    const NUMERO_COSELEC = 21;
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
 
