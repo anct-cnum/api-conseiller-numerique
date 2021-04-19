@@ -91,7 +91,7 @@ execute(async ({ feathers, db, logger, exit }) => {
           }).catch(e => {
             logger.error(e);
             reject();
-          })
+          });
         } else {
           resolve();
         }
