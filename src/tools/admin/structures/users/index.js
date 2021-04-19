@@ -88,7 +88,7 @@ execute(async ({ feathers, db, logger, exit }) => {
             if (usersCreatedCount === limit) {
               quit(usersCreatedCount);
             }
-          }).catch((e) => {
+          }).catch(e => {
             logger.error(e);
             reject();
           })
