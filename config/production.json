@@ -29,6 +29,9 @@
     "replyTo": "SMTP_REPLYTO",
     "structure": {
       "accountsRelaunchDelay": "SMTP_STRUCTURE_ACCOUNTRELAUNCHDELAY"
+    },
+    "admin": {
+      "accountsRelaunchDelay": "SMTP_ADMIN_ACCOUNTRELAUNCHDELAY"
     }
   },
   "gandi": {
