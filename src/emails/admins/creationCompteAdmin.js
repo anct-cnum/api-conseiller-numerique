@@ -40,7 +40,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         admin.name,
         {
-          subject: 'Créer votre compte administrateur Conseiller Numérique France services',
+          subject: 'Créez votre compte administrateur Conseiller Numérique France services',
           body: await render(admin),
         },
       )
