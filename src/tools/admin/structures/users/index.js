@@ -98,7 +98,6 @@ execute(async ({ feathers, db, logger, exit }) => {
       });
       promises.push(p);
     }
-    console.log(promises.length)
     await Promise.all(promises);
   }
 
