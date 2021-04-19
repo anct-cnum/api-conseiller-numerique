@@ -73,6 +73,7 @@ execute(async ({ feathers, db, logger, exit }) => {
   } else {
     const structures = await db.collection('structures').find({ userCreated: false, statut: 'VALIDATION_COSELEC' }).toArray();
     let promises = [];
+    /*eslint no-loop-func: "error"*/
     for (const idx in structures) {
       const p = new Promise(async (resolve, reject) => {
         const structure = structures[idx];
