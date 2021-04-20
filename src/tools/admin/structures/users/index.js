@@ -15,7 +15,7 @@ const doCreateUser = async (db, feathers, dbName, _id) => {
   return new Promise(async resolve => {
     const structure = await db.collection('structures').findOne({ _id: _id, statut: 'VALIDATION_COSELEC' });
     await feathers.service('users').create({
-      name: structure.contactEmail,
+      name: structure.contactEmail.toLowerCase(),
       password: uuidv4(), // mandatory param
       roles: Array('structure'),
       entity: {
