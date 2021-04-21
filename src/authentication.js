@@ -3,7 +3,7 @@ const { LocalStrategy } = require('@feathersjs/authentication-local');
 const { expressOauth } = require('@feathersjs/authentication-oauth');
 
 class InsensitiveLocalStrategy extends LocalStrategy {
-  async getEntityQuery(query, params) {
+  async getEntityQuery(query) {
     query.name = query.name.toLowerCase();
     return {
       ...query,
