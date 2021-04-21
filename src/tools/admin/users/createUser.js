@@ -19,7 +19,7 @@ execute(async ({ feathers, db, logger, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const username = program.username;
+  const username = program.username.toLowerCase();
   const password = program.password;
   const role = program.role;
   const id = program.id;
