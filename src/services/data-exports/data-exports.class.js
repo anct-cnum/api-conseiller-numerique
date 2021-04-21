@@ -4,7 +4,7 @@ const { ObjectID } = require('mongodb');
 const moment = require('moment');
 
 exports.DataExports = class DataExports {
-  constructor (options, app) {
+  constructor(options, app) {
     this.options = options || {};
 
     let db;
@@ -34,19 +34,43 @@ exports.DataExports = class DataExports {
       await Promise.all(promises);
       res.send();
     });
+
+    app.get('/exports/structures.csv', async (req, res) => {
+      const structures = await db.collection('structures').find().toArray();
+      let promises = [];
+      // eslint-disable-next-line max-len
+      res.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC\n');
+
+      structures.forEach(structure => {
+        promises.push(new Promise(async resolve => {
+          const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
+          const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
+          try {
+            // eslint-disable-next-line max-len
+            res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0}\n`);
+          } catch (e) {
+            // TODO : logger
+          }
+          resolve();
+        }));
+      });
+
+      await Promise.all(promises);
+      res.send();
+    });
   }
 
-  async find (params) {
+  async find(params) {
     return [];
   }
 
-  async get (id, params) {
+  async get(id, params) {
     return {
       id, text: `A new message with ID: ${id}!`
     };
   }
 
-  async create (data, params) {
+  async create(data, params) {
     if (Array.isArray(data)) {
       return Promise.all(data.map(current => this.create(current, params)));
     }
@@ -54,15 +78,15 @@ exports.DataExports = class DataExports {
     return data;
   }
 
-  async update (id, data, params) {
+  async update(id, data, params) {
     return data;
   }
 
-  async patch (id, data, params) {
+  async patch(id, data, params) {
     return data;
   }
 
-  async remove (id, params) {
+  async remove(id, params) {
     return { id };
   }
 };
