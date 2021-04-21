@@ -37,6 +37,7 @@ execute(async ({ logger, db }) => {
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
+
   // eslint-disable-next-line max-len
   file.write('Email\n');
 
@@ -52,7 +53,7 @@ execute(async ({ logger, db }) => {
     }));
   });
   promises.push(new Promise(async resolve => {
-    file.close(file.fd, function() {
+    file.close(function() {
       resolve();
     });
   }));
