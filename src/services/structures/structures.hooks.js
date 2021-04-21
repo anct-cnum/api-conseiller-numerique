@@ -8,7 +8,7 @@ const search = require('feathers-mongodb-fuzzy-search');
 */
 module.exports = {
   before: {
-    all: [],
+    all: authenticate('jwt'),
     find: [async context => {
       if (context.params.query.createdAt && context.params.query.createdAt.$gt) {
         context.params.query.createdAt.$gt = parseStringToDate(context.params.query.createdAt.$gt);
