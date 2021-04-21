@@ -13,6 +13,7 @@ exports.Stats = class Stats extends Service {
         let stats = {};
         stats.structuresCount = await db.collection('structures').countDocuments();
         stats.conseillersCount = await db.collection('conseillers').countDocuments();
+        stats.matchingsCount = await db.collection('misesEnRelation').countDocuments();
         stats.conseillersRecrutesCount = await db.collection('misesEnRelation').countDocuments({ statut: 'recrutee' });
         res.send(stats);
       });
