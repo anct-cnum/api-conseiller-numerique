@@ -14,7 +14,6 @@ cli.description('Export structures')
 .parse(process.argv);
 
 execute(async ({ logger, db, exit }) => {
-
   let query = {};
   let count = 0;
 
@@ -43,7 +42,6 @@ execute(async ({ logger, db, exit }) => {
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
-
   // eslint-disable-next-line max-len
   file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC\n');
 
