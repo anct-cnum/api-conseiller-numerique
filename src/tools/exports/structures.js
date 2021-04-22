@@ -58,7 +58,6 @@ execute(async ({ logger, db, exit }) => {
           // eslint-disable-next-line max-len
           file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.estLabelliseFranceServices ? 'oui' : 'non'};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''}\n`);
         } catch (e) {
-          console.log(e)
           logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG}`);
         }
         count++;
