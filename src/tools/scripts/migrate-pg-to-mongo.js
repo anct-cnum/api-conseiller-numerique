@@ -23,11 +23,13 @@ execute(async ({ db, logger }) => {
         siret: s.siret === null ? null : `${s.siret}`,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
-        contactPrenom: s.contact_first_name,
-        contactNom: s.contact_last_name,
-        contactFonction: s.contact_job,
-        contactEmail: s.contact_email,
-        contactTelephone: s.contact_phone,
+        contact: {
+          prenom: s.contact_first_name,
+          nom: s.contact_last_name,
+          fonction: s.contact_job,
+          email: s.contact_email,
+          telephone: s.contact_phone
+        },
         codePostal: s.zip_code,
         location: s.location,
         nomCommune: s.geo_name,
