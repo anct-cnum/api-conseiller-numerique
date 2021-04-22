@@ -25,7 +25,7 @@ execute(async ({ logger, db }) => {
     },
     {
       $group: {
-        _id: '$contactEmail'
+        _id: '$contact.email'
       }
     }
   ]).toArray();
@@ -46,7 +46,7 @@ execute(async ({ logger, db }) => {
       try {
         file.write(`${structure._id}\n`);
       } catch (e) {
-        logger.error(`Une erreur est survenue sur la structure contactEmail=${structure._id}`);
+        logger.error(`Une erreur est survenue sur la structure contact.email=${structure._id}`);
       }
       count++;
       resolve();

@@ -18,7 +18,7 @@ module.exports = {
       db.collection('structures').createIndex({
         'siret': 'text',
         'nom': 'text',
-        'contactEmail': 'text',
+        'contact.email': 'text',
       }, { name: 'bo-search-fulltext' }),
     ]);
   },
