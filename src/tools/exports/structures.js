@@ -50,9 +50,9 @@ execute(async ({ logger, db, exit }) => {
       const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
       let matchingsValidated = 0;
       if (cli.matchingValidated) {
-        matchingsValidated = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id), 'statut': 'recrutee' });
+        matchingsValidated = await db.collection('misesEnRelation').findOne({ 'structure.$id': new ObjectID(structure._id), 'statut': 'recrutee' });
       }
-      if (!cli.matchingValidated || matchingsValidated > 0) {
+      if (!cli.matchingValidated || matchingsValidated !== null) {
         const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
         try {
           // eslint-disable-next-line max-len
