@@ -52,7 +52,11 @@ execute(async ({ logger, db }) => {
       resolve();
     }));
   });
-
+  promises.push(new Promise(async resolve => {
+    file.close(function() {
+      resolve();
+    });
+  }));
   await Promise.all(promises);
   logger.info(`${count} structures exported`);
   file.close();
