@@ -2,7 +2,7 @@
 const { DataExports } = require('./data-exports.class');
 const hooks = require('./data-exports.hooks');
 
-module.exports = function (app) {
+module.exports = function(app) {
   const options = {
     paginate: app.get('paginate')
   };
