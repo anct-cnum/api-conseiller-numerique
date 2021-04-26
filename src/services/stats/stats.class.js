@@ -14,6 +14,16 @@ exports.Stats = class Stats extends Service {
         stats.structuresCount = await db.collection('structures').countDocuments();
         stats.conseillersCount = await db.collection('conseillers').countDocuments();
         stats.matchingsCount = await db.collection('misesEnRelation').countDocuments();
+        stats.structuresEnAttenteCount = await db.collection('structures').countDocuments({ 'userCreated': false });
+        stats.structuresValideesCount = await db.collection('structures').countDocuments({ 'statut': 'VALIDATION_COSELEC' });
+        stats.structuresActiveesCount = await db.collection('structures').countDocuments({ 'userCreated': true });
+        stats.structuresQuiRecrutentCount = await db.collection('misesEnRelation').aggregate(
+          [
+            { $match: { statut: 'recrutee' } },
+            { $group: { _id: '$structureObj._id' } },
+            { $group: { _id: null, count: { $sum: 1 } } }
+          ]).toArray();
+        stats.structuresQuiRecrutentCount = stats.structuresQuiRecrutentCount[0].count;
         stats.conseillersRecrutesCount = await db.collection('misesEnRelation').countDocuments({ statut: 'recrutee' });
         res.send(stats);
       });
