@@ -3,21 +3,21 @@
 
 const { execute } = require('../utils');
 
-execute(async ({ db, logger }) => {
-  await db.collection('structures').update({ }, {
+execute(async ({ db }) => {
+  await db.collection('structures').updateMany({ }, {
     $unset: {
-      nombreConseillersPrefet : '',
+      nombreConseillersPrefet: '',
       avisPrefet: '',
       commentairePrefet: '',
       avisCoselec: '',
-      nombreConseillersCoselec : '',
-      observationsReferent : '',
-      prioritaireCoselec : '',
-      contactPrenom : '',
-      contactNom : '',
-      contactFonction : '',
-      contactEmail : '',
-      contactTelephone : ''
+      nombreConseillersCoselec: '',
+      observationsReferent: '',
+      prioritaireCoselec: '',
+      contactPrenom: '',
+      contactNom: '',
+      contactFonction: '',
+      contactEmail: '',
+      contactTelephone: ''
     },
   });
 });
