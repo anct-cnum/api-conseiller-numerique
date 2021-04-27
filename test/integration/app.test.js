@@ -1,7 +1,7 @@
 const assert = require('assert').strict;
 const axios = require('axios');
 const url = require('url');
-const app = require('../src/app');
+const app = require('../../src/app');
 
 const port = app.get('port') || 8998;
 const getUrl = pathname => url.format({
@@ -14,22 +14,27 @@ const getUrl = pathname => url.format({
 describe('Feathers application tests', () => {
   let server;
 
-  before(function(done) {
+  before(function (done) {
     server = app.listen(port);
     server.once('listening', () => done());
   });
 
-  after(function(done) {
+  after(function (done) {
     server.close(done);
   });
 
-  it('starts and shows the index page', async () => {
-    const { data } = await axios.get(getUrl());
+  it('starts and shows nothing on the index page', async () => {
+    try {
+      await axios.get(getUrl());
+      assert.fail('should never get here');
+    } catch (error) {
+      const { response } = error;
 
-    assert.ok(data.indexOf('<html lang="en">') !== -1);
+      assert.equal(response.status, 404);
+    }
   });
 
-  describe('404', function() {
+  describe('404', function () {
     it('shows a 404 HTML page', async () => {
       try {
         await axios.get(getUrl('path/to/nowhere'), {
