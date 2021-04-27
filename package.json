@@ -19,7 +19,7 @@
     "lint": "eslint src/. test/. --config .eslintrc.json --fix",
     "dev": "nodemon src/",
     "start": "node src/",
-    "mocha": "mocha test/ --recursive --exit",
+    "test:integration": "mocha test/integration --recursive --exit",
     "smtp:start": "docker rm cnum-smtp; docker run -d --name cnum-smtp -p 1025:1025 -p 8025:8025 mailhog/mailhog",
     "smtp:stop": "docker stop cnum-smtp"
   },
