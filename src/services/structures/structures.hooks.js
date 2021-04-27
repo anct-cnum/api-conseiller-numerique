@@ -8,8 +8,15 @@ const search = require('feathers-mongodb-fuzzy-search');
 */
 module.exports = {
   before: {
-    all: [authenticate('jwt')],
-    find: [search()],
+    all: authenticate('jwt'),
+    find: [async context => {
+      if (context.params.query.createdAt && context.params.query.createdAt.$gt) {
+        context.params.query.createdAt.$gt = parseStringToDate(context.params.query.createdAt.$gt);
+      }
+      if (context.params.query.createdAt && context.params.query.createdAt.$lt) {
+        context.params.query.createdAt.$lt = parseStringToDate(context.params.query.createdAt.$lt);
+      }
+    }, search()],
     get: [],
     create: [],
     update: [],
@@ -44,3 +51,11 @@ module.exports = {
     remove: []
   }
 };
+
+//Parse string to date
+function parseStringToDate(date) {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
+  return date;
+}

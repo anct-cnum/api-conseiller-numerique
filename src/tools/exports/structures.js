@@ -14,7 +14,6 @@ cli.description('Export structures')
 .parse(process.argv);
 
 execute(async ({ logger, db, exit }) => {
-
   let query = {};
   let count = 0;
 
@@ -43,22 +42,28 @@ execute(async ({ logger, db, exit }) => {
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
-
   // eslint-disable-next-line max-len
-  file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Nombre de conseillers validés par le COSELEC\n');
+  file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;Labelisée France Services;Raison sociale\n');
 
   structures.forEach(structure => {
     promises.push(new Promise(async resolve => {
       const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
       let matchingsValidated = 0;
       if (cli.matchingValidated) {
-        matchingsValidated = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id), 'statut': 'recrutee' });
+        matchingsValidated = await db.collection('misesEnRelation').findOne({ 'structure.$id': new ObjectID(structure._id), 'statut': 'recrutee' });
       }
-      if (!cli.matchingValidated || matchingsValidated > 0) {
+      if (!cli.matchingValidated || matchingsValidated !== null) {
         const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
         try {
+          let label = 'non renseigné';
+          if (structure?.estLabelliseFranceServices && structure.estLabelliseFranceServices === 'OUI') {
+            label = 'oui';
+          } else if (structure?.estLabelliseFranceServices && structure.estLabelliseFranceServices === 'NON') {
+            label = 'non';
+          }
+
           // eslint-disable-next-line max-len
-          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure.contactTelephone};${structure.contactEmail};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0}\n`);
+          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().numero : ''};${structure.estZRR ? 'oui' : 'non'};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''}\n`);
         } catch (e) {
           logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG}`);
         }
