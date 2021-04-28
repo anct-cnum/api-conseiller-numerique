@@ -21,7 +21,7 @@ const readCSV = async filePath => {
   }
 };
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
   const store = async (s, isZRR) => {
     const filter = {
       '_id': s._id,

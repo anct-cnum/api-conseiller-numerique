@@ -9,7 +9,7 @@ require('dotenv').config();
 
 const { execute } = require('../../utils');
 
-execute(async ({ feathers, logger, exit, app }) => {
+execute(__filename, async ({ feathers, logger, exit, app }) => {
 
   program.option('-p, --password <password>', 'password: clear text');
   program.option('-i, --id <id>', 'id: MongoDB ObjecID');

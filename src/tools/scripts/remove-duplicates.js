@@ -8,7 +8,7 @@ require('dotenv').config();
 
 const { execute } = require('../utils');
 
-execute(async ({ exit }) => {
+execute(__filename, async ({ exit }) => {
 
   program.option('-t, --table <table>', 'table');
   program.parse(process.argv);

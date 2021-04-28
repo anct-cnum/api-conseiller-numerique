@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const { execute } = require('../utils');
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
 
   let count = 0;
 

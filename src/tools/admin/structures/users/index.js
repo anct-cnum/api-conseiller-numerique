@@ -12,7 +12,7 @@ require('dotenv').config();
 const { execute } = require('../../../utils');
 
 const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
-  return new Promise(async resolve => {
+  return new Promise(async (resolve, reject) => {
     const structure = await db.collection('structures').findOne({ _id: _id, statut: 'VALIDATION_COSELEC' });
     try {
       await feathers.service('users').create({
@@ -32,15 +32,16 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
       await feathers.service('structures').patch(_id, {
         userCreated: true
       });
+      resolve();
     } catch (e) {
       Sentry.captureException(e);
-      logger.error(`Une erreur est survenue pour la structure ${structure?.siret}`);
+      logger.error(`Une erreur est survenue pour la structure id: ${structure._id} SIRET: ${structure?.siret}`);
+      reject(e);
     }
-    resolve();
   });
 };
 
-execute(async ({ feathers, db, logger, exit, Sentry }) => {
+execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
   program.option('-a, --all', 'all: toutes les structures');
   program.option('-l, --limit <limit>', 'limit: limite le nombre de structures à traiter', parseInt);
   program.option('-i, --id <id>', 'id: une seule structure');

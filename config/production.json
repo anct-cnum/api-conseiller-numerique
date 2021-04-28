@@ -41,6 +41,7 @@
   },
   "sentry": {
     "enabled": "SENTRY_ENABLED",
+    "environment": "SENTRY_ENVIRONMENT",
     "dsn": "SENTRY_DSN",
     "traceSampleRate": "SENTRY_TRACE_SAMPLE_RATE"
   }

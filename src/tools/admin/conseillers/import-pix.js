@@ -42,7 +42,7 @@ function diacriticSensitiveRegex(string = '') {
   return reg;
 }
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
   let j = 0;
   const insertPix = async pix => {
     try {

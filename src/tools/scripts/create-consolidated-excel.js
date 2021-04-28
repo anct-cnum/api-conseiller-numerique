@@ -24,7 +24,7 @@ for (const value of departements) {
 
 const structures = [];
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
 // Fichier Excel consolidé
 
   const codePostal2departementRegion = cp => {
@@ -249,7 +249,7 @@ execute(async ({ db, logger }) => {
     .style(styleVertical);
 
     // Formules
- 
+
     ws.cell(start - 1, 11, start - 1, 11, true)
     .formula(`SUBTOTAL(109,K${start + 1}:K${start + structures.length})`)
     .style(styleConf)

@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const { execute } = require('../utils');
 
-execute(async ({ db, logger, exit }) => {
+execute(__filename, async ({ db, logger, exit }) => {
   logger.info('Passes les noms d\'utilisateur en minuscule...');
   let count = 0;
   await db.collection('users').find({}, { 'name': 1 }).forEach(function(doc) {

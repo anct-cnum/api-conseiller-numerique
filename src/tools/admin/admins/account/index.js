@@ -12,7 +12,7 @@ cli.description('Send new account emails')
 .option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
 .parse(process.argv);
 
-execute(async ({ logger, db, app, emails }) => {
+execute(__filename, async ({ logger, db, app, emails }) => {
 
   let { type = 'send', siret, limit = 1, delay = 100 } = cli;
 
