@@ -11,7 +11,7 @@ require('dotenv').config();
 
 const { execute } = require('../../../utils');
 
-const doCreateUser = async (db, feathers, dbName, _id, logger) => {
+const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
   return new Promise(async resolve => {
     const structure = await db.collection('structures').findOne({ _id: _id, statut: 'VALIDATION_COSELEC' });
     try {
@@ -33,14 +33,14 @@ const doCreateUser = async (db, feathers, dbName, _id, logger) => {
         userCreated: true
       });
     } catch (e) {
+      Sentry.captureException(e);
       logger.error(`Une erreur est survenue pour la structure ${structure?.siret}`);
-      logger.error(e);
     }
     resolve();
   });
 };
 
-execute(async ({ feathers, db, logger, exit }) => {
+execute(async ({ feathers, db, logger, exit, Sentry }) => {
   program.option('-a, --all', 'all: toutes les structures');
   program.option('-l, --limit <limit>', 'limit: limite le nombre de structures à traiter', parseInt);
   program.option('-i, --id <id>', 'id: une seule structure');
@@ -72,7 +72,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     if (count > 0) {
       exit('Un utilisateur existe déjà pour cette structure');
     }
-    await doCreateUser(db, feathers, dbName, _id, logger);
+    await doCreateUser(db, feathers, dbName, _id, logger, Sentry);
     usersCreatedCount++;
   } else {
     const structures = await db.collection('structures').find({ userCreated: false, statut: 'VALIDATION_COSELEC' }).toArray();
@@ -85,13 +85,14 @@ execute(async ({ feathers, db, logger, exit }) => {
           '$db': dbName
         } });
         if (count > 0) {
-          doCreateUser(db, feathers, dbName, structure._id, logger).then(() => {
+          doCreateUser(db, feathers, dbName, structure._id, logger, Sentry).then(() => {
             usersCreatedCount++;
             resolve();
             if (usersCreatedCount === limit) {
               quit(usersCreatedCount);
             }
           }).catch(e => {
+            Sentry.captureException(e);
             logger.error(e);
             reject();
           });
