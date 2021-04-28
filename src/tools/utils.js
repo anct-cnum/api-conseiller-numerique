@@ -18,19 +18,23 @@ const mongodb = require('../mongodb');
 const createEmails = require('../emails/emails');
 const createMailer = require('../mailer');
 
-Sentry.init({
-  dsn: config().sentry.dsn,
+if (config().sentry.enabled === 'true') {
+  Sentry.init({
+    dsn: config().sentry.dsn,
 
-  // Set tracesSampleRate to 1.0 to capture 100%
-  // of transactions for performance monitoring.
-  // We recommend adjusting this value in production
-  tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
-});
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+  });
+}
 
 const f = feathers();
 const app = express(f);
 
-app.use(Sentry.Handlers.errorHandler());
+if (config().sentry.enabled === 'true') {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 app.configure(config);
 app.configure(mongodb);

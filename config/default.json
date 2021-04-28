@@ -58,6 +58,7 @@
     "domain": "conseiller-numerique.fr"
   },
   "sentry": {
+    "enabled": false,
     "dsn": "https://xxx@yyy.ingest.sentry.io/zzz",
     "traceSampleRate": 1
   }
