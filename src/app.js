@@ -2,11 +2,12 @@ const compress = require('compression');
 const helmet = require('helmet');
 const cors = require('cors');
 const logger = require('./logger');
+const Sentry = require('@sentry/node');
 
 const feathers = require('@feathersjs/feathers');
 const configuration = require('@feathersjs/configuration');
+const config = configuration();
 const express = require('@feathersjs/express');
-
 
 const middleware = require('./middleware');
 const services = require('./services');
@@ -17,10 +18,25 @@ const authentication = require('./authentication');
 
 const mongodb = require('./mongodb');
 
+if (config().sentry.enabled === 'true') {
+  Sentry.init({
+    dsn: config().sentry.dsn,
+
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+  });
+}
+
 const app = express(feathers());
 
+app.configure(config);
 
-app.configure(configuration());
+if (config().sentry.enabled === 'true') {
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 app.use(helmet({
   contentSecurityPolicy: false

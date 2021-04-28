@@ -2,7 +2,9 @@ const moment = require('moment');
 
 const feathers = require('@feathersjs/feathers');
 const configuration = require('@feathersjs/configuration');
+const config = configuration();
 const express = require('@feathersjs/express');
+const Sentry = require('@sentry/node');
 
 const middleware = require('../middleware');
 const services = require('../services');
@@ -16,10 +18,25 @@ const mongodb = require('../mongodb');
 const createEmails = require('../emails/emails');
 const createMailer = require('../mailer');
 
+if (config().sentry.enabled === 'true') {
+  Sentry.init({
+    dsn: config().sentry.dsn,
+
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+  });
+}
+
 const f = feathers();
 const app = express(f);
 
-app.configure(configuration());
+if (config().sentry.enabled === 'true') {
+  app.use(Sentry.Handlers.errorHandler());
+}
+
+app.configure(config);
 app.configure(mongodb);
 app.configure(middleware);
 app.configure(authentication);
@@ -36,8 +53,8 @@ module.exports = {
   capitalizeFirstLetter: string => string.charAt(0).toUpperCase() + string.slice(1),
   execute: async job => {
 
-    process.on('unhandledRejection', e => console.log(e));
-    process.on('uncaughtException', e => console.log(e));
+    process.on('unhandledRejection', e => Sentry.captureException(e));
+    process.on('uncaughtException', e => Sentry.captureException(e));
 
     const exit = async error => {
       if (error) {
@@ -51,7 +68,7 @@ module.exports = {
     let mailer = createMailer(app);
 
     const emails = createEmails(db, mailer);
-    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app });
+    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app, Sentry });
 
     try {
       let launchTime = new Date().getTime();

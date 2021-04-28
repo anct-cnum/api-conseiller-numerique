@@ -38,5 +38,10 @@
     "token": "GANDI_TOKEN",
     "endPoint": "GANDI_ENDPOINT",
     "domain": "GANDI_DOMAIN"
+  },
+  "sentry": {
+    "enabled": "SENTRY_ENABLED",
+    "dsn": "SENTRY_DSN",
+    "traceSampleRate": "SENTRY_TRACE_SAMPLE_RATE"
   }
 }
