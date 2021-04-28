@@ -11,32 +11,36 @@ require('dotenv').config();
 
 const { execute } = require('../../../utils');
 
-const doCreateUser = async (db, feathers, dbName, _id) => {
+const doCreateUser = async (db, feathers, dbName, _id, logger) => {
   return new Promise(async resolve => {
     const structure = await db.collection('structures').findOne({ _id: _id, statut: 'VALIDATION_COSELEC' });
-    await feathers.service('users').create({
-      name: structure?.contact?.email.toLowerCase(),
-      password: uuidv4(), // mandatory param
-      roles: Array('structure'),
-      entity: {
-        '$ref': `structures`,
-        '$id': _id,
-        '$db': dbName
-      },
-      token: uuidv4(),
-      mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
-      passwordCreated: false,
-      createdAt: new Date(),
-    });
-    await feathers.service('structures').patch(_id, {
-      userCreated: true
-    });
+    try {
+      await feathers.service('users').create({
+        name: structure?.contact?.email.toLowerCase(),
+        password: uuidv4(), // mandatory param
+        roles: Array('structure'),
+        entity: {
+          '$ref': `structures`,
+          '$id': _id,
+          '$db': dbName
+        },
+        token: uuidv4(),
+        mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
+        passwordCreated: false,
+        createdAt: new Date(),
+      });
+      await feathers.service('structures').patch(_id, {
+        userCreated: true
+      });
+    } catch (e) {
+      logger.error(`Une erreur est survenue pour la structure ${structure?.siret}`);
+      logger.error(e);
+    }
     resolve();
   });
 };
 
 execute(async ({ feathers, db, logger, exit }) => {
-
   program.option('-a, --all', 'all: toutes les structures');
   program.option('-l, --limit <limit>', 'limit: limite le nombre de structures à traiter', parseInt);
   program.option('-i, --id <id>', 'id: une seule structure');
@@ -68,7 +72,7 @@ execute(async ({ feathers, db, logger, exit }) => {
     if (count > 0) {
       exit('Un utilisateur existe déjà pour cette structure');
     }
-    await doCreateUser(db, feathers, dbName, _id);
+    await doCreateUser(db, feathers, dbName, _id, logger);
     usersCreatedCount++;
   } else {
     const structures = await db.collection('structures').find({ userCreated: false, statut: 'VALIDATION_COSELEC' }).toArray();
@@ -81,7 +85,7 @@ execute(async ({ feathers, db, logger, exit }) => {
           '$db': dbName
         } });
         if (count > 0) {
-          doCreateUser(db, feathers, dbName, structure._id).then(() => {
+          doCreateUser(db, feathers, dbName, structure._id, logger).then(() => {
             usersCreatedCount++;
             resolve();
             if (usersCreatedCount === limit) {
