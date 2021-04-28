@@ -33,8 +33,8 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
         userCreated: true
       });
     } catch (e) {
+      Sentry.captureException(e);
       logger.error(`Une erreur est survenue pour la structure ${structure?.siret}`);
-      logger.error(e);
     }
     resolve();
   });
