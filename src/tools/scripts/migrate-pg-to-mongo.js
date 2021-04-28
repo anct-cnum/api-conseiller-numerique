@@ -12,7 +12,7 @@ program.parse(process.argv);
 
 const pool = new Pool();
 
-execute(async ({ db, logger }) => {
+execute(async ({ db, logger, Sentry }) => {
   const moveStructure = async s => {
     const filter = { idPG: s.id };
 
@@ -191,6 +191,7 @@ execute(async ({ db, logger }) => {
       [program.limit]);
       return rows;
     } catch (error) {
+      Sentry.captureException(error);
       logger.info(`Erreur DB : ${error.message}`);
     }
   };
