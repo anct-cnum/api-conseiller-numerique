@@ -18,23 +18,8 @@ const mongodb = require('../mongodb');
 const createEmails = require('../emails/emails');
 const createMailer = require('../mailer');
 
-if (config().sentry.enabled === 'true') {
-  Sentry.init({
-    dsn: config().sentry.dsn,
-
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
-    tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
-  });
-}
-
 const f = feathers();
 const app = express(f);
-
-if (config().sentry.enabled === 'true') {
-  app.use(Sentry.Handlers.errorHandler());
-}
 
 app.configure(config);
 app.configure(mongodb);
@@ -46,22 +31,46 @@ app.hooks(appHooks);
 
 const logger = require('../logger');
 
+let transaction = null;
+
 module.exports = {
   delay: milliseconds => {
     return new Promise(resolve => setTimeout(() => resolve(), milliseconds));
   },
   capitalizeFirstLetter: string => string.charAt(0).toUpperCase() + string.slice(1),
-  execute: async job => {
+  execute: async (name, job) => {
+    if (config().sentry.enabled === 'true') {
+      Sentry.init({
+        dsn: config().sentry.dsn,
+        environment: config().sentry.environment,
 
-    process.on('unhandledRejection', e => Sentry.captureException(e));
-    process.on('uncaughtException', e => Sentry.captureException(e));
+        // Set tracesSampleRate to 1.0 to capture 100%
+        // of transactions for performance monitoring.
+        // We recommend adjusting this value in production
+        tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+      });
+      transaction = Sentry.startTransaction({
+        op: 'Lancement de script',
+        name: name,
+      });
+      app.use(Sentry.Handlers.errorHandler());
+      process.on('unhandledRejection', e => Sentry.captureException(e));
+      process.on('uncaughtException', e => Sentry.captureException(e));
+    } else {
+      process.on('unhandledRejection', e => logger.error(e));
+      process.on('uncaughtException', e => logger.error(e));
+    }
 
     const exit = async error => {
       if (error) {
+        Sentry.captureException(error);
         logger.error(error);
         process.exitCode = 1;
       }
-      process.exit();
+      transaction.finish();
+      setTimeout(() => {
+        process.exit();
+      }, 1000);
     };
 
     const db = await app.get('mongoClient');

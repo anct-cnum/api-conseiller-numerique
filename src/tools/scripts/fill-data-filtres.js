@@ -6,7 +6,7 @@ require('dotenv').config();
 
 const { execute } = require('../../../utils');
 
-execute(async ({ db, logger, exit }) => {
+execute(__filename, async ({ db, logger, exit }) => {
 
   logger.info('Complète les données des mises en relations pour les filtres...');
   let count = 0;

@@ -10,7 +10,7 @@ require('dotenv').config();
 
 const { execute } = require('../../utils');
 
-execute(async ({ feathers, db, logger, exit }) => {
+execute(__filename, async ({ feathers, db, logger, exit }) => {
 
   program.option('-u, --username <username>', 'username');
   program.option('-p, --password <password>', 'password');

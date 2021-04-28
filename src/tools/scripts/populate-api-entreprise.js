@@ -6,7 +6,7 @@ const { program } = require('commander');
 
 program.parse(process.argv);
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
   const store = async (s, insee) => {
     const filter = {
       '_id': s._id,

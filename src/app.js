@@ -21,6 +21,7 @@ const mongodb = require('./mongodb');
 if (config().sentry.enabled === 'true') {
   Sentry.init({
     dsn: config().sentry.dsn,
+    environment: config().sentry.environment,
 
     // Set tracesSampleRate to 1.0 to capture 100%
     // of transactions for performance monitoring.

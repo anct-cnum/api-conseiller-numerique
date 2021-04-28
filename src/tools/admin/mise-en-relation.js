@@ -9,7 +9,7 @@ const feathers = require('@feathersjs/feathers');
 
 program.parse(process.argv);
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
   const app = feathers().configure(configuration());
   const connection = app.get('mongodb');
   const database = connection.substr(connection.lastIndexOf('/') + 1);

@@ -7,7 +7,7 @@ const moment = require('moment');
 
 const { execute } = require('../utils');
 
-execute(async ({ logger, db }) => {
+execute(__filename, async ({ logger, db }) => {
   const miseEnrelations = await db.collection('misesEnRelation').find({ statut: 'recrutee' }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
   let promises = [];
 

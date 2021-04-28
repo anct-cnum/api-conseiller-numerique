@@ -12,7 +12,7 @@ program.parse(process.argv);
 
 const pool = new Pool();
 
-execute(async ({ db, logger, Sentry }) => {
+execute(__filename, async ({ db, logger, Sentry }) => {
   const moveStructure = async s => {
     const filter = { idPG: s.id };
 

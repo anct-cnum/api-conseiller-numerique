@@ -21,7 +21,7 @@ for (const value of departements) {
   deps.set(String(value.num_dep), value);
 }
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
   const processStructure = async s => {
     const match = await db.collection('structures').findOne({ idPG: s.id });
 

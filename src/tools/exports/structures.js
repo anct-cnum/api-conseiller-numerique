@@ -13,7 +13,7 @@ cli.description('Export structures')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
-execute(async ({ logger, db, exit }) => {
+execute(__filename, async ({ logger, db, exit }) => {
   let query = {};
   let count = 0;
 

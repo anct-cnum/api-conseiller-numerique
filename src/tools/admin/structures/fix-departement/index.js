@@ -6,7 +6,7 @@ require('dotenv').config();
 
 const { execute } = require('../../../utils');
 
-execute(async ({ db, logger, exit }) => {
+execute(__filename, async ({ db, logger, exit }) => {
 
   logger.info('Recherche des structures sans département...');
   let count = 0;
