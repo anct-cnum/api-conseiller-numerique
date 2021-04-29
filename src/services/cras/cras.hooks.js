@@ -1,5 +1,5 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
-const { BadRequest, NotAuthenticated } = require('@feathersjs/errors');
+const { BadRequest, Forbidden } = require('@feathersjs/errors');
 const { DBRef } = require('mongodb');
 const configuration = require('@feathersjs/configuration');
 const feathers = require('@feathersjs/feathers');
@@ -17,7 +17,7 @@ module.exports = {
       context => {
         //vérification du role conseiller du user
         if (!context.params?.user?.roles.includes('conseiller')) {
-          throw new NotAuthenticated('Vous n\'avez pas l\'autorisation'); //401 will deconnect user
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
