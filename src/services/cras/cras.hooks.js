@@ -1,5 +1,5 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
-const { BadRequest } = require('@feathersjs/errors');
+const { BadRequest, NotAuthenticated } = require('@feathersjs/errors');
 const { DBRef } = require('mongodb');
 const configuration = require('@feathersjs/configuration');
 const feathers = require('@feathersjs/feathers');
@@ -15,6 +15,11 @@ module.exports = {
     get: [],
     create: [
       context => {
+        //vérification du role conseiller du user
+        if (!context.params?.user?.roles.includes('conseiller')) {
+          throw new NotAuthenticated('Vous n\'avez pas l\'autorisation'); //401 will deconnect user
+        }
+
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
         context.data.conseiller = new DBRef('conseillers', context.data.idConseiller, database);
         delete context.data.idConseiller;
@@ -24,7 +29,7 @@ module.exports = {
         context.data.cra.nomCommune = context.data.cra.cp.slice(6);
         delete context.data.cra.cp;
 
-        //Ajout de la date de de création
+        //Ajout de la date de création
         context.data.createdAt = new Date();
 
         //Validation des données cra
