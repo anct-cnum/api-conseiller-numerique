@@ -1,6 +1,12 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound } = require('@feathersjs/errors');
 
+const createEmails = require('../../emails/emails');
+const createMailer = require('../../mailer');
+const configuration = require('@feathersjs/configuration');
+const Sentry = require('@sentry/node');
+const config = configuration();
+
 const { v4: uuidv4 } = require('uuid');
 
 exports.Users = class Users extends Service {
@@ -10,6 +16,18 @@ exports.Users = class Users extends Service {
     app.get('mongoClient').then(db => {
       this.Model = db.collection('users');
     });
+
+    if (config().sentry.enabled === 'true') {
+      Sentry.init({
+        dsn: config().sentry.dsn,
+        environment: config().sentry.environment,
+        tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+      });
+    }
+
+    const db = app.get('mongoClient');
+    let mailer = createMailer(app);
+    const emails = createEmails(db, mailer);
 
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
@@ -74,6 +92,30 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       app.service('users').patch(user._id, { password: password, passwordCreated: true });
+
+      try {
+        let message;
+        switch (user.roles[0]) {
+          case 'admin':
+            message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
+            await message.send(user);
+            break;
+          case 'structure':
+            message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
+            await message.send(user);
+            break;
+          case 'prefet':
+            message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
+            await message.send(user);
+            break;
+          default:
+            /* conseiller : ne rien faire pour le moment */
+            break;
+        }
+      } catch (err) {
+        Sentry.captureException(err);
+      }
+
       res.send(user);
     });
   }

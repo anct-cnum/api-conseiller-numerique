@@ -27,11 +27,12 @@ module.exports = (db, mailer) => {
     render,
     send: async admin => {
 
-      let onSuccess = () => {};
+      let onSuccess = () => { };
 
       let onError = async err => {
         Sentry.captureException(err);
       };
+
       return mailer.createMailer().sendEmail(
         admin.name,
         {
