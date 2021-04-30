@@ -3,9 +3,8 @@ const { NotFound } = require('@feathersjs/errors');
 
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
-const configuration = require('@feathersjs/configuration');
 const Sentry = require('@sentry/node');
-const config = configuration();
+
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -16,14 +15,6 @@ exports.Users = class Users extends Service {
     app.get('mongoClient').then(db => {
       this.Model = db.collection('users');
     });
-
-    if (config().sentry.enabled === 'true') {
-      Sentry.init({
-        dsn: config().sentry.dsn,
-        environment: config().sentry.environment,
-        tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
-      });
-    }
 
     const db = app.get('mongoClient');
     let mailer = createMailer(app);

@@ -1,16 +1,6 @@
-const configuration = require('@feathersjs/configuration');
 const Sentry = require('@sentry/node');
-const config = configuration();
 
 module.exports = (db, mailer) => {
-
-  if (config().sentry.enabled === 'true') {
-    Sentry.init({
-      dsn: config().sentry.dsn,
-      environment: config().sentry.environment,
-      tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
-    });
-  }
 
   const templateName = 'bienvenueComptePrefet';
   let { utils } = mailer;
