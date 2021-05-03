@@ -1,7 +1,4 @@
-
-const Sentry = require('@sentry/node');
-
-module.exports = (db, mailer) => {
+module.exports = (db, mailer, app) => {
 
   const templateName = 'bienvenueCompteAdmin';
   let { utils } = mailer;
@@ -21,7 +18,7 @@ module.exports = (db, mailer) => {
       let onSuccess = () => { };
 
       let onError = async err => {
-        Sentry.captureException(err);
+        app.get('sentry').captureException(err);
       };
 
       return mailer.createMailer().sendEmail(
