@@ -3,8 +3,6 @@ const { NotFound } = require('@feathersjs/errors');
 
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
-const Sentry = require('@sentry/node');
-
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -18,7 +16,7 @@ exports.Users = class Users extends Service {
 
     const db = app.get('mongoClient');
     let mailer = createMailer(app);
-    const emails = createEmails(db, mailer);
+    const emails = createEmails(db, mailer, app);
 
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
@@ -104,7 +102,7 @@ exports.Users = class Users extends Service {
             break;
         }
       } catch (err) {
-        Sentry.captureException(err);
+        app.get('sentry').captureException(err);
       }
 
       res.send(user);
