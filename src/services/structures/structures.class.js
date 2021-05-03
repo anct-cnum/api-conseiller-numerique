@@ -1,11 +1,12 @@
 const { ObjectID } = require('mongodb');
 
-const { BadRequest, NotFound } = require('@feathersjs/errors');
+const { BadRequest, NotFound, Forbidden } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
 
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
+const decode = require('jwt-decode');
 
 exports.Structures = class Structures extends Service {
   constructor(options, app) {
@@ -121,6 +122,15 @@ exports.Structures = class Structures extends Service {
     });
 
     app.get('/structures/:id/relance-inscription', async (req, res) => {
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (!adminUser?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
       let structureId = null;
       try {
         structureId = new ObjectID(req.params.id);
