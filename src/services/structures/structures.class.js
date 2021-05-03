@@ -1,8 +1,12 @@
 const { ObjectID } = require('mongodb');
 
-const { BadRequest, NotFound } = require('@feathersjs/errors');
+const { BadRequest, NotFound, Forbidden } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
+
+const createEmails = require('../../emails/emails');
+const createMailer = require('../../mailer');
+const decode = require('jwt-decode');
 
 exports.Structures = class Structures extends Service {
   constructor(options, app) {
@@ -116,5 +120,46 @@ exports.Structures = class Structures extends Service {
         res.send(misesEnRelation);
       });
     });
+
+    app.get('/structures/:id/relance-inscription', async (req, res) => {
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (!adminUser?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
+      let structureId = null;
+      try {
+        structureId = new ObjectID(req.params.id);
+      } catch (e) {
+        res.status(404).send(new NotFound('Structure not found', {
+          id: req.params.id
+        }).toJSON());
+        return;
+      }
+
+      try {
+        const structureUser = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structureId) });
+        if (structureUser === null) {
+          res.status(404).send(new NotFound('User associated to structure not found', {
+            id: req.params.id
+          }).toJSON());
+          return;
+        }
+        let mailer = createMailer(app);
+        const emails = createEmails(db, mailer, app);
+        let message = emails.getEmailMessageByTemplateName('creationCompteStructure');
+        await message.send(structureUser);
+        res.send(structureUser);
+
+      } catch (error) {
+        app.get('sentry').captureException(error);
+      }
+
+    });
+
   }
 };
