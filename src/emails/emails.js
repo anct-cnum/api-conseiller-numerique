@@ -1,13 +1,19 @@
 const creationCompteStructure = require('./structures/creationCompteStructure');
 const creationComptePrefet = require('./prefets/creationComptePrefet');
 const creationCompteAdmin = require('./admins/creationCompteAdmin');
+const bienvenueCompteStructure = require('./structures/bienvenueCompteStructure');
+const bienvenueComptePrefet = require('./prefets/bienvenueComptePrefet');
+const bienvenueCompteAdmin = require('./admins/bienvenueCompteAdmin');
 
-module.exports = (db, mailer) => {
+module.exports = (db, mailer, app) => {
 
   let emails = [
     creationCompteStructure(db, mailer),
     creationComptePrefet(db, mailer),
-    creationCompteAdmin(db, mailer)
+    creationCompteAdmin(db, mailer),
+    bienvenueCompteStructure(db, mailer, app),
+    bienvenueComptePrefet(db, mailer, app),
+    bienvenueCompteAdmin(db, mailer, app)
   ];
 
   return {

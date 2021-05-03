@@ -76,7 +76,7 @@ module.exports = {
     const db = await app.get('mongoClient');
     let mailer = createMailer(app);
 
-    const emails = createEmails(db, mailer);
+    const emails = createEmails(db, mailer, app);
     let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app, Sentry });
 
     try {
