@@ -4,7 +4,7 @@ const creationCompteAdmin = require('./admins/creationCompteAdmin');
 const bienvenueCompteStructure = require('./structures/bienvenueCompteStructure');
 const bienvenueComptePrefet = require('./prefets/bienvenueComptePrefet');
 const bienvenueCompteAdmin = require('./admins/bienvenueCompteAdmin');
-const motDePasseOublie = require('./commun/MotDePasseOublie');
+const motDePasseOublie = require('./commun/motDePasseOublie');
 
 module.exports = (db, mailer, app) => {
 

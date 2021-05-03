@@ -123,7 +123,7 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
-      user.token = uuidv4();
+      db.collection('users').updateOne({ _id: user._id }, { $set: { token: uuidv4() } });
 
       let isSend;
       try {
