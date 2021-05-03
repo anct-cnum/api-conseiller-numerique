@@ -109,13 +109,14 @@ exports.Users = class Users extends Service {
     });
 
     app.post('/users/sendForgottenPasswordEmail', async (req, res) => {
-      const username = req.params.username;
+      const username = req.body.username;
       const users = await this.find({
         query: {
           name: username,
           $limit: 1,
         }
       });
+
       if (users.total === 0) {
         res.status(404).send(new NotFound('User not found', {
           username
@@ -123,19 +124,18 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
-      db.collection('users').updateOne({ _id: user._id }, { $set: { token: uuidv4() } });
+      user.token = uuidv4();
 
-      let isSend;
       try {
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
-        isSend = true;
+
       } catch (err) {
-        isSend = false;
         app.get('sentry').captureException(err);
       }
 
-      res.send({ isSend: isSend });
+      res.send(user);
     });
   }
 };
