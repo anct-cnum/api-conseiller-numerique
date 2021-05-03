@@ -6,7 +6,7 @@ module.exports = (db, mailer, app) => {
   let render = async user => {
     return mailer.render(__dirname, templateName, {
       user,
-      link: utils.getBackofficeUrl(`/mot-de-passe-oublie/${(user.token)}`),
+      link: utils.getBackofficeUrl(`/renouveler-mot-de-passe/${(user.token)}`),
     });
   };
 
