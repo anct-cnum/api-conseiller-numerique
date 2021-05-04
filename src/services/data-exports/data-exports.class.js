@@ -3,6 +3,9 @@
 const { ObjectID } = require('mongodb');
 const moment = require('moment');
 
+const decode = require('jwt-decode');
+const { NotFound, Forbidden } = require('@feathersjs/errors');
+
 exports.DataExports = class DataExports {
   constructor(options, app) {
     this.options = options || {};
@@ -27,6 +30,46 @@ exports.DataExports = class DataExports {
           let coselec = [...structure.coselec].pop();
           // eslint-disable-next-line max-len
           res.write(`${moment(conseiller.createdAt).format('DD/MM/yyyy')};${miseEnrelation.dateRecrutement === null ? 'non renseignée' : moment(miseEnrelation.dateRecrutement).format('DD/MM/yyyy')};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller._id};${coselec.numero};${coselec.nombreConseillersCoselec};\n`);
+          resolve();
+        }));
+      });
+
+      await Promise.all(promises);
+      res.send();
+    });
+
+    app.get('/exports/candidatsByStructure.csv', async (req, res) => {
+      //verify user role structure
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const structureUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!structureUser?.roles.includes('structure')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: structureUser
+        }).toJSON());
+        return;
+      }
+      //verify structure associated to user
+      try {
+        const structure = await db.collection('structures').findOne({ _id: new ObjectID(structureUser.entity.oid) });
+        if (structure === null) {
+          res.status(404).send(new NotFound('Structure not found', {
+            id: structureUser.entity.oid
+          }).toJSON());
+          return;
+        }
+      } catch (error) {
+        app.get('sentry').captureException(error);
+      }
+
+      // eslint-disable-next-line max-len
+      const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': new ObjectID(structureUser.entity.oid) }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
+      let promises = [];
+
+      res.write('Nom;Prenom;Email;\n');
+      miseEnrelations.forEach(miseEnrelation => {
+        promises.push(new Promise(async resolve => {
+          let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
+          res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};\n`);
           resolve();
         }));
       });
