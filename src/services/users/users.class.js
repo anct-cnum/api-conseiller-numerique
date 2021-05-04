@@ -67,12 +67,14 @@ exports.Users = class Users extends Service {
     app.post('/users/choosePassword/:token', async (req, res) => {
       const token = req.params.token;
       const password = req.body.password;
+      const typeEmail = req.body.typeEmail;
       const users = await this.find({
         query: {
           token: token,
           $limit: 1,
         }
       });
+
       if (users.total === 0) {
         res.status(404).send(new NotFound('User not found', {
           token
@@ -84,22 +86,27 @@ exports.Users = class Users extends Service {
 
       try {
         let message;
-        switch (user.roles[0]) {
-          case 'admin':
-            message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
-            await message.send(user);
-            break;
-          case 'structure':
-            message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
-            await message.send(user);
-            break;
-          case 'prefet':
-            message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
-            await message.send(user);
-            break;
-          default:
-            /* conseiller : ne rien faire pour le moment */
-            break;
+        if (typeEmail === 'bienvenue') {
+          switch (user.roles[0]) {
+            case 'admin':
+              message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
+              await message.send(user);
+              break;
+            case 'structure':
+              message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
+              await message.send(user);
+              break;
+            case 'prefet':
+              message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
+              await message.send(user);
+              break;
+            default:
+              /* conseiller : mail de bienvenue, ne rien faire pour le moment */
+              break;
+          }
+        } else {
+          message = emails.getEmailMessageByTemplateName('renouvellementCompte');
+          await message.send(user);
         }
       } catch (err) {
         app.get('sentry').captureException(err);
@@ -127,7 +134,7 @@ exports.Users = class Users extends Service {
       user.token = uuidv4();
 
       try {
-        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token } });
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, passwordCreated: false } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
 
