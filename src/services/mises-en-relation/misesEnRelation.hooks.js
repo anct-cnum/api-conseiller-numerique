@@ -1,5 +1,7 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
+const { NotFound, Forbidden } = require('@feathersjs/errors');
+const { ObjectID } = require('mongodb');
 
 /* TODO:
 - seul les admin doivent pouvoir tout faire
@@ -14,12 +16,44 @@ module.exports = {
     create: [],
     update: [
       context => {
+        //vérification du role structure du user
+        if (!context.params?.user?.roles.includes('structure')) {
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        }
         context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
         return context;
       }
     ],
     patch: [
-      context => {
+      async context => {
+        //vérification du role structure du user
+        if (!context.params?.user?.roles.includes('structure')) {
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        }
+        //Vérification  par rapport à la limite coselect si passage d'un conseiller en recrutee
+        if (context.data?.statut === 'recrutee') {
+          const structureId = context.params?.user?.entity?.oid;
+          const structure = await context.app.service('structures').get(structureId);
+          //Vérification si structure non null
+          if (structure === null) {
+            throw new NotFound('structure not found with id : ', structureId);
+          }
+          //Limite du nombre de candidats à recruter
+          let limit = structure.nombreConseillersCoselec;
+
+          //Calcul du nombre déjà recruté pour cette structure
+          const misesEnRelationRecrutees = await context.app.service('misesEnRelation').find({
+            query: {
+              'statut': 'recrutee',
+              'structure.$id': new ObjectID(structureId)
+            },
+            paginate: false //important pour ne pas être limité à 10 par défaut
+          });
+
+          if (misesEnRelationRecrutees.length >= limit) {
+            throw new Forbidden('Action non autorisée, limite atteinte par rapport au nombre de conseillers validés', limit);
+          }
+        }
         context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
         return context;
       }
