@@ -113,10 +113,13 @@ exports.DataExports = class DataExports {
         return;
       }
 
-      //Prefet with or without codeRegion ?
-      let region = prefetUser.region;
-      //eslint-disable-next-line max-len
-      const structures = region === undefined ? await db.collection('structures').find().toArray() : await db.collection('structures').find({ codeRegion: region.toString() }).toArray();
+      //Prefet with or without codeRegion
+      let structures = [];
+      if (prefetUser.region !== undefined) {
+        structures = await db.collection('structures').find({ codeRegion: prefetUser.region.toString() }).toArray();
+      } else if (prefetUser.departement !== undefined) {
+        structures = await db.collection('structures').find({ codeDepartement: prefetUser.departement.toString() }).toArray();
+      }
 
       let promises = [];
       //eslint-disable-next-line max-len
