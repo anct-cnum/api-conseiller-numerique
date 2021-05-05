@@ -90,10 +90,44 @@ exports.DataExports = class DataExports {
           const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
           try {
             // eslint-disable-next-line max-len
-            res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0}\n`);
+            res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' && Array.isArray(structure.coselec) ? [...structure.coselec].pop().nombreConseillersCoselec : 0}\n`);
           } catch (e) {
             // TODO : logger
           }
+          resolve();
+        }));
+      });
+
+      await Promise.all(promises);
+      res.send();
+    });
+
+    app.get('/exports/structuresPrefet.csv', async (req, res) => {
+      //verify user role prefet
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const prefetUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!prefetUser?.roles.includes('prefet')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: prefetUser
+        }).toJSON());
+        return;
+      }
+
+      //Prefet with or without codeRegion ?
+      let region = prefetUser.region;
+      //eslint-disable-next-line max-len
+      const structures = region === undefined ? await db.collection('structures').find().toArray() : await db.collection('structures').find({ codeRegion: region.toString() }).toArray();
+
+      let promises = [];
+      //eslint-disable-next-line max-len
+      res.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC\n');
+
+      structures.forEach(structure => {
+        promises.push(new Promise(async resolve => {
+          const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
+          const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
+          // eslint-disable-next-line max-len
+          res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' && Array.isArray(structure.coselec) ? [...structure.coselec].pop().nombreConseillersCoselec : 0}\n`);
           resolve();
         }));
       });
