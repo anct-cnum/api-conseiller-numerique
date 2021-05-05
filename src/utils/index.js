@@ -8,7 +8,7 @@
  */
 const getCoselecPositif = structure => {
   let coselecsPositifs = null;
-  if ('coselec' in structure) {
+  if ('coselec' in structure && structure.coselec !== null) {
     coselecsPositifs = structure.coselec.filter(c => c.avisCoselec === 'POSITIF');
   }
   // On prend le dernier
@@ -21,7 +21,7 @@ const getCoselecPositif = structure => {
  */
 const getLastCoselec = structure => {
   let coselecs = null;
-  if ('coselec' in structure) {
+  if ('coselec' in structure && structure.coselec !== null) {
     coselecs = structure.coselec.sort((a, b) => ~~a.numero.replace('COSELEC ', '') - ~~b.numero.replace('COSELEC ', ''));
   }
   return (coselecs !== null && coselecs.length > 0) ? coselecs.slice(-1).pop() : null;
