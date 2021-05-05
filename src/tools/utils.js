@@ -67,7 +67,9 @@ module.exports = {
         logger.error(error);
         process.exitCode = 1;
       }
-      transaction.finish();
+      if (transaction !== null) {
+        transaction.finish();
+      }
       setTimeout(() => {
         process.exit();
       }, 1000);
