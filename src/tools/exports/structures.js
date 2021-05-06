@@ -43,7 +43,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     flags: 'w'
   });
   // eslint-disable-next-line max-len
-  file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;Labelisée France Services;Raison sociale\n');
+  file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;Labelisée France Services;Raison sociale;Code INSEE\n');
 
   structures.forEach(structure => {
     promises.push(new Promise(async resolve => {
@@ -63,7 +63,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           }
 
           // eslint-disable-next-line max-len
-          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().numero : ''};${structure.estZRR ? 'oui' : 'non'};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''}\n`);
+          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().numero : ''};${structure.estZRR ? 'oui' : 'non'};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''}\n`);
         } catch (e) {
           logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG}`);
         }
