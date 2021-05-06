@@ -6,8 +6,8 @@
   "espace_coop_hostname": "https://beta.coop.conseiller-numerique.gouv.fr",
   "port": 8080,
   "paginate": {
-    "default": 10,
-    "max": 50
+    "default": 20,
+    "max": 100
   },
   "authentication": {
     "entity": "user",

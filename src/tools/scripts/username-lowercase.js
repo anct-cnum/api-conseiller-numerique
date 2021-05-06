@@ -16,5 +16,5 @@ execute(__filename, async ({ db, logger, exit }) => {
     );
   });
   logger.info(`${count} utilisateurs mis à jour`);
-  exit();
+  //exit();
 });

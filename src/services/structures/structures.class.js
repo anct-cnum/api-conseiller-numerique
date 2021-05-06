@@ -1,4 +1,4 @@
-const { ObjectID } = require('mongodb');
+const { ObjectID, DBRef } = require('mongodb');
 
 const { BadRequest, NotFound, Forbidden } = require('@feathersjs/errors');
 
@@ -17,6 +17,44 @@ exports.Structures = class Structures extends Service {
     app.get('mongoClient').then(mongoDB => {
       db = mongoDB;
       this.Model = db.collection('structures');
+    });
+
+    app.post('/structures/:id/preSelectionner/:conseillerId', async (req, res) => {
+      let structureId = null;
+      let conseillerId = null;
+      try {
+        structureId = new ObjectID(req.params.id);
+        conseillerId = new ObjectID(req.params.conseillerId);
+      } catch (e) {
+        res.status(404).send(new NotFound('Structure or conseiller not found', {
+          id: req.params.id
+        }).toJSON());
+        return;
+      }
+
+      let structure = await db.collection('structures').findOne({ _id: structureId });
+      let conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
+
+      if (structure === null || conseiller === null) {
+        res.status(404).send(new NotFound('Structure or conseiller not found', {
+          id: req.params.id,
+          conseillerId: req.params.conseillerId
+        }).toJSON());
+      }
+
+      const connection = app.get('mongodb');
+      const database = connection.substr(connection.lastIndexOf('/') + 1);
+      await db.collection('misesEnRelation').insertOne({
+        conseiller: new DBRef('conseillers', conseillerId, database),
+        structure: new DBRef('structures', structureId, database),
+        statut: 'interessee',
+        type: 'MANUEL',
+        createdAt: new Date(),
+        conseillerCreatedAt: conseiller.createdAt,
+        conseillerObj: conseiller,
+        structureObj: structure
+      });
+      res.status(201).send();
     });
 
     // TODO : n'est pas filtré par les hooks (pas d'authentification)
@@ -46,8 +84,6 @@ exports.Structures = class Structures extends Service {
     // TODO : n'est pas filtré par les hooks (pas d'authentification)
     app.get('/structures/:id/misesEnRelation', async (req, res) => {
       const misesEnRelationService = app.service('misesEnRelation');
-      const conseillersService = app.service('conseillers');
-
       let structureId = null;
       try {
         structureId = new ObjectID(req.params.id);
@@ -76,7 +112,7 @@ exports.Structures = class Structures extends Service {
       }
 
       if (search) {
-        queryFilter['$text'] = { $search: search };
+        queryFilter['$text'] = { $search: '"' + search + '"' };
       }
 
       //User Filters
@@ -102,23 +138,7 @@ exports.Structures = class Structures extends Service {
         res.send(misesEnRelation);
         return;
       }
-
-      const findConseiller = async miseEnRelation => {
-        return conseillersService.find({ query: { _id: new ObjectID(miseEnRelation.conseiller.oid) } });
-      };
-
-      const getData = async () => {
-        return Promise.all(misesEnRelation.data.map(miseEnRelation => findConseiller(miseEnRelation)));
-      };
-
-      getData().then(conseillers => {
-        misesEnRelation.data = misesEnRelation.data.map((miseEnRelation, idx) => {
-          let item = Object.assign(miseEnRelation, { conseiller: conseillers[idx].data[0] });
-          delete item.structure;
-          return item;
-        });
-        res.send(misesEnRelation);
-      });
+      res.send(misesEnRelation);
     });
 
     app.get('/structures/:id/relance-inscription', async (req, res) => {
