@@ -7,7 +7,7 @@ const fs = require('fs');
 const { execute } = require('../utils');
 
 execute(__filename, async ({ logger, db }) => {
-  const miseEnrelations = await db.collection('misesEnRelation').find({ 'structureObj._id': new ObjectID('60461fdc871498b5cec207ff') }).toArray();
+  const miseEnrelations = await db.collection('misesEnRelation').find({ 'structureObj._id': new ObjectID('xxx') }).toArray();
   let promises = [];
 
   logger.info(`Generating CSV file...`);
@@ -22,7 +22,6 @@ execute(__filename, async ({ logger, db }) => {
   miseEnrelations.forEach(miseEnrelation => {
     promises.push(new Promise(async resolve => {
       let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
-      console.log(conseiller);
       // eslint-disable-next-line max-len
       file.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email}\n`);
       resolve();
