@@ -10,11 +10,11 @@ module.exports = {
       db.collection('structures').createIndex({ 'createdAt': -1 }),
       db.collection('structures').createIndex({ 'type': 1 }),
       db.collection('structures').createIndex({ 'statut': 1 }),
-      db.collection('structures').createIndex({ 'avisPrefet': 1 }),
-      db.collection('structures').createIndex({ 'avisCoselec': 1 }),
       db.collection('structures').createIndex({ 'codeDepartement': 1 }),
       db.collection('structures').createIndex({ 'codeRegion': 1 }),
       db.collection('structures').createIndex({ 'userCreated': 1 }),
+      db.collection('structures').createIndex({ 'prefet.avisPrefet': 1 }),
+      db.collection('structures').createIndex({ 'coselec.avisCoselec': 1 }),
       db.collection('structures').createIndex({
         'siret': 'text',
         'nom': 'text',
@@ -25,6 +25,8 @@ module.exports = {
   misesEnRelation: db => {
     return Promise.all([
       db.collection('misesEnRelation').createIndex({ 'statut': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'structure.$id': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'conseiller.$id': 1 }),
       db.collection('misesEnRelation').createIndex({
         'conseillerObj.nom': 'text',
         'conseillerObj.prenom': 'text',
