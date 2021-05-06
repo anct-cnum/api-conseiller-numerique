@@ -22,7 +22,7 @@ exports.Structures = class Structures extends Service {
         structureId = new ObjectID(req.params.id);
         conseillerId = new ObjectID(req.params.conseillerId);
       } catch (e) {
-        res.status(404).send(new NotFound('Structure not found', {
+        res.status(404).send(new NotFound('Structure or conseiller not found', {
           id: req.params.id
         }).toJSON());
         return;
@@ -32,8 +32,9 @@ exports.Structures = class Structures extends Service {
       let conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
 
       if (structure === null || conseiller === null) {
-        res.status(404).send(new NotFound('Structure not found', {
-          id: req.params.id
+        res.status(404).send(new NotFound('Structure or conseiller not found', {
+          id: req.params.id,
+          conseillerId: req.params.conseillerId
         }).toJSON());
       }
 
