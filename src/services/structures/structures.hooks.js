@@ -27,7 +27,14 @@ module.exports = {
 
   after: {
     all: [],
-    find: [],
+    find: [async context => {
+      if (context.result.data.length > 0) {
+        context.result.data.forEach(structure => {
+          Object.assign(structure, { dernierCoselec: utils.getCoselec(structure) });
+        });
+      }
+      return context;
+    }],
     get: [async context => {
       Object.assign(context.result, { dernierCoselec: utils.getCoselec(context.result) });
       return context;
