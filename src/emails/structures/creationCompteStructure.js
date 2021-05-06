@@ -1,13 +1,12 @@
-const utils = require('../../utils/index.js');
-
 module.exports = (db, mailer) => {
+  const utilsStructure = require('../../utils/index.js');
 
   const templateName = 'creationCompteStructure';
   let { utils } = mailer;
 
   let render = async structure => {
     const structureObj = await db.collection('structures').findOne({ _id: structure.entity.oid });
-    const coselec = utils.getCoselec(structureObj);
+    const coselec = utilsStructure.getCoselec(structureObj);
     const nombreConseillersCoselec = coselec?.nombreConseillersCoselec ?? 0;
 
     return mailer.render(__dirname, templateName, {
