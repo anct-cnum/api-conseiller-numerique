@@ -1,6 +1,9 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound } = require('@feathersjs/errors');
 
+const createEmails = require('../../emails/emails');
+const createMailer = require('../../mailer');
+
 const { v4: uuidv4 } = require('uuid');
 
 exports.Users = class Users extends Service {
@@ -10,6 +13,10 @@ exports.Users = class Users extends Service {
     app.get('mongoClient').then(db => {
       this.Model = db.collection('users');
     });
+
+    const db = app.get('mongoClient');
+    let mailer = createMailer(app);
+    const emails = createEmails(db, mailer, app);
 
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
@@ -60,12 +67,14 @@ exports.Users = class Users extends Service {
     app.post('/users/choosePassword/:token', async (req, res) => {
       const token = req.params.token;
       const password = req.body.password;
+      const typeEmail = req.body.typeEmail;
       const users = await this.find({
         query: {
           token: token,
           $limit: 1,
         }
       });
+
       if (users.total === 0) {
         res.status(404).send(new NotFound('User not found', {
           token
@@ -74,6 +83,65 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       app.service('users').patch(user._id, { password: password, passwordCreated: true });
+
+      try {
+        let message;
+        if (typeEmail === 'bienvenue') {
+          switch (user.roles[0]) {
+            case 'admin':
+              message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
+              await message.send(user);
+              break;
+            case 'structure':
+              message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
+              await message.send(user);
+              break;
+            case 'prefet':
+              message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
+              await message.send(user);
+              break;
+            default:
+              /* conseiller : mail de bienvenue, ne rien faire pour le moment */
+              break;
+          }
+        } else {
+          message = emails.getEmailMessageByTemplateName('renouvellementCompte');
+          await message.send(user);
+        }
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+
+      res.send(user);
+    });
+
+    app.post('/users/sendForgottenPasswordEmail', async (req, res) => {
+      const username = req.body.username;
+      const users = await this.find({
+        query: {
+          name: username,
+          $limit: 1,
+        }
+      });
+
+      if (users.total === 0) {
+        res.status(404).send(new NotFound('User not found', {
+          username
+        }).toJSON());
+        return;
+      }
+      const user = users.data[0];
+      user.token = uuidv4();
+
+      try {
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, passwordCreated: false } });
+        let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
+        await message.send(user);
+
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+
       res.send(user);
     });
   }

@@ -10,13 +10,16 @@
         <mj-section>
           <mj-column>
             <mj-text css-class="text-primary">
-              Créez votre compte préfet Conseiller Numérique France Services.
+              Bienvenue chez Conseiller Numérique France Services.
             </mj-text>
             <mj-text>
               Madame, Monsieur,
             </mj-text>
             <mj-text>
-              Vous avez été invité sur la plateforme www.conseiller-numerique.gouv.fr pour rejoindre l'espace de votre préfecture.
+              Nous avons le plaisir de vous annoncer que votre espace administrateur est désormais activé.
+            </mj-text>
+            <mj-text>
+              Nous vous conseillons de garder cet email afin de conserver le lien de connexion à votre espace administrateur.
             </mj-text>
           </mj-column>
         </mj-section>
@@ -27,31 +30,30 @@
               Votre identifiant
             </mj-text>
             <mj-text font-size="14px" line-height="21px">
-              <%= user.name %>
+              <%= admin.name %>
             </mj-text>
 
             <mj-text padding="0" css-class="text-secondary">
-              Suivez ce lien pour créer votre mot de passe
+              Suivez ce lien pour vous connecter
             </mj-text>
 
             <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
               text-transform="uppercase">
               Accéder à mon espace
             </mj-button>
+
+            <mj-text css-class="text-secondary">
+              <%= link %>
+            </mj-text>
           </mj-column>
         </mj-section>
       </mj-wrapper>
       <mj-wrapper css-class="wrapper">
         <mj-section>
           <mj-column>
-
-      <mj-text>
-        Merci pour votre initiative qui porte le développement d’un numérique inclusif, partout, pour tous,
-      </mj-text>
-
-      <%- include('../commun/signature.mjml.ejs'); %>
-    </mj-column>
-  </mj-section>
-</mj-wrapper>
+            <%- include('../commun/signature.mjml.ejs'); %>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
   </mj-body>
 </mjml>

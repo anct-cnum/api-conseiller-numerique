@@ -1,5 +1,6 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
+const utils = require('../../utils/index.js');
 
 /* TODO:
 - seul les admin doivent pouvoir tout faire
@@ -26,13 +27,16 @@ module.exports = {
 
   after: {
     all: [],
-    find: [],
-    get: [async context => {
-      let lastCoselec = {};
-      if (context.result.coselec !== undefined && context.result.coselec.length > 0) {
-        lastCoselec = context.result.coselec[context.result.coselec.length - 1];
+    find: [async context => {
+      if (context.result.data.length > 0) {
+        context.result.data.forEach(structure => {
+          Object.assign(structure, { dernierCoselec: utils.getCoselec(structure) });
+        });
       }
-      Object.assign(context.result, lastCoselec);
+      return context;
+    }],
+    get: [async context => {
+      Object.assign(context.result, { dernierCoselec: utils.getCoselec(context.result) });
       return context;
     }],
     create: [],
