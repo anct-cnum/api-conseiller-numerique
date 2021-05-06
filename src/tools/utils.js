@@ -67,7 +67,9 @@ module.exports = {
         logger.error(error);
         process.exitCode = 1;
       }
-      transaction.finish();
+      if (transaction !== null) {
+        transaction.finish();
+      }
       setTimeout(() => {
         process.exit();
       }, 1000);
@@ -76,7 +78,7 @@ module.exports = {
     const db = await app.get('mongoClient');
     let mailer = createMailer(app);
 
-    const emails = createEmails(db, mailer);
+    const emails = createEmails(db, mailer, app);
     let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app, Sentry });
 
     try {

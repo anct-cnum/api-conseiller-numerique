@@ -3,6 +3,7 @@
   "public_hostname": "PUBLIC_HOSTNAME",
   "help_url": "HELP_URL",
   "backoffice_hostname": "BACKOFFICE_HOSTNAME",
+  "espace_coop_hostname": "ESPACE_COOP_HOSTNAME",
   "port": "PORT",
   "authentication": {
     "secret": "AUTHENTICATION_SECRET",

@@ -39,6 +39,8 @@ if (config().sentry.enabled === 'true') {
   app.use(Sentry.Handlers.errorHandler());
 }
 
+app.set('sentry', Sentry);
+
 app.use(helmet({
   contentSecurityPolicy: false
 }));
