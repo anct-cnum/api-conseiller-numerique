@@ -1,3 +1,5 @@
+const utils = require('../../utils/index.js');
+
 module.exports = (db, mailer) => {
 
   const templateName = 'creationCompteStructure';
@@ -5,12 +7,9 @@ module.exports = (db, mailer) => {
 
   let render = async structure => {
     const structureObj = await db.collection('structures').findOne({ _id: structure.entity.oid });
-    let nombreConseillersCoselec = 0;
-    if (structureObj.coselec !== undefined && structureObj.coselec.length > 0) {
-      nombreConseillersCoselec = structureObj.coselec[structureObj.coselec.length - 1].nombreConseillersCoselec;
-    } else {
-      nombreConseillersCoselec = structureObj.nombreConseillersPrefet;
-    }
+    const coselec = utils.getCoselec(structureObj);
+    const nombreConseillersCoselec = coselec?.nombreConseillersCoselec ?? 0;
+
     return mailer.render(__dirname, templateName, {
       structure,
       nombreConseillersCoselec,

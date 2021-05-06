@@ -4,6 +4,7 @@ const { ObjectID } = require('mongodb');
 const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
+const utils = require('../../utils/index.js');
 
 const { execute } = require('../utils');
 
@@ -25,7 +26,8 @@ execute(__filename, async ({ logger, db }) => {
     promises.push(new Promise(async resolve => {
       let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
       let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
-      let coselec = [...structure.coselec].pop();
+      // Cherche le bon Coselec
+      const coselec = utils.getCoselec(structure);
       // eslint-disable-next-line max-len
       file.write(`${moment(conseiller.createdAt).format('DD/MM/yyyy')};${miseEnrelation.dateRecrutement === null ? 'non renseignée' : moment(miseEnrelation.dateRecrutement).format('DD/MM/yyyy')};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec.numero};${coselec.nombreConseillersCoselec};\n`);
       resolve();
