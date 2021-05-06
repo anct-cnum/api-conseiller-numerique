@@ -53,7 +53,7 @@ module.exports = {
 
             if (misesEnRelationRecrutees.length >= dernierCoselec.nombreConseillersCoselec) {
               //eslint-disable-next-line max-len
-              throw new Forbidden('Action non autorisée, limite atteinte par rapport au nombre de conseillers validés', dernierCoselec.nombreConseillersCoselec);
+              throw new Forbidden('Action non autorisée : quota atteint de conseillers validés par rapport au nombre de postes attribués', dernierCoselec.nombreConseillersCoselec);
             }
           }
         }
