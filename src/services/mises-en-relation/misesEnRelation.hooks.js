@@ -2,6 +2,7 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
 const { NotFound, Forbidden } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
+const utils = require('../../utils/index.js');
 
 /* TODO:
 - seul les admin doivent pouvoir tout faire
@@ -39,21 +40,24 @@ module.exports = {
             throw new NotFound('structure not found with id : ', structureId);
           }
           //Limite du nombre de candidats à recruter
-          let limit = structure.nombreConseillersCoselec;
+          let dernierCoselec = utils.getCoselec(structure);
+          if (dernierCoselec !== null) {
+            //Nombre de candidats déjà recrutés pour cette structure
+            const misesEnRelationRecrutees = await context.app.service('misesEnRelation').find({
+              query: {
+                'statut': 'recrutee',
+                'structure.$id': new ObjectID(structureId)
+              },
+              paginate: false //important pour ne pas être limité à 10 par défaut
+            });
 
-          //Calcul du nombre déjà recruté pour cette structure
-          const misesEnRelationRecrutees = await context.app.service('misesEnRelation').find({
-            query: {
-              'statut': 'recrutee',
-              'structure.$id': new ObjectID(structureId)
-            },
-            paginate: false //important pour ne pas être limité à 10 par défaut
-          });
-
-          if (misesEnRelationRecrutees.length >= limit) {
-            throw new Forbidden('Action non autorisée, limite atteinte par rapport au nombre de conseillers validés', limit);
+            if (misesEnRelationRecrutees.length >= dernierCoselec.nombreConseillersCoselec) {
+              //eslint-disable-next-line max-len
+              throw new Forbidden('Action non autorisée, limite atteinte par rapport au nombre de conseillers validés', dernierCoselec.nombreConseillersCoselec);
+            }
           }
         }
+
         context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
         return context;
       }
