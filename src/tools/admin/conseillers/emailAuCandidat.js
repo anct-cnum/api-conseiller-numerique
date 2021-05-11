@@ -16,7 +16,7 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
 
   let { type = 'send', limit = 1, delay = 100 } = cli;
 
-  logger.info('Envoi de l\'email de point sur le recrutment du candidat...');
+  logger.info('Envoi de l\'email de point sur le recrutement du candidat...');
 
   let ActionClass = require(`./tasks/actions/${_.capitalize(type)}Action`);
   let action = new ActionClass(app);

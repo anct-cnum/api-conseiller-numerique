@@ -22,7 +22,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
 
     stats.total++;
     try {
-      let message = emails.getEmailMessageByTemplateName('candidatPointRecrutment');
+      let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
       await message.send(miseEnRelation.conseillerObj);
 
       if (options.delay) {
