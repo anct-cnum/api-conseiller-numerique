@@ -1,4 +1,5 @@
 let { delay } = require('../../../../utils');
+const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (db, logger, emails, action, options = {}) => {
 
@@ -8,6 +9,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
     error: 0,
   };
 
+  /* Besoin d'un distinct sur conseiller */
   let cursor = await db.collection('misesEnRelation').find({
     ...action.getQuery(),
   });
@@ -17,13 +19,17 @@ module.exports = async (db, logger, emails, action, options = {}) => {
   cursor.batchSize(10);
 
   while (await cursor.hasNext()) {
+
+    let tokenRetourRecrutement = uuidv4();
     let miseEnRelation = await cursor.next();
-    logger.info(`Sending email to candidate ${miseEnRelation.conseillerObj.email}`);
+    let conseiller = await db.collection('conseillers').patch(miseEnRelation.conseillerObj._id, { tokenRetourRecrutement: tokenRetourRecrutement });
+
+    logger.info(`Sending email to candidate ${conseiller.email}`);
 
     stats.total++;
     try {
       let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
-      await message.send(miseEnRelation.conseillerObj);
+      await message.send(conseiller);
 
       if (options.delay) {
         await delay(options.delay);

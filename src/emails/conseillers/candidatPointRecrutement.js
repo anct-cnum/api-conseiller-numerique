@@ -4,7 +4,7 @@ module.exports = (db, mailer, app) => {
   let { utils } = mailer;
 
   let render = async user => {
-    const link = utils.getEspaceCoopUrl(`/dites-nous-en-plus-sur-vous`);
+    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(user.tokenRetourRecrutement)}`);
     return mailer.render(__dirname, templateName, {
       link: link,
     });

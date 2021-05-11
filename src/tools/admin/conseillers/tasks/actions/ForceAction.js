@@ -1,7 +1,7 @@
 class ForceAction {
 
   getQuery() {
-    return { 'statut': { $elemMatch: { '$eq': 'nouvelle' } } };
+    return { 'statut': { $elemMatch: { '$neq': 'recrutee' } } };
   }
 }
 
