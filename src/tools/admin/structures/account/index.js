@@ -13,7 +13,7 @@ cli.description('Send new account emails')
 .option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
 .parse(process.argv);
 
-execute(async ({ logger, db, app, emails }) => {
+execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
 
   let { type = 'send', siret, limit = 1, delay = 100 } = cli;
 
@@ -36,6 +36,7 @@ execute(async ({ logger, db, app, emails }) => {
 
     return stats;
   } catch (stats) {
+    Sentry.captureException(stats);
     logger.info(`[STRUCTURE] Une erreur est survenue lors de l'envoi des emails de création de compte aux structures : ` +
         `${stats.sent} envoyés / ${stats.error} erreurs`);
 

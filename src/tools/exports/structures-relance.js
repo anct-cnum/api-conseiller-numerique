@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const { execute } = require('../utils');
 
-execute(async ({ logger, db }) => {
+execute(__filename, async ({ logger, db }) => {
 
   let count = 0;
 

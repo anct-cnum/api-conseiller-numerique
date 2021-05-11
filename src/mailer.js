@@ -36,11 +36,15 @@ module.exports = app => {
 
   let getBackofficeUrl = path => `${app.get('backoffice_hostname')}${path}`;
 
+  let getEspaceCoopUrl = path => `${app.get('espace_coop_hostname')}${path}`;
+
   let getHelpUrl = app.get('help_url');
+
 
   let utils = {
     getPublicUrl,
     getBackofficeUrl,
+    getEspaceCoopUrl,
     getHelpUrl,
   };
 

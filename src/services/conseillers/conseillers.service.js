@@ -5,7 +5,7 @@ const hooks = require('./conseillers.hooks');
 module.exports = function(app) {
   const options = {
     paginate: app.get('paginate'),
-    whitelist: ['$text', '$search'], // fields used by feathers-mongodb-fuzzy-search
+    whitelist: ['$text', '$search', '$language'], // fields used by feathers-mongodb-fuzzy-search
   };
 
   // Initialize our service with any options it requires

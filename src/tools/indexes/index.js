@@ -13,7 +13,7 @@ cli.description('Manage indexes')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
 
   if (cli.find) {
     return await findUnusedIndexes(db);

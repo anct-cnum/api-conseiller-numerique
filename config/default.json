@@ -3,10 +3,11 @@
   "public_hostname": "https://www.conseiller-numerique.gouv.fr",
   "help_url": "https://aide.conseiller-numerique.gouv.fr/fr/",
   "backoffice_hostname":  "https://admin.conseiller-numerique.gouv.fr",
+  "espace_coop_hostname": "https://beta.coop.conseiller-numerique.gouv.fr",
   "port": 8080,
   "paginate": {
-    "default": 10,
-    "max": 50
+    "default": 20,
+    "max": 100
   },
   "authentication": {
     "entity": "user",
@@ -56,5 +57,11 @@
     "token": "1234",
     "endPoint": "https://api.gandi.net/v5/email",
     "domain": "conseiller-numerique.fr"
+  },
+  "sentry": {
+    "enabled": "false",
+    "environment": "local",
+    "dsn": "https://xxx@yyy.ingest.sentry.io/zzz",
+    "traceSampleRate": "1"
   }
 }

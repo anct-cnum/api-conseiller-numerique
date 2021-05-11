@@ -2,7 +2,9 @@ const moment = require('moment');
 
 const feathers = require('@feathersjs/feathers');
 const configuration = require('@feathersjs/configuration');
+const config = configuration();
 const express = require('@feathersjs/express');
+const Sentry = require('@sentry/node');
 
 const middleware = require('../middleware');
 const services = require('../services');
@@ -19,7 +21,7 @@ const createMailer = require('../mailer');
 const f = feathers();
 const app = express(f);
 
-app.configure(configuration());
+app.configure(config);
 app.configure(mongodb);
 app.configure(middleware);
 app.configure(authentication);
@@ -29,29 +31,55 @@ app.hooks(appHooks);
 
 const logger = require('../logger');
 
+let transaction = null;
+
 module.exports = {
   delay: milliseconds => {
     return new Promise(resolve => setTimeout(() => resolve(), milliseconds));
   },
   capitalizeFirstLetter: string => string.charAt(0).toUpperCase() + string.slice(1),
-  execute: async job => {
+  execute: async (name, job) => {
+    if (config().sentry.enabled === 'true') {
+      Sentry.init({
+        dsn: config().sentry.dsn,
+        environment: config().sentry.environment,
 
-    process.on('unhandledRejection', e => console.log(e));
-    process.on('uncaughtException', e => console.log(e));
+        // Set tracesSampleRate to 1.0 to capture 100%
+        // of transactions for performance monitoring.
+        // We recommend adjusting this value in production
+        tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+      });
+      transaction = Sentry.startTransaction({
+        op: 'Lancement de script',
+        name: name,
+      });
+      app.use(Sentry.Handlers.errorHandler());
+      process.on('unhandledRejection', e => Sentry.captureException(e));
+      process.on('uncaughtException', e => Sentry.captureException(e));
+    } else {
+      process.on('unhandledRejection', e => logger.error(e));
+      process.on('uncaughtException', e => logger.error(e));
+    }
 
     const exit = async error => {
       if (error) {
+        Sentry.captureException(error);
         logger.error(error);
         process.exitCode = 1;
       }
-      process.exit();
+      if (transaction !== null) {
+        transaction.finish();
+      }
+      setTimeout(() => {
+        process.exit();
+      }, 1000);
     };
 
     const db = await app.get('mongoClient');
     let mailer = createMailer(app);
 
-    const emails = createEmails(db, mailer);
-    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app });
+    const emails = createEmails(db, mailer, app);
+    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app, Sentry });
 
     try {
       let launchTime = new Date().getTime();

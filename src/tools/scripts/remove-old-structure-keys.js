@@ -3,7 +3,7 @@
 
 const { execute } = require('../utils');
 
-execute(async ({ db }) => {
+execute(__filename, async ({ db }) => {
   await db.collection('structures').updateMany({ }, {
     $unset: {
       nombreConseillersPrefet: '',

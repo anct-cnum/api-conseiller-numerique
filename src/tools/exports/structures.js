@@ -4,6 +4,7 @@ const { ObjectID } = require('mongodb');
 const path = require('path');
 const fs = require('fs');
 const cli = require('commander');
+const utils = require('../../utils/index.js');
 
 const { execute } = require('../utils');
 
@@ -13,8 +14,8 @@ cli.description('Export structures')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
-execute(async ({ logger, db, exit }) => {
-  let query = {};
+execute(__filename, async ({ logger, db, exit }) => {
+  let query = { };
   let count = 0;
 
   if (cli.activated && cli.matchingValidated) {
@@ -43,7 +44,7 @@ execute(async ({ logger, db, exit }) => {
     flags: 'w'
   });
   // eslint-disable-next-line max-len
-  file.write('SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;Labelisée France Services;Raison sociale\n');
+  file.write('SIRET structure;ID Structure;Dénomination;Type;Statut;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;Labelisée France Services;Raison sociale;Nom commune INSEE;Code commune INSEE;Adresse postale\n');
 
   structures.forEach(structure => {
     promises.push(new Promise(async resolve => {
@@ -54,7 +55,12 @@ execute(async ({ logger, db, exit }) => {
       }
       if (!cli.matchingValidated || matchingsValidated !== null) {
         const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
+
         try {
+          // Cherche le bon Coselec
+          const coselec = utils.getCoselec(structure);
+
+          // France Services
           let label = 'non renseigné';
           if (structure?.estLabelliseFranceServices && structure.estLabelliseFranceServices === 'OUI') {
             label = 'oui';
@@ -62,10 +68,18 @@ execute(async ({ logger, db, exit }) => {
             label = 'non';
           }
 
+          // Adresse
+          const adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
+            (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
+            (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + '\n' +
+            (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + '\n' : '') +
+            (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
+            (structure?.insee?.etablissement?.adresse?.localite ?? '');
+
           // eslint-disable-next-line max-len
-          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? [...structure.coselec].pop().numero : ''};${structure.estZRR ? 'oui' : 'non'};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''}\n`);
+          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}"\n`);
         } catch (e) {
-          logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG}`);
+          logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
         }
         count++;
       }

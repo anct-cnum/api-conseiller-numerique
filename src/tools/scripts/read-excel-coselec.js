@@ -10,7 +10,7 @@ program
 
 program.parse(process.argv);
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
   let avisPositif = 0;
 
   const processStructure = async s => {

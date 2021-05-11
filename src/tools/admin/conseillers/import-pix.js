@@ -6,7 +6,6 @@ const { execute } = require('../../utils');
 const { program } = require('commander');
 
 program
-.option('-t, --token <token>', 'token api entreprise')
 .option('-c, --csv <path>', 'CSV file path');
 
 program.parse(process.argv);
@@ -42,7 +41,7 @@ function diacriticSensitiveRegex(string = '') {
   return reg;
 }
 
-execute(async ({ db, logger }) => {
+execute(__filename, async ({ db, logger }) => {
   let j = 0;
   const insertPix = async pix => {
     try {
