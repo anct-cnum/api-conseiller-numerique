@@ -3,10 +3,10 @@
 
 const cli = require('commander');
 const _ = require('lodash');
-const sendCandidatEmails = require('./tasks/sendCandidatEmail');
+const sendCandidatEmail = require('./tasks/sendCandidatEmail');
 const { capitalizeFirstLetter, execute } = require('../../../utils');
 
-cli.description('Send new account emails')
+cli.description('Send point recrutment to candidate emails')
 .option('--type [type]', 'resend,send (default: send))', capitalizeFirstLetter)
 .option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
 .option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
@@ -22,7 +22,7 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
   let action = new ActionClass(app);
 
   try {
-    let stats = await sendCandidatEmails(db, logger, emails, action, {
+    let stats = await sendCandidatEmail(db, logger, emails, action, {
       limit,
       delay,
     });
