@@ -1,4 +1,7 @@
 const { Service } = require('feathers-mongodb');
+const decode = require('jwt-decode');
+const { Forbidden, NotAuthenticated } = require('@feathersjs/errors');
+const { ObjectID } = require('mongodb');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -10,6 +13,19 @@ exports.Stats = class Stats extends Service {
 
     app.get('/stats/dashboard', async (req, res) => {
       app.get('mongoClient').then(async db => {
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+        }
+        //verify user role admin
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!adminUser?.roles.includes('admin')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: adminUser
+          }).toJSON());
+          return;
+        }
+
         let stats = {};
         stats.structuresCount = await db.collection('structures').countDocuments();
         stats.conseillersCount = await db.collection('conseillers').countDocuments();

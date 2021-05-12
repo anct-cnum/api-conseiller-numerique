@@ -1,14 +1,17 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
+const { Forbidden } = require('@feathersjs/errors');
+const checkPermissions = require('feathers-permissions');
 
-/* TODO:
- - seul les admin doivent pouvoir tout faire
- - les structures doivent pouvoir agir sur les conseillers qui les concernent
- - les conseillers ne peuvent modifier que leurs données
- */
 module.exports = {
   before: {
-    all: [authenticate('jwt')],
+    all: [
+      authenticate('jwt'),
+      checkPermissions({
+        roles: ['admin', 'structure', 'prefet', 'conseiller'],
+        field: 'roles',
+      })
+    ],
     find: [
       context => {
         if (context.params.query.$search) {
@@ -16,11 +19,56 @@ module.exports = {
         }
         return context;
       }, search({ escape: false })],
-    get: [],
-    create: [],
-    update: [],
-    patch: [],
-    remove: []
+    get: [
+      async context => {
+        //Restreindre les permissions : les conseillers ne peuvent voir que les informations les concernant
+        if (context.params?.user?.roles.includes('conseiller')) {
+          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          }
+        }
+      }
+    ],
+    create: [
+      checkPermissions({
+        roles: ['admin'],
+        field: 'roles',
+      })
+    ],
+    update: [
+      checkPermissions({
+        roles: ['admin', 'conseiller'],
+        field: 'roles',
+      }),
+      async context => {
+        //Restreindre les permissions : les conseillers ne peuvent mettre à jour que les informations les concernant
+        if (context.params?.user?.roles.includes('conseiller')) {
+          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          }
+        }
+      }
+    ],
+    patch: [
+      checkPermissions({
+        roles: ['admin', 'conseiller'],
+        field: 'roles',
+      }),
+      async context => {
+        //Restreindre les permissions : les conseillers ne peuvent mettre à jour que les informations les concernant
+        if (context.params?.user?.roles.includes('conseiller')) {
+          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          }
+        }
+      }
+    ],
+    remove: [
+      checkPermissions({
+        roles: ['admin'],
+        field: 'roles',
+      })
+    ]
   },
 
   after: {

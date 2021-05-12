@@ -1,6 +1,6 @@
 const { ObjectID, DBRef } = require('mongodb');
 
-const { BadRequest, NotFound, Forbidden } = require('@feathersjs/errors');
+const { BadRequest, NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
 
@@ -20,6 +20,19 @@ exports.Structures = class Structures extends Service {
     });
 
     app.post('/structures/:id/preSelectionner/:conseillerId', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      //verify user role structure
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const structureUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!structureUser?.roles.includes('structure')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: structureUser
+        }).toJSON());
+        return;
+      }
+
       let structureId = null;
       let conseillerId = null;
       try {
@@ -57,8 +70,21 @@ exports.Structures = class Structures extends Service {
       res.status(201).send();
     });
 
-    // TODO : n'est pas filtré par les hooks (pas d'authentification)
     app.get('/structures/:id/misesEnRelation/stats', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      //verify user role
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      let rolesUserAllowed = user?.roles.filter(role => ['admin', 'structure', 'prefet'].includes(role));
+      if (rolesUserAllowed.length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: user
+        }).toJSON());
+        return;
+      }
+
       let structureId = null;
       try {
         structureId = new ObjectID(req.params.id);
@@ -81,8 +107,21 @@ exports.Structures = class Structures extends Service {
       }));
     });
 
-    // TODO : n'est pas filtré par les hooks (pas d'authentification)
     app.get('/structures/:id/misesEnRelation', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      //verify user role
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      let rolesUserAllowed = user?.roles.filter(role => ['admin', 'structure', 'prefet'].includes(role));
+      if (rolesUserAllowed.length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: user
+        }).toJSON());
+        return;
+      }
+
       const misesEnRelationService = app.service('misesEnRelation');
       let structureId = null;
       try {
@@ -142,9 +181,12 @@ exports.Structures = class Structures extends Service {
     });
 
     app.get('/structures/:id/relance-inscription', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
       let adminId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
-      if (!adminUser?.roles.includes('admin')) {
+      if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: adminUser
         }).toJSON());
