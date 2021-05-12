@@ -6,7 +6,7 @@ const { program } = require('commander');
 
 require('dotenv').config();
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 
 execute(__filename, async ({ exit }) => {
 
