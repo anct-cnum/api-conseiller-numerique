@@ -14,7 +14,13 @@ module.exports = {
         field: 'roles',
       })
     ],
-    find: [search()],
+    find: [
+      context => {
+        if (context.params.query.$search) {
+          context.params.query.$search = '"' + context.params.query.$search + '"';
+        }
+        return context;
+      }, search({ escape: false })],
     get: [],
     create: [
       checkPermissions({

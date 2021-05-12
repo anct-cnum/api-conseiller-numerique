@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 const { program } = require('commander');
 const fs = require('fs');
 const path = require('path');

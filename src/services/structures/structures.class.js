@@ -57,7 +57,7 @@ exports.Structures = class Structures extends Service {
 
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
-      await db.collection('misesEnRelation').insertOne({
+      const miseEnRelation = await db.collection('misesEnRelation').insertOne({
         conseiller: new DBRef('conseillers', conseillerId, database),
         structure: new DBRef('structures', structureId, database),
         statut: 'interessee',
@@ -67,7 +67,8 @@ exports.Structures = class Structures extends Service {
         conseillerObj: conseiller,
         structureObj: structure
       });
-      res.status(201).send();
+
+      res.status(201).send({ misEnRelation: miseEnRelation.ops[0] });
     });
 
     app.get('/structures/:id/misesEnRelation/stats', async (req, res) => {
