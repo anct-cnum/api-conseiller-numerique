@@ -12,7 +12,13 @@ const utils = require('../../utils/index.js');
 module.exports = {
   before: {
     all: authenticate('jwt'),
-    find: [search()],
+    find: [
+      context => {
+        if (context.params.query.$search) {
+          context.params.query.$search = '"' + context.params.query.$search + '"';
+        }
+        return context;
+      }, search({ escape: false })],
     get: [],
     create: [],
     update: [
