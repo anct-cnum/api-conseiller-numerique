@@ -83,6 +83,7 @@ module.exports = {
               const p = new Promise(async resolve => {
                 let miseEnRelationCount = await db.collection('misesEnRelation').countDocuments(
                   {
+                    'structureObj._id': context.params?.user.entity.oid,
                     'conseillerObj._id': conseiller._id
                   });
                 resolve();
