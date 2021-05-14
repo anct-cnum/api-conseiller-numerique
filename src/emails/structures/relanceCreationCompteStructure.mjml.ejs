@@ -1,0 +1,89 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Créez votre compte structure Conseiller Numérique France Services.
+            </mj-text>
+            <mj-text>
+              Madame, Monsieur,
+            </mj-text>
+            <mj-text>
+              Vous vous êtes inscrit sur la plateforme www.conseiller-numerique.gouv.fr pour accueillir un ou plusieurs Conseillers Numériques France Services dans votre structure.
+            </mj-text>
+            <mj-text>
+              Après la délibération du Comité national de sélection sur votre candidature, s’appuyant sur l’avis de la préfecture de votre département, vous êtes éligibles à l’accueil de <%= nombreConseillersCoselec %> conseiller(s) numérique(s) France Services. (*)
+            </mj-text>
+            <mj-text>
+              Afin de procéder au recrutement d’un ou plusieurs conseiller(s) numérique(s) France Services, un espace « structure » a spécialement été créé à cet effet sur la plateforme www.conseiller-numerique.gouv.fr
+            </mj-text>
+            <mj-text>
+              Les premières structures inscrites dans cette démarche de recrutement verront leur dossier instruit sous 15 jours et pourront ainsi rapidement accueillir un ou plusieurs conseiller(s) numérique(s) France Services.
+            </mj-text>
+            <mj-text>
+              Pour prendre connaissance des prochaines étapes du processus de recrutement, nous vous invitons donc à activer votre espace dès que possible. Il vous guidera jusqu’à la constitution de votre dossier de demande de subvention. Cliquez <mj-link href="<%= link %>">ici</mj-link> pour y accéder, ou alors entrez le lien suivant dans votre navigateur : <%= link %>
+            </mj-text>
+            <mj-text>
+              Cet espace contient notamment une candidathèque qui vous permettra de consulter les candidatures de conseillers numériques qui correspondent à vos critères (zone géographique et disponibilité). Nous vous invitons ensuite à procéder à des entretiens d’embauche pour trouver le ou les conseiller(s) numérique(s) France Services qu’il vous faut. Si vous avez identifié un candidat hors de la plateforme dont le profil vous intéresse, demandez-lui de s’inscrire sur www.conseiller-numerique.gouv.fr.
+            </mj-text>
+            <mj-text>
+              Lorsque votre choix est arrêté sur un ou des candidat(s), vous devez cliquer sur « Valider cette candidature » pour déclencher la suite de la procédure.
+            </mj-text>
+            <mj-text>
+              Nous comptons sur votre mobilisation pour recruter le ou les conseiller(s) numérique(s) France Services d'ici un mois. En tout état de cause, si le recrutement devait intervenir dans plus de trois mois, la validation de votre structure pourrait être suspendue et réévaluée dans une prochaine vague pour privilégier les recrutements les plus rapides dans le cadre de ce dispositif France Relance.
+            </mj-text>
+            <mj-text>
+              Afin d’identifier la date de début de contrat de votre/vos Conseiller(s) numérique(s) France Services, un organisme de formation va prendre contact avec vous pour :
+              </mj-text>
+              <mj-text>
+                Fixer la date du test de positionnement de votre/vos Conseiller(s) numérique(s) France Services afin d’évaluer le
+                besoin en formation,
+              </mj-text>
+              <mj-text>
+                Valider la date de début d’entrée en formation de votre/vos Conseiller(s) numérique(s) France Services.
+            </mj-text>
+            <mj-text>
+              Nous restons à votre disposition si vous avez la moindre question,
+            </mj-text>
+            <mj-text>
+              (*) Sous réserve de la conformité de votre dossier de demande de subvention.
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
+          <mj-column border="1px solid #C8CBCE">
+            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
+              Votre identifiant
+            </mj-text>
+            <mj-text font-size="14px" line-height="21px">
+              <%= structure.name %>
+            </mj-text>
+
+            <mj-text padding="0" css-class="text-secondary">
+              Suivez ce lien pour créer votre mot de passe
+            </mj-text>
+
+            <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
+              text-transform="uppercase">
+              Accéder à mon espace
+            </mj-button>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <%- include('../commun/signature.mjml.ejs'); %>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+  </mj-body>
+</mjml>
