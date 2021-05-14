@@ -29,22 +29,30 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
-          const result = await db.collection('conseillers').updateOne({ email }, {
-            $set: {
-              statut: 'RECRUTE',
-              disponible: false,
-              estRecrute: true,
-              recrutedAt: new Date()
-              // à voir pour les statuts: estEnEmploi, estEnFormation, estDemandeurEmploi...
-            }
-          });
-          if (result.matchedCount === 1) {
-            count++;
-            resolve();
-          } else {
-            Sentry.captureException(`Conseiller avec l'email '${email}' introuvable`);
+          const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
+          if (alreadyRecruted > 0) {
+            Sentry.captureException(`Un conseiller avec l'email '${email}' a déjà été recruté`);
             errors++;
             reject();
+          } else {
+            const result = await db.collection('conseillers').updateOne({ email }, {
+              $set: {
+                statut: 'RECRUTE',
+                disponible: false,
+                estRecrute: true,
+                recrutedAt: new Date()
+                // à voir pour les statuts: estEnEmploi, estEnFormation, estDemandeurEmploi...
+              }
+            });
+
+            if (result.matchedCount === 1) {
+              count++;
+              resolve();
+            } else {
+              Sentry.captureException(`Conseiller avec l'email '${email}' introuvable`);
+              errors++;
+              reject();
+            }
           }
         });
         promises.push(p);
