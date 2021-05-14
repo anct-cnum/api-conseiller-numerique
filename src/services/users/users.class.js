@@ -64,24 +64,6 @@ exports.Users = class Users extends Service {
       res.send({ isValid: token === expectedToken });
     });
 
-    app.get('/users/verifyCandidateToken/:token', async (req, res) => {
-      const token = req.params.token;
-      const users = await this.find({
-        query: {
-          tokenRetourRecrutement: token,
-          $limit: 1,
-        }
-      });
-      if (users.total === 0) {
-        res.status(404).send(new NotFound('User not found', {
-          token
-        }).toJSON());
-        return;
-      }
-
-      res.send({ isValid: true });
-    });
-
     app.post('/users/choosePassword/:token', async (req, res) => {
       const token = req.params.token;
       const password = req.body.password;
