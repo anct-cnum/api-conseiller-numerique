@@ -32,13 +32,21 @@ execute(__filename, async ({ db, logger }) => {
       // ... si Coselec récent, on continue
     }
 
-
     // Respecte la distance max du conseiller
     if (c.dist.calculated > c.distanceMax * 1000) {
       logger.info(
         `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
         `,distancefail,${c.distanceMax},${c.dist.calculated}`
       );
+      return;
+    }
+
+    // Saint-Martin
+    if (c.codePostal === '97150' && s.codePostal !== '97150') {
+      return;
+    }
+
+    if (s.codePostal === '97150' && c.codePostal !== '97150') {
       return;
     }
 
