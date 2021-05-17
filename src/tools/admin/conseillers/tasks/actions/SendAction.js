@@ -2,7 +2,7 @@ class SendAction {
 
   getQuery() {
     return {
-      'statut': { $elemMatch: { '$neq': 'recrutee' } }
+      'statut': { $elemMatch: { '$neq': 'RECRUTE' } }
     };
   }
 }

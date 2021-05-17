@@ -19,7 +19,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
       if (conseillers.total === 0) {
-        res.status(404).send(new NotFound('User not found', {
+        res.status(404).send(new NotFound('Conseiller not found', {
           token
         }).toJSON());
         return;

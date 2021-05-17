@@ -1,5 +1,11 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const { BadRequest } = require('@feathersjs/errors');
+const { DBRef, ObjectId } = require('mongodb');
+const configuration = require('@feathersjs/configuration');
+const feathers = require('@feathersjs/feathers');
+const app = feathers().configure(configuration());
+const connection = app.get('mongodb');
+const database = connection.substr(connection.lastIndexOf('/') + 1);
 const Joi = require('joi');
 
 module.exports = {
@@ -11,6 +17,10 @@ module.exports = {
       context => {
         //Ajout de la date de création
         context.data.createdAt = new Date();
+
+        //Creation DBRef conseillers et suppression de l'idConseiller plus utile
+        context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.sondage.idConseiller), database);
+        delete context.data.sondage.idConseiller;
 
         //Validation des données sondage
         const schema = Joi.object({
