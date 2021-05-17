@@ -4,7 +4,7 @@
 const cli = require('commander');
 const _ = require('lodash');
 const sendCandidatEmail = require('./tasks/sendCandidatEmail');
-const { capitalizeFirstLetter, execute } = require('../../../utils');
+const { capitalizeFirstLetter, execute } = require('../../utils');
 
 cli.description('Send point recrutment to candidate emails')
 .option('--type [type]', 'resend,send (default: send))', capitalizeFirstLetter)

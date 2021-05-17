@@ -1,4 +1,4 @@
-let { delay } = require('../../../../utils');
+let { delay } = require('../../../utils');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (db, logger, emails, action, options = {}) => {
@@ -22,8 +22,13 @@ module.exports = async (db, logger, emails, action, options = {}) => {
 
     let tokenRetourRecrutement = uuidv4();
     let miseEnRelation = await cursor.next();
-    let conseiller = await db.collection('conseillers').patch(miseEnRelation.conseillerObj._id, { tokenRetourRecrutement: tokenRetourRecrutement });
+    await db.collection('conseillers').updateOne({ '_id': miseEnRelation.conseillerObj._id }, {
+      $set: {
+        tokenRetourRecrutement: tokenRetourRecrutement
+      }
+    });
 
+    let conseiller = await db.collection('conseillers').findOne({ '_id': miseEnRelation.conseillerObj._id });
     logger.info(`Sending email to candidate ${conseiller.email}`);
 
     stats.total++;

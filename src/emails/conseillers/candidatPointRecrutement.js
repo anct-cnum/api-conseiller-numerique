@@ -3,8 +3,8 @@ module.exports = (db, mailer, app) => {
   const templateName = 'candidatPointRecrutement';
   let { utils } = mailer;
 
-  let render = async user => {
-    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(user.tokenRetourRecrutement)}`);
+  let render = async conseiller => {
+    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(conseiller.tokenRetourRecrutement)}`);
     return mailer.render(__dirname, templateName, {
       link: link,
     });
@@ -13,7 +13,7 @@ module.exports = (db, mailer, app) => {
   return {
     templateName,
     render,
-    send: async user => {
+    send: async conseiller => {
 
       let onSuccess = () => { };
 
@@ -22,10 +22,10 @@ module.exports = (db, mailer, app) => {
       };
 
       return mailer.createMailer().sendEmail(
-        user.email,
+        conseiller.email,
         {
           subject: 'Les recrutements ont démarré, dîtes nous en plus sur vous',
-          body: await render(),
+          body: await render(conseiller),
         },
       )
       .then(onSuccess)
