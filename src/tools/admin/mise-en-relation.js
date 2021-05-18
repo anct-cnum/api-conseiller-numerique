@@ -50,6 +50,24 @@ execute(__filename, async ({ db, logger }) => {
       return;
     }
 
+    // Guadeloupe
+    if (c.codePostal.substring(0,3) === '971' && s.codePostal.substring(0,3) !== '971') {
+      return;
+    }
+
+    if (s.codePostal.substring(0,3) === '971' && c.codePostal.substring(0,3) !== '971') {
+      return;
+    }
+
+    // Martinique
+    if (c.codePostal.substring(0,3) === '972' && s.codePostal.substring(0,3) !== '972') {
+      return;
+    }
+
+    if (s.codePostal.substring(0,3) === '972' && c.codePostal.substring(0,3) !== '972') {
+      return;
+    }
+
     // Vérifie les dates de dispo
     const maintenant = new Date();
 
