@@ -3,18 +3,31 @@ const search = require('feathers-mongodb-fuzzy-search');
 const { NotFound, Forbidden } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const utils = require('../../utils/index.js');
+const checkPermissions = require('feathers-permissions');
 
-/* TODO:
-- seul les admin doivent pouvoir tout faire
-- les structures ne peuvent modifier que les donneés qui les concernent
-- les conseillers ne peuvent lire les infos que sur la mise en relation qui le concerne
-*/
 module.exports = {
   before: {
-    all: authenticate('jwt'),
-    find: [search()],
+    all: [
+      authenticate('jwt'),
+      checkPermissions({
+        roles: ['admin', 'structure', 'prefet'],
+        field: 'roles',
+      })
+    ],
+    find: [
+      context => {
+        if (context.params.query.$search) {
+          context.params.query.$search = '"' + context.params.query.$search + '"';
+        }
+        return context;
+      }, search({ escape: false })],
     get: [],
-    create: [],
+    create: [
+      checkPermissions({
+        roles: ['admin'],
+        field: 'roles',
+      })
+    ],
     update: [
       context => {
         //vérification du role structure du user
@@ -48,7 +61,7 @@ module.exports = {
                 'statut': 'recrutee',
                 'structure.$id': new ObjectID(structureId)
               },
-              paginate: false //important pour ne pas être limité à 10 par défaut
+              paginate: false //important pour ne pas être limité par la pagination
             });
 
             if (misesEnRelationRecrutees.length >= dernierCoselec.nombreConseillersCoselec) {
@@ -62,7 +75,12 @@ module.exports = {
         return context;
       }
     ],
-    remove: []
+    remove: [
+      checkPermissions({
+        roles: ['admin'],
+        field: 'roles',
+      })
+    ]
   },
 
   after: {

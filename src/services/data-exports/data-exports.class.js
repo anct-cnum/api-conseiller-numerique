@@ -5,7 +5,7 @@ const moment = require('moment');
 const utils = require('../../utils/index.js');
 
 const decode = require('jwt-decode');
-const { NotFound, Forbidden } = require('@feathersjs/errors');
+const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -18,6 +18,19 @@ exports.DataExports = class DataExports {
     });
 
     app.get('/exports/candidats.csv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      //verify user role admin
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!adminUser?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
       const miseEnrelations = await db.collection('misesEnRelation').find({ statut: 'recrutee' }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
 
@@ -40,6 +53,9 @@ exports.DataExports = class DataExports {
     });
 
     app.get('/exports/candidatsByStructure.csv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
       //verify user role structure
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const structureUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -80,6 +96,19 @@ exports.DataExports = class DataExports {
     });
 
     app.get('/exports/structures.csv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      //verify user role admin
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!adminUser?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
       const structures = await db.collection('structures').find().toArray();
       let promises = [];
       // eslint-disable-next-line max-len
@@ -106,6 +135,9 @@ exports.DataExports = class DataExports {
     });
 
     app.get('/exports/structuresPrefet.csv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
       //verify user role prefet
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const prefetUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });

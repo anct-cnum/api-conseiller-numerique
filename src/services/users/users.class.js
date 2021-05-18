@@ -100,8 +100,12 @@ exports.Users = class Users extends Service {
               message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
               await message.send(user);
               break;
+            case 'conseiller':
+              let conseiller = await app.service('conseillers').get(user.entity?.oid);
+              message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+              await message.send(user, conseiller);
+              break;
             default:
-              /* conseiller : mail de bienvenue, ne rien faire pour le moment */
               break;
           }
         } else {

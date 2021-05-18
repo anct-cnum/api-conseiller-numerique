@@ -1,28 +1,89 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
 const utils = require('../../utils/index.js');
+const { Forbidden } = require('@feathersjs/errors');
+const checkPermissions = require('feathers-permissions');
 
-/* TODO:
-- seul les admin doivent pouvoir tout faire
-- les structures ne peuvent modifier que les donneés qui les concernent
-- les conseillers ne peuvent lire les infos que sur la structure qui le concerne
-*/
 module.exports = {
   before: {
-    all: authenticate('jwt'),
-    find: [async context => {
-      if (context.params.query.createdAt && context.params.query.createdAt.$gt) {
-        context.params.query.createdAt.$gt = parseStringToDate(context.params.query.createdAt.$gt);
+    all: [
+      authenticate('jwt'),
+      checkPermissions({
+        roles: ['admin', 'structure', 'prefet', 'conseiller'],
+        field: 'roles',
+      })
+    ],
+    find: [
+      checkPermissions({
+        roles: ['admin', 'prefet'],
+        field: 'roles',
+      }),
+      async context => {
+        if (context.params.query.createdAt && context.params.query.createdAt.$gt) {
+          context.params.query.createdAt.$gt = parseStringToDate(context.params.query.createdAt.$gt);
+        }
+        if (context.params.query.createdAt && context.params.query.createdAt.$lt) {
+          context.params.query.createdAt.$lt = parseStringToDate(context.params.query.createdAt.$lt);
+        }
+      }, search()],
+    get: [
+      async context => {
+        //Restreindre les permissions : les structures ne peuvent voir que les informations les concernant
+        if (context.params?.user?.roles.includes('structure')) {
+          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          }
+        }
+
+        //Restreindre les permissions : les conseillers ne peuvent voir que les informations de la structure associée
+        if (context.params?.user?.roles.includes('conseiller')) {
+          const conseiller = await context.app.service('conseillers').get(context.params?.user?.entity?.oid);
+          if (context.id.toString() !== conseiller?.idStructure.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          }
+        }
       }
-      if (context.params.query.createdAt && context.params.query.createdAt.$lt) {
-        context.params.query.createdAt.$lt = parseStringToDate(context.params.query.createdAt.$lt);
+    ],
+    create: [
+      checkPermissions({
+        roles: ['admin'],
+        field: 'roles',
+      })
+    ],
+    update: [
+      checkPermissions({
+        roles: ['admin', 'structure', 'prefet'],
+        field: 'roles',
+      }),
+      async context => {
+        //Restreindre les permissions : les structures ne peuvent mettre à jour que les informations les concernant
+        if (context.params?.user?.roles.includes('structure')) {
+          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          }
+        }
       }
-    }, search()],
-    get: [],
-    create: [],
-    update: [],
-    patch: [],
-    remove: []
+    ],
+    patch: [
+      checkPermissions({
+        roles: ['admin', 'structure', 'prefet'],
+        field: 'roles',
+      }),
+      async context => {
+        //Restreindre les permissions : les structures ne peuvent mettre à jour que les informations les concernant
+        if (context.params?.user?.roles.includes('structure')) {
+          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          }
+        }
+      }
+    ],
+    remove: [
+      checkPermissions({
+        roles: ['admin'],
+        field: 'roles',
+      })
+    ]
   },
 
   after: {

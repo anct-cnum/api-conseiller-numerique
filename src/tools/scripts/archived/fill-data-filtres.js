@@ -4,7 +4,7 @@
 
 require('dotenv').config();
 
-const { execute } = require('../../../utils');
+const { execute } = require('../../utils');
 
 execute(__filename, async ({ db, logger, exit }) => {
 
