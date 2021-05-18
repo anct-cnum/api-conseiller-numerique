@@ -22,78 +22,100 @@ const readCSV = async filePath => {
 };
 
 function removeAccentsRegex(string = '') {
-  const reg = string.replace(/[á,à,ä]/g, 'a')
+  const reg = string.replace(/[á,à,ä,â]/g, 'a')
+  .replace(/[A,Á,À,Ä,Â]/g, 'a')
   .replace(/[é,è,ê,ë]/g, 'e')
+  .replace(/[E,É,È,Ê,Ë]/g, 'e')
   .replace(/[í,ï]/g, 'i')
-  .replace(/[ó,ö,ò]/g, 'o')
-  .replace(/[ü,ú,ù]/g, 'u');
+  .replace(/[I,Í,Ï]/g, 'i')
+  .replace(/[ÿ,Y,Ÿ]/g, 'y')
+  .replace(/[ó,ö,ò,ô]/g, 'o')
+  .replace(/[O,Ó,Ö,Ò,Ô]/g, 'o')
+  .replace(/[ü,ú,ù]/g, 'u')
+  .replace(/[U,Ü,Ú,Ù]/g, 'u')
+  .replace(/[C,ç,Ç]/g, 'c')
+  .replace(/[-]/g, '')
+  .replace(/[\s]+/g, ''); // supprime les espaces
   //console.log(reg);
   return reg;
 }
 
 function diacriticSensitiveRegex(string = '') {
-  const reg = string.replace(/a/g, '[a,á,à,ä]')
-  .replace(/e/g, '[e,é,è,ê,ë]')
-  .replace(/i/g, '[i,í,ï]')
-  .replace(/o/g, '[o,ó,ö,ò]')
-  .replace(/u/g, '[u,ü,ú,ù]');
+  const reg = string.replace(/(.)/g, '$1[-]*\\s*') // tirets et espaces
+  .replace(/a/g, '[a,á,à,ä,â,A,Á,À,Ä,Â]')
+  .replace(/e/g, '[e,é,è,ê,ë,E,É,È,Ê,Ë]')
+  .replace(/i/g, '[i,í,ï,I,Í,Ï]')
+  .replace(/y/g, '[y,ÿ,Y,Ÿ]')
+  .replace(/o/g, '[o,ó,ö,ò,ô,O,Ó,Ö,Ò,Ô]')
+  .replace(/u/g, '[u,ü,ú,ù,U,Ü,Ú,Ù]')
+  .replace(/c/g, '[c,C,ç,Ç]');
   //console.log(reg);
   return reg;
 }
 
 execute(__filename, async ({ db, logger }) => {
-  let j = 0;
+  let k = 0;
+  let l = 0;
   const insertPix = async pix => {
     try {
       // 1- Chercher avec nom et prénom (ignorer casse et accents)
       // Si ça match, on stocke
-      const match = await db.collection('conseillers').findOne({
-        nom: { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`)), $options: 'i' },
-        prenom: { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`)), $options: 'i' },
-      });
+      // On cherche aussi en inversant le nom et le prénom
+      let query = {
+        '$or': [{
+          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`), $options: 'i' },
+          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`), $options: 'i' },
+        }, {
+          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`), $options: 'i' },
+          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`), $options: 'i' },
+        }]
+      };
 
-      //      const match = await db.collection('conseillers').findOne({
-      //        $text: { $search: `${pix.nom} ${pix.prenom}`, $caseSensitive: true }
-      //      });
-      if (match) {
-        logger.info(`OK;${match.nom};${match.prenom};${pix.nom};${pix.prenom};${pix.id};${match._id}`);
-        //if (!new RegExp(`^${pix.nom}`, 'i').test(match.nom)
-        //  || !new RegExp(`^${pix.prenom}`, 'i').test(match.prenom)) {
-        //  console.log(` no Match ! ${match.nom} ${match.prenom} ${match.idPG} ${pix.nom} ${pix.prenom} ${pix.id}`)};
+      const conseillers = await db.collection('conseillers').find(query).toArray();
 
-        // Import dans Mongo
+      let promises = [];
 
-        //logger.info(JSON.stringify(match));
+      if (conseillers.length > 0) {
+        conseillers.forEach(c => {
+          l++;
+          const p = new Promise(async resolve => {
+            logger.info(`OK;${c.nom};${c.prenom};${pix.nom};${pix.prenom};${pix.id};${c.idPG};${c._id}`);
 
-        const filter = {
-          '_id': match._id,
-        };
+            const filter = {
+              '_id': c._id,
+            };
 
-        const updateDoc = {
-          $set: {
-            pix: {
-              partage: pix.partage === 'Oui',
-              datePartage: new Date(pix.datePartage),
-              palier: ~~pix.palier,
-              competence1: pix.competence1 === 'Oui',
-              competence2: pix.competence2 === 'Oui',
-              competence3: pix.competence3 === 'Oui',
-            },
-          }
-        };
+            const updateDoc = {
+              $set: {
+                pix: {
+                  partage: pix.partage === 'Oui',
+                  datePartage: new Date(pix.datePartage),
+                  palier: ~~pix.palier,
+                  competence1: pix.competence1 === 'Oui',
+                  competence2: pix.competence2 === 'Oui',
+                  competence3: pix.competence3 === 'Oui',
+                },
+              }
+            };
 
-        const options = { };
+            const options = { };
 
-        await db.collection('conseillers').updateOne(filter, updateDoc, options);
+            await db.collection('conseillers').updateOne(filter, updateDoc, options);
+            resolve();
+          });
+          promises.push(p);
+        });
+        await Promise.all(promises);
+
       } else {
         // 2- Chercher avec l'id, et on logue
-        const match = await db.collection('conseillers').findOne({ idPG: pix.id });
-        if (match) {
-          logger.info(`KO1;${match.nom};${match.prenom};${pix.nom};${pix.prenom};${pix.id}`);
+        const c = await db.collection('conseillers').findOne({ idPG: pix.id });
+        if (c) {
+          logger.info(`KO1;${c.nom};${c.prenom};${pix.nom};${pix.prenom};${pix.id}`);
         } else {
           logger.info(`KO2;${pix.nom};${pix.prenom};${pix.id}`);
         }
-        j++;
+        k++;
       }
     } catch (error) {
       logger.info(`Erreur DB : ${error.message}`);
@@ -103,6 +125,7 @@ execute(__filename, async ({ db, logger }) => {
   const replies = await readCSV(program.csv);
 
   let i = 0;
+  let j = 0;
   for (const reply of replies) {
     const nom = reply['Nom du Participant'].replace(/\s/g, '');
     const prenom = reply['Prénom du Participant'].replace(/\s/g, '');
@@ -116,9 +139,12 @@ execute(__filename, async ({ db, logger }) => {
     //const email = reply['Adresse email'];
 
     i++;
+
     //logger.info(nom + ' ' + prenom + ' ' + partage + ' ' + palier);
+
     try {
-      if (partage === 'Oui') {
+      if (nom !== '' && prenom !== '' && partage === 'Oui') {
+        j++;
         await insertPix({
           nom: nom,
           prenom: prenom,
@@ -135,6 +161,8 @@ execute(__filename, async ({ db, logger }) => {
       logger.info(`KO ${error.message}`);
     }
   }
-  logger.info(i);
-  logger.info(j);
+  logger.info(`${i} lignes au total`);
+  logger.info(`${j} partages`);
+  logger.info(`${l} conseillers mis à jour dont les doublons`);
+  logger.info(`${k} échecs`);
 });
