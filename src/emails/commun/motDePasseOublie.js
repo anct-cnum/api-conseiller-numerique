@@ -22,7 +22,7 @@ module.exports = (db, mailer, app) => {
       };
 
       return mailer.createMailer().sendEmail(
-        user.name,
+        user.persoEmail ?? user.name,
         {
           subject: 'Renouvellement de votre mot de passe Conseiller Numérique France services',
           body: await render(user),
