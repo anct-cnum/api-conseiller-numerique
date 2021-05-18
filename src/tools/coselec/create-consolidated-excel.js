@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 const { program } = require('commander');
 const ExcelJS = require('exceljs'); // Lire du Excel
 const fs = require('fs');
