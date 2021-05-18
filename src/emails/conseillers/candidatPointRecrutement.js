@@ -30,7 +30,6 @@ module.exports = (db, mailer, app) => {
       )
       .then(onSuccess)
       .catch(onError);
-
     },
   };
 };

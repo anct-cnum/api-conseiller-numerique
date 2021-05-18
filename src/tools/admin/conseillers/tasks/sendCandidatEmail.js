@@ -1,7 +1,7 @@
 let { delay } = require('../../../utils');
 const { v4: uuidv4 } = require('uuid');
 
-module.exports = async (db, logger, emails, action, options = {}, Sentry) => {
+module.exports = async (db, logger, emails, action, options, Sentry) => {
 
   let stats = {
     total: 0,
@@ -13,9 +13,6 @@ module.exports = async (db, logger, emails, action, options = {}, Sentry) => {
     ...action.getQuery()
   ]);
 
-  if (options.limit) {
-    cursor.limit(options.limit);
-  }
   cursor.batchSize(10);
 
   while (await cursor.hasNext()) {
@@ -36,8 +33,8 @@ module.exports = async (db, logger, emails, action, options = {}, Sentry) => {
       let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
       await message.send(conseiller);
 
-      if (options.delay) {
-        await delay(options.delay);
+      if (options) {
+        await delay(options);
       }
       stats.sent++;
     } catch (err) {

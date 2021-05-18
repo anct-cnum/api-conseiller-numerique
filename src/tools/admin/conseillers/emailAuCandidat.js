@@ -8,13 +8,12 @@ const { capitalizeFirstLetter, execute } = require('../../utils');
 
 cli.description('Send point recrutment to candidate emails')
 .option('--type [type]', 'resend,send (default: send))', capitalizeFirstLetter)
-.option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
 .option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
 .parse(process.argv);
 
 execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
 
-  let { type = 'send', limit = 10, delay = 100 } = cli;
+  let { type = 'send', delay = 100 } = cli;
 
   logger.info('Envoi de l\'email de point sur le recrutement du candidat...');
 
@@ -22,10 +21,7 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
   let action = new ActionClass(app);
 
   try {
-    let stats = await sendCandidatEmail(db, logger, emails, action, {
-      limit,
-      delay,
-    }, Sentry);
+    let stats = await sendCandidatEmail(db, logger, emails, action, delay, Sentry);
 
     if (stats.total > 0) {
       logger.info(`[CONSEILLERS] Des emails sur le recrutement ont été envoyés à des candidats :  ` +
