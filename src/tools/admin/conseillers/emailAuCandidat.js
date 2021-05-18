@@ -14,7 +14,7 @@ cli.description('Send point recrutment to candidate emails')
 
 execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
 
-  let { type = 'send', limit = 1, delay = 100 } = cli;
+  let { type = 'send', limit = 10, delay = 100 } = cli;
 
   logger.info('Envoi de l\'email de point sur le recrutement du candidat...');
 
@@ -25,7 +25,7 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
     let stats = await sendCandidatEmail(db, logger, emails, action, {
       limit,
       delay,
-    });
+    }, Sentry);
 
     if (stats.total > 0) {
       logger.info(`[CONSEILLERS] Des emails sur le recrutement ont été envoyés à des candidats :  ` +

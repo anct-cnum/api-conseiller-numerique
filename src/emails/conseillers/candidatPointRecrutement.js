@@ -4,7 +4,7 @@ module.exports = (db, mailer, app) => {
   let { utils } = mailer;
 
   let render = async conseiller => {
-    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(conseiller.tokenRetourRecrutement)}`);
+    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(conseiller.emailConfirmationKey)}`);
     return mailer.render(__dirname, templateName, {
       link: link,
     });
@@ -30,6 +30,7 @@ module.exports = (db, mailer, app) => {
       )
       .then(onSuccess)
       .catch(onError);
+
     },
   };
 };

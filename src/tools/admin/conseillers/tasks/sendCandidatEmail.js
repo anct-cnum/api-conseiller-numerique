@@ -1,7 +1,7 @@
 let { delay } = require('../../../utils');
 const { v4: uuidv4 } = require('uuid');
 
-module.exports = async (db, logger, emails, action, options = {}) => {
+module.exports = async (db, logger, emails, action, options = {}, Sentry) => {
 
   let stats = {
     total: 0,
@@ -9,10 +9,10 @@ module.exports = async (db, logger, emails, action, options = {}) => {
     error: 0,
   };
 
-  /* Besoin d'un distinct sur conseiller */
-  let cursor = await db.collection('misesEnRelation').find({
-    ...action.getQuery(),
-  });
+  let cursor = db.collection('misesEnRelation').aggregate([
+    ...action.getQuery()
+  ]);
+
   if (options.limit) {
     cursor.limit(options.limit);
   }
@@ -22,15 +22,15 @@ module.exports = async (db, logger, emails, action, options = {}) => {
 
     let tokenRetourRecrutement = uuidv4();
     let miseEnRelation = await cursor.next();
-    await db.collection('conseillers').updateOne({ '_id': miseEnRelation.conseillerObj._id }, {
+
+    await db.collection('conseillers').updateOne({ '_id': miseEnRelation._id }, {
       $set: {
-        tokenRetourRecrutement: tokenRetourRecrutement
+        emailConfirmationKey: tokenRetourRecrutement
       }
     });
 
-    let conseiller = await db.collection('conseillers').findOne({ '_id': miseEnRelation.conseillerObj._id });
+    let conseiller = await db.collection('conseillers').findOne({ '_id': miseEnRelation._id });
     logger.info(`Sending email to candidate ${conseiller.email}`);
-
     stats.total++;
     try {
       let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
@@ -41,6 +41,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
       }
       stats.sent++;
     } catch (err) {
+      Sentry.captureException(err);
       logger.error(err);
       stats.error++;
     }

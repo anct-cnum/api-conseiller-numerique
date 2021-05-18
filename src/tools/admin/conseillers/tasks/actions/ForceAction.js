@@ -1,7 +1,10 @@
 class ForceAction {
 
   getQuery() {
-    return { 'statut': { $ne: 'RECRUTE' } };
+    return [
+      { '$match': { 'conseillerObj.disponible': true, 'statut': { $ne: 'RECRUTE' } } },
+      { $group: { _id: '$conseillerObj._id', email: { $first: '$conseillerObj.email' } } }
+    ];
   }
 }
 

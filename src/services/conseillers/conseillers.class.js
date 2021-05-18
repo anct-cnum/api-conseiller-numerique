@@ -13,7 +13,7 @@ exports.Conseillers = class Conseillers extends Service {
       const token = req.params.token;
       const conseillers = await this.find({
         query: {
-          tokenRetourRecrutement: token,
+          emailConfirmationKey: token,
           $limit: 1,
         }
       });
