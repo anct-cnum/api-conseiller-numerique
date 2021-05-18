@@ -1,0 +1,64 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+    <mj-wrapper css-class="wrapper">
+
+      <mj-section>
+        <mj-column>
+          <mj-text>
+            Bonjour,
+          </mj-text>
+          <mj-text>
+            Bravo ! Vous avez terminé
+          </mj-text>
+          <mj-text>
+            Pour le terminer, rien de plus simple , cliquez ici :
+          </mj-text>
+          <mj-text>
+            ou connectez-vous à votre compte Pix sur https://pix.fr/ et cliquez sur le bouton “Reprendre”.
+          </mj-text>
+          <mj-image align="center" padding-left="10px" alt="En-tête Conseiller numérique France Services"
+          src="<%= utils.getPublicUrl('/assets/img/email/candidatPix/candidat-pix-0.png') %>" />
+          <mj-text>
+            Vous reprendrez le test là où vous l’aviez arrêté.
+          </mj-text>
+          <mj-text>
+            Les résultats constituent une brique importante pour étudier votre candidature,
+            nous ne pouvons donc que vous inciter fortement à vous participer à ce test et à partager vos résultats.
+          </mj-text>
+          <mj-text>
+            Comment partager vos résultats ?
+          </mj-text>
+          <mj-text>
+            A la fin de votre test, cliquez sur “J’envoie mes résultats”. Vos résultats viennent alors compléter votre
+            dossier d’inscription (et seront partagés à l’organisme de formation et à la structure accueillante dans le
+            cadre de l’examen de votre candidature).
+          </mj-text>
+          <mj-image align="center" padding-left="10px" width="256px" alt="En-tête Conseiller numérique France Services"
+          src="<%= utils.getPublicUrl('/assets/img/email/candidatPix/candidat-pix-1.png') %>" />
+          <mj-text>
+          <mj-text>
+            Pourquoi partager mes résultats ?
+          </mj-text>
+          <mj-text>
+          Pour vous, les résultats donnent du poids à votre candidature en objectivant votre niveau, vos points forts
+          Pour l’organisme de formation et pour la structure accueillante ils sont un élément important d’information pour la suite de votre parcours
+          </mj-text>
+        </mj-column>
+      </mj-section>
+
+    </mj-wrapper>
+    <mj-wrapper css-class="wrapper">
+      <mj-section>
+        <mj-column>
+          <%- include('../commun/signature.mjml.ejs'); %>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

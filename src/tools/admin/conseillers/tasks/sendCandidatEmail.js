@@ -10,7 +10,7 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
   };
 
   let cursor = db.collection('misesEnRelation').aggregate([
-    ...action.getQuery()
+    ...action.getQuery(options.limit)
   ]);
 
   cursor.batchSize(10);
@@ -33,8 +33,8 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
       let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
       await message.send(conseiller);
 
-      if (options) {
-        await delay(options);
+      if (options.delay) {
+        await delay(options.delay);
       }
       stats.sent++;
     } catch (err) {
