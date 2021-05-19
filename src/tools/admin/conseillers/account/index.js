@@ -23,7 +23,7 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
   let action = new ActionClass(app);
 
   try {
-    let stats = await sendActivationCompteEmails(db, logger, emails, action, {
+    let stats = await sendActivationCompteEmails(db, logger, emails, Sentry, action, {
       limit,
       delay,
     });
@@ -34,11 +34,10 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
     }
 
     return stats;
-  } catch (stats) {
-    Sentry.captureException(stats);
+  } catch (err) {
     logger.info(`[CONSEILLER] Une erreur est survenue lors de l'envoi des emails de création de compte aux conseillers : ` +
-        `${stats.sent} envoyés / ${stats.error} erreurs`);
-
-    throw stats;
+        `${err}`);
+    Sentry.captureException(err);
+    throw err;
   }
 }, { slack: cli.slack });

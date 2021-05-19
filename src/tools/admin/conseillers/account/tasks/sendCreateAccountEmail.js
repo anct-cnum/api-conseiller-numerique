@@ -1,6 +1,6 @@
 let { delay } = require('../../../../utils');
 
-module.exports = async (db, logger, emails, action, options = {}) => {
+module.exports = async (db, logger, emails, Sentry, action, options = {}) => {
 
   let stats = {
     total: 0,
@@ -31,6 +31,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
       stats.sent++;
     } catch (err) {
       logger.error(err);
+      Sentry.captureException(err);
       stats.error++;
     }
   }
