@@ -5,6 +5,7 @@ const configuration = require('@feathersjs/configuration');
 const feathers = require('@feathersjs/feathers');
 const app = feathers().configure(configuration());
 const connection = app.get('mongodb');
+const sentry = app.get('sentry');
 const database = connection.substr(connection.lastIndexOf('/') + 1);
 const Joi = require('joi');
 
@@ -15,18 +16,27 @@ module.exports = {
     get: [authenticate('jwt')],
     create: [
       async context => {
+        console.log(sentry.captureException('olo'));
         //Ajout du controle de conseiller
-        const conseiller = await context.app.service('conseillers').get(context.data.sondage.idConseiller);
-        if (!conseiller) {
+        try {
+          await context.app.service('conseillers').get(context.data.sondage.idConseiller);
+        } catch (error) {
+          sentry.captureException(error);
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
+
 
         //Ajout de la date de création
         context.data.createdAt = new Date();
 
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
-        context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.sondage.idConseiller), database);
-        delete context.data.sondage.idConseiller;
+        try {
+          context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.sondage.idConseiller), database);
+          delete context.data.sondage.idConseiller;
+        } catch (error) {
+          sentry.captureException(error);
+        }
+
 
         //Validation des données sondage
         const schema = Joi.object({
