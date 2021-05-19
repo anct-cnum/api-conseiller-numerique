@@ -33,6 +33,9 @@
     },
     "admin": {
       "accountsRelaunchDelay": "SMTP_ADMIN_ACCOUNTRELAUNCHDELAY"
+    },
+    "conseiller": {
+      "accountsRelaunchDelay": "SMTP_CONSEILLER_ACCOUNTRELAUNCHDELAY"
     }
   },
   "gandi": {
