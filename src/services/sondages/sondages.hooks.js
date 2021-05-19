@@ -16,7 +16,7 @@ module.exports = {
     get: [authenticate('jwt')],
     create: [
       async context => {
-        console.log(sentry.captureException('olo'));
+        console.log(sentry);
         //Ajout du controle de conseiller
         try {
           await context.app.service('conseillers').get(context.data.sondage.idConseiller);
