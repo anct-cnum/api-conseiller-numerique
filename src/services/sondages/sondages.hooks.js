@@ -1,5 +1,5 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
-const { BadRequest } = require('@feathersjs/errors');
+const { BadRequest, Forbidden } = require('@feathersjs/errors');
 const { DBRef, ObjectId } = require('mongodb');
 const configuration = require('@feathersjs/configuration');
 const feathers = require('@feathersjs/feathers');
@@ -14,7 +14,13 @@ module.exports = {
     find: [authenticate('jwt')],
     get: [authenticate('jwt')],
     create: [
-      context => {
+      async context => {
+        //Ajout du controle de conseiller
+        const conseiller = await context.app.service('conseillers').get(context.data.sondage.idConseiller);
+        if (!conseiller) {
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        }
+
         //Ajout de la date de création
         context.data.createdAt = new Date();
 
