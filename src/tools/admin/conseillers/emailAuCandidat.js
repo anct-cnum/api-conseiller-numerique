@@ -34,7 +34,8 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
 
     return stats;
   } catch (err) {
-    logger.info(`[CONSEILLERS] Une erreur est survenue lors de l'envoi des emails sur le recrutement aux candidats : `);
+    logger.info(`[CONSEILLERS] Une erreur est survenue lors de l'envoi des emails sur le recrutement aux candidats : ` +
+    `${err}`);
     Sentry.captureException(err);
     throw err;
   }
