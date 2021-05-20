@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
   const utilsStructure = require('../../utils/index.js');
 
-  const templateName = 'creationCompteStructure';
+  const templateName = 'relanceCreationCompteStructure';
   let { utils } = mailer;
 
   let render = async structure => {
