@@ -1,6 +1,6 @@
 let { delay } = require('../../../../utils');
 
-module.exports = async (logger, emails, candidats, delay, Sentry) => {
+module.exports = async (logger, emails, candidats, optionDelais, Sentry) => {
 
   let stats = {
     total: 0,
@@ -10,14 +10,12 @@ module.exports = async (logger, emails, candidats, delay, Sentry) => {
 
   candidats.forEach(candidat => {
     stats.total++;
-    /*
     try {
       logger.info(`Sending email to candidate ${candidat.email}`);
       let message = emails.getEmailMessageByTemplateName('candidatPixEnAttente');
       message.send(candidat);
-
-      if (options.delay) {
-        delay(options.delay);
+      if (optionDelais) {
+        delay(optionDelais);
       }
       stats.sent++;
     } catch (err) {
@@ -26,8 +24,8 @@ module.exports = async (logger, emails, candidats, delay, Sentry) => {
       logger.error(err);
       stats.error++;
     }
-    return stats;*/
-    console.log(candidat);
   });
 
+  return stats;
 };
+

@@ -55,6 +55,7 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
       });
       if (match) {
         candidats.push(match);
+        j++;
         logger.info(`OK;${match.nom};${match.prenom};${pix.nom};${pix.prenom};${pix.id};${match._id}`);
       } else {
         // Chercher avec l'id, et on logue
@@ -64,7 +65,6 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
         } else {
           logger.info(`KO2;${pix.nom};${pix.prenom};${pix.id}`);
         }
-        j++;
       }
     } catch (error) {
       logger.info(`Erreur DB : ${error.message}`);
@@ -97,7 +97,7 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
     }
   }
 
-  logger.info('lignes traitées: ' + i);
+  logger.info('total de lignes: ' + i);
   logger.info('lignes validées: ' + j);
 
   try {
@@ -107,8 +107,8 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
       logger.info(`[CONSEILLERS] Des emails sur le partage des résultats PIX ont été envoyés à des candidats : ` +
       `${stats.sent} envoyés / ${stats.error} erreurs`);
     }
-
     return stats;
+
   } catch (err) {
     logger.info(`[CONSEILLERS] Une erreur est survenue lors de l'envoi des emails sur le partage des résultats PIX aux candidats : ` +
     `${err}`);

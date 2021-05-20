@@ -3,17 +3,21 @@ module.exports = (db, mailer, app) => {
   const templateName = 'candidatPixEnAttente';
 
   let render = async candidat => {
-    return mailer.render(__dirname, templateName, {});
+    console.log(candidat.email);
+    return mailer.render(__dirname, templateName, { candidat });
   };
 
   return {
     templateName,
     render,
     send: async candidat => {
-
-      let onSuccess = () => { };
+      console.log(candidat.email);
+      let onSuccess = () => {
+        console.log('success');
+      };
 
       let onError = async err => {
+        console.log('error');
         app.get('sentry').captureException(err);
       };
 

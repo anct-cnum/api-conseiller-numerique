@@ -7,6 +7,7 @@ const bienvenueCompteAdmin = require('./admins/bienvenueCompteAdmin');
 const motDePasseOublie = require('./commun/motDePasseOublie');
 const renouvellementCompte = require('./commun/renouvellementCompte');
 const bienvenueCompteConseiller = require('./conseillers/bienvenueCompteConseiller');
+const candidatPixEnAttente = require('./conseillers/candidatPixEnAttente');
 
 module.exports = (db, mailer, app) => {
 
@@ -20,6 +21,7 @@ module.exports = (db, mailer, app) => {
     motDePasseOublie(db, mailer, app),
     renouvellementCompte(db, mailer, app),
     bienvenueCompteConseiller(db, mailer, app),
+    candidatPixEnAttente(db, mailer, app),
   ];
 
   return {
