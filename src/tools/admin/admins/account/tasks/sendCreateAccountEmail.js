@@ -1,4 +1,4 @@
-let { delay } = require('../../../../utils');
+let { delay } = require('../../../../../utils');
 
 module.exports = async (db, logger, emails, action, options = {}) => {
 
