@@ -1,5 +1,5 @@
 const creationCompteStructure = require('./structures/creationCompteStructure');
-const relanceCreationCompteStructure = require('./structures/relanceCreationCompteStructure');
+const relanceCreationCompteStructure = require('./structures/relanceCompteStructure');
 const creationComptePrefet = require('./prefets/creationComptePrefet');
 const creationCompteAdmin = require('./admins/creationCompteAdmin');
 const bienvenueCompteStructure = require('./structures/bienvenueCompteStructure');
