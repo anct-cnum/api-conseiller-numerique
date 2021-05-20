@@ -1,6 +1,6 @@
-let { delay } = require('../../../utils');
+let { delay } = require('../../../../utils');
 
-module.exports = async (db, logger, emails, action, options, Sentry) => {
+module.exports = async (logger, emails, candidats, delay, Sentry) => {
 
   let stats = {
     total: 0,
@@ -8,32 +8,26 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
     error: 0,
   };
 
-  let cursor = db.collection('conseillers').aggregate([
-    ...action.getQuery(options.limit)
-  ]);
-
-  cursor.batchSize(10);
-
-  while (await cursor.hasNext()) {
-
-    let candidat = await cursor.next();
-
-    let conseiller = await db.collection('conseillers').findOne({ '_id': candidat._id });
-    logger.info(`Sending email to candidate ${candidat.email}`);
+  candidats.forEach(candidat => {
     stats.total++;
+    /*
     try {
-      let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
-      await message.send(conseiller);
+      logger.info(`Sending email to candidate ${candidat.email}`);
+      let message = emails.getEmailMessageByTemplateName('candidatPixEnAttente');
+      message.send(candidat);
 
       if (options.delay) {
-        await delay(options.delay);
+        delay(options.delay);
       }
       stats.sent++;
     } catch (err) {
+
       Sentry.captureException(err);
       logger.error(err);
       stats.error++;
     }
-  }
-  return stats;
+    return stats;*/
+    console.log(candidat);
+  });
+
 };
