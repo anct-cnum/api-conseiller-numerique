@@ -27,7 +27,6 @@ function removeAccentsRegex(string = '') {
   .replace(/[í,ï]/g, 'i')
   .replace(/[ó,ö,ò]/g, 'o')
   .replace(/[ü,ú,ù]/g, 'u');
-  //console.log(reg);
   return reg;
 }
 
@@ -37,14 +36,13 @@ function diacriticSensitiveRegex(string = '') {
   .replace(/i/g, '[i,í,ï]')
   .replace(/o/g, '[o,ó,ö,ò]')
   .replace(/u/g, '[u,ü,ú,ù]');
-  //console.log(reg);
   return reg;
 }
 
 execute(__filename, async ({ logger, db, emails, Sentry }) => {
 
-  let { delay = 100 } = program;
-  let candidats = [];
+  let { delay = 1000 } = program;
+  let idCandidats = [];
   let j = 0;
   const pixUser = async pix => {
     try {
@@ -54,7 +52,7 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
         prenom: { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`)), $options: 'i' },
       });
       if (match) {
-        candidats.push(match);
+        idCandidats.push(match._id);
         j++;
         logger.info(`OK;${match.nom};${match.prenom};${pix.nom};${pix.prenom};${pix.id};${match._id}`);
       } else {
@@ -101,7 +99,7 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
   logger.info('lignes validées: ' + j);
 
   try {
-    let stats = await sendCandidatPixEnAttenteEmail(logger, emails, candidats, delay, Sentry);
+    let stats = await sendCandidatPixEnAttenteEmail(db, logger, emails, idCandidats, delay, Sentry);
 
     if (stats.total > 0) {
       logger.info(`[CONSEILLERS] Des emails sur le partage des résultats PIX ont été envoyés à des candidats : ` +

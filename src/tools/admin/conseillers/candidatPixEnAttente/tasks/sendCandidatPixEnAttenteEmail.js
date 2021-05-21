@@ -1,6 +1,6 @@
 let { delay } = require('../../../../utils');
 
-module.exports = async (logger, emails, candidats, optionDelais, Sentry) => {
+module.exports = async (db, logger, emails, candidats, optionDelais, Sentry) => {
 
   let stats = {
     total: 0,
@@ -8,24 +8,28 @@ module.exports = async (logger, emails, candidats, optionDelais, Sentry) => {
     error: 0,
   };
 
-  candidats.forEach(candidat => {
+  let cursor = await db.collection('conseillers').find({ '_id': { $in: candidats } });
+
+  cursor.batchSize(10);
+
+  while (await cursor.hasNext()) {
+    let candidat = await cursor.next();
+    logger.info(`Sending email to admin user ${candidat.email}`);
+
     stats.total++;
     try {
-      logger.info(`Sending email to candidate ${candidat.email}`);
       let message = emails.getEmailMessageByTemplateName('candidatPixEnAttente');
-      message.send(candidat);
+      await message.send(candidat);
+
       if (optionDelais) {
-        delay(optionDelais);
+        await delay(optionDelais);
       }
       stats.sent++;
     } catch (err) {
-
       Sentry.captureException(err);
       logger.error(err);
       stats.error++;
     }
-  });
-
+  }
   return stats;
 };
-
