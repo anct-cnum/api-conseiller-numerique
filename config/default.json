@@ -51,6 +51,9 @@
     },
     "admin": {
       "accountsRelaunchDelay": 7
+    },
+    "conseiller": {
+      "accountsRelaunchDelay": 7
     }
   },
   "gandi": {

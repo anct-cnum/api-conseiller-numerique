@@ -1,12 +1,11 @@
 module.exports = (db, mailer, app) => {
 
-  const templateName = 'renouvellementCompte';
+  const templateName = 'candidatPointRecrutement';
   let { utils } = mailer;
 
-  let render = async user => {
-    const link = user.roles[0] !== 'conseiller' ? utils.getBackofficeUrl(`/login?role=${(user.roles[0])}`) : utils.getEspaceCoopUrl(`/login`);
+  let render = async conseiller => {
+    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(conseiller.emailConfirmationKey)}`);
     return mailer.render(__dirname, templateName, {
-      user,
       link: link,
     });
   };
@@ -14,7 +13,7 @@ module.exports = (db, mailer, app) => {
   return {
     templateName,
     render,
-    send: async user => {
+    send: async conseiller => {
 
       let onSuccess = () => { };
 
@@ -23,10 +22,10 @@ module.exports = (db, mailer, app) => {
       };
 
       return mailer.createMailer().sendEmail(
-        user.persoEmail ?? user.name,
+        conseiller.email,
         {
-          subject: 'Votre mot de passe Conseiller Numérique France services à été renouvelé avec succès',
-          body: await render(user),
+          subject: 'Les recrutements ont démarré, dîtes nous en plus sur vous',
+          body: await render(conseiller),
         },
       )
       .then(onSuccess)

@@ -32,6 +32,13 @@ exports.Users = class Users extends Service {
         }).toJSON());
         return;
       }
+
+      //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
+      if (users.data[0].roles[0] === 'conseiller') {
+        let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
+        users.data[0].persoEmail = conseiller.email;
+      }
+
       res.send(users.data[0]);
     });
 
@@ -108,6 +115,12 @@ exports.Users = class Users extends Service {
             default:
               break;
           }
+        } else if (user.roles[0] === 'conseiller' && typeEmail === 'renouvellement') {
+          //Renouvellement conseiller => envoi email perso
+          let conseiller = await app.service('conseillers').get(user.entity?.oid);
+          user.persoEmail = conseiller.email;
+          message = emails.getEmailMessageByTemplateName('renouvellementCompte');
+          await message.send(user);
         } else {
           message = emails.getEmailMessageByTemplateName('renouvellementCompte');
           await message.send(user);
@@ -136,6 +149,12 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       user.token = uuidv4();
+
+      //Si le user est un conseiller, envoyer le mail sur son email perso
+      if (user.roles[0] === 'conseiller') {
+        let conseiller = await app.service('conseillers').get(user.entity?.oid);
+        user.persoEmail = conseiller.email;
+      }
 
       try {
         this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, passwordCreated: false } });
