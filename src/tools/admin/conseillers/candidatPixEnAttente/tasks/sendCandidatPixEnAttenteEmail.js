@@ -14,7 +14,7 @@ module.exports = async (db, logger, emails, candidats, optionDelais, Sentry) => 
 
   while (await cursor.hasNext()) {
     let candidat = await cursor.next();
-    logger.info(`Sending email to admin user ${candidat.email}`);
+    logger.info(`Sending email to candidate ${candidat.email}`);
 
     stats.total++;
     try {

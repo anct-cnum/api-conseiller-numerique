@@ -78,17 +78,11 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
     const id = ~~(user['identifiant CN'].replace(/\s/g, ''));
     const pourcentage = ~~(user['% de progression'].replace(/\s/g, ''));
     const partage = user['Partage (O/N)'].replace(/\s/g, '');
-    //const email = reply['Adresse email'];
 
     i++;
-    //logger.info(nom + ' ' + prenom + ' ' + partage + ' ' + pourcentage);
     try {
       if (partage === 'Non' && pourcentage === 1) {
-        await pixUser({
-          nom: nom,
-          prenom: prenom,
-          id: id,
-        });
+        await pixUser({ nom, prenom, id });
       }
     } catch (error) {
       logger.info(`KO ${error.message}`);
@@ -108,8 +102,7 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
     return stats;
 
   } catch (err) {
-    logger.info(`[CONSEILLERS] Une erreur est survenue lors de l'envoi des emails sur le partage des résultats PIX aux candidats : ` +
-    `${err}`);
+    logger.info(`[CONSEILLERS] Une erreur est survenue lors de l'envoi des emails sur le partage des résultats PIX aux candidats : ${err}`);
     Sentry.captureException(err);
     throw err;
   }
