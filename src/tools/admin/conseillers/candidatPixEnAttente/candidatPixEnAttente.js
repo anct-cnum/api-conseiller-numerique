@@ -22,20 +22,32 @@ const readCSV = async filePath => {
 };
 
 function removeAccentsRegex(string = '') {
-  const reg = string.replace(/[á,à,ä]/g, 'a')
+  const reg = string.replace(/[á,à,ä,â]/g, 'a')
+  .replace(/[A,Á,À,Ä,Â]/g, 'a')
   .replace(/[é,è,ê,ë]/g, 'e')
+  .replace(/[E,É,È,Ê,Ë]/g, 'e')
   .replace(/[í,ï]/g, 'i')
-  .replace(/[ó,ö,ò]/g, 'o')
-  .replace(/[ü,ú,ù]/g, 'u');
+  .replace(/[I,Í,Ï]/g, 'i')
+  .replace(/[ÿ,Y,Ÿ]/g, 'y')
+  .replace(/[ó,ö,ò,ô]/g, 'o')
+  .replace(/[O,Ó,Ö,Ò,Ô]/g, 'o')
+  .replace(/[ü,ú,ù]/g, 'u')
+  .replace(/[U,Ü,Ú,Ù]/g, 'u')
+  .replace(/[C,ç,Ç]/g, 'c')
+  .replace(/[-]/g, '')
+  .replace(/[\s]+/g, '');
   return reg;
 }
 
 function diacriticSensitiveRegex(string = '') {
-  const reg = string.replace(/a/g, '[a,á,à,ä]')
-  .replace(/e/g, '[e,é,è,ê,ë]')
-  .replace(/i/g, '[i,í,ï]')
-  .replace(/o/g, '[o,ó,ö,ò]')
-  .replace(/u/g, '[u,ü,ú,ù]');
+  const reg = string.replace(/(.)/g, '$1[-]*\\s*')
+  .replace(/a/g, '[a,á,à,ä,â,A,Á,À,Ä,Â]')
+  .replace(/e/g, '[e,é,è,ê,ë,E,É,È,Ê,Ë]')
+  .replace(/i/g, '[i,í,ï,I,Í,Ï]')
+  .replace(/y/g, '[y,ÿ,Y,Ÿ]')
+  .replace(/o/g, '[o,ó,ö,ò,ô,O,Ó,Ö,Ò,Ô]')
+  .replace(/u/g, '[u,ü,ú,ù,U,Ü,Ú,Ù]')
+  .replace(/c/g, '[c,C,ç,Ç]');
   return reg;
 }
 
@@ -47,10 +59,16 @@ execute(__filename, async ({ logger, db, emails, Sentry }) => {
   const pixUser = async pix => {
     try {
       // Chercher avec nom et prénom (ignorer casse et accents)
-      const match = await db.collection('conseillers').findOne({
-        nom: { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`)), $options: 'i' },
-        prenom: { $regex: new RegExp(diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`)), $options: 'i' },
-      });
+      let query = {
+        '$or': [{
+          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`), $options: 'i' },
+          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`), $options: 'i' },
+        }, {
+          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`), $options: 'i' },
+          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`), $options: 'i' },
+        }]
+      };
+      const match = await db.collection('conseillers').findOne(query);
       if (match) {
         idCandidats.push(match._id);
         j++;
