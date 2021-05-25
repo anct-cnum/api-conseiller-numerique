@@ -106,12 +106,12 @@ execute(__filename, async ({ db, logger, emails, exit }) => {
       telephone: contact.phone
     } } }, {});
 
-  const structure = await db.collection('structures').findOne({ idPG: id});
+  const structure = await db.collection('structures').findOne({ idPG: id });
 
-  await db.collection('users').updateOne({ name: structurePG.contact_email, 'entity.$id' : new ObjectID(structure._id) }, { $set: {
+  await db.collection('users').updateOne({ 'name': structurePG.contact_email, 'entity.$id': new ObjectID(structure._id) }, { $set: {
     name: contact.email } }, {});
 
-  const structureUser = await db.collection('users').findOne({ 'entity.$id' : new ObjectID(structure._id) });
+  const structureUser = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
 
   if (program.invitation) {
     let message = emails.getEmailMessageByTemplateName('creationCompteStructure');
