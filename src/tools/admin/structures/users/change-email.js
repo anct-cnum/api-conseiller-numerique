@@ -10,7 +10,7 @@ const { execute } = require('../../../utils');
 const pool = new Pool();
 
 execute(__filename, async ({ db, logger, emails, exit }) => {
-  const getStructure = async id => {
+  const getStructurePG = async id => {
     try {
       const { rows } = await pool.query(`
         SELECT
@@ -80,7 +80,7 @@ execute(__filename, async ({ db, logger, emails, exit }) => {
     return;
   }
 
-  const structuresPG = await getStructure(id);
+  const structuresPG = await getStructurePG(id);
 
   if (!structuresPG || structuresPG.length === 0) {
     exit('id PG inconnu dans PostgreSQL');
