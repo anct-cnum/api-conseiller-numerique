@@ -3,12 +3,13 @@
 
 const { program } = require('commander');
 const { Pool } = require('pg');
+const { ObjectID } = require('mongodb');
 
 const { execute } = require('../../../utils');
 
 const pool = new Pool();
 
-execute(__filename, async ({ db, logger, exit }) => {
+execute(__filename, async ({ db, logger, emails, exit }) => {
   const getStructure = async id => {
     try {
       const { rows } = await pool.query(`
@@ -59,6 +60,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.option('-p, --prenom <prenom>', 'prenom: prénom du nouveau contact');
   program.option('-f, --fonction <fonction>', 'fonction: fonction du nouveau contact');
   program.option('-t, --telephone <telephone>', 'telephone: téléphone du nouveau contact');
+  program.option('-m, --invitation', `invitation: envoie lemail d'invitation`);
   program.option('-i, --id <id>', 'id: id PG de la structure');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
@@ -104,8 +106,18 @@ execute(__filename, async ({ db, logger, exit }) => {
       telephone: contact.phone
     } } }, {});
 
-  await db.collection('users').updateOne({ name: structurePG.contact_email }, { $set: {
+  const structure = await db.collection('structures').findOne({ idPG: id});
+
+  await db.collection('users').updateOne({ name: structurePG.contact_email, 'entity.$id' : new ObjectID(structure._id) }, { $set: {
     name: contact.email } }, {});
+
+  const structureUser = await db.collection('users').findOne({ 'entity.$id' : new ObjectID(structure._id) });
+
+  if (program.invitation) {
+    let message = emails.getEmailMessageByTemplateName('creationCompteStructure');
+    await message.send(structureUser);
+    logger.info('Invitation envoyée');
+  }
 
   exit('Email mis à jour');
 });
