@@ -1,4 +1,4 @@
-let { delay } = require('../../../../../utils');
+let { delay } = require('../../../../utils');
 
 module.exports = async (db, logger, emails, action, options = {}) => {
 
@@ -10,6 +10,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
 
   let cursor = await db.collection('users').find({
     ...action.getQuery(),
+    ...(options.siret ? { siret: options.siret } : {})
   });
   if (options.limit) {
     cursor.limit(options.limit);
@@ -17,13 +18,13 @@ module.exports = async (db, logger, emails, action, options = {}) => {
   cursor.batchSize(10);
 
   while (await cursor.hasNext()) {
-    let admin = await cursor.next();
-    logger.info(`Sending email to admin user ${admin.name}`);
+    let structure = await cursor.next();
+    logger.info(`Sending email relance to Structure user ${structure.name}`);
 
     stats.total++;
     try {
-      let message = emails.getEmailMessageByTemplateName('creationCompteAdmin');
-      await message.send(admin);
+      let message = emails.getEmailMessageByTemplateName('relanceCreationCompteStructure');
+      await message.send(structure);
 
       if (options.delay) {
         await delay(options.delay);

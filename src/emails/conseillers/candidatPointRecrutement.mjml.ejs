@@ -1,0 +1,63 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Bonjour !
+            </mj-text>
+            <mj-text>
+              Vous avez manifesté votre intérêt pour devenir Conseiller numérique France Services.
+            </mj-text>
+            <mj-text>
+              A ce jour, vous êtes plus de <mj-text font-size="16px" font-weight="bold" color="#1f497d">20 000</mj-text> inscrits.
+            </mj-text>
+            <mj-text>
+              Les recrutements viennent de commencer dans <mj-text font-size="16px" color="#1f497d">89</mj-text> départements
+            </mj-text>
+
+            <mj-text>
+              Une structure peut vous contacter directement.
+            </mj-text>
+            <mj-text>
+              La plateforme vous met en relation avec les structures qui recrutent, en fonction notamment de la mobilité géographique que vous avez indiqué à votre inscription.
+            </mj-text>
+            <mj-text>
+              Pour toute modification de profil, n'hésitez pas à nous contacter <a color="#24303A" target="_blank" href="https://go.crisp.chat/chat/embed/?website_id=ea669e13-e40f-40c8-be23-e43565c0e62c">ici</a>
+            </mj-text>
+            <mj-text>
+              Pour mieux vous accompagner, nous vous proposons de répondre en moins d’une minute à quelques questions.
+            </mj-text>
+            <mj-button href="<%= link %>" background-color="#F4F4F5" color="#1f497d" font-size="16px" font-weight="bold" border="1px solid #1f497d"
+              text-transform="uppercase">
+              RÉPONDRE AU QUESTIONNAIRE
+            </mj-button>
+            <mj-text>
+              Nous reviendrons vers vous régulièrement pour vous donner des nouvelles !
+            </mj-text>
+            <mj-text>
+              Nous préparons également des actions pour vous permettre de rester pro-actif dans votre démarche.
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+
+      <mj-text>
+        A bientôt !
+      </mj-text>
+
+      <%- include('../commun/signature.mjml.ejs'); %>
+    </mj-column>
+  </mj-section>
+</mj-wrapper>
+  </mj-body>
+</mjml>

@@ -1,6 +1,6 @@
-let { delay } = require('../../../../../utils');
+let { delay } = require('../../../../utils');
 
-module.exports = async (db, logger, emails, action, options = {}) => {
+module.exports = async (db, logger, emails, Sentry, action, options = {}) => {
 
   let stats = {
     total: 0,
@@ -17,13 +17,13 @@ module.exports = async (db, logger, emails, action, options = {}) => {
   cursor.batchSize(10);
 
   while (await cursor.hasNext()) {
-    let admin = await cursor.next();
-    logger.info(`Sending email to admin user ${admin.name}`);
+    let conseiller = await cursor.next();
+    logger.info(`Sending email to conseiller user ${conseiller.name}`);
 
     stats.total++;
     try {
-      let message = emails.getEmailMessageByTemplateName('creationCompteAdmin');
-      await message.send(admin);
+      let message = emails.getEmailMessageByTemplateName('creationCompteConseiller');
+      await message.send(conseiller);
 
       if (options.delay) {
         await delay(options.delay);
@@ -31,6 +31,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
       stats.sent++;
     } catch (err) {
       logger.error(err);
+      Sentry.captureException(err);
       stats.error++;
     }
   }

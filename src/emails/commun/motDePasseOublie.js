@@ -6,7 +6,8 @@ module.exports = (db, mailer, app) => {
   let render = async user => {
     return mailer.render(__dirname, templateName, {
       user,
-      link: utils.getBackofficeUrl(`/renouveler-mot-de-passe/${(user.token)}`),
+      //eslint-disable-next-line max-len
+      link: user.roles[0] !== 'conseiller' ? utils.getBackofficeUrl(`/renouveler-mot-de-passe/${(user.token)}`) : utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`),
     });
   };
 
@@ -22,7 +23,7 @@ module.exports = (db, mailer, app) => {
       };
 
       return mailer.createMailer().sendEmail(
-        user.name,
+        user.persoEmail ?? user.name,
         {
           subject: 'Renouvellement de votre mot de passe Conseiller Numérique France services',
           body: await render(user),
