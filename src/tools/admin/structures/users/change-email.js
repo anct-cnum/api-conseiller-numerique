@@ -8,7 +8,7 @@ const { execute } = require('../../../utils');
 
 const pool = new Pool();
 
-execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
+execute(__filename, async ({ db, logger, exit }) => {
   const getStructure = async id => {
     try {
       const { rows } = await pool.query(`
@@ -77,7 +77,6 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     exit('id PG inconnu dans MongoDB');
     return;
   }
-  const structure = structures[0];
 
   const structuresPG = await getStructure(id);
 
