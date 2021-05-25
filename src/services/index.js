@@ -7,6 +7,7 @@ const stats = require('./stats/stats.service.js');
 const dataExports = require('./data-exports/data-exports.service.js');
 const cras = require('./cras/cras.service.js');
 const sondages = require('./sondages/sondages.service.js');
+const metabase = require('./metabase/metabase.service.js');
 // eslint-disable-next-line no-unused-vars
 module.exports = function(app) {
   app.configure(users);
@@ -18,4 +19,5 @@ module.exports = function(app) {
   app.configure(dataExports);
   app.configure(cras);
   app.configure(sondages);
+  app.configure(metabase);
 };
