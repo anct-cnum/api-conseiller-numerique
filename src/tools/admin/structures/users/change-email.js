@@ -66,8 +66,6 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
   let id = ~~program.id;
   let email = program.email;
 
-  const dbName = db.serverConfig.s.options.dbName;
-
   if (id === 0 || !email) {
     exit('Paramètres invalides. Veuillez préciser un id et une adresse email');
     return;
