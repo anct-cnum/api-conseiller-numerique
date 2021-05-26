@@ -36,13 +36,9 @@ module.exports = {
         // Modification de la disponibilité
         const modifierConseiller = new Promise(resolve => {
           context.app.get('mongoClient').then(async db => {
-            let disponible = false;
-            if (context.data.sondage.disponible === 'Oui') {
-              disponible = true;
-            }
             await db.collection('conseillers').updateOne({ '_id': new ObjectId(context.data.sondage.idConseiller) }, {
               $set: {
-                'disponible': disponible
+                'disponible': context.data.sondage.disponible === 'Oui'
               }
             });
           });
@@ -54,7 +50,7 @@ module.exports = {
           await modifierConseiller;
           delete context.data.sondage.idConseiller;
         } catch (error) {
-          throw new Forbidden(error);
+          throw new BadRequest(error);
         }
 
         //Validation des données du sondage
