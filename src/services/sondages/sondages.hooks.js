@@ -7,6 +7,7 @@ const app = feathers().configure(configuration());
 const connection = app.get('mongodb');
 const database = connection.substr(connection.lastIndexOf('/') + 1);
 const Joi = require('joi');
+const { Pool } = require('pg');
 
 module.exports = {
   before: {
@@ -34,8 +35,24 @@ module.exports = {
         }
 
         // Modification de la disponibilité
+        const updateConseillerPG = async (id, disponible) => {
+          const pool = new Pool();
+          try {
+            const { rows } = await pool.query(`
+              UPDATE djapp_coach
+              SET (disponible) = ($2)
+              WHERE id = $1`,
+            [id, disponible]);
+            return rows;
+          } catch (error) {
+            throw new BadRequest(`Erreur DB : ${error}`);
+          }
+        };
+
         const modifierConseiller = new Promise(resolve => {
           context.app.get('mongoClient').then(async db => {
+            let conseiller = await db.collection('conseillers').findOne({ '_id': new ObjectId(context.data.sondage.idConseiller) });
+            updateConseillerPG(conseiller.idPG, context.data.sondage.disponible === 'Oui');
             await db.collection('conseillers').updateOne({ '_id': new ObjectId(context.data.sondage.idConseiller) }, {
               $set: {
                 'disponible': context.data.sondage.disponible === 'Oui'
