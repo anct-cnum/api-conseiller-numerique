@@ -119,5 +119,6 @@ execute(__filename, async ({ db, logger, emails, exit }) => {
     logger.info('Invitation envoyée');
   }
 
-  exit('Email mis à jour');
+  logger.info('Email mis à jour');
+  exit();
 });
