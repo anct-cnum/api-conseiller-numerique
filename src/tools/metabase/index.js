@@ -4,10 +4,10 @@
 const cli = require('commander');
 const { execute } = require('../utils');
 
-cli.description('Data pour métabase').parse(process.argv);
+cli.description('Data pour metabase').parse(process.argv);
 
-execute(__filename, async ({ logger, db, app, Sentry }) => {
-  logger.info('Récupération des différentes données nécessaires au métabase public...');
+execute(__filename, async ({ logger, db, Sentry }) => {
+  logger.info('Récupération des différentes données nécessaires au metabase public...');
 
   const postesValidesDepartement = [];
   const postesValidesStructure = [];
@@ -37,8 +37,7 @@ execute(__filename, async ({ logger, db, app, Sentry }) => {
   const queryPosteValidesStructures = [
     { $match: { 'statut': 'VALIDATION_COSELEC', 'coselec': { '$elemMatch': { 'avisCoselec': 'POSITIF' } } } },
     { $unwind: '$coselec' },
-    { $group: { _id: '$nom', count: { $sum: '$coselec.nombreConseillersCoselec' } } },
-
+    { $group: { _id: '$structureObj._id', count: { $sum: '$coselec.nombreConseillersCoselec' } } },
   ];
   const nombrePostesValidesStructures = await db.collection('structures').aggregate(queryPosteValidesStructures).toArray();
   if (nombrePostesValidesStructures.length > 0) {
@@ -70,13 +69,13 @@ execute(__filename, async ({ logger, db, app, Sentry }) => {
   /* Nombre de conseillers recrutés par structure */
   const queryNombreConseillersRecrutesStructure = [
     { '$match': { 'statut': { $eq: 'recrutee' } } },
-    { $group: { _id: '$structureObj.nom', count: { $sum: 1 } } },
+    { $group: { _id: '$structureObj._id', count: { $sum: 1 } } },
   ];
   const listConseillersRecrutesStructure = await db.collection('misesEnRelation').aggregate(queryNombreConseillersRecrutesStructure).toArray();
   if (listConseillersRecrutesStructure.length > 0) {
     listConseillersRecrutesStructure.forEach(conseiller => {
       let ligne = {
-        'departement': conseiller._id,
+        'structure': conseiller._id,
         'nombreConseillersStructure': conseiller.count
       };
       conseillersRecrutesStructure.push(ligne);
@@ -121,17 +120,19 @@ execute(__filename, async ({ logger, db, app, Sentry }) => {
     const insert = {
       date: new Date(),
       data: {
-        'postesValidesDepartement': postesValidesDepartement,
-        'postesValidesStructure': postesValidesStructure,
-        'conseillersRecrutesDepartement': conseillersRecrutesDepartement,
-        'conseillersRecrutesStructure': conseillersRecrutesStructure,
-        'candidats': candidats,
-        'structuresCandidates': structuresCandidates
+        postesValidesDepartement,
+        postesValidesStructure,
+        conseillersRecrutesDepartement,
+        conseillersRecrutesStructure,
+        candidats,
+        structuresCandidates
       }
     };
-    await app.service('metabase').create(insert);
+
+    db.collection('metabase').insertOne(insert);
 
   } catch (error) {
+    Sentry.captureException(error);
     logger.error(error);
   }
 
