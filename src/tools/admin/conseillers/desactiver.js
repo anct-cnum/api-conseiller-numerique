@@ -8,7 +8,6 @@ const pool = new Pool();
 
 execute(__filename, async ({ db, logger, exit }) => {
   const getConseiller = async id => {
-    console.log('id:', id);
     try {
       const { rows } = await pool.query(`
         SELECT
@@ -38,7 +37,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   };
 
   program.option('-d, --disponible <true/false>', 'disponible: désactivé le conseiller par la valeur false ');
-  program.option('-i, --id <id>', 'id: id PG de la structure');
+  program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -50,30 +49,24 @@ execute(__filename, async ({ db, logger, exit }) => {
     return;
   }
 
-  const conseillers = await db.collection('conseillers').find({ idPG: id }).toArray();
-  console.log('conseillers:', conseillers);
+  const conseillersCount = await db.collection('conseillers').countDocuments({ idPG: id });
 
-  if (conseillers.length === 0) {
+  if (conseillersCount === 0) {
     exit('id PG inconnu dans MongoDB');
     return;
   }
 
   const conseillersPG = await getConseiller(id);
-  console.log('conseillersPG:', conseillersPG);
 
   if (!conseillersPG || conseillersPG.length === 0) {
     exit('id PG inconnu dans PostgreSQL');
     return;
   }
-  const conseillerPG = conseillersPG[0];
-
-  let disponibleChange = {};
-  disponibleChange.disponible = program.disponible || conseillerPG.conseiller;
-
+  let disponibleChange = program.disponible;
   updateConseiller(id, disponibleChange);
 
   await db.collection('conseillers').updateOne({ idPG: id }, { $set: {
-    disponible: disponibleChange.disponible
+    disponible: disponibleChange
   } }, {});
 
   logger.info('Disponibilité mis à jour');
