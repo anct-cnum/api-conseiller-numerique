@@ -62,8 +62,8 @@ execute(__filename, async ({ db, logger, exit }) => {
     exit('id PG inconnu dans PostgreSQL');
     return;
   }
-  let disponibleChange = program.disponible;
-  updateConseiller(id, disponibleChange === 'true');
+  let disponibleChange = program.disponible === 'true';
+  updateConseiller(id, disponibleChange);
 
   await db.collection('conseillers').updateOne({ idPG: id }, { $set: {
     disponible: disponibleChange
