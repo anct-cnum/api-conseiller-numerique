@@ -79,7 +79,8 @@ execute(__filename, async ({ db, logger }) => {
 
     if (['COLLECTIVITE', 'PRIVATE'].includes(s.type) && s.codeCommune !== '' && s.codeCommune !== '.' && s.coordonneesInsee !== undefined) {
 
-      const radius = 0.1;
+      // On cherche si la structure est dans un QPV, à radius kilomètres près
+      const radius = 0.1; // en km
       const c = circle.default(s.coordonneesInsee.coordinates, radius);
 
       quartiers = await db.collection('qpv').find(
