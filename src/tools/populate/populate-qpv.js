@@ -61,10 +61,12 @@ execute(__filename, async ({ db, logger }) => {
     if (s.type === 'COMMUNE' && s.codeCommune !== '' && s.codeCommune !== '.') {
       // Est-ce qu'elle contient au moins un QPV ?
 
+      // On récupère le GeoJSON de la commune
       const commune = await db.collection('communes').findOne({
         'properties.code': s.codeCommune
       });
 
+      // On cherche les intersections entre la commune et les quartiers
       quartiers = await db.collection('qpv').find(
         { 'geometry':
           { '$geoIntersects':
@@ -81,8 +83,11 @@ execute(__filename, async ({ db, logger }) => {
 
       // On cherche si la structure est dans un QPV, à radius kilomètres près
       const radius = 0.1; // en km
+      // Comme il n'y a pas de cercle dans GeoJSON, on crée un polygone de 64 faces en approximation,
+      // centré sur la structure, et avec un rayon de radius kilomètres
       const c = circle.default(s.coordonneesInsee.coordinates, radius);
 
+      // On cherche les intersections entre ce polygone et les quartiers
       quartiers = await db.collection('qpv').find(
         { 'geometry':
           { '$geoIntersects':
