@@ -36,7 +36,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     }
   };
 
-  program.option('-d, --disponible <true/false>', 'disponible: désactivé le conseiller par la valeur false ');
+  program.option('-d, --disponible <true/false>', 'disponible: désactiver le conseiller par la valeur false ');
   program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
@@ -48,7 +48,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     exit('Paramètres invalides. Veuillez préciser un id et une valeur sois true ou false pour la disponibilité');
     return;
   }
-  disponible = disponible === 'true';
 
   const conseillersCount = await db.collection('conseillers').countDocuments({ idPG: id });
 
@@ -64,7 +63,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     return;
   }
   let disponibleChange = program.disponible;
-  updateConseiller(id, disponibleChange);
+  updateConseiller(id, disponibleChange === 'true');
 
   await db.collection('conseillers').updateOne({ idPG: id }, { $set: {
     disponible: disponibleChange
