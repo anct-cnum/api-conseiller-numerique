@@ -8,7 +8,6 @@ const pool = new Pool();
 
 execute(__filename, async ({ db, logger, exit }) => {
   const getConseiller = async id => {
-    console.log('id:', typeof id);
     try {
       const { rows } = await pool.query(`
         SELECT
@@ -17,10 +16,9 @@ execute(__filename, async ({ db, logger, exit }) => {
         FROM djapp_coach
         WHERE id = $1`,
       [id]);
-      console.log('rows:', rows);
       return rows;
     } catch (error) {
-      logger.info(`Erreur DB : ${error.message}`);
+      logger.info(`Erreur DB for GET Conseiller : ${error.message}`);
     }
   };
 
@@ -29,12 +27,12 @@ execute(__filename, async ({ db, logger, exit }) => {
       const { rows } = await pool.query(`
         UPDATE djapp_coach
         SET
-          disponible
+          disponible = $2
         WHERE id = $1`,
       [id, disponibleChange]);
       return rows;
     } catch (error) {
-      logger.info(`Erreur DB : ${error.message}`);
+      logger.info(`Erreur DB for update Conseiller : ${error.message}`);
     }
   };
 
@@ -46,12 +44,12 @@ execute(__filename, async ({ db, logger, exit }) => {
   let id = ~~program.id;
   let disponible = program.disponible;
 
-  if (id === 0 || !(disponible !== 'true' && disponible !== 'false')) {
+  if (id === 0 || !(disponible !== 'true' || disponible !== 'false')) {
     exit('Paramètres invalides. Veuillez préciser un id et une valeur sois true ou false pour la disponibilité');
     return;
   }
   disponible = disponible === 'true';
-  
+
   const conseillersCount = await db.collection('conseillers').countDocuments({ idPG: id });
 
   if (conseillersCount === 0) {
@@ -60,7 +58,6 @@ execute(__filename, async ({ db, logger, exit }) => {
   }
 
   const conseillersPG = await getConseiller(id);
-  console.log('conseillersPG:', conseillersPG);
 
   if (!conseillersPG || conseillersPG.length === 0) {
     exit('id PG inconnu dans PostgreSQL');
