@@ -21,6 +21,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $match: { 'statut': 'VALIDATION_COSELEC', 'coselec': { '$elemMatch': { 'avisCoselec': 'POSITIF' } } } },
     { $unwind: '$coselec' },
     { $group: { _id: '$codeDepartement', count: { $sum: '$coselec.nombreConseillersCoselec' } } },
+    { $sort: { _id: 1 } }
   ];
   const nombrePostesValidesDepartement = await db.collection('structures').aggregate(queryPosteValidesDepartement).toArray();
   if (nombrePostesValidesDepartement.length > 0) {
@@ -37,13 +38,13 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const queryPosteValidesStructures = [
     { $match: { 'statut': 'VALIDATION_COSELEC', 'coselec': { '$elemMatch': { 'avisCoselec': 'POSITIF' } } } },
     { $unwind: '$coselec' },
-    { $group: { _id: '$structureObj._id', count: { $sum: '$coselec.nombreConseillersCoselec' } } },
+    { $group: { _id: '$_id', count: { $sum: '$coselec.nombreConseillersCoselec' }, nom: { $first: '$nom' } } },
   ];
   const nombrePostesValidesStructures = await db.collection('structures').aggregate(queryPosteValidesStructures).toArray();
   if (nombrePostesValidesStructures.length > 0) {
     nombrePostesValidesStructures.forEach(posteValide => {
       let ligne = {
-        'structure': posteValide._id,
+        'structure': posteValide.nom,
         'nombrePostesValidesStructures': posteValide.count
       };
       postesValidesStructure.push(ligne);
@@ -54,6 +55,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const queryNombreConseillersRecrutesDepartement = [
     { '$match': { 'statut': { $eq: 'recrutee' } } },
     { $group: { _id: '$structureObj.codeDepartement', count: { $sum: 1 } } },
+    { $sort: { _id: 1 } }
   ];
   const listConseillersRecrutesDepartement = await db.collection('misesEnRelation').aggregate(queryNombreConseillersRecrutesDepartement).toArray();
   if (listConseillersRecrutesDepartement.length > 0) {
@@ -69,13 +71,13 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   /* Nombre de conseillers recrutés par structure */
   const queryNombreConseillersRecrutesStructure = [
     { '$match': { 'statut': { $eq: 'recrutee' } } },
-    { $group: { _id: '$structureObj._id', count: { $sum: 1 } } },
+    { $group: { _id: '$structureObj._id', count: { $sum: 1 }, nomStructure: { $first: '$structureObj.nom' } } },
   ];
   const listConseillersRecrutesStructure = await db.collection('misesEnRelation').aggregate(queryNombreConseillersRecrutesStructure).toArray();
   if (listConseillersRecrutesStructure.length > 0) {
     listConseillersRecrutesStructure.forEach(conseiller => {
       let ligne = {
-        'structure': conseiller._id,
+        'structure': conseiller.nomStructure,
         'nombreConseillersStructure': conseiller.count
       };
       conseillersRecrutesStructure.push(ligne);
@@ -86,6 +88,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const queryNombreCandidats = [
     { '$match': { 'conseillerObj.disponible': true, 'statut': { $ne: 'recrutee' } } },
     { $group: { _id: '$structureObj.codeDepartement', count: { $sum: 1 } } },
+    { $sort: { _id: 1 } }
   ];
   const listCandidats = await db.collection('misesEnRelation').aggregate(queryNombreCandidats).toArray();
   if (listCandidats.length > 0) {
@@ -102,7 +105,8 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   /* Nombre de structures candidates par département */
   const queryNombreStructures = [
     { $match: { statut: 'CREEE' } },
-    { $group: { _id: '$codeDepartement', count: { $sum: 1 } } }
+    { $group: { _id: '$codeDepartement', count: { $sum: 1 } } },
+    { $sort: { _id: 1 } }
   ];
   const nombreStructures = await db.collection('structures').aggregate(queryNombreStructures).toArray();
   if (nombreStructures.length > 0) {
