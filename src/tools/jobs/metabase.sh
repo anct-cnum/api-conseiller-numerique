@@ -2,6 +2,6 @@
 
 cd ${APP_HOME}
 
-echo "Creating structures' accounts : START\n"
+echo "Creating datas metabase : START\n"
 node src/tools/metabase/index.js
-echo "Creating structures' accounts : END\n"
+echo "Creating datas metabase : END\n"
