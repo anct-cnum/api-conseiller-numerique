@@ -6,7 +6,7 @@ const { program } = require('commander');
 const circle = require('@turf/circle');
 
 program
-.option('-c, --csv <path>', 'CSV file path');
+.option('-a, --all', 'Recalcule les QPV pour toutes les structures');
 
 program.parse(process.argv);
 
@@ -35,11 +35,16 @@ execute(__filename, async ({ db, logger }) => {
       `qpv,OK,${s._id},${s.idPG},${s.nom},${qpv},${quartiers.length}`);
   };
 
-  // Chercher les structures dont on n'a pas encore les infos de QPV
-  const match = await db.collection('structures').find({
-    location: { '$exists': true },
-    qpv: { '$exists': false }
-  });
+  let query = {
+    location: { '$exists': true }
+  };
+
+  if (!program.all) {
+    // Chercher uniquement les structures dont on n'a pas encore les infos de QPV
+    query = { ...query, qpv: { '$exists': false } };
+  }
+
+  const match = await db.collection('structures').find(query);
 
   let s;
   while ((s = await match.next())) {
