@@ -7,7 +7,6 @@ const app = feathers().configure(configuration());
 const connection = app.get('mongodb');
 const database = connection.substr(connection.lastIndexOf('/') + 1);
 const Joi = require('joi');
-const { Pool } = require('pg');
 
 module.exports = {
   before: {
@@ -29,45 +28,9 @@ module.exports = {
         //Creation DBRef conseillers et suppression de l'idConseiller
         try {
           context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.sondage.idConseiller), database);
-
-        } catch (error) {
-          throw new Forbidden('Vous n\'avez pas l\'autorisation');
-        }
-
-        // Modification de la disponibilité
-        const updateConseillerPG = async (id, disponible) => {
-          const pool = new Pool();
-          try {
-            const row = await pool.query(`
-              UPDATE djapp_coach
-              SET disponible = $2
-              WHERE id = $1`,
-            [id, disponible]);
-            return row;
-          } catch (error) {
-            throw new BadRequest(`${error}`);
-          }
-        };
-
-        const modifierConseiller = new Promise(resolve => {
-          context.app.get('mongoClient').then(async db => {
-            let conseiller = await db.collection('conseillers').findOne({ '_id': new ObjectId(context.data.sondage.idConseiller) });
-            await updateConseillerPG(conseiller.idPG, context.data.sondage.disponible === 'Oui');
-            await db.collection('conseillers').updateOne({ '_id': new ObjectId(context.data.sondage.idConseiller) }, {
-              $set: {
-                'disponible': context.data.sondage.disponible === 'Oui'
-              }
-            });
-          });
-          resolve();
-        }, error => {
-          error('une erreur de mise à jour est survenu!');
-        });
-        try {
-          await modifierConseiller;
           delete context.data.sondage.idConseiller;
         } catch (error) {
-          throw new BadRequest(error);
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
         //Validation des données du sondage
