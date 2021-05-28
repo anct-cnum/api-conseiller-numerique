@@ -3,6 +3,7 @@
 
 const { execute } = require('../utils');
 const { Pool } = require('pg');
+const dayjs = require('dayjs');
 const pool = new Pool();
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
@@ -23,7 +24,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     }
   };
 
-  const date = new Date(Date.now() - 86400000).toISOString();
+  const date = new Date(dayjs(Date.now()).subtract(1, 'days')).toISOString();
   let promises = [];
   await db.collection('sondages').find(
     { 'createdAt': { $gte: new Date(date) } },
