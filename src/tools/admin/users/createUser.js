@@ -16,7 +16,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
   program.option('-p, --password <password>', 'password');
   program.option('-d, --departement <departement>', 'departement');
   program.option('-r, --role <role>', 'role : choisir entre admin, structure, conseiller, prefet');
-  program.option('-i, --id <id>', 'id');
+  program.option('-i, --id <id>', 'id pour les structures et les conseillers');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -34,17 +34,19 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
     exit('Rôle non reconnu');
   }
 
-  if (role === 'admin') {
+  if (role === 'admin' || role === 'prefet') {
     if (id) {
       exit('Paramètre id interdit pour le rôle admin');
     }
   } else if (!id) {
     exit('Paramètre id obligatoire pour ce rôle');
+    return;
   }
 
   if (role === 'prefet') {
     if (!departement) {
-      exit('Paramètre departement obligatoire pour le role prefet');
+      exit('Paramètre département obligatoire pour le rôle préfet');
+      return;
     }
   }
 
@@ -54,19 +56,26 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
   }
   const dbName = db.serverConfig.s.options.dbName;
 
-  await feathers.service('users').create({
+  let user = {
     name: username,
     password: password,
     roles: Array(role),
-    entity: {
-      '$ref': `${role}s`,
-      '$id': new ObjectID(id),
-      '$db': dbName
-    },
     token: uuidv4(),
     mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
     passwordCreated: true,
     createdAt: new Date(),
-  });
+  };
+  if (role === 'structure' || role === 'conseiller') {
+    user.entity = {
+      '$ref': `${role}s`,
+      '$id': new ObjectID(id),
+      '$db': dbName
+    };
+  } else if (role === 'prefet') {
+    user.departement = departement;
+  }
+
+  await feathers.service('users').create(user);
+
   logger.info('Utilisateur créé');
 });
