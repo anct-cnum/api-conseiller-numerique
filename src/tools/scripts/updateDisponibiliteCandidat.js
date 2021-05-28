@@ -3,6 +3,7 @@
 
 const { execute } = require('../utils');
 const { Pool } = require('pg');
+const dayjs = require('dayjs');
 const pool = new Pool();
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
@@ -23,8 +24,11 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     }
   };
 
+  const date = new Date(dayjs(Date.now()).subtract(1, 'days')).toISOString();
   let promises = [];
-  await db.collection('sondages').find({}, { 'conseiller.$id': 1, 'sondage.disponible': 1 }).forEach(function(sondage) {
+  await db.collection('sondages').find(
+    { 'createdAt': { $gte: new Date(date) } },
+    { 'conseiller.$id': 1, 'sondage.disponible': 1 }).forEach(function(sondage) {
     promises.push(new Promise(async resolve => {
       try {
         const conseiller = await db.collection('conseillers').findOne({ '_id': sondage.conseiller.oid });
