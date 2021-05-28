@@ -28,7 +28,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   await db.collection('sondages').find(
     { 'createdAt': { $gte: new Date(date) } },
     { 'conseiller.$id': 1, 'sondage.disponible': 1 }).forEach(function(sondage) {
-    console.log(sondage);
     promises.push(new Promise(async resolve => {
       try {
         const conseiller = await db.collection('conseillers').findOne({ '_id': sondage.conseiller.oid });
