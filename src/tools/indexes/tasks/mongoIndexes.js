@@ -47,4 +47,10 @@ module.exports = {
       }, { name: 'bo-search-fulltext' }),
     ]);
   },
+  metabase: db => {
+    return Promise.all([
+      db.collection('metabase').createIndex({ 'date': 1 }, { unique: true })
+    ]);
+  },
+
 };
