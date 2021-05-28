@@ -14,7 +14,8 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
 
   program.option('-u, --username <username>', 'username');
   program.option('-p, --password <password>', 'password');
-  program.option('-r, --role <role>', 'role : choisir entre admin, structure, conseiller');
+  program.option('-d, --departement <departement>', 'departement');
+  program.option('-r, --role <role>', 'role : choisir entre admin, structure, conseiller, prefet');
   program.option('-i, --id <id>', 'id');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
@@ -28,7 +29,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
     exit('Paramètres invalides');
   }
 
-  if (!['admin', 'structure', 'conseiller'].includes(role)) {
+  if (!['admin', 'structure', 'conseiller', 'prefet'].includes(role)) {
     exit('Rôle non reconnu');
   }
 
