@@ -36,16 +36,18 @@ execute(__filename, async ({ db, logger, exit }) => {
     }
   };
 
-  program.option('-d, --disponible <true/false>', 'disponible: désactiver le conseiller par la valeur false ');
-  program.option('-i, --id <id>', 'id: id PG du conseiller');
+  program.option('--disponible', 'activer le conseiller ');
+  program.option('--non-disponible', 'désactiver le conseiller');
+  program.option('-i, --id <id>', 'id: id PostgreSQL du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   let id = ~~program.id;
   let disponible = program.disponible;
+  let nonDisponible = program.nonDisponible;
 
-  if (id === 0 || !(disponible !== 'true' || disponible !== 'false')) {
-    exit('Paramètres invalides. Veuillez préciser un id et une valeur sois true ou false pour la disponibilité');
+  if (id === 0 || (disponible ^ nonDisponible)) {
+    exit('Paramètres invalides. Veuillez préciser un id et la disponibilité ou la non disponibilité');
     return;
   }
 
@@ -62,7 +64,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     exit('id PG inconnu dans PostgreSQL');
     return;
   }
-  let disponibleChange = program.disponible === 'true';
+  let disponibleChange = program.disponible === true;
   updateConseiller(id, disponibleChange);
 
   await db.collection('conseillers').updateOne({ idPG: id }, { $set: {
