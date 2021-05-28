@@ -22,6 +22,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
 
   const username = program.username.toLowerCase();
   const password = program.password;
+  const departement = program.departement;
   const role = program.role;
   const id = program.id;
 
@@ -39,6 +40,12 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
     }
   } else if (!id) {
     exit('Paramètre id obligatoire pour ce rôle');
+  }
+
+  if (role === 'prefet') {
+    if (!departement) {
+      exit('Paramètre departement obligatoire pour le role prefet');
+    }
   }
 
   const count = await db.collection('users').countDocuments({ name: username });
