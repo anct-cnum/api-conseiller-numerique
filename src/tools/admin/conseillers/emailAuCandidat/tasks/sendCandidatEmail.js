@@ -20,6 +20,8 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
     let tokenRetourRecrutement = uuidv4();
     let miseEnRelation = await cursor.next();
 
+    const count = db.collection('conseillers').count({ emailConfirmationKey: { $not: /^.-./ } }, { emailConfirmationKey: 1 });
+
     await db.collection('conseillers').updateOne({ '_id': miseEnRelation._id }, {
       $set: {
         emailConfirmationKey: tokenRetourRecrutement
@@ -27,7 +29,9 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
     });
 
     let conseiller = await db.collection('conseillers').findOne({ '_id': miseEnRelation._id });
-    logger.info(`Sending email to candidate ${conseiller.email} - token ${tokenRetourRecrutement}`);
+    logger.info(`Sending email to candidate ${conseiller.email} - token ${tokenRetourRecrutement} | number ${count}`);
+    //Être sûr d'envoyer le bon token
+    conseiller.emailConfirmationKey = tokenRetourRecrutement;
     stats.total++;
     try {
       let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
