@@ -27,7 +27,7 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
     });
 
     let conseiller = await db.collection('conseillers').findOne({ '_id': conseillerAgg._id });
-    if (conseiller.sondageSentAt === null) {
+    if (conseiller.sondageSentAt === undefined || conseiller.sondageSentAt === null) {
       logger.info(`Sending email to candidate ${conseiller.email} - token ${tokenRetourRecrutement}`);
       stats.total++;
       try {
