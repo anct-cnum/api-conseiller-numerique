@@ -16,7 +16,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
   program.option('-p, --password <password>', 'password');
   program.option('-d, --departement <departement>', 'departement');
   program.option('-r, --role <role>', 'role : choisir entre admin, structure, conseiller, prefet');
-  program.option('-i, --id <id>', 'id pour les structures et les conseillers');
+  program.option('-i, --id <id>', 'id MongoDB pour les structures et les conseillers');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
