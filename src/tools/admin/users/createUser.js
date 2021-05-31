@@ -36,7 +36,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
 
   if (role === 'admin' || role === 'prefet') {
     if (id) {
-      exit('Paramètre id interdit pour le rôle admin');
+      exit('Paramètre id interdit pour les rôles admin et prefet');
     }
   } else if (!id) {
     exit('Paramètre id obligatoire pour ce rôle');
