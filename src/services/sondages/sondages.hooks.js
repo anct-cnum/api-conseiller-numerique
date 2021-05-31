@@ -28,29 +28,9 @@ module.exports = {
         //Creation DBRef conseillers et suppression de l'idConseiller
         try {
           context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.sondage.idConseiller), database);
-
-        } catch (error) {
-          throw new Forbidden('Vous n\'avez pas l\'autorisation');
-        }
-
-        // Modification de la disponibilité
-        const modifierConseiller = new Promise(resolve => {
-          context.app.get('mongoClient').then(async db => {
-            await db.collection('conseillers').updateOne({ '_id': new ObjectId(context.data.sondage.idConseiller) }, {
-              $set: {
-                'disponible': context.data.sondage.disponible === 'Oui'
-              }
-            });
-          });
-          resolve();
-        }, error => {
-          error('une erreur de mise à jour est survenu!');
-        });
-        try {
-          await modifierConseiller;
           delete context.data.sondage.idConseiller;
         } catch (error) {
-          throw new BadRequest(error);
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
         //Validation des données du sondage
