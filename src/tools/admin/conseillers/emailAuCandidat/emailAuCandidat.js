@@ -14,7 +14,7 @@ cli.description('Send point recrutment to candidate emails')
 
 execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
 
-  let { type = 'send', delay = 100, limit = 1000 } = cli;
+  let { type = 'send', delay = 100, limit = 1 } = cli;
 
   logger.info('Envoi de l\'email de point sur le recrutement du candidat...');
 
