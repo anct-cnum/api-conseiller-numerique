@@ -38,6 +38,13 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
       if (options.delay) {
         await delay(options.delay);
       }
+      
+      await db.collection('conseillers').updateOne({ '_id': miseEnRelation._id }, {
+        $set: {
+          sondageSentAt: new Date()
+        }
+      });
+      
       stats.sent++;
     } catch (err) {
       Sentry.captureException(err);
