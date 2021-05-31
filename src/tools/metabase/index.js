@@ -9,12 +9,8 @@ cli.description('Data pour metabase').parse(process.argv);
 execute(__filename, async ({ logger, db, Sentry }) => {
   logger.info('Récupération des différentes données nécessaires au metabase public...');
 
-  const postesValidesDepartement = [];
-  const postesValidesStructure = [];
-  const conseillersRecrutesDepartement = [];
-  const conseillersRecrutesStructure = [];
-  const candidats = [];
-  const structuresCandidates = [];
+  const date = new Date();
+  let lignes = [];
 
   /* Nombre de postes validés par département */
   const queryPosteValidesDepartement = [
@@ -26,13 +22,13 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const nombrePostesValidesDepartement = await db.collection('structures').aggregate(queryPosteValidesDepartement).toArray();
   if (nombrePostesValidesDepartement.length > 0) {
     nombrePostesValidesDepartement.forEach(posteValide => {
-      let ligne = {
+      lignes.push({
         'departement': posteValide._id,
         'nombrePostesValidesDepartement': posteValide.count
-      };
-      postesValidesDepartement.push(ligne);
+      });
     });
   }
+  const postesValidesDepartement = ({ 'key': date, 'data': lignes });
 
   /* Nombre de postes validés par structure */
   const queryPosteValidesStructures = [
@@ -41,15 +37,16 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $group: { _id: '$_id', count: { $sum: '$coselec.nombreConseillersCoselec' }, nom: { $first: '$nom' } } },
   ];
   const nombrePostesValidesStructures = await db.collection('structures').aggregate(queryPosteValidesStructures).toArray();
+  lignes = [];
   if (nombrePostesValidesStructures.length > 0) {
     nombrePostesValidesStructures.forEach(posteValide => {
-      let ligne = {
+      lignes.push({
         'structure': posteValide.nom,
         'nombrePostesValidesStructures': posteValide.count
-      };
-      postesValidesStructure.push(ligne);
+      });
     });
   }
+  const postesValidesStructure = ({ 'key': date, 'data': lignes });
 
   /* Nombre de conseillers recrutés par département */
   const queryNombreConseillersRecrutesDepartement = [
@@ -58,15 +55,16 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $sort: { _id: 1 } }
   ];
   const listConseillersRecrutesDepartement = await db.collection('misesEnRelation').aggregate(queryNombreConseillersRecrutesDepartement).toArray();
+  lignes = [];
   if (listConseillersRecrutesDepartement.length > 0) {
     listConseillersRecrutesDepartement.forEach(conseiller => {
-      let ligne = {
+      lignes.push({
         'departement': conseiller._id,
         'nombreConseillersDepartement': conseiller.count
-      };
-      conseillersRecrutesDepartement.push(ligne);
+      });
     });
   }
+  const conseillersRecrutesDepartement = ({ 'key': date, 'data': lignes });
 
   /* Nombre de conseillers recrutés par structure */
   const queryNombreConseillersRecrutesStructure = [
@@ -74,15 +72,16 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $group: { _id: '$structureObj._id', count: { $sum: 1 }, nomStructure: { $first: '$structureObj.nom' } } },
   ];
   const listConseillersRecrutesStructure = await db.collection('misesEnRelation').aggregate(queryNombreConseillersRecrutesStructure).toArray();
+  lignes = [];
   if (listConseillersRecrutesStructure.length > 0) {
     listConseillersRecrutesStructure.forEach(conseiller => {
-      let ligne = {
+      lignes.push({
         'structure': conseiller.nomStructure,
         'nombreConseillersStructure': conseiller.count
-      };
-      conseillersRecrutesStructure.push(ligne);
+      });
     });
   }
+  const conseillersRecrutesStructure = ({ 'key': date, 'data': lignes });
 
   /* Nombre de candidats par département */
   const queryNombreCandidats = [
@@ -91,15 +90,16 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $sort: { _id: 1 } }
   ];
   const listCandidats = await db.collection('misesEnRelation').aggregate(queryNombreCandidats).toArray();
+  lignes = [];
   if (listCandidats.length > 0) {
     listCandidats.forEach(candidat => {
-      let ligne = {
+      lignes.push({
         'departement': candidat._id,
         'nombreCandidatsDepartement': candidat.count
-      };
-      candidats.push(ligne);
+      });
     });
   }
+  const candidats = ({ 'key': date, 'data': lignes });
 
 
   /* Nombre de structures candidates par département */
@@ -109,31 +109,25 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $sort: { _id: 1 } }
   ];
   const nombreStructures = await db.collection('structures').aggregate(queryNombreStructures).toArray();
+  lignes = [];
   if (nombreStructures.length > 0) {
     nombreStructures.forEach(structure => {
-      let ligne = {
+      lignes.push({
         'departement': structure._id,
         'nombreStructures': structure.count
-      };
-      structuresCandidates.push(ligne);
+      });
     });
   }
+  const structuresCandidates = ({ 'key': date, 'data': lignes });
 
   try {
 
-    const insert = {
-      date: new Date(),
-      data: {
-        postesValidesDepartement,
-        postesValidesStructure,
-        conseillersRecrutesDepartement,
-        conseillersRecrutesStructure,
-        candidats,
-        structuresCandidates
-      }
-    };
-
-    db.collection('metabase').insertOne(insert);
+    db.collection('stats_PostesValidesDepartement').insertOne(postesValidesDepartement);
+    db.collection('stats_PostesValidesStructure').insertOne(postesValidesStructure);
+    db.collection('stats_ConseillersRecrutesDepartement').insertOne(conseillersRecrutesDepartement);
+    db.collection('stats_ConseillersRecrutesStructure').insertOne(conseillersRecrutesStructure);
+    db.collection('stats_Candidats').insertOne(candidats);
+    db.collection('stats_StructuresCandidates').insertOne(structuresCandidates);
 
   } catch (error) {
     Sentry.captureException(error);

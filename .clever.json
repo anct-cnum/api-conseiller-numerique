@@ -1,0 +1,18 @@
+{
+  "apps": [
+    {
+      "app_id": "app_9c571685-fe60-4a2c-ae1b-d80aeb6081b2",
+      "org_id": "orga_48e235e2-64a9-4e59-aa6a-d2442a5ab3b7",
+      "deploy_url": "https://push-n2-par-clevercloud-customers.services.clever-cloud.com/app_9c571685-fe60-4a2c-ae1b-d80aeb6081b2.git",
+      "name": "beta.api.conseiller-numerique.gouv.fr",
+      "alias": "beta.api.conseiller-numerique.gouv.fr"
+    },
+    {
+      "app_id": "app_6a419f45-bc2f-4a82-a4f2-a7de99358859",
+      "org_id": "orga_48e235e2-64a9-4e59-aa6a-d2442a5ab3b7",
+      "deploy_url": "https://push-n2-par-clevercloud-customers.services.clever-cloud.com/app_6a419f45-bc2f-4a82-a4f2-a7de99358859.git",
+      "name": "api.conseiller-numerique.gouv.fr",
+      "alias": "api.conseiller-numerique.gouv.fr"
+    }
+  ]
+}

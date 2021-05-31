@@ -47,9 +47,34 @@ module.exports = {
       }, { name: 'bo-search-fulltext' }),
     ]);
   },
-  metabase: db => {
+  stats_PostesValidesDepartement: db => {
     return Promise.all([
-      db.collection('metabase').createIndex({ 'date': 1 }, { unique: true })
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_PostesValidesStructure: db => {
+    return Promise.all([
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_ConseillersRecrutesDepartement: db => {
+    return Promise.all([
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_ConseillersRecrutesStructure: db => {
+    return Promise.all([
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_CSandidats: db => {
+    return Promise.all([
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_StructuresCandidates: db => {
+    return Promise.all([
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
     ]);
   },
 
