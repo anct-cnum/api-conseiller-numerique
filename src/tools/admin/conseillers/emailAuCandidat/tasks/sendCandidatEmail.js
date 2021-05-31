@@ -18,16 +18,16 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
   while (await cursor.hasNext()) {
 
     let tokenRetourRecrutement = uuidv4();
-    let miseEnRelation = await cursor.next();
+    let conseillerAgg = await cursor.next();
 
-    await db.collection('conseillers').updateOne({ '_id': miseEnRelation._id }, {
+    await db.collection('conseillers').updateOne({ '_id': conseillerAgg._id }, {
       $set: {
-        emailConfirmationKey: tokenRetourRecrutement
+        sondageToken: tokenRetourRecrutement
       }
     });
 
-    let conseiller = await db.collection('conseillers').findOne({ '_id': miseEnRelation._id });
-    logger.info(`Sending email to candidate ${conseiller.email}`);
+    let conseiller = await db.collection('conseillers').findOne({ '_id': conseillerAgg._id });
+    logger.info(`Sending email to candidate ${conseiller.email} - token ${tokenRetourRecrutement}`);
     stats.total++;
     try {
       let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
@@ -36,6 +36,13 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
       if (options.delay) {
         await delay(options.delay);
       }
+
+      await db.collection('conseillers').updateOne({ '_id': conseillerAgg._id }, {
+        $set: {
+          sondageSentAt: new Date()
+        }
+      });
+
       stats.sent++;
     } catch (err) {
       Sentry.captureException(err);
