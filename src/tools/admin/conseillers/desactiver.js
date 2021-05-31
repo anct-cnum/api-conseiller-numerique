@@ -46,7 +46,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   let disponible = program.disponible;
   let nonDisponible = program.nonDisponible;
 
-  if (id === 0 || (disponible ^ nonDisponible)) {
+  if (id === 0 || !(disponible ^ nonDisponible)) {
     exit('Paramètres invalides. Veuillez préciser un id et la disponibilité ou la non disponibilité');
     return;
   }
