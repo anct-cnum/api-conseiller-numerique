@@ -27,7 +27,7 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
     });
 
     let conseiller = await db.collection('conseillers').findOne({ '_id': miseEnRelation._id });
-    logger.info(`Sending email to candidate ${conseiller.email}`);
+    logger.info(`Sending email to candidate ${conseiller.email} - token ${tokenRetourRecrutement}`);
     stats.total++;
     try {
       let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
