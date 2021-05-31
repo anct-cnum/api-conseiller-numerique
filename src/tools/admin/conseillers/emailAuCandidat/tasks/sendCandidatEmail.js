@@ -1,4 +1,4 @@
-let { delay } = require('../../../utils');
+let { delay } = require('../../../../utils');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (db, logger, emails, action, options, Sentry) => {
