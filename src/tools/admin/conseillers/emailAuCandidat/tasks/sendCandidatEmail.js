@@ -27,27 +27,29 @@ module.exports = async (db, logger, emails, action, options, Sentry) => {
     });
 
     let conseiller = await db.collection('conseillers').findOne({ '_id': conseillerAgg._id });
-    logger.info(`Sending email to candidate ${conseiller.email} - token ${tokenRetourRecrutement}`);
-    stats.total++;
-    try {
-      let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
-      await message.send(conseiller);
+    if (conseiller.sondageSentAt === null) {
+      logger.info(`Sending email to candidate ${conseiller.email} - token ${tokenRetourRecrutement}`);
+      stats.total++;
+      try {
+        let message = emails.getEmailMessageByTemplateName('candidatPointRecrutement');
+        await message.send(conseiller);
 
-      if (options.delay) {
-        await delay(options.delay);
-      }
-
-      await db.collection('conseillers').updateOne({ '_id': conseillerAgg._id }, {
-        $set: {
-          sondageSentAt: new Date()
+        if (options.delay) {
+          await delay(options.delay);
         }
-      });
 
-      stats.sent++;
-    } catch (err) {
-      Sentry.captureException(err);
-      logger.error(err);
-      stats.error++;
+        await db.collection('conseillers').updateOne({ '_id': conseillerAgg._id }, {
+          $set: {
+            sondageSentAt: new Date()
+          }
+        });
+
+        stats.sent++;
+      } catch (err) {
+        Sentry.captureException(err);
+        logger.error(err);
+        stats.error++;
+      }
     }
   }
   return stats;

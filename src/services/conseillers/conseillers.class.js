@@ -27,5 +27,24 @@ exports.Conseillers = class Conseillers extends Service {
 
       res.send({ isValid: true, conseiller: conseillers.data[0] });
     });
+
+    app.get('/conseillers/verifySondageToken/:token', async (req, res) => {
+      const token = req.params.token;
+      const conseillers = await this.find({
+        query: {
+          sondageToken: token,
+          $limit: 1,
+        }
+      });
+
+      if (conseillers.total === 0) {
+        res.status(404).send(new NotFound('Conseiller not found', {
+          token
+        }).toJSON());
+        return;
+      }
+
+      res.send({ isValid: true, conseiller: conseillers.data[0] });
+    });
   }
 };
