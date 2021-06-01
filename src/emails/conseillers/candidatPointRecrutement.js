@@ -24,7 +24,7 @@ module.exports = (db, mailer, app) => {
       return mailer.createMailer().sendEmail(
         conseiller.email,
         {
-          subject: '[ANNULE ET REMPLACE] Les recrutements ont démarré, dites-nous en plus sur vous',
+          subject: 'Les recrutements ont démarré, dites-nous en plus sur vous',
           body: await render(conseiller),
         },
       )
