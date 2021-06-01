@@ -37,7 +37,6 @@ module.exports = {
         });
         const result = await p;
 
-        console.log(result);
         if (result > 0) {
           throw new Forbidden('Vous avez déjà répondu au sondage');
         }
@@ -53,7 +52,7 @@ module.exports = {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
-        context.data.sondage.avis = context.data.sondage.avis === '' ? null : context.data.sondage.avis;
+        context.data.sondage.avis = context.data.sondage.avis === '' ? null : parseInt(context.data.sondage.avis);
         context.data.sondage.disponible = context.data.sondage.disponible === 'Oui';
         context.data.sondage.contact = context.data.sondage.contact === 'Oui';
 
