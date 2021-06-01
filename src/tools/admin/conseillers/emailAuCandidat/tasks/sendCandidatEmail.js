@@ -26,6 +26,7 @@ module.exports = async (db, logger, emails, action, options, Sentry, exit) => {
     let conseiller = await db.collection('conseillers').findOne({ '_id': conseillerAgg._id });
     if (conseiller.sondageSentAt === undefined || conseiller.sondageSentAt === null) {
       let tokenRetourRecrutement = uuidv4();
+      conseiller.sondageToken = tokenRetourRecrutement;
 
       await db.collection('conseillers').updateOne({ '_id': conseillerAgg._id }, {
         $set: {
