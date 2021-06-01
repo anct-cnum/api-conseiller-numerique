@@ -22,6 +22,26 @@ module.exports = {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
+        //N'authoriser qu'un seul sondage par candidat
+        const p = new Promise(resolve => {
+          context.app.get('mongoClient').then(async db => {
+            const p = new Promise(async resolve => {
+              let sondage = db.collection('sondages').countDocuments(
+                {
+                  'conseiller.$id': new ObjectId(context.data.sondage.idConseiller)
+                });
+              resolve(sondage);
+            });
+            resolve(p);
+          });
+        });
+        const result = await p;
+
+        console.log(result);
+        if (result > 0) {
+          throw new Forbidden('Vous avez déjà répondu au sondage');
+        }
+
         //Ajout de la date de création
         context.data.createdAt = new Date();
 
