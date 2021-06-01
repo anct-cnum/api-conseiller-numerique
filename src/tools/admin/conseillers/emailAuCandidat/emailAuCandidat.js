@@ -12,9 +12,9 @@ cli.description('Send point recrutment to candidate emails')
 .option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
 .parse(process.argv);
 
-execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
+execute(__filename, async ({ logger, db, app, emails, Sentry, exit }) => {
 
-  let { type = 'send', delay = 100, limit = 1000 } = cli;
+  let { type = 'send', delay = 100, limit = 1 } = cli;
 
   logger.info('Envoi de l\'email de point sur le recrutement du candidat...');
 
@@ -25,7 +25,7 @@ execute(__filename, async ({ logger, db, app, emails, Sentry }) => {
     let stats = await sendCandidatEmail(db, logger, emails, action, {
       limit,
       delay,
-    }, Sentry);
+    }, Sentry, exit);
 
     if (stats.total > 0) {
       logger.info(`[CONSEILLERS] Des emails sur le recrutement ont été envoyés à des candidats :  ` +

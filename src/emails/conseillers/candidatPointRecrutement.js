@@ -4,7 +4,7 @@ module.exports = (db, mailer, app) => {
   let { utils } = mailer;
 
   let render = async conseiller => {
-    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(conseiller.emailConfirmationKey)}`);
+    const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(conseiller.sondageToken)}`);
     return mailer.render(__dirname, templateName, {
       link: link,
     });
@@ -24,7 +24,7 @@ module.exports = (db, mailer, app) => {
       return mailer.createMailer().sendEmail(
         conseiller.email,
         {
-          subject: 'Les recrutements ont démarré, dîtes nous en plus sur vous',
+          subject: 'Les recrutements ont démarré, dites-nous en plus sur vous',
           body: await render(conseiller),
         },
       )
