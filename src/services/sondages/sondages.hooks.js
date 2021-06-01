@@ -33,6 +33,10 @@ module.exports = {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
+        context.data.sondage.avis = context.data.sondage.avis === '' ? null : context.data.sondage.avis;
+        context.data.sondage.disponible = context.data.sondage.disponible === 'Oui';
+        context.data.sondage.contact = context.data.sondage.contact === 'Oui';
+
         //Validation des données du sondage
         const schema = Joi.object({
           disponible: Joi.string().required().error(new Error('La champ disponibilité est invalide')),

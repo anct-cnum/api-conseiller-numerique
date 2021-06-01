@@ -44,6 +44,26 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
+      const sondage = new Promise(async resolve => {
+        const p = new Promise(async resolve => {
+          app.get('mongoClient').then(db => {
+            let sondage = db.collection('sondages').countDocuments(
+              {
+                'conseiller.$id': conseillers.data[0]._id
+              });
+            resolve(sondage);
+          });
+        });
+        resolve(p);
+      });
+      const result = await sondage;
+      if (result > 0) {
+        res.status(404).send(new NotFound('Survey already answered', {
+          token
+        }).toJSON());
+        return;
+      }
+
       res.send({ isValid: true, conseiller: conseillers.data[0] });
     });
   }
