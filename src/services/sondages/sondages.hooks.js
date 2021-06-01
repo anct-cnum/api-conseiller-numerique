@@ -22,6 +22,25 @@ module.exports = {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
+        //N'authoriser qu'un seul sondage par candidat
+        const p = new Promise(resolve => {
+          context.app.get('mongoClient').then(async db => {
+            const p = new Promise(async resolve => {
+              let sondage = db.collection('sondages').countDocuments(
+                {
+                  'conseiller.$id': new ObjectId(context.data.sondage.idConseiller)
+                });
+              resolve(sondage);
+            });
+            resolve(p);
+          });
+        });
+        const result = await p;
+
+        if (result > 0) {
+          throw new Forbidden('Vous avez déjà répondu au sondage');
+        }
+
         //Ajout de la date de création
         context.data.createdAt = new Date();
 
@@ -33,13 +52,17 @@ module.exports = {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
 
+        context.data.sondage.avis = context.data.sondage.avis === '' ? null : parseInt(context.data.sondage.avis);
+        context.data.sondage.disponible = context.data.sondage.disponible === 'Oui';
+        context.data.sondage.contact = context.data.sondage.contact === 'Oui';
+
         //Validation des données du sondage
         const schema = Joi.object({
           disponible: Joi.string().required().error(new Error('La champ disponibilité est invalide')),
           contact: Joi.string().required().error(new Error('Le champ de contact est invalide')),
           nombreContact: Joi.number().required().error(new Error('Le champ nombre de contact est invalide')),
           entretien: Joi.string(),
-          avis: Joi.string(),
+          avis: Joi.number().min(1).max(5).allow(null),
           axeAmelioration: Joi.string(),
           precisionAvis: Joi.string(),
           precisionAxeAmelioration: Joi.string()
