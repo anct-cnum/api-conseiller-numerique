@@ -62,7 +62,7 @@ module.exports = {
           contact: Joi.string().required().error(new Error('Le champ de contact est invalide')),
           nombreContact: Joi.number().required().error(new Error('Le champ nombre de contact est invalide')),
           entretien: Joi.string(),
-          avis: Joi.string(),
+          avis: Joi.number().min(1).max(5),
           axeAmelioration: Joi.string(),
           precisionAvis: Joi.string(),
           precisionAxeAmelioration: Joi.string()
