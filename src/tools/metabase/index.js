@@ -3,13 +3,15 @@
 
 const cli = require('commander');
 const { execute } = require('../utils');
+const moment = require('moment');
 
 cli.description('Data pour metabase').parse(process.argv);
 
 execute(__filename, async ({ logger, db, Sentry }) => {
   logger.info('Récupération des différentes données nécessaires au metabase public...');
 
-  const date = new Date();
+  const date = moment(new Date()).format('DD/MM/YYYY');
+  const departements = require('../../../data/imports/departements-region.json');
   let lignes = [];
 
   /* Nombre de postes validés par département */
@@ -22,11 +24,17 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const nombrePostesValidesDepartement = await db.collection('structures').aggregate(queryPosteValidesDepartement).toArray();
   if (nombrePostesValidesDepartement.length > 0) {
     nombrePostesValidesDepartement.forEach(posteValide => {
-      lignes.push({
-        'departement': posteValide._id,
-        'nombrePostesValidesDepartement': posteValide.count
+      departements.forEach(departement => {
+        if (String(departement.num_dep) === String(posteValide._id)) {
+          lignes.push({
+            'numeroDepartement': posteValide._id,
+            'departement': departement.dep_name,
+            'nombrePostesValides': posteValide.count
+          });
+        }
       });
     });
+
   }
   const postesValidesDepartement = ({ 'key': date, 'data': lignes });
 
@@ -42,7 +50,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     nombrePostesValidesStructures.forEach(posteValide => {
       lignes.push({
         'structure': posteValide.nom,
-        'nombrePostesValidesStructures': posteValide.count
+        'nombrePostesValides': posteValide.count
       });
     });
   }
@@ -58,9 +66,14 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   lignes = [];
   if (listConseillersRecrutesDepartement.length > 0) {
     listConseillersRecrutesDepartement.forEach(conseiller => {
-      lignes.push({
-        'departement': conseiller._id,
-        'nombreConseillersDepartement': conseiller.count
+      departements.forEach(departement => {
+        if (String(departement.num_dep) === String(conseiller._id)) {
+          lignes.push({
+            'numeroDepartement': conseiller._id,
+            'departement': departement.dep_name,
+            'nombreConseillers': conseiller.count
+          });
+        }
       });
     });
   }
@@ -77,7 +90,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     listConseillersRecrutesStructure.forEach(conseiller => {
       lignes.push({
         'structure': conseiller.nomStructure,
-        'nombreConseillersStructure': conseiller.count
+        'nombreConseillers': conseiller.count
       });
     });
   }
@@ -93,9 +106,14 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   lignes = [];
   if (listCandidats.length > 0) {
     listCandidats.forEach(candidat => {
-      lignes.push({
-        'departement': candidat._id,
-        'nombreCandidatsDepartement': candidat.count
+      departements.forEach(departement => {
+        if (String(departement.num_dep) === String(candidat._id)) {
+          lignes.push({
+            'numeroDepartement': candidat._id,
+            'departement': departement.dep_name,
+            'nombreCandidats': candidat.count
+          });
+        }
       });
     });
   }
@@ -112,9 +130,14 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   lignes = [];
   if (nombreStructures.length > 0) {
     nombreStructures.forEach(structure => {
-      lignes.push({
-        'departement': structure._id,
-        'nombreStructures': structure.count
+      departements.forEach(departement => {
+        if (String(departement.num_dep) === String(structure._id)) {
+          lignes.push({
+            'numeroDepartement': structure._id,
+            'departement': departement.dep_name,
+            'nombre': structure.count
+          });
+        }
       });
     });
   }
