@@ -230,10 +230,10 @@ execute(__filename, async ({ db, logger }) => {
   };
 
   const getDoublonsSiret = async () => {
-    let query = `SELECT siret, COUNT(*)
+    let query = `SELECT siret, departement_code, COUNT(*)
       FROM djapp_hostorganization
       GROUP BY
-        siret
+        siret, departement_code
       HAVING
         COUNT(*) > 1`;
 
@@ -246,10 +246,10 @@ execute(__filename, async ({ db, logger }) => {
   };
 
   const getDoublonsSiretEtEmail = async () => {
-    let query = `SELECT siret, contact_email, COUNT(*)
+    let query = `SELECT siret, contact_email, departement_code, COUNT(*)
       FROM djapp_hostorganization
       GROUP BY
-        siret, contact_email
+        siret, contact_email, departement_code
       HAVING
         COUNT(*) > 1`;
 
@@ -288,12 +288,18 @@ execute(__filename, async ({ db, logger }) => {
       let structuresEnrichies = [];
 
       for (const s of rows) {
-        structuresEnrichies.push(await getStructureMongo(s));
-      //await getStructureMongo(s);
-      }
-      // Classement des structures
-      // AVIS POSITIF - AVIS NEGATIF - EXAMEN COMPLEMENTAIRE - NOUVELLES STRUCTURES
+        let sm = await getStructureMongo(s);
 
+        if (['CREEE', 'VALIDATION_COSELEC'].includes(sm.statut) &&
+          !sm.name.includes('CROIX ROUGE FRANCAISE') &&
+            !sm.name.includes('(GROUPE SOS)') &&
+              !sm.name.includes('EMMAUS CONNECT')) {
+          structuresEnrichies.push(sm);
+        }
+      }
+
+      // Classement des structures dans l'ordre suivant :
+      // AVIS POSITIF - AVIS NEGATIF - EXAMEN COMPLEMENTAIRE - NOUVELLES STRUCTURES
       const ordre = ['POSITIF', 'NÉGATIF', 'EXAMEN COMPLÉMENTAIRE', ''];
 
       structuresEnrichies.sort((a, b) => {
@@ -466,7 +472,7 @@ execute(__filename, async ({ db, logger }) => {
     });
 
     // Total des affectations
-    ws.cell(12, 7, 12, 7, true)
+    ws.cell(12, 9, 12, 9, true)
     .string('Nombre d\'affectations total :')
     .style(styleConf)
     .style({
@@ -529,60 +535,54 @@ execute(__filename, async ({ db, logger }) => {
 
     ws.column(7).setWidth(25);
     ws.cell(start, 7)
-    .string('Labellisé France Services')
+    .string('Intervention en France services')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(8).setWidth(22);
+    ws.column(8).setWidth(20);
     ws.cell(start, 8)
+    .string('Intervention en ZRR')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(9).setWidth(20);
+    ws.cell(start, 9)
+    .string('Intervention en QPV')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(10).setWidth(22);
+    ws.cell(start, 10)
     .string('Nombre de conseillers demandés')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(9).setWidth(30);
-    ws.cell(start, 9)
+    ws.column(11).setWidth(30);
+    ws.cell(start, 11)
     .string('Avis Préfecture')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(10).setWidth(70);
-    ws.cell(start, 10)
+    ws.column(12).setWidth(70);
+    ws.cell(start, 12)
     .string('Commentaire de la Préfecture pour justifier l\'avis donné')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(11).setWidth(22);
-    ws.cell(start, 11)
+    ws.column(13).setWidth(22);
+    ws.cell(start, 13)
     .string('Nombre de conseillers COSELEC')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(12).setWidth(30);
-    ws.cell(start, 12)
+    ws.column(14).setWidth(30);
+    ws.cell(start, 14)
     .string('Avis COSELEC')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(13).setWidth(20);
-    ws.cell(start, 13)
-    .string('ZZR')
-    .style(styleHeaderConf)
-    .style(styleVertical);
-
-    ws.column(14).setWidth(20);
-    ws.cell(start, 14)
-    .string('QPV')
-    .style(styleHeaderConf)
-    .style(styleVertical);
-
-    ws.column(15).setWidth(70);
-    ws.cell(start, 15)
-    .string('Quartiers')
-    .style(styleHeaderConf)
-    .style(styleVertical);
-
-    ws.cell(start - 1, 8, start - 1, 8, true)
-    .formula(`SUM(H${start + 1}:H${start + structures.length})`)
+    ws.cell(start - 1, 10, start - 1, 10, true)
+    .formula(`SUM(J${start + 1}:H${start + structures.length})`)
     .style(styleConf)
     .style({
       font: {
@@ -658,7 +658,37 @@ execute(__filename, async ({ db, logger }) => {
         formulas: ['OUI,NON'],
       });
 
+      // ZRR
       ws.cell(i + start + 1, 8)
+      .string('')
+      .style(styleConf);
+
+      ws.addDataValidation({
+        type: 'list',
+        allowBlank: true,
+        prompt: 'Choisissez dans la liste',
+        error: 'Choix non valide',
+        showDropDown: true,
+        sqref: `H${i + start + 1}:H${i + start + 1}`,
+        formulas: ['OUI,NON'],
+      });
+
+      // QPV
+      ws.cell(i + start + 1, 9)
+      .string('')
+      .style(styleConf);
+
+      ws.addDataValidation({
+        type: 'list',
+        allowBlank: true,
+        prompt: 'Choisissez dans la liste',
+        error: 'Choix non valide',
+        showDropDown: true,
+        sqref: `I${i + start + 1}:I${i + start + 1}`,
+        formulas: ['OUI,NON'],
+      });
+
+      ws.cell(i + start + 1, 10)
       .number(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].nombreConseillersPrefet : 0)
       .style({ numberFormat: '0' })
       .style(styleConf);
@@ -669,11 +699,11 @@ execute(__filename, async ({ db, logger }) => {
         allowBlank: true,
         prompt: 'Saisissez un nombre',
         error: 'Nombre obligatoire',
-        sqref: `H${i + start + 1}:H${i + start + 1}`,
+        sqref: `J${i + start + 1}:J${i + start + 1}`,
         formulas: [0, 500],
       });
 
-      ws.cell(i + start + 1, 9)
+      ws.cell(i + start + 1, 11)
       .string(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].avisPrefet : '')
       .style(styleConf);
 
@@ -683,11 +713,11 @@ execute(__filename, async ({ db, logger }) => {
         prompt: 'Choisissez dans la liste',
         error: 'Choix non valide',
         showDropDown: true,
-        sqref: `I${i + start + 1}:I${i + start + 1}`,
+        sqref: `K${i + start + 1}:K${i + start + 1}`,
         formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE'],
       });
 
-      ws.cell(i + start + 1, 10)
+      ws.cell(i + start + 1, 12)
       .string(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].commentairePrefet : '')
       .style(styleConf)
       .style(
@@ -699,35 +729,14 @@ execute(__filename, async ({ db, logger }) => {
 
       // Coselec
 
-      ws.cell(i + start + 1, 11)
+      ws.cell(i + start + 1, 13)
       .number(s.coselecPrecedent ? s.coselecPrecedent.nombreConseillersCoselec : 0)
       .style({ numberFormat: '0' })
       .style(styleConf);
 
-      ws.cell(i + start + 1, 12)
+      ws.cell(i + start + 1, 14)
       .string(s.coselecPrecedent ? s.coselecPrecedent.avisCoselec : '')
       .style(styleConf);
-
-      // ZRR
-      ws.cell(i + start + 1, 13)
-      .string(s.estZRR ?? '')
-      .style(styleConf);
-
-      // QPV
-      ws.cell(i + start + 1, 14)
-      .string(s.qpvStatut ?? '')
-      .style(styleConf);
-
-      ws.cell(i + start + 1, 15)
-      .string(s.qpvListe ? s.qpvListe.map(({ properties }) => `${properties.CODE_QP} - ${properties.NOM_QP} - ${properties.COMMUNE_QP}`).join('\n') : '')
-      .style(styleConf)
-      .style(
-        {
-          alignment: {
-            wrapText: true,
-            vertical: 'top'
-          }
-        });
     });
   };
 
