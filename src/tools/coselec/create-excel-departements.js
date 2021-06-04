@@ -32,6 +32,9 @@ const accords = new Map();
 
 const pool = new Pool();
 
+let doublonsSiret;
+let doublonsSiretEtEmail;
+
 const types = {
   'PRIVATE': 'Privée',
   'COMMUNE': 'Publique',
@@ -101,6 +104,14 @@ execute(__filename, async ({ db, logger }) => {
       return deps.get(String(dep[0]));
     }
     return null;
+  };
+
+  const isDoublonSiretEtEmail = (siret, email) => {
+    return doublonsSiretEtEmail.some(doublon => doublon.siret === siret && doublon.contact_email === email);
+  };
+
+  const isDoublonSiret = siret => {
+    return doublonsSiret.some(doublon => doublon.siret === siret);
   };
 
   const getStructureMongo = async s => {
@@ -215,6 +226,38 @@ execute(__filename, async ({ db, logger }) => {
       // Quand le fichier Coselec sera généré à partir de l'appli
       // ça ne sera plus possible
       return s;
+    }
+  };
+
+  const getDoublonsSiret = async () => {
+    let query = `SELECT siret, COUNT(*)
+      FROM djapp_hostorganization
+      GROUP BY
+        siret
+      HAVING
+        COUNT(*) > 1`;
+
+    try {
+      const { rows } = await pool.query(query, []);
+      return rows;
+    } catch (error) {
+      console.log(`Erreur DB : ${error.message}`);
+    }
+  };
+
+  const getDoublonsSiretEtEmail = async () => {
+    let query = `SELECT siret, contact_email, COUNT(*)
+      FROM djapp_hostorganization
+      GROUP BY
+        siret, contact_email
+      HAVING
+        COUNT(*) > 1`;
+
+    try {
+      const { rows } = await pool.query(query, []);
+      return rows;
+    } catch (error) {
+      console.log(`Erreur DB : ${error.message}`);
     }
   };
 
@@ -557,7 +600,13 @@ execute(__filename, async ({ db, logger }) => {
 
       ws.cell(i + start + 1, 2)
       .string(s.siret || '')
-      .style(styleConf);
+      .style(styleConf)
+      .style({
+        font: {
+          //color: '#FF0000',
+          bold: isDoublonSiretEtEmail(s.siret, s.contact_email) || isDoublonSiret(s.siret)
+        }
+      });
 
       //ws.row(i + start + 1).setHeight(30);
 
@@ -587,7 +636,13 @@ execute(__filename, async ({ db, logger }) => {
           alignment: {
             wrapText: true,
           }
-        });
+        })
+      .style({
+        font: {
+          //color: '#FF0000',
+          bold: isDoublonSiretEtEmail(s.siret, s.contact_email)
+        }
+      });
 
       ws.cell(i + start + 1, 7)
       .string(s.estLabelliseFranceServices ?? '')
@@ -736,6 +791,9 @@ execute(__filename, async ({ db, logger }) => {
       await createExcelForDep(d.num_dep);
     }
   };
+
+  doublonsSiret = await getDoublonsSiret();
+  doublonsSiretEtEmail = await getDoublonsSiretEtEmail();
 
   if (program.referents) {
     const referentsCSV = await csv().fromFile(program.referents);
