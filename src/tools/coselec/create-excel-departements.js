@@ -115,12 +115,6 @@ execute(__filename, async ({ db, logger }) => {
   };
 
   const getStructureMongo = async s => {
-    // On ne conserve que les avis positifs
-    //    if (s.avis !== 'POSITIF') {
-    //      logger.info(`REJETEE,${s.id},${s.siret},${s.ligne},${s.fichier}`);
-    //      return;
-    //    }
-
     const match = await db.collection('structures').findOne({ idPG: s.id });
 
     // Si on a un id
