@@ -32,7 +32,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     promises.push(new Promise(async resolve => {
       try {
         const conseiller = await db.collection('conseillers').findOne({ '_id': sondage.conseiller.oid });
-        await updateConseillerPG(conseiller.idPG, sondage.sondage.disponible === 'Oui');
+        await updateConseillerPG(conseiller.idPG, sondage.sondage.disponible);
       } catch (error) {
         Sentry.captureException(error);
       }

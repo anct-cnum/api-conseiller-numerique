@@ -38,7 +38,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
       if (conseillers.total === 0) {
-        res.status(404).send(new NotFound('Conseiller not found', {
+        res.status(404).send(new NotFound('Désolé mais le lien est invalide.', {
           token
         }).toJSON());
         return;
@@ -58,7 +58,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
       const result = await sondage;
       if (result > 0) {
-        res.status(404).send(new NotFound('Sondage déjà répondu', {
+        res.status(409).send(new NotFound('Sondage déjà répondu.', {
           token
         }).toJSON());
         return;
