@@ -38,7 +38,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
       if (conseillers.total === 0) {
-        res.status(404).send(new NotFound('Conseiller not found', {
+        res.status(404).send(new NotFound('Désolé mais le lien est invalide.', {
           token
         }).toJSON());
         return;
