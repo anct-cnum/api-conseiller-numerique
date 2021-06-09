@@ -3,6 +3,8 @@ const search = require('feathers-mongodb-fuzzy-search');
 const utils = require('../../utils/index.js');
 const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
+const { Pool } = require('pg');
+const pool = new Pool();
 
 module.exports = {
   before: {
@@ -102,7 +104,28 @@ module.exports = {
     }],
     create: [],
     update: [],
-    patch: [],
+    patch: [async context => {
+      try {
+        const contact = context.result.contact;
+        const id = context.result.idPG;
+        const { rows } = await pool.query(`UPDATE djapp_hostorganization
+          SET (
+            contact_first_name,
+            contact_last_name,
+            contact_job,
+            contact_phone)
+            =
+            ($2,$3,$4,$5,$6)
+          WHERE id = $1`,
+        [id, contact.first_name,
+          contact.last_name,
+          contact.job,
+          contact.phone]);
+        return rows;
+      } catch (error) {
+        console.log(error);
+      }
+    }],
     remove: []
   },
 
