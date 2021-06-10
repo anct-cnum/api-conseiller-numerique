@@ -4367,7 +4367,7 @@
     "readable-stream" "^2.3.7"
     "triple-beam" "^1.2.0"
 
-"winston@>=0.7.3":
+"winston@>=0.7.3", "winston@3.3.3":
   "integrity" "sha512-oEXTISQnC8VlSAKf1KYSSd7J6IWuRPQqDdo8eoRNaYKLvwSb5+79Z3Yi1lrl6KDpU6/VWaxpakDAtb1oQ4n9aw=="
   "resolved" "https://registry.npmjs.org/winston/-/winston-3.3.3.tgz"
   "version" "3.3.3"
