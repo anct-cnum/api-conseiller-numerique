@@ -76,11 +76,11 @@ module.exports = {
         if (context.params?.user?.roles.includes('structure')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
-          } else {
-            try {
-              const contact = context.data?.contact;
-              const id = context.data?.idPG;
-              await pool.query(`UPDATE djapp_hostorganization
+          }
+          try {
+            const contact = context.data?.contact;
+            const id = context.data?.idPG;
+            await pool.query(`UPDATE djapp_hostorganization
               SET (
                     contact_first_name,
                     contact_last_name,
@@ -89,13 +89,12 @@ module.exports = {
                     =
                     ($2,$3,$4,$5)
                   WHERE id = $1`,
-              [id, contact.prenom,
-                contact.nom,
-                contact.fonction,
-                contact.telephone]);
-            } catch (error) {
-              logger.info(`Erreur PostgreSQL : ${error.message}`);
-            }
+            [id, contact.prenom,
+              contact.nom,
+              contact.fonction,
+              contact.telephone]);
+          } catch (error) {
+            logger.info(`Erreur PostgreSQL : ${error.message}`);
           }
         }
       }
