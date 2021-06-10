@@ -85,8 +85,10 @@ exports.Stats = class Stats extends Service {
 
         //Construction des statistiques
         let stats = {};
+
         //Nombre accompagnement total
         stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
+
         //Nombre atelier collectif total
         stats.nbAteliers = await db.collection('cras').aggregate(
           [
@@ -95,6 +97,7 @@ exports.Stats = class Stats extends Service {
           ]
         ).toArray();
         stats.nbAteliers = stats.nbAteliers.length !== 0 ? stats.nbAteliers[0].totalCollectif : 0;
+
         //Somme total des participants (atelier collectif)
         stats.nbTotalParticipant = await db.collection('cras').aggregate(
           [
@@ -103,6 +106,7 @@ exports.Stats = class Stats extends Service {
           ]
         ).toArray();
         stats.nbTotalParticipant = stats.nbTotalParticipant.length !== 0 ? stats.nbTotalParticipant[0].total : 0;
+
         //Nombre accompagnement individuel total
         stats.nbAccompagnementPerso = await db.collection('cras').aggregate(
           [
@@ -111,6 +115,7 @@ exports.Stats = class Stats extends Service {
           ]
         ).toArray();
         stats.nbAccompagnementPerso = stats.nbAccompagnementPerso.length !== 0 ? stats.nbAccompagnementPerso[0].totalIndividuel : 0;
+
         //Nombre de demande ponctuel total
         stats.nbDemandePonctuel = await db.collection('cras').aggregate(
           [
@@ -120,6 +125,141 @@ exports.Stats = class Stats extends Service {
         ).toArray();
         stats.nbDemandePonctuel = stats.nbDemandePonctuel.length !== 0 ? stats.nbDemandePonctuel[0].totalPonctuel : 0;
 
+        //Accompagnement poursuivi ?
+        stats.nbUsagersBeneficiantSuivi = await db.collection('cras').aggregate(
+          [
+            { $match: { ...query, 'cra.accompagnement': { $ne: null } } },
+            { $group: { _id: null, totalSuivi: { $sum: 1 } } }
+          ]
+        ).toArray();
+        stats.nbUsagersBeneficiantSuivi = stats.nbUsagersBeneficiantSuivi.length !== 0 ? stats.nbUsagersBeneficiantSuivi[0].totalSuivi : 0;
+
+        //Taux accompagnement
+        stats.tauxTotalUsagersAccompagnes = stats.nbAccompagnement > 0 ? ~~(stats.nbUsagersBeneficiantSuivi / stats.nbAccompagnement * 100) : 0;
+
+        //Accompagnement poursuivi en individuel
+        stats.nbUsagersAccompagnementIndividuel = await db.collection('cras').aggregate(
+          [
+            { $match: { ...query, 'cra.accompagnement': { $eq: 'individuel' } } },
+            { $group: { _id: null, totalSuiviIndividuel: { $sum: 1 } } }
+          ]
+        ).toArray();
+        // eslint-disable-next-line max-len
+        stats.nbUsagersAccompagnementIndividuel = stats.nbUsagersAccompagnementIndividuel.length !== 0 ? stats.nbUsagersAccompagnementIndividuel[0].totalSuiviIndividuel : 0;
+
+        //Accompagnement poursuivi en atelier collectif
+        stats.nbUsagersAtelierCollectif = await db.collection('cras').aggregate(
+          [
+            { $match: { ...query, 'cra.accompagnement': { $eq: 'atelier' } } },
+            { $group: { _id: null, totalSuiviAtelier: { $sum: 1 } } }
+          ]
+        ).toArray();
+        stats.nbUsagersAtelierCollectif = stats.nbUsagersAtelierCollectif.length !== 0 ? stats.nbUsagersAtelierCollectif[0].totalSuiviAtelier : 0;
+
+        //Accompagnement redirigé vers un établissement agréé
+        stats.nbReconduction = await db.collection('cras').aggregate(
+          [
+            { $match: { ...query, 'cra.accompagnement': { $eq: 'redirection' } } },
+            { $group: { _id: null, totalSuiviRedirection: { $sum: 1 } } }
+          ]
+        ).toArray();
+        stats.nbReconduction = stats.nbReconduction.length !== 0 ? stats.nbReconduction[0].totalSuiviRedirection : 0;
+
+        //Thèmes (total de chaque)
+        stats.statsThemes = [];
+        let statsThemes = await db.collection('cras').aggregate(
+          [
+            { $unwind: '$cra.themes' },
+            { $match: { ...query } },
+            { $group: { _id: '$cra.themes', count: { $sum: 1 } } },
+            { $group: { _id: null, listThemes: { $push: {
+              'theme': '$_id',
+              'total': '$count',
+            } } } },
+            { $project: { '_id': 0, 'listThemes': 1 } }
+          ]
+        ).toArray();
+        if (statsThemes.length > 0) {
+          for (let theme of Object.values(statsThemes[0].listThemes)) {
+            stats.statsThemes[theme.theme] = theme.total;
+          }
+        }
+
+        //Canaux (total de chaque)
+        stats.statsLieux = [];
+        let statsLieux = await db.collection('cras').aggregate(
+          [
+            { $unwind: '$cra.canal' },
+            { $match: { ...query } },
+            { $group: { _id: '$cra.canal', count: { $sum: 1 } } },
+            { $group: { _id: null, listLieux: { $push: {
+              'canal': '$_id',
+              'total': '$count',
+            } } } },
+            { $project: { '_id': 0, 'listLieux': 1 } }
+          ]
+        ).toArray();
+        if (statsLieux.length > 0) {
+          for (let canal of Object.values(statsLieux[0].listLieux)) {
+            stats.statsLieux[canal.canal] = canal.total;
+          }
+        }
+
+        //Duree (total de chaque)
+        stats.statsDurees = [];
+        //Gestion des categories 0-30 / 30-60
+        let statsDurees = await db.collection('cras').aggregate(
+          [
+            { $unwind: '$cra.duree' },
+            { $match: { ...query, 'cra.duree': { $in: ['0-30', '30-60'] } } },
+            { $group: { _id: '$cra.duree', count: { $sum: 1 } } },
+            { $group: { _id: null, listDurees: { $push: {
+              'duree': '$_id',
+              'total': '$count',
+            } } } },
+            { $project: { '_id': 0, 'listDurees': 1 } }
+          ]
+        ).toArray();
+        if (statsDurees.length > 0) {
+          for (let duree of Object.values(statsDurees[0].listDurees)) {
+            stats.statsDurees[duree.duree] = duree.total;
+          }
+        }
+        //Ajout du cas spécifique 90 à 120 minutes
+        let duree60 = await db.collection('cras').aggregate(
+          [
+            { $match: { ...query,
+              $and: [
+                { 'cra.duree': { $ne: ['0-30', '30-60'] } },
+                { $or: [
+                  { 'cra.duree': {
+                    $gte: 60,
+                    $lt: 120,
+                  } },
+                  { 'cra.duree': { $eq: '90' } } //Correspond au bouton 1h30 sans précision de duree
+                ] }
+              ],
+            } },
+            { $group: { _id: null, total: { $sum: 1 } } }
+          ]
+        ).toArray();
+        stats.statsDurees['60-120'] = duree60.length !== 0 ? duree60[0].total : 0;
+
+        //Ajout du cas spécifique > 120 minutes
+        let duree120 = await db.collection('cras').aggregate(
+          [
+            { $match: { ...query,
+              $and: [
+                { 'cra.duree': { $ne: ['0-30', '30-60'] } },
+                { 'cra.duree': {
+                  $gte: 120,
+                } }
+              ],
+            } },
+            { $group: { _id: null, total: { $sum: 1 } } }
+          ]
+        ).toArray();
+        stats.statsDurees['120+'] = duree120.length !== 0 ? duree120[0].total : 0;
 
         console.log(stats);
         res.send(stats);
