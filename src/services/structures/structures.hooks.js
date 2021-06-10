@@ -73,8 +73,8 @@ module.exports = {
       }),
       async context => {
         try {
-          const contact = context.data.contact;
-          const id = context.data.idPG;
+          const contact = context.data?.contact;
+          const id = context.data?.idPG;
           //Restreindre les permissions : les structures ne peuvent mettre à jour que les informations les concernant
           if (context.params?.user?.roles.includes('structure')) {
             if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
