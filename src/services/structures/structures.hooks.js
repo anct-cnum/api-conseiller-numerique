@@ -72,14 +72,14 @@ module.exports = {
         field: 'roles',
       }),
       async context => {
-        try {
-          const contact = context.data?.contact;
-          const id = context.data?.idPG;
-          //Restreindre les permissions : les structures ne peuvent mettre à jour que les informations les concernant
-          if (context.params?.user?.roles.includes('structure')) {
-            if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
-              throw new Forbidden('Vous n\'avez pas l\'autorisation');
-            } else {
+        //Restreindre les permissions : les structures ne peuvent mettre à jour que les informations les concernant
+        if (context.params?.user?.roles.includes('structure')) {
+          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+          } else {
+            try {
+              const contact = context.data?.contact;
+              const id = context.data?.idPG;
               await pool.query(`UPDATE djapp_hostorganization
               SET (
                     contact_first_name,
@@ -93,10 +93,10 @@ module.exports = {
                 contact.nom,
                 contact.fonction,
                 contact.telephone]);
+            } catch (error) {
+              logger.info(`Erreur PostgreSQL : ${error.message}`);
             }
           }
-        } catch (error) {
-          logger.info(`Erreur PostgreSQL : ${error.message}`);
         }
       }
     ],
