@@ -42,6 +42,7 @@ const types = {
   'DEPARTEMENT': 'Publique',
   'REGION': 'Publique',
   'COLLECTIVITE': 'Publique',
+  'GIP': 'Publique',
 };
 
 const styleConf = {
@@ -74,7 +75,7 @@ const styleHeaderConf = {
   }
 };
 
-execute(__filename, async ({ db, logger }) => {
+execute(__filename, async ({ db }) => {
   // Liste des départements
   const departements = require('./departements-region.json');
   const deps = new Map();
@@ -294,7 +295,7 @@ execute(__filename, async ({ db, logger }) => {
 
       // Classement des structures dans l'ordre suivant :
       // AVIS POSITIF - AVIS NEGATIF - EXAMEN COMPLEMENTAIRE - NOUVELLES STRUCTURES
-      const ordre = ['POSITIF', 'NÉGATIF', 'EXAMEN COMPLÉMENTAIRE', ''];
+      const ordre = ['POSITIF', 'NÉGATIF', 'EXAMEN COMPLÉMENTAIRE', 'DOUBLON', ''];
 
       structuresEnrichies.sort((a, b) => {
         const aAP = a.prefet && a.prefet.length > 0 ? a.prefet[a.prefet.length - 1].avisPrefet : '';
@@ -466,7 +467,7 @@ execute(__filename, async ({ db, logger }) => {
     });
 
     // Total des affectations
-    ws.cell(12, 9, 12, 9, true)
+    ws.cell(14, 9, 14, 9, true)
     .string('Nombre d\'affectations total :')
     .style(styleConf)
     .style({
@@ -545,38 +546,50 @@ execute(__filename, async ({ db, logger }) => {
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(10).setWidth(22);
+    ws.column(10).setWidth(20);
     ws.cell(start, 10)
+    .string('Si OUI Code QPV (8 chiffres)')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(11).setWidth(20);
+    ws.cell(start, 11)
+    .string('Nom du quartier')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(12).setWidth(22);
+    ws.cell(start, 12)
     .string('Nombre de conseillers demandés')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(11).setWidth(30);
-    ws.cell(start, 11)
+    ws.column(13).setWidth(30);
+    ws.cell(start, 13)
     .string('Avis Préfecture')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(12).setWidth(70);
-    ws.cell(start, 12)
+    ws.column(14).setWidth(70);
+    ws.cell(start, 14)
     .string('Commentaire de la Préfecture pour justifier l\'avis donné')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(13).setWidth(22);
-    ws.cell(start, 13)
+    ws.column(15).setWidth(22);
+    ws.cell(start, 15)
     .string('Nombre de conseillers COSELEC')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.column(14).setWidth(30);
-    ws.cell(start, 14)
+    ws.column(16).setWidth(30);
+    ws.cell(start, 16)
     .string('Avis COSELEC')
     .style(styleHeaderConf)
     .style(styleVertical);
 
-    ws.cell(start - 1, 10, start - 1, 10, true)
-    .formula(`SUM(J${start + 1}:H${start + structures.length})`)
+    ws.cell(start - 1, 12, start - 1, 12, true)
+    .formula(`SUM(L${start + 1}:L${start + structures.length})`)
     .style(styleConf)
     .style({
       font: {
@@ -683,6 +696,14 @@ execute(__filename, async ({ db, logger }) => {
       });
 
       ws.cell(i + start + 1, 10)
+      .string('')
+      .style(styleConf);
+
+      ws.cell(i + start + 1, 11)
+      .string('')
+      .style(styleConf);
+
+      ws.cell(i + start + 1, 12)
       .number(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].nombreConseillersPrefet : 0)
       .style({ numberFormat: '0' })
       .style(styleConf);
@@ -693,11 +714,11 @@ execute(__filename, async ({ db, logger }) => {
         allowBlank: true,
         prompt: 'Saisissez un nombre',
         error: 'Nombre obligatoire',
-        sqref: `J${i + start + 1}:J${i + start + 1}`,
+        sqref: `L${i + start + 1}:L${i + start + 1}`,
         formulas: [0, 500],
       });
 
-      ws.cell(i + start + 1, 11)
+      ws.cell(i + start + 1, 13)
       .string(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].avisPrefet : '')
       .style(styleConf);
 
@@ -707,11 +728,11 @@ execute(__filename, async ({ db, logger }) => {
         prompt: 'Choisissez dans la liste',
         error: 'Choix non valide',
         showDropDown: true,
-        sqref: `K${i + start + 1}:K${i + start + 1}`,
-        formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE'],
+        sqref: `M${i + start + 1}:M${i + start + 1}`,
+        formulas: ['POSITIF,NÉGATIF,EXAMEN COMPLÉMENTAIRE,DOUBLON'],
       });
 
-      ws.cell(i + start + 1, 12)
+      ws.cell(i + start + 1, 14)
       .string(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].commentairePrefet : '')
       .style(styleConf)
       .style(
@@ -723,12 +744,12 @@ execute(__filename, async ({ db, logger }) => {
 
       // Coselec
 
-      ws.cell(i + start + 1, 13)
+      ws.cell(i + start + 1, 15)
       .number(s.coselecPrecedent ? s.coselecPrecedent.nombreConseillersCoselec : 0)
       .style({ numberFormat: '0' })
       .style(styleConf);
 
-      ws.cell(i + start + 1, 14)
+      ws.cell(i + start + 1, 16)
       .string(s.coselecPrecedent ? s.coselecPrecedent.avisCoselec : '')
       .style(styleConf);
     });
@@ -782,7 +803,7 @@ execute(__filename, async ({ db, logger }) => {
 
   const createExcelForDep = async departement => {
     const structuresPrivees = await getStructures(departement, 'PRIVATE');
-    const structuresPubliques = await getStructures(departement, 'COLLECTIVITE,COMMUNE,EPCI,DEPARTEMENT,REGION');
+    const structuresPubliques = await getStructures(departement, 'COLLECTIVITE,COMMUNE,EPCI,DEPARTEMENT,REGION,GIP');
     const wb = await createWorkbook(departement, structuresPubliques, structuresPrivees);
     wb.write(`conseiller-numerique-${departement}-${deps.get(String(departement)).dep_name.replace(' ', '-')
     .normalize('NFD')
