@@ -10,7 +10,8 @@ cli.description('Data pour metabase').parse(process.argv);
 execute(__filename, async ({ logger, db, Sentry }) => {
   logger.info('Récupération des différentes données nécessaires au metabase public...');
 
-  const date = moment(new Date()).format('DD/MM/YYYY');
+  const key = moment(new Date()).format('DD/MM/YYYY');
+  const date = new Date();
   const departements = require('../../../data/imports/departements-region.json');
   let lignes = [];
 
@@ -22,6 +23,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $sort: { _id: 1 } }
   ];
   const nombrePostesValidesDepartement = await db.collection('structures').aggregate(queryPosteValidesDepartement).toArray();
+  console.log(nombrePostesValidesDepartement);
   if (nombrePostesValidesDepartement.length > 0) {
     nombrePostesValidesDepartement.forEach(posteValide => {
       departements.forEach(departement => {
@@ -36,7 +38,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     });
 
   }
-  const postesValidesDepartement = ({ 'key': date, 'data': lignes });
+  const postesValidesDepartement = ({ 'key': key, 'date': date, 'data': lignes });
 
   /* Nombre de postes validés par structure */
   const queryPosteValidesStructures = [
@@ -54,7 +56,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       });
     });
   }
-  const postesValidesStructure = ({ 'key': date, 'data': lignes });
+  const postesValidesStructure = ({ 'key': key, 'date': date, 'data': lignes });
 
   /* Nombre de conseillers recrutés par département */
   const queryNombreConseillersRecrutesDepartement = [
@@ -77,7 +79,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       });
     });
   }
-  const conseillersRecrutesDepartement = ({ 'key': date, 'data': lignes });
+  const conseillersRecrutesDepartement = ({ 'key': key, 'date': date, 'data': lignes });
 
   /* Nombre de conseillers recrutés par structure */
   const queryNombreConseillersRecrutesStructure = [
@@ -94,7 +96,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       });
     });
   }
-  const conseillersRecrutesStructure = ({ 'key': date, 'data': lignes });
+  const conseillersRecrutesStructure = ({ 'key': key, 'date': date, 'data': lignes });
 
   /* Nombre de candidats par département */
   const queryNombreCandidats = [
@@ -117,7 +119,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       });
     });
   }
-  const candidats = ({ 'key': date, 'data': lignes });
+  const candidats = ({ 'key': key, 'date': date, 'data': lignes });
 
 
   /* Nombre de structures candidates par département */
@@ -141,17 +143,15 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       });
     });
   }
-  const structuresCandidates = ({ 'key': date, 'data': lignes });
+  const structuresCandidates = ({ 'key': key, 'date': date, 'data': lignes });
 
   try {
-
     db.collection('stats_PostesValidesDepartement').insertOne(postesValidesDepartement);
     db.collection('stats_PostesValidesStructure').insertOne(postesValidesStructure);
     db.collection('stats_ConseillersRecrutesDepartement').insertOne(conseillersRecrutesDepartement);
     db.collection('stats_ConseillersRecrutesStructure').insertOne(conseillersRecrutesStructure);
     db.collection('stats_Candidats').insertOne(candidats);
     db.collection('stats_StructuresCandidates').insertOne(structuresCandidates);
-
   } catch (error) {
     Sentry.captureException(error);
     logger.error(error);
