@@ -115,7 +115,7 @@ module.exports = {
             contact_job,
             contact_phone)
             =
-            ($2,$3,$4,$5,$6)
+            ($2,$3,$4,$5)
           WHERE id = $1`,
         [id, contact.first_name,
           contact.last_name,
