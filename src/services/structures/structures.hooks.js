@@ -124,10 +124,7 @@ module.exports = {
     }],
     create: [],
     update: [],
-    patch: [context => {
-      // console.log('context 2 :', context);
-
-    }],
+    patch: [],
     remove: []
   },
 
