@@ -5,7 +5,7 @@ const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
 const { Pool } = require('pg');
 const pool = new Pool();
-
+const logger = require('../../logger');
 module.exports = {
   before: {
     all: [
@@ -72,11 +72,31 @@ module.exports = {
         field: 'roles',
       }),
       async context => {
-        //Restreindre les permissions : les structures ne peuvent mettre à jour que les informations les concernant
-        if (context.params?.user?.roles.includes('structure')) {
-          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
-            throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        try {
+          const contact = context.data.contact;
+          const id = context.data.idPG;
+          //Restreindre les permissions : les structures ne peuvent mettre à jour que les informations les concernant
+          if (context.params?.user?.roles.includes('structure')) {
+            if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+              throw new Forbidden('Vous n\'avez pas l\'autorisation');
+            } else {
+              await pool.query(`UPDATE djapp_hostorganization
+              SET (
+                    contact_first_name,
+                    contact_last_name,
+                    contact_job,
+                    contact_phone)
+                    =
+                    ($2,$3,$4,$5)
+                  WHERE id = $1`,
+              [id, contact.prenom,
+                contact.nom,
+                contact.fonction,
+                contact.telephone]);
+            }
           }
+        } catch (error) {
+          logger.info(`Erreur PostgreSQL : ${error.message}`);
         }
       }
     ],
@@ -104,27 +124,9 @@ module.exports = {
     }],
     create: [],
     update: [],
-    patch: [async context => {
-      try {
-        const contact = context.result.contact;
-        const id = context.result.idPG;
-        const { rows } = await pool.query(`UPDATE djapp_hostorganization
-          SET (
-            contact_first_name,
-            contact_last_name,
-            contact_job,
-            contact_phone)
-            =
-            ($2,$3,$4,$5)
-          WHERE id = $1`,
-        [id, contact.first_name,
-          contact.last_name,
-          contact.job,
-          contact.phone]);
-        return rows;
-      } catch (error) {
-        console.log(error);
-      }
+    patch: [context => {
+      // console.log('context 2 :', context);
+
     }],
     remove: []
   },
