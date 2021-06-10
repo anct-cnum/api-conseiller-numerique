@@ -36,7 +36,10 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
     } catch (e) {
       Sentry.captureException(e);
       logger.error(`Une erreur est survenue pour la structure id: ${structure._id} SIRET: ${structure?.siret}`);
-      reject(e);
+      await feathers.service('structures').patch(_id, {
+        userCreationError: true
+      });
+      reject();
     }
   });
 };
@@ -48,14 +51,15 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const quit = count => {
-    logger.info(`${count} utilisateurs créés`);
+  const quit = (usersCreatedCount, usersCreationErrorCount) => {
+    logger.info(`${usersCreatedCount} utilisateurs créés, ${usersCreationErrorCount} utilisateurs en échec de création`);
     exit();
   };
 
   let { all, limit = 1, id } = program;
 
   let usersCreatedCount = 0;
+  let usersCreationErrorCount = 0;
 
   const dbName = db.serverConfig.s.options.dbName;
 
@@ -76,7 +80,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     await doCreateUser(db, feathers, dbName, _id, logger, Sentry);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('structures').find({ userCreated: false, statut: 'VALIDATION_COSELEC' }).toArray();
+    const structures = await db.collection('structures').find({ userCreated: false, userCreationError: { $ne: true }, statut: 'VALIDATION_COSELEC' }).toArray();
     let promises = [];
     structures.forEach(structure => {
       const p = new Promise(async (resolve, reject) => {
@@ -92,9 +96,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             if (usersCreatedCount === limit) {
               quit(usersCreatedCount);
             }
-          }).catch(e => {
-            Sentry.captureException(e);
-            logger.error(e);
+          }).catch(() => {
+            usersCreationErrorCount++;
             reject();
           });
         } else {
@@ -103,8 +106,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       });
       promises.push(p);
     });
-    await Promise.all(promises);
+    await Promise.allSettled(promises);
   }
 
-  quit(usersCreatedCount);
+  quit(usersCreatedCount, usersCreationErrorCount);
 });
