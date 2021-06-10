@@ -294,7 +294,7 @@ execute(__filename, async ({ db }) => {
       }
 
       // Classement des structures dans l'ordre suivant :
-      // AVIS POSITIF - AVIS NEGATIF - EXAMEN COMPLEMENTAIRE - NOUVELLES STRUCTURES
+      // AVIS POSITIF - AVIS NEGATIF - EXAMEN COMPLEMENTAIRE - DOUBLON - NOUVELLES STRUCTURES
       const ordre = ['POSITIF', 'NÉGATIF', 'EXAMEN COMPLÉMENTAIRE', 'DOUBLON', ''];
 
       structuresEnrichies.sort((a, b) => {
