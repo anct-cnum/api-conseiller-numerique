@@ -6,6 +6,8 @@ const checkPermissions = require('feathers-permissions');
 const { Pool } = require('pg');
 const pool = new Pool();
 const logger = require('../../logger');
+const ObjectID = require('mongodb').ObjectID;
+
 module.exports = {
   before: {
     all: [
@@ -78,8 +80,10 @@ module.exports = {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
           try {
+            console.log('context:', context.id);
             const contact = context.data?.contact;
-            const id = context.data?.idPG;
+            const id = await context.app.service('structures').find({ id: new ObjectID(context.id) });
+            console.log('id:', id);
             await pool.query(`UPDATE djapp_hostorganization
               SET (
                     contact_first_name,
@@ -89,7 +93,7 @@ module.exports = {
                     =
                     ($2,$3,$4,$5)
                   WHERE id = $1`,
-            [id, contact.prenom,
+            [id.idPG, contact.prenom,
               contact.nom,
               contact.fonction,
               contact.telephone]);
