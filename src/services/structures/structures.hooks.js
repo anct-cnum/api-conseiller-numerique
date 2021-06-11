@@ -81,12 +81,11 @@ module.exports = {
           }
           try {
             const contact = context.data?.contact;
-            const structure = await context.app.service('structures').find({
-              query: {
-                _id: new ObjectID(context.id)
-              }
+            const structure = context.app.get('mongoClient').then(async db => {
+              let str = await db.collection('structures').findOne({ _id: new ObjectID(context.id) });
+              return str;
             });
-            const { idPG } = structure?.data[0];
+            const { idPG } = await structure;
             await pool.query(`UPDATE djapp_hostorganization
               SET (
                     contact_first_name,
