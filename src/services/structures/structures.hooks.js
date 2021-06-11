@@ -96,7 +96,7 @@ module.exports = {
           Object.assign(structure, { dernierCoselec: utils.getCoselec(structure) });
         });
 
-        //Compter le nombre de
+        //Compter le nombre de candidats dont le recrutement est finalisé
         const p = new Promise(resolve => {
           context.app.get('mongoClient').then(async db => {
             let promises = [];
