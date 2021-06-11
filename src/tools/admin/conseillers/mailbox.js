@@ -61,6 +61,7 @@ execute(__filename, async ({ feathers, logger, exit, app }) => {
           'Authorization': `Apikey ${gandi.token}`
         }
       });
+      // TODO : utiliser client mongo natif
       await feathers.service('conseillers').patch(conseiller._id, { emailCN: { address: result.data[0].address, id: result.data[0].id } });
       logger.info('Boite email créée');
     } catch (e) {

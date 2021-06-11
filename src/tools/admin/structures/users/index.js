@@ -29,16 +29,16 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
         passwordCreated: false,
         createdAt: new Date(),
       });
-      await feathers.service('structures').patch(_id, {
+      await db.collection('structures').updateOne({ _id }, { $set: {
         userCreated: true
-      });
+      } });
       resolve();
     } catch (e) {
       Sentry.captureException(e);
       logger.error(`Une erreur est survenue pour la structure id: ${structure._id} SIRET: ${structure?.siret}`);
-      await feathers.service('structures').patch(_id, {
+      await db.collection('structures').updateOne({ _id }, { $set: {
         userCreationError: true
-      });
+      } });
       reject();
     }
   });
