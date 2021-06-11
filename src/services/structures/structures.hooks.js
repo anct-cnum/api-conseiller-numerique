@@ -101,7 +101,7 @@ module.exports = {
               contact.fonction,
               contact.telephone]);
           } catch (error) {
-            logger.info(`Erreur PostgreSQL : ${error.message}`);
+            logger.error(error);
             context.app.get('sentry').captureException(error);
           }
         }
