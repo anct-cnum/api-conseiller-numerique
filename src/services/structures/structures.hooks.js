@@ -102,6 +102,7 @@ module.exports = {
               contact.telephone]);
           } catch (error) {
             logger.info(`Erreur PostgreSQL : ${error.message}`);
+            context.app.get('sentry').captureException(error);
           }
         }
       }
