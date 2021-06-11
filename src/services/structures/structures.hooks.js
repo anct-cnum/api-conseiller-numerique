@@ -80,10 +80,13 @@ module.exports = {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
           try {
-            console.log('context:', context.id);
             const contact = context.data?.contact;
-            const id = await context.app.service('structures').find({ id: new ObjectID(context.id) });
-            console.log('id:', id);
+            const structures = await context.app.service('structures').find({
+              query: {
+                _id: new ObjectID(context.id)
+              }
+            });
+            const { idPG } = structures?.data[0];
             await pool.query(`UPDATE djapp_hostorganization
               SET (
                     contact_first_name,
@@ -93,7 +96,7 @@ module.exports = {
                     =
                     ($2,$3,$4,$5)
                   WHERE id = $1`,
-            [id.idPG, contact.prenom,
+            [idPG, contact.prenom,
               contact.nom,
               contact.fonction,
               contact.telephone]);
