@@ -81,12 +81,12 @@ module.exports = {
           }
           try {
             const contact = context.data?.contact;
-            const structures = await context.app.service('structures').find({
+            const structure = await context.app.service('structures').find({
               query: {
                 _id: new ObjectID(context.id)
               }
             });
-            const { idPG } = structures?.data[0];
+            const { idPG } = structure?.data[0];
             await pool.query(`UPDATE djapp_hostorganization
               SET (
                     contact_first_name,
