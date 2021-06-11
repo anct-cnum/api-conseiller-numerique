@@ -3,6 +3,7 @@ const search = require('feathers-mongodb-fuzzy-search');
 const utils = require('../../utils/index.js');
 const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
+const { ObjectID } = require('mongodb');
 
 module.exports = {
   before: {
@@ -90,10 +91,37 @@ module.exports = {
     all: [],
     find: [async context => {
       if (context.result.data.length > 0) {
+
         context.result.data.forEach(structure => {
           Object.assign(structure, { dernierCoselec: utils.getCoselec(structure) });
         });
+
+        //Compter le nombre de
+        const p = new Promise(resolve => {
+          context.app.get('mongoClient').then(async db => {
+            let promises = [];
+            let result = [];
+            context.result.data.filter(async structure => {
+              const p = new Promise(async resolve => {
+                let candidatsRecrutes = await db.collection('misesEnRelation').countDocuments(
+                  {
+                    'statut': 'finalisee',
+                    'structure.$id': new ObjectID(structure._id)
+                  });
+                resolve();
+                Object.assign(structure, { nbCandidatsRecrutes: candidatsRecrutes });
+                result.push(structure);
+              });
+              promises.push(p);
+            });
+            await Promise.all(promises);
+            context.result.data = result;
+            resolve();
+          });
+        });
+        await p;
       }
+
       return context;
     }],
     get: [async context => {
