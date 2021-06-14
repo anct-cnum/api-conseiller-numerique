@@ -4,6 +4,7 @@
 const cli = require('commander');
 const { execute } = require('../utils');
 const moment = require('moment');
+const utilsStructure = require('../../utils/index.js');
 
 cli.description('Data pour metabase').parse(process.argv);
 
@@ -16,6 +17,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   let lignes = [];
 
   /* Nombre de postes validés par département */
+  /*
   const queryPosteValidesDepartement = [
     { $match: { 'statut': 'VALIDATION_COSELEC', 'coselec': { '$elemMatch': { 'avisCoselec': 'POSITIF' } } } },
     { $unwind: '$coselec' },
@@ -23,7 +25,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     { $sort: { _id: 1 } }
   ];
   const nombrePostesValidesDepartement = await db.collection('structures').aggregate(queryPosteValidesDepartement).toArray();
-  console.log(nombrePostesValidesDepartement);
+
   if (nombrePostesValidesDepartement.length > 0) {
     nombrePostesValidesDepartement.forEach(posteValide => {
       departements.forEach(departement => {
@@ -36,11 +38,36 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         }
       });
     });
-
   }
+  */
+
+  /* V2 */
+  const structures = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC' }).sort({ codeDepartement: 1 }).toArray();
+  let posteParDepartement = [];
+  structures.forEach(structure => {
+    let coselecPositif = utilsStructure.getCoselecPositif(structure);
+    if (coselecPositif) {
+      const departement = String(structure.codeDepartement);
+      if (posteParDepartement[departement]) {
+        posteParDepartement[departement] += coselecPositif.nombreConseillersCoselec;
+      } else {
+        posteParDepartement[departement] = coselecPositif.nombreConseillersCoselec;
+      }
+    }
+  });
+  departements.forEach(departement => {
+    if (posteParDepartement[departement.num_dep]) {
+      lignes.push({
+        'numeroDepartement': departement.num_dep,
+        'departement': departement.dep_name,
+        'nombrePostesValides': posteParDepartement[departement.num_dep]
+      });
+    }
+  });
   const postesValidesDepartement = ({ 'key': key, 'date': date, 'data': lignes });
 
   /* Nombre de postes validés par structure */
+  /*
   const queryPosteValidesStructures = [
     { $match: { 'statut': 'VALIDATION_COSELEC', 'coselec': { '$elemMatch': { 'avisCoselec': 'POSITIF' } } } },
     { $unwind: '$coselec' },
@@ -56,6 +83,21 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       });
     });
   }
+  */
+
+  /* V2 */
+  const structuresPostesValides = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC' }).sort({ nom: 1 }).toArray();
+  lignes = [];
+  structuresPostesValides.forEach(structure => {
+    let coselecPositif = utilsStructure.getCoselecPositif(structure);
+    if (coselecPositif) {
+      lignes.push({
+        'structure': structure.nom,
+        'nombrePostesValides': coselecPositif.nombreConseillersCoselec
+      });
+    }
+  });
+
   const postesValidesStructure = ({ 'key': key, 'date': date, 'data': lignes });
 
   /* Nombre de conseillers recrutés par département */
