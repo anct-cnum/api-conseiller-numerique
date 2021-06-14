@@ -1,5 +1,6 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
+const { ObjectID } = require('mongodb');
 
 execute(__filename, async ({ db, logger, exit }) => {
 
@@ -19,14 +20,18 @@ execute(__filename, async ({ db, logger, exit }) => {
     return;
   }
 
-  const structures = await db.collection('structures').findOne({ idPG: id });
+  const structure = await db.collection('structures').findOne({ idPG: id });
 
-  if (structures.length === 0) {
+  if (structure.length === 0) {
     exit('id PG inconnu dans MongoDB');
     return;
   }
 
   await db.collection('structures').updateOne({ idPG: id }, { $set: { statut: statut } }, {});
+
+  if (structure.userCreated === true) {
+    await db.collection('users').updateOne({ 'entity.$id': new ObjectID(structure._id) }, { $set: { password: null } }, {});
+  }
 
   logger.info('Statut mis à jour');
   exit();
