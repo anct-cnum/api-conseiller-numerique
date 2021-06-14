@@ -16,7 +16,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     exit('Paramètres invalides. Veuillez préciser un id et un staut');
     return;
   } else if (statut !== 'ANNULEE' && statut !== 'DOUBLON') {
-    exit('Statut invalides. Veuillez préciser un statut qui est égale à ANNULEE ou DOUBLON');
+    exit('Statut invalide. Veuillez préciser un statut qui est égal à ANNULEE ou DOUBLON');
     return;
   }
 
