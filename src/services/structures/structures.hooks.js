@@ -101,7 +101,6 @@ module.exports = {
               context.app.get('sentry').captureException(error);
             }
           });
-
         }
       }
     ],
