@@ -79,30 +79,29 @@ module.exports = {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
-          try {
-            const contact = context.data?.contact;
-            const structure = context.app.get('mongoClient').then(async db => {
-              let str = await db.collection('structures').findOne({ _id: new ObjectID(context.id) });
-              return str;
-            });
-            const { idPG } = await structure;
-            await pool.query(`UPDATE djapp_hostorganization
-              SET (
-                    contact_first_name,
-                    contact_last_name,
-                    contact_job,
-                    contact_phone)
-                    =
-                    ($2,$3,$4,$5)
-                  WHERE id = $1`,
-            [idPG, contact.prenom,
-              contact.nom,
-              contact.fonction,
-              contact.telephone]);
-          } catch (error) {
-            logger.error(error);
-            context.app.get('sentry').captureException(error);
-          }
+          context.app.get('mongoClient').then(async db => {
+            try {
+              const contact = context.data?.contact;
+              const { idPG } = await db.collection('structures').findOne({ _id: new ObjectID(context.id) });
+              await pool.query(`UPDATE djapp_hostorganization
+                SET (
+                      contact_first_name,
+                      contact_last_name,
+                      contact_job,
+                      contact_phone)
+                      =
+                      ($2,$3,$4,$5)
+                    WHERE id = $1`,
+              [idPG, contact.prenom,
+                contact.nom,
+                contact.fonction,
+                contact.telephone]);
+            } catch (error) {
+              logger.error(error);
+              context.app.get('sentry').captureException(error);
+            }
+          });
+
         }
       }
     ],
