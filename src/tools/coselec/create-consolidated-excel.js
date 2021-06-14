@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../../utils');
+const { execute } = require('../utils');
 const { program } = require('commander');
 const ExcelJS = require('exceljs'); // Lire du Excel
 const fs = require('fs');
 const path = require('path');
 const xl = require('excel4node'); // Ecrire du Excel
+const utils = require('../../utils/index.js');
 
 program
 .option('-r, --repertoire <repertoire>', 'répertoire')
@@ -249,7 +250,8 @@ execute(__filename, async ({ db, logger }) => {
     .style(styleVertical);
 
     // Formules
-
+    /* Semble créer des problèmes pour Excel, désactivé pour le moment */
+    /*
     ws.cell(start - 1, 11, start - 1, 11, true)
     .formula(`SUBTOTAL(109,K${start + 1}:K${start + structures.length})`)
     .style(styleConf)
@@ -271,7 +273,7 @@ execute(__filename, async ({ db, logger }) => {
       }
     })
     .style({ numberFormat: '0' });
-
+*/
     ws.row(start).filter();
 
     // Fin des headers
@@ -684,12 +686,8 @@ execute(__filename, async ({ db, logger }) => {
       s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
         match?.insee?.etablissement?.commune_implantation?.value : '';
 
-      // Coselec précédent
-      if (match.coselec && match.coselec.length > 0) {
-        s.coselecPrecedent = match.coselec.slice(-1)[0];
-      } else {
-        s.coselecPrecedent = '';
-      }
+      // Cherche le bon Coselec précédent
+      s.coselecPrecedent = utils.getCoselec(match) || '';
 
       structures.push(s);
 
@@ -727,12 +725,8 @@ execute(__filename, async ({ db, logger }) => {
         s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
           match?.insee?.etablissement?.commune_implantation?.value : '';
 
-        // Coselec précédent
-        if (match.coselec && match.coselec.length > 0) {
-          s.coselecPrecedent = match.coselec.slice(-1)[0];
-        } else {
-          s.coselecPrecedent = '';
-        }
+        // Cherche le bon Coselec précédent
+        s.coselecPrecedent = utils.getCoselec(match) || '';
 
         structures.push(s);
 
