@@ -98,11 +98,23 @@ exports.Structures = class Structures extends Service {
 
       const stats = await db.collection('misesEnRelation').aggregate([
         { '$match': { 'structure.$id': structureId } },
-        { '$group': { _id: '$statut', count: { $sum: 1 } } }
+        { '$group': { _id: '$statut', count: { $sum: 1 } } },
       ]).toArray();
+
+      const misesEnRelation = await db.collection('misesEnRelation').aggregate([
+        { '$match': { 'structure.$id': structureId, 'statut': 'finalisee' } },
+      ]).toArray();
+
+      const candidats = misesEnRelation.map(item => {
+        item = item.conseillerObj.nom + ' ' + item.conseillerObj.prenom;
+        return item;
+      });
 
       res.send(stats.map(item => {
         item.statut = item._id;
+        if (item.statut === 'finalisee') {
+          item.candidats = candidats;
+        }
         delete item._id;
         return item;
       }));
