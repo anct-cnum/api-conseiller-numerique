@@ -10,7 +10,7 @@ const { execute } = require('../../../utils');
 
 const pool = new Pool();
 
-execute(async ({ logger, exit }) => {
+execute(__filename, async ({ logger, exit }) => {
 
   const getMissing = async () => {
     try {
