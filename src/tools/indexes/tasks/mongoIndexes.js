@@ -47,4 +47,10 @@ module.exports = {
       }, { name: 'bo-search-fulltext' }),
     ]);
   },
+  cras: db => {
+    return Promise.all([
+      db.collection('cras').createIndex({ 'conseiller.$id': 1 }),
+      db.collection('cras').createIndex({ 'createdAt': 1 }),
+    ]);
+  },
 };

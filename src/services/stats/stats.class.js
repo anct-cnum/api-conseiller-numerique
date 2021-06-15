@@ -86,89 +86,50 @@ exports.Stats = class Stats extends Service {
         //Construction des statistiques
         let stats = {};
 
-        //Nombre accompagnement total
+        //Nombre total d'accompagnements
         stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
 
-        //Nombre atelier collectif total
-        stats.nbAteliers = await db.collection('cras').aggregate(
+        //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
+        let statsActivites = await db.collection('cras').aggregate(
           [
-            { $match: { ...query, 'cra.activite': { $eq: 'collectif' } } },
-            { $group: { _id: null, totalCollectif: { $sum: 1 } } }
+            { $unwind: '$cra.activite' },
+            { $match: { ...query } },
+            { $group: { _id: '$cra.activite', count: { $sum: 1 }, nbParticipants: { $sum: '$cra.nbParticipants' } } },
+            { $group: { _id: null, listActivites: { $push: {
+              'nom': '$_id',
+              'valeur': '$count',
+              'nbParticipants': '$nbParticipants',
+            } } } },
+            { $project: { '_id': 0, 'listActivites': 1 } }
           ]
         ).toArray();
-        stats.nbAteliers = stats.nbAteliers.length !== 0 ? stats.nbAteliers[0].totalCollectif : 0;
+        stats.nbAteliers = statsActivites[0]?.listActivites.find(activite => activite.nom === 'collectif')?.valeur ?? 0;
+        stats.nbTotalParticipant = statsActivites[0]?.listActivites.find(activite => activite.nom === 'collectif')?.nbParticipants ?? 0;
+        stats.nbAccompagnementPerso = statsActivites[0]?.listActivites.find(activite => activite.nom === 'individuel')?.valeur ?? 0;
+        stats.nbDemandePonctuel = statsActivites[0]?.listActivites.find(activite => activite.nom === 'ponctuel')?.valeur ?? 0;
 
-        //Somme total des participants (atelier collectif)
-        stats.nbTotalParticipant = await db.collection('cras').aggregate(
+        //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
+        let statsAccompagnements = await db.collection('cras').aggregate(
           [
-            { $match: { ...query, 'cra.activite': { $eq: 'collectif' }, 'cra.nbParticipants': { $ne: null } } },
-            { $group: { _id: null, total: { $sum: '$cra.nbParticipants' } } }
-          ]
-        ).toArray();
-        stats.nbTotalParticipant = stats.nbTotalParticipant.length !== 0 ? stats.nbTotalParticipant[0].total : 0;
-
-        //Nombre accompagnement individuel total
-        stats.nbAccompagnementPerso = await db.collection('cras').aggregate(
-          [
-            { $match: { ...query, 'cra.activite': { $eq: 'individuel' } } },
-            { $group: { _id: null, totalIndividuel: { $sum: 1 } } }
-          ]
-        ).toArray();
-        stats.nbAccompagnementPerso = stats.nbAccompagnementPerso.length !== 0 ? stats.nbAccompagnementPerso[0].totalIndividuel : 0;
-
-        //Nombre de demande ponctuel total
-        stats.nbDemandePonctuel = await db.collection('cras').aggregate(
-          [
-            { $match: { ...query, 'cra.activite': { $eq: 'ponctuel' } } },
-            { $group: { _id: null, totalPonctuel: { $sum: 1 } } }
-          ]
-        ).toArray();
-        stats.nbDemandePonctuel = stats.nbDemandePonctuel.length !== 0 ? stats.nbDemandePonctuel[0].totalPonctuel : 0;
-
-        //Accompagnement poursuivi ?
-        stats.nbUsagersBeneficiantSuivi = await db.collection('cras').aggregate(
-          [
-            { $match: { ...query, 'cra.accompagnement': { $ne: null } } },
-            { $group: { _id: null, totalSuivi: { $sum: {
+            { $unwind: '$cra.accompagnement' },
+            { $match: { ...query } },
+            { $group: { _id: '$cra.accompagnement', count: { $sum: {
               $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
-            } } } }
-          ]
-        ).toArray();
-        stats.nbUsagersBeneficiantSuivi = stats.nbUsagersBeneficiantSuivi.length !== 0 ? stats.nbUsagersBeneficiantSuivi[0].totalSuivi : 0;
-
-        //Accompagnement poursuivi en individuel
-        stats.nbUsagersAccompagnementIndividuel = await db.collection('cras').aggregate(
-          [
-            { $match: { ...query, 'cra.accompagnement': { $eq: 'individuel' } } },
-            { $group: { _id: null, totalSuiviIndividuel: { $sum: {
-              $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
-            } } } }
+            } } } },
+            { $group: { _id: null, listAccompagnements: { $push: {
+              'nom': '$_id',
+              'valeur': '$count',
+            } } } },
+            { $project: { '_id': 0, 'listAccompagnements': 1 } }
           ]
         ).toArray();
         // eslint-disable-next-line max-len
-        stats.nbUsagersAccompagnementIndividuel = stats.nbUsagersAccompagnementIndividuel.length !== 0 ? stats.nbUsagersAccompagnementIndividuel[0].totalSuiviIndividuel : 0;
+        stats.nbUsagersAccompagnementIndividuel = statsAccompagnements[0]?.listAccompagnements.find(accompagnement => accompagnement.nom === 'individuel')?.valeur ?? 0;
+        stats.nbUsagersAtelierCollectif = statsAccompagnements[0]?.listAccompagnements.find(accompagnement => accompagnement.nom === 'atelier')?.valeur ?? 0;
+        stats.nbReconduction = statsAccompagnements[0]?.listAccompagnements.find(accompagnement => accompagnement.nom === 'redirection')?.valeur ?? 0;
 
-        //Accompagnement poursuivi en atelier collectif
-        stats.nbUsagersAtelierCollectif = await db.collection('cras').aggregate(
-          [
-            { $match: { ...query, 'cra.accompagnement': { $eq: 'atelier' } } },
-            { $group: { _id: null, totalSuiviAtelier: { $sum: {
-              $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
-            } } } }
-          ]
-        ).toArray();
-        stats.nbUsagersAtelierCollectif = stats.nbUsagersAtelierCollectif.length !== 0 ? stats.nbUsagersAtelierCollectif[0].totalSuiviAtelier : 0;
-
-        //Accompagnement redirigé vers un établissement agréé
-        stats.nbReconduction = await db.collection('cras').aggregate(
-          [
-            { $match: { ...query, 'cra.accompagnement': { $eq: 'redirection' } } },
-            { $group: { _id: null, totalSuiviRedirection: { $sum: {
-              $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
-            } } } }
-          ]
-        ).toArray();
-        stats.nbReconduction = stats.nbReconduction.length !== 0 ? stats.nbReconduction[0].totalSuiviRedirection : 0;
+        //Total accompagnés
+        stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
 
         //Taux accompagnement
         // eslint-disable-next-line max-len
