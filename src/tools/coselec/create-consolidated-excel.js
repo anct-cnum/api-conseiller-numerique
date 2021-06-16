@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../../utils');
+const { execute } = require('../utils');
 const { program } = require('commander');
 const ExcelJS = require('exceljs'); // Lire du Excel
 const fs = require('fs');
 const path = require('path');
 const xl = require('excel4node'); // Ecrire du Excel
+const utils = require('../../utils/index.js');
 
 program
 .option('-r, --repertoire <repertoire>', 'répertoire')
@@ -244,12 +245,49 @@ execute(__filename, async ({ db, logger }) => {
 
     ws.column(25).setWidth(20);
     ws.cell(start, 25)
-    .string('ZRR')
+    .string('Nombre de conseillers Coselec précédent')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(26).setWidth(20);
+    ws.cell(start, 26)
+    .string('Intervention ZRR')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(27).setWidth(20);
+    ws.cell(start, 27)
+    .string('Intervention QPV')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(28).setWidth(20);
+    ws.cell(start, 28)
+    .string('Codes QPV')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(29).setWidth(20);
+    ws.cell(start, 29)
+    .string('Noms quartiers QPV')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(30).setWidth(20);
+    ws.cell(start, 30)
+    .string('Statut QPV calculé')
+    .style(styleHeaderConf)
+    .style(styleVertical);
+
+    ws.column(31).setWidth(20);
+    ws.cell(start, 31)
+    .string('Noms quartiers QPV calculés')
     .style(styleHeaderConf)
     .style(styleVertical);
 
     // Formules
-
+    /* Semble créer des problèmes pour Excel, désactivé pour le moment */
+    /*
     ws.cell(start - 1, 11, start - 1, 11, true)
     .formula(`SUBTOTAL(109,K${start + 1}:K${start + structures.length})`)
     .style(styleConf)
@@ -271,7 +309,7 @@ execute(__filename, async ({ db, logger }) => {
       }
     })
     .style({ numberFormat: '0' });
-
+*/
     ws.row(start).filter();
 
     // Fin des headers
@@ -502,13 +540,7 @@ execute(__filename, async ({ db, logger }) => {
 
       ws.cell(i + start + 1, 23)
       .string(s?.coselecPrecedent?.numero ? s.coselecPrecedent.numero : '')
-      .style(styleConf)
-      .style(
-        {
-          alignment: {
-            wrapText: true,
-          }
-        });
+      .style(styleConf);
 
       ws.cell(i + start + 1, 24)
       .string(s?.coselecPrecedent?.avisCoselec ? s.coselecPrecedent.avisCoselec : '')
@@ -520,16 +552,73 @@ execute(__filename, async ({ db, logger }) => {
           }
         });
 
-      let estZRR;
-
-      if (s.hasOwnProperty('estZRR')) {
-        estZRR = s.estZRR ? 'OUI' : 'NON';
-      } else {
-        estZRR = '';
-      }
-
       ws.cell(i + start + 1, 25)
-      .string(estZRR)
+      .number(s?.coselecPrecedent?.nombreConseillersCoselec ? s.coselecPrecedent.nombreConseillersCoselec : 0)
+      .style({ numberFormat: '0' })
+      .style(styleConf);
+
+      // ZRR stocké en base
+      //      let estZRR;
+      //
+      //      if (s.hasOwnProperty('estZRR')) {
+      //        estZRR = s.estZRR ? 'OUI' : 'NON';
+      //      } else {
+      //        estZRR = '';
+      //      }
+
+      ws.cell(i + start + 1, 26)
+      .string(s.interventionZRR || '')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      // QPV
+      ws.cell(i + start + 1, 27)
+      .string(s.interventionQPV || '')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 28)
+      .string(s.codesQPV !== null ? s.codesQPV.toString() : '')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 29)
+      .string(s.nomsQuartiersQPV !== null ? s.nomsQuartiersQPV.toString() : '')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 30)
+      .string(s.qpvStatut || '')
+      .style(styleConf)
+      .style(
+        {
+          alignment: {
+            wrapText: true,
+          }
+        });
+
+      ws.cell(i + start + 1, 31)
+      .string(s.qpvListe ? s.qpvListe.map(({ properties }) => `${properties.CODE_QP} - ${properties.NOM_QP} - ${properties.COMMUNE_QP}`).join(', ') : '')
       .style(styleConf)
       .style(
         {
@@ -540,12 +629,12 @@ execute(__filename, async ({ db, logger }) => {
 
       // Fin des valeurs
 
-      for (let j = 1; j < 19; j++) {
+      for (let j = 1; j < 32; j++) {
         let cell1 = xl.getExcelCellRef(i + start + 1, j);
         ws.addConditionalFormattingRule(cell1, {
           type: 'expression',
           priority: 1, // rule priority order (required)
-          formula: `IF(AND(L${i + start + 1}="POSITIF",P${i + start + 1}="POSITIF"),1,0)`, // formula that returns nonzero or 0
+          formula: `IF(AND(L${i + start + 1}="POSITIF",X${i + start + 1}="POSITIF"),1,0)`, // formula that returns nonzero or 0
           style: styleVert,
         });
         ws.addConditionalFormattingRule(cell1, {
@@ -670,6 +759,10 @@ execute(__filename, async ({ db, logger }) => {
       // ZRR
       s.estZRR = match.estZRR;
 
+      // QPV calculés
+      s.qpvStatut = match.qpvStatut;
+      s.qpvListe = match.qpvListe;
+
       // Commune
       s.nomCommune = match.nomCommune;
 
@@ -684,12 +777,8 @@ execute(__filename, async ({ db, logger }) => {
       s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
         match?.insee?.etablissement?.commune_implantation?.value : '';
 
-      // Coselec précédent
-      if (match.coselec && match.coselec.length > 0) {
-        s.coselecPrecedent = match.coselec.slice(-1)[0];
-      } else {
-        s.coselecPrecedent = '';
-      }
+      // Cherche le bon Coselec précédent
+      s.coselecPrecedent = utils.getCoselec(match) || '';
 
       structures.push(s);
 
@@ -716,6 +805,10 @@ execute(__filename, async ({ db, logger }) => {
         // ZRR
         s.estZRR = match.estZRR;
 
+        // QPV calculés
+        s.qpvStatut = match.qpvStatut;
+        s.qpvListe = match.qpvListe;
+
         // Commune
         s.nomCommune = match.nomCommune;
 
@@ -727,12 +820,8 @@ execute(__filename, async ({ db, logger }) => {
         s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
           match?.insee?.etablissement?.commune_implantation?.value : '';
 
-        // Coselec précédent
-        if (match.coselec && match.coselec.length > 0) {
-          s.coselecPrecedent = match.coselec.slice(-1)[0];
-        } else {
-          s.coselecPrecedent = '';
-        }
+        // Cherche le bon Coselec précédent
+        s.coselecPrecedent = utils.getCoselec(match) || '';
 
         structures.push(s);
 
@@ -767,10 +856,14 @@ execute(__filename, async ({ db, logger }) => {
     const CODE_POSTAL = 4;
     const VILLE = 5;
     const EMAIL = 6;
-    const LABEL_FRANCE_SERVICES = 7;
-    const NOMBRE_CONSEILLERS = 8;
-    const AVIS = 9;
-    const COMMENTAIRE = 10;
+    const INTERVENTION_FRANCE_SERVICES = 7;
+    const INTERVENTION_ZRR = 8;
+    const INTERVENTION_QPV = 9;
+    const CODES_QPV = 10;
+    const NOMS_QUARTIERS_QPV = 11;
+    const NOMBRE_CONSEILLERS = 12;
+    const AVIS = 13;
+    const COMMENTAIRE = 14;
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f);
 
@@ -798,7 +891,11 @@ execute(__filename, async ({ db, logger }) => {
           codePostal: row.getCell(CODE_POSTAL).text,
           ville: row.getCell(VILLE).text,
           email: row.getCell(EMAIL).text,
-          labelFranceServices: row.getCell(LABEL_FRANCE_SERVICES).value,
+          labelFranceServices: row.getCell(INTERVENTION_FRANCE_SERVICES).value,
+          interventionZRR: row.getCell(INTERVENTION_ZRR).value,
+          interventionQPV: row.getCell(INTERVENTION_QPV).value,
+          codesQPV: row.getCell(CODES_QPV).value,
+          nomsQuartiersQPV: row.getCell(NOMS_QUARTIERS_QPV).value,
           nombreConseillers: ~~row.getCell(NOMBRE_CONSEILLERS).value,
           avis: row.getCell(AVIS).value,
           commentaire: row.getCell(COMMENTAIRE).text,
