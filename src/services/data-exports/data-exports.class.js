@@ -82,11 +82,11 @@ exports.DataExports = class DataExports {
       const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': new ObjectID(structureUser.entity.oid) }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
       let promises = [];
 
-      res.write('Nom;Prenom;Email;\n');
+      res.write('Nom;Prenom;Email;Code postal;\n');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
-          res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};\n`);
+          res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};${conseiller.codePostal};\n`);
           resolve();
         }));
       });
