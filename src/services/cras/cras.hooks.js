@@ -1,6 +1,6 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const { BadRequest, Forbidden } = require('@feathersjs/errors');
-const { DBRef } = require('mongodb');
+const { DBRef, ObjectId } = require('mongodb');
 const configuration = require('@feathersjs/configuration');
 const feathers = require('@feathersjs/feathers');
 const app = feathers().configure(configuration());
@@ -43,7 +43,7 @@ module.exports = {
         }
 
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
-        context.data.conseiller = new DBRef('conseillers', context.data.idConseiller, database);
+        context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.idConseiller), database);
         delete context.data.idConseiller;
 
         //Separation CP / ville et suppression de cp plus utile
