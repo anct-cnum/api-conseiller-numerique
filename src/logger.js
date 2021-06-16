@@ -1,16 +1,32 @@
 const { createLogger, format, transports } = require('winston');
+const winston = require('winston');
+require('winston-logstash');
 
-// Configure the Winston logger. For the complete documentation see https://github.com/winstonjs/winston
-const logger = createLogger({
-  // To see more detailed errors, change this to 'debug'
-  level: 'info',
-  format: format.combine(
-    format.splat(),
-    format.simple()
-  ),
-  transports: [
-    new transports.Console()
-  ],
-});
+let logger = null;
+
+if (process.env.NODE_ENV !== 'production') {
+  logger = createLogger({
+    level: 'info',
+    format: format.combine(
+      format.colorize(),
+      format.splat(),
+      format.simple()
+    ),
+    transports: [
+      new transports.Console()
+    ],
+  });
+} else {
+  logger = createLogger({
+    level: 'info',
+    format: format.combine(
+      format.splat(),
+      winston.format.logstash()
+    ),
+    transports: [
+      new transports.Console()
+    ],
+  });
+}
 
 module.exports = logger;

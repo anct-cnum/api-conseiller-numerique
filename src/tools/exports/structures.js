@@ -22,7 +22,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     exit('Les paramètres activated et matchingValidated sont exclusifs');
   }
   if (cli.activated) {
-    query = { userCreated: true };
+    query = { statut: 'VALIDATION_COSELEC', userCreated: true };
   }
 
   const structures = await db.collection('structures').find(query).toArray();
@@ -44,7 +44,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     flags: 'w'
   });
   // eslint-disable-next-line max-len
-  file.write('SIRET structure;ID Structure;Dénomination;Type;Statut;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;QPV;Nombre de quartiers QPV;Labelisée France Services;Raison sociale;Nom commune INSEE;Code commune INSEE;Adresse postale\n');
+  file.write('SIRET structure;ID Structure;Dénomination;Type;Statut;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Nombre de conseillers souhaités;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;QPV;Nombre de quartiers QPV;Labelisée France Services;Raison sociale;Nom commune INSEE;Code commune INSEE;Adresse postale\n');
 
   structures.forEach(structure => {
     promises.push(new Promise(async resolve => {
@@ -77,7 +77,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             (structure?.insee?.etablissement?.adresse?.localite ?? '');
 
           // eslint-disable-next-line max-len
-          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}"\n`);
+          file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}"\n`);
         } catch (e) {
           logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
         }
