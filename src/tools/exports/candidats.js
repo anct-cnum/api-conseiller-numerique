@@ -6,6 +6,7 @@ const fs = require('fs');
 const moment = require('moment');
 const utils = require('../../utils/index.js');
 const cli = require('commander');
+const CSVToJSON = require('csvtojson');
 
 const { execute } = require('../utils');
 
@@ -20,12 +21,27 @@ execute(__filename, async ({ logger, db, exit }) => {
   let parametre = { };
   const nom = cli.nom;
   const siret = cli.siret;
+  const siretList = cli.siretList;
   if (nom ^ siret) {
     exit('Les paramètres nom et siret ne doivent pas etre défini en même temps');
   } else if (nom) {
     parametre = { 'statut': 'recrutee', 'structureObj.nom': nom };
   } else if (siret) {
     parametre = { 'statut': 'recrutee', 'structureObj.siret': siret };
+  } else if (siretList) {
+    const siretArray = async () => {
+      try {
+        // eslint-disable-next-line new-cap
+        const users = await CSVToJSON().fromFile(`C:/Users/ornel/OneDrive/dossier_conseiller_numérique/api-conseiller-numerique/data/exports/${siretList}`);
+        console.log(users);
+        return users;
+      } catch (err) {
+        throw err;
+      }
+    };
+    const list = await siretArray();
+    await list.map(item => item.SIRET);
+
   }
 
   // eslint-disable-next-line max-len
