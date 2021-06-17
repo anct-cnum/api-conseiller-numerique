@@ -5,11 +5,30 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
 const utils = require('../../utils/index.js');
+const cli = require('commander');
 
 const { execute } = require('../utils');
 
-execute(__filename, async ({ logger, db }) => {
-  const miseEnrelations = await db.collection('misesEnRelation').find({ statut: 'recrutee' }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+cli.description('Export candidats')
+.option('-n, --nom <NOM>', 'définir le nom')
+.option('-s, --siret <SIRET>', 'définir un SIRET')
+.helpOption('-e', 'HELP command')
+.parse(process.argv);
+
+execute(__filename, async ({ logger, db, exit }) => {
+  let parametre = { };
+  const nom = cli.nom;
+  const siret = cli.siret;
+  if (nom ^ siret) {
+    exit('Les paramètres nom et siret ne doivent pas etre défini en meme temps');
+  } else if (nom) {
+    parametre = { 'statut': 'recrutee', 'structureObj.nom': nom };
+  } else if (siret) {
+    parametre = { 'statut': 'recrutee', 'structureObj.siret': siret };
+  }
+
+  // eslint-disable-next-line max-len
+  const miseEnrelations = await db.collection('misesEnRelation').find(parametre).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
   let promises = [];
 
   logger.info(`Generating CSV file...`);
