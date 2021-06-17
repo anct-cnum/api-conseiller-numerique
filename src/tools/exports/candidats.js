@@ -19,24 +19,13 @@ cli.description('Export candidats')
 
 execute(__filename, async ({ logger, db, exit }) => {
   let parametre = { };
+  const siretList = cli.siretList;
   const nom = cli.nom;
   const siret = cli.siret;
-  const siretList = cli.siretList;
-  if (nom ^ siret) {
+  if ((siretList && nom) || (nom ^ siret)) {
     exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps');
     return;
   }
-
-  // if (nom ^ siret) {
-  //   exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps 1 test ok');
-  //   return;
-  // }
-  // if (siret ^ siretList) {
-  //   exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps 2');
-  // }
-  // if (nom ^ siretList) {
-  //   exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps 3');
-  // }
 
   if (nom) {
     parametre = { 'statut': 'recrutee', 'structureObj.nom': nom };
