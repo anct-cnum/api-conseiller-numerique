@@ -33,14 +33,14 @@ execute(__filename, async ({ logger, db, exit }) => {
       try {
         // eslint-disable-next-line new-cap
         const users = await CSVToJSON().fromFile(`C:/Users/ornel/OneDrive/dossier_conseiller_numérique/api-conseiller-numerique/data/exports/${siretList}`);
-        console.log(users);
         return users;
       } catch (err) {
         throw err;
       }
     };
     const list = await siretArray();
-    await list.map(item => item.SIRET);
+    const listSiret = await list.map(item => item.SIRET);
+    parametre = { 'statut': 'recrutee', 'structureObj.siret': { $in: listSiret } };
 
   }
 
