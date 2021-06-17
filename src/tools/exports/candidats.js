@@ -12,6 +12,7 @@ const { execute } = require('../utils');
 cli.description('Export candidats')
 .option('-n, --nom <NOM>', 'définir le nom')
 .option('-s, --siret <SIRET>', 'définir un SIRET')
+.option('-sl, --siretList <Nom de fichier>', 'Le nom du fichier qui contient la Liste de SIRET')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
@@ -20,7 +21,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   const nom = cli.nom;
   const siret = cli.siret;
   if (nom ^ siret) {
-    exit('Les paramètres nom et siret ne doivent pas etre défini en meme temps');
+    exit('Les paramètres nom et siret ne doivent pas etre défini en même temps');
   } else if (nom) {
     parametre = { 'statut': 'recrutee', 'structureObj.nom': nom };
   } else if (siret) {
