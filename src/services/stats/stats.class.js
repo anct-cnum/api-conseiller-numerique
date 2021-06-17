@@ -73,9 +73,9 @@ exports.Stats = class Stats extends Service {
 
         //Composition de la partie query en formattant la date
         let dateDebut = new Date(req.body?.dateDebut);
-        dateDebut.setUTCHours(0, 0, 0);
+        dateDebut.setUTCHours(0, 0, 0, 0);
         let dateFin = new Date(req.body?.dateFin);
-        dateFin.setUTCHours(23, 59, 0);
+        dateFin.setUTCHours(23, 59, 59, 59);
         let query = {
           'conseiller.$id': new ObjectID(conseiller._id),
           'createdAt': {
