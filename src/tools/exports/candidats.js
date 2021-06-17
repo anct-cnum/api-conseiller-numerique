@@ -13,7 +13,7 @@ const { execute } = require('../utils');
 cli.description('Export candidats')
 .option('-n, --nom <NOM>', 'définir le nom')
 .option('-s, --siret <SIRET>', 'définir un SIRET')
-.option('-sl, --siretList <Nom de fichier>', 'Le nom du fichier qui contient la Liste de SIRET')
+.option('-sl, --siretList <Nom de fichier>', 'Le nom du fichier qui contient la liste des SIRET')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
@@ -23,8 +23,22 @@ execute(__filename, async ({ logger, db, exit }) => {
   const siret = cli.siret;
   const siretList = cli.siretList;
   if (nom ^ siret) {
-    exit('Les paramètres nom et siret ne doivent pas etre défini en même temps');
-  } else if (nom) {
+    exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps');
+    return;
+  }
+
+  // if (nom ^ siret) {
+  //   exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps 1 test ok');
+  //   return;
+  // }
+  // if (siret ^ siretList) {
+  //   exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps 2');
+  // }
+  // if (nom ^ siretList) {
+  //   exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps 3');
+  // }
+
+  if (nom) {
     parametre = { 'statut': 'recrutee', 'structureObj.nom': nom };
   } else if (siret) {
     parametre = { 'statut': 'recrutee', 'structureObj.siret': siret };
@@ -32,8 +46,8 @@ execute(__filename, async ({ logger, db, exit }) => {
     const siretArray = async () => {
       try {
         // eslint-disable-next-line new-cap
-        const users = await CSVToJSON().fromFile(`C:/Users/ornel/OneDrive/dossier_conseiller_numérique/api-conseiller-numerique/data/exports/${siretList}`);
-        return users;
+        const structures = await CSVToJSON().fromFile(`data/exports/${siretList}`);
+        return structures;
       } catch (err) {
         throw err;
       }
