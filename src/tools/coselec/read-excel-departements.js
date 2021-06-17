@@ -117,6 +117,7 @@ execute(__filename, async ({ db, logger }) => {
     const NOMS_QUARTIERS_QPV = 11;
     const NOMBRE_CONSEILLERS = 12;
     const AVIS = 13;
+    const COMMENTAIRE = 14;
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f);
 
