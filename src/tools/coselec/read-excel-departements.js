@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../../utils');
+const { execute } = require('../utils');
 const { program } = require('commander');
 const fs = require('fs');
 const path = require('path');
@@ -9,7 +9,6 @@ const ExcelJS = require('exceljs');
 
 program
 .option('-r, --repertoire <repertoire>', 'répertoire')
-.option('-d, --departement <departement>', 'département')
 .option('-f, --file <file>', 'Excel file path');
 
 program.parse(process.argv);
@@ -40,15 +39,22 @@ execute(__filename, async ({ db, logger }) => {
             avisPrefet: s.avis,
             commentairePrefet: s.commentaire,
             nombreConseillersPrefet: s.nombreConseillers,
+            interventionFranceServices : s.labelFranceServices,
+            interventionZRR: s.interventionZRR,
+            interventionQPV: s.interventionQPV,
+            codesQPV: s.codesQPV,
+            nomsQuartiersQPV: s.nomsQuartiersQPV,
+            fichier: s.fichier,
+            ligne: s.ligne,
             insertedAt: new Date()
           },
         }
       };
 
       // xxx Vérifier le SIRET avec l'API Entreprise
-      if (/^\d{14}$/.test(s.siret)) {
-        updateDoc.$set = { ...updateDoc.$set, ...{ siret: s.siret } };
-      }
+      //if (/^\d{14}$/.test(s.siret)) {
+      //updateDoc.$set = { ...updateDoc.$set, ...{ siret: s.siret } };
+      //}
 
       const result = await db.collection('structures').updateOne(filter, updateDoc);
 
@@ -59,6 +65,7 @@ execute(__filename, async ({ db, logger }) => {
 
       // Si on a un siret
       const match = await db.collection('structures').findOne({ siret: s.siret });
+      // S'il y a plusieurs SA avec le même siret, on n'en modifie qu'une...
 
       if (match) {
         const filter = { siret: s.siret };
@@ -72,6 +79,13 @@ execute(__filename, async ({ db, logger }) => {
               avisPrefet: s.avis,
               commentairePrefet: s.commentaire,
               nombreConseillersPrefet: s.nombreConseillers,
+              interventionFranceServices : s.labelFranceServices,
+              interventionZRR: s.interventionZRR,
+              interventionQPV: s.interventionQPV,
+              codesQPV: s.codesQPV,
+              nomsQuartiersQPV: s.nomsQuartiersQPV,
+              fichier: s.fichier,
+              ligne: s.ligne,
               insertedAt: new Date()
             },
           }
@@ -96,10 +110,13 @@ execute(__filename, async ({ db, logger }) => {
     const CODE_POSTAL = 4;
     const VILLE = 5;
     const EMAIL = 6;
-    const LABEL_FRANCE_SERVICES = 7;
-    const NOMBRE_CONSEILLERS = 8;
-    const AVIS = 9;
-    const COMMENTAIRE = 10;
+    const INTERVENTION_FRANCE_SERVICES = 7;
+    const INTERVENTION_ZRR = 8;
+    const INTERVENTION_QPV = 9;
+    const CODES_QPV = 10;
+    const NOMS_QUARTIERS_QPV = 11;
+    const NOMBRE_CONSEILLERS = 12;
+    const AVIS = 13;
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(f);
 
@@ -127,7 +144,11 @@ execute(__filename, async ({ db, logger }) => {
           codePostal: row.getCell(CODE_POSTAL).text,
           ville: row.getCell(VILLE).text,
           email: row.getCell(EMAIL).text,
-          labelFranceServices: row.getCell(LABEL_FRANCE_SERVICES).value,
+          labelFranceServices: row.getCell(INTERVENTION_FRANCE_SERVICES).value,
+          interventionZRR: row.getCell(INTERVENTION_ZRR).value,
+          interventionQPV: row.getCell(INTERVENTION_QPV).value,
+          codesQPV: row.getCell(CODES_QPV).value,
+          nomsQuartiersQPV: row.getCell(NOMS_QUARTIERS_QPV).value,
           nombreConseillers: ~~row.getCell(NOMBRE_CONSEILLERS).value,
           avis: row.getCell(AVIS).value,
           commentaire: row.getCell(COMMENTAIRE).text,
