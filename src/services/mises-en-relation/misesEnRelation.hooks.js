@@ -58,7 +58,7 @@ module.exports = {
             //Nombre de candidats déjà recrutés pour cette structure
             const misesEnRelationRecrutees = await context.app.service('misesEnRelation').find({
               query: {
-                'statut': 'recrutee',
+                'statut': { $in: ['recrutee', 'finalisee'] },
                 'structure.$id': new ObjectID(structureId)
               },
               paginate: false //important pour ne pas être limité par la pagination
