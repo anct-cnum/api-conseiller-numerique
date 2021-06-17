@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../../utils');
+const { execute } = require('../utils');
 const { program } = require('commander');
 const ExcelJS = require('exceljs');
 
@@ -38,9 +38,9 @@ execute(__filename, async ({ db, logger }) => {
       };
 
       // xxx Vérifier le SIRET avec l'API Entreprise
-      if (/^\d{14}$/.test(s.siret)) {
-        updateDoc.$set = { ...updateDoc.$set, ...{ siret: s.siret } };
-      }
+      //      if (/^\d{14}$/.test(s.siret)) {
+      //updateDoc.$set = { ...updateDoc.$set, ...{ siret: s.siret } };
+      //}
 
       if (s.avisCoselec === 'POSITIF') {
         updateDoc.$set = { ...updateDoc.$set, ...{ statut: 'VALIDATION_COSELEC', coselecAt: new Date() } };
@@ -99,20 +99,19 @@ execute(__filename, async ({ db, logger }) => {
     const SIRET = 2;
     const NOM = 3;
     const LABEL_FRANCE_SERVICES = 10;
-    const NOMBRE_CONSEILLERS = 13;
-    const AVIS = 14;
-    const COMMENTAIRE = 15;
-    const OBSERVATIONS_REFERENT = 16;
-    const AVIS_COSELEC = 18;
-    const NOMBRE_CONSEILLERS_COSELEC = 19;
-    const PRIORITAIRE_COSELEC = 20;
-    const NUMERO_COSELEC = 21;
+    const NOMBRE_CONSEILLERS = 11;
+    const AVIS = 12;
+    const COMMENTAIRE = 13;
+    const OBSERVATIONS_REFERENT = 14;
+    const AVIS_COSELEC = 16;
+    const NOMBRE_CONSEILLERS_COSELEC = 17;
+    const PRIORITAIRE_COSELEC = 18;
+    const NUMERO_COSELEC = 19;
 
     const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
 
     for await (const worksheetReader of workbookReader) {
-      //if (worksheetReader.name !== 'Fichier COSELEC') {
-      if (worksheetReader.name !== 'Feuille6') {
+      if (worksheetReader.name !== 'Structures') {
         continue;
       }
 
