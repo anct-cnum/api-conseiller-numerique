@@ -1,6 +1,6 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
-const { NotFound, Forbidden } = require('@feathersjs/errors');
+const { NotFound, Forbidden, BadRequest } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const utils = require('../../utils/index.js');
 const checkPermissions = require('feathers-permissions');
@@ -52,14 +52,14 @@ module.exports = {
           const structure = await context.app.service('structures').get(structureId);
           //Vérification si structure non null
           if (structure === null) {
-            throw new NotFound('structure introuvable avec l\'id : ', structureId);
+            throw new NotFound('Structure introuvable avec l\'id : ', structureId);
           }
           //Vérification de la présence d'une date de recrutement
           const misesEnRelationRecrutee = await context.app.service('misesEnRelation').find({
             query: { '_id': new ObjectID(context.id) }
           });
           if (misesEnRelationRecrutee.data[0].dateRecrutement === null) {
-            throw new Forbidden('La date de recrutement doit être obligatoirement renseignée !');
+            throw new BadRequest('La date de recrutement doit être obligatoirement renseignée !');
           }
           //Limite du nombre de candidats à recruter
           let dernierCoselec = utils.getCoselec(structure);
