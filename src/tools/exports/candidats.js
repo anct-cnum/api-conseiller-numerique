@@ -35,7 +35,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     const siretArray = async () => {
       try {
         // eslint-disable-next-line new-cap
-        const structures = await CSVToJSON().fromFile(`data/exports/${siretList}`);
+        const structures = await CSVToJSON().fromFile(`data/imports/${siretList}`);
         return structures;
       } catch (err) {
         throw err;
@@ -44,7 +44,6 @@ execute(__filename, async ({ logger, db, exit }) => {
     const list = await siretArray();
     const listSiret = await list.map(item => item.SIRET);
     parametre = { 'statut': 'recrutee', 'structureObj.siret': { $in: listSiret } };
-
   }
 
   // eslint-disable-next-line max-len
