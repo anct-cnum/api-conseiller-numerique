@@ -17,31 +17,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   let lignes = [];
 
   /* Nombre de postes validés par département */
-  /*
-  const queryPosteValidesDepartement = [
-    { $match: { 'statut': 'VALIDATION_COSELEC', 'coselec': { '$elemMatch': { 'avisCoselec': 'POSITIF' } } } },
-    { $unwind: '$coselec' },
-    { $group: { _id: '$codeDepartement', count: { $sum: '$coselec.nombreConseillersCoselec' } } },
-    { $sort: { _id: 1 } }
-  ];
-  const nombrePostesValidesDepartement = await db.collection('structures').aggregate(queryPosteValidesDepartement).toArray();
-
-  if (nombrePostesValidesDepartement.length > 0) {
-    nombrePostesValidesDepartement.forEach(posteValide => {
-      departements.forEach(departement => {
-        if (String(departement.num_dep) === String(posteValide._id)) {
-          lignes.push({
-            'numeroDepartement': posteValide._id,
-            'departement': departement.dep_name,
-            'nombrePostesValides': posteValide.count
-          });
-        }
-      });
-    });
-  }
-  */
-
-  /* V2 */
   const structures = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC' }).sort({ codeDepartement: 1 }).toArray();
   let posteParDepartement = [];
   structures.forEach(structure => {
@@ -67,25 +42,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const postesValidesDepartement = ({ 'key': key, 'date': date, 'data': lignes });
 
   /* Nombre de postes validés par structure */
-  /*
-  const queryPosteValidesStructures = [
-    { $match: { 'statut': 'VALIDATION_COSELEC', 'coselec': { '$elemMatch': { 'avisCoselec': 'POSITIF' } } } },
-    { $unwind: '$coselec' },
-    { $group: { _id: '$_id', count: { $sum: '$coselec.nombreConseillersCoselec' }, nom: { $first: '$nom' } } },
-  ];
-  const nombrePostesValidesStructures = await db.collection('structures').aggregate(queryPosteValidesStructures).toArray();
-  lignes = [];
-  if (nombrePostesValidesStructures.length > 0) {
-    nombrePostesValidesStructures.forEach(posteValide => {
-      lignes.push({
-        'structure': posteValide.nom,
-        'nombrePostesValides': posteValide.count
-      });
-    });
-  }
-  */
-
-  /* V2 */
   const structuresPostesValides = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC' }).sort({ nom: 1 }).toArray();
   lignes = [];
   structuresPostesValides.forEach(structure => {
