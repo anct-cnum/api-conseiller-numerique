@@ -84,7 +84,7 @@ execute(__filename, async ({ db, logger }) => {
       await store(s, qpv, quartiers);
     }
 
-    if (['COLLECTIVITE', 'PRIVATE'].includes(s.type) && s.codeCommune !== '' && s.codeCommune !== '.' && s.coordonneesInsee !== undefined) {
+    if (['COLLECTIVITE', 'GIP', 'PRIVATE'].includes(s.type) && s.codeCommune !== '' && s.codeCommune !== '.' && s.coordonneesInsee !== undefined) {
 
       // On cherche si la structure est dans un QPV, à radius kilomètres près
       const radius = 0.1; // en km

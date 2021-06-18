@@ -729,6 +729,7 @@ execute(__filename, async ({ db, logger }) => {
     'DEPARTEMENT': 'Publique',
     'REGION': 'Publique',
     'COLLECTIVITE': 'Publique',
+    'GIP': 'Publique',
   };
 
   const processStructure = async s => {
