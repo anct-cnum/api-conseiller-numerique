@@ -1,0 +1,66 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+    <mj-wrapper css-class="wrapper">
+
+      <mj-section font-family="Arial" font-size="13px" >
+        <mj-column>
+          <mj-text>
+            Bonjour,
+          </mj-text>
+          <mj-text line-height="22px">
+            Bravo ! Vous avez <span style="color:#000;font-weight:bold;">terminé</span> votre test PIX !
+          </mj-text>
+          <mj-text line-height="22px">
+            Si ce n'est pas le cas, rien de plus simple , cliquez ici : <a href="https://app.pix.fr/connexion">https://app.pix.fr/connexion</a>
+          </mj-text>
+          <mj-text line-height="22px">
+            et connectez-vous à votre compte Pix, enfin cliquez sur le bouton “Reprendre”.
+          </mj-text>
+          <mj-image align="center" width="350px"padding-left="10px" alt="Reprendre son test pix Conseiller numérique France Services"
+          src="<%= utils.getPublicUrl('/assets/img/email/candidatPixPartageEnAttente/candidat-pix-0.png') %>" />
+          <mj-text font-size="15px" font-family="Open Sans">
+            Vous reprendrez le test là où vous l’aviez arrêté.
+          </mj-text>
+          <mj-text line-height="22px">
+            Les résultats constituent une brique importante pour étudier votre candidature,
+            nous ne pouvons donc que vous inciter fortement à participer à ce test et à partager vos résultats.
+          </mj-text>
+          <mj-text>
+            <span style="color:#000;font-weight:bold;">
+              Comment partager vos résultats ?
+            </span>
+          </mj-text>
+          <mj-text line-height="22px">
+            <span style="color:#000;font-weight:bold;">A la fin</span> de votre test, cliquez sur “J’envoie mes résultats”. Vos résultats viennent alors compléter votre
+            dossier d’inscription (et seront partagés à l’organisme de formation et à la structure accueillante dans le
+            cadre de l’examen de votre candidature).
+          </mj-text>
+          <mj-image align="center" padding-left="10px" width="550px" alt="J'envoie mes résultats PIX"
+          src="<%= utils.getPublicUrl('/assets/img/email/candidatPixPartageEnAttente/candidat-pix-1.png') %>" />
+          <mj-text>
+          <mj-text style="color:#000;font-weight:bold;">
+            Pourquoi partager mes résultats ?
+          </mj-text>
+          <mj-text>
+            <p style="line-height:22px;">❖ Pour <span style="color:#000;font-weight:bold;">vous</span>, les résultats donnent du poids à votre candidature en objectivant votre niveau, vos points forts</p>
+            <p style="line-height:22px;">❖ Pour l’<span style="color:#000;font-weight:bold;">organisme de formation</span> et pour la <span style="color:#000;font-weight:bold;">structure accueillante</span>, ils sont un élément important d’information pour la suite de votre parcours</p>
+          </mj-text>
+        </mj-column>
+      </mj-section>
+
+    </mj-wrapper>
+    <mj-wrapper css-class="wrapper">
+      <mj-section>
+        <mj-column>
+          <%- include('../commun/signature.mjml.ejs'); %>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

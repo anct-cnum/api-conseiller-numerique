@@ -3,3 +3,4 @@ node_modules/
 config/local.json
 data/exports/*
 .DS_Store
+.clever.json
