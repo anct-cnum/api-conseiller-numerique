@@ -167,5 +167,38 @@ exports.Users = class Users extends Service {
 
       res.send(user);
     });
+
+    // Envoi de l'email d'inscription à Pix Orga
+    app.get('conseillers/envoiEmailPix/:token', async (req, res) => {
+
+      let statutEnvoi = false;
+      const token = req.params.token;
+
+      try {
+        const users = await this.find({
+          query: {
+            token: token,
+            $limit: 1,
+          }
+        });
+
+        if (users.total === 0) {
+          res.status(404).send(new NotFound('Utilisateur introuvable').toJSON());
+          return;
+        }
+
+        const user = users.data[0];
+        if (user.roles[0] === 'conseiller') {
+          let conseiller = await app.service('conseillers').get(user.entity?.oid);
+          let message = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+          await message.send(conseiller);
+          statutEnvoi = true;
+        }
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+
+      res.send(statutEnvoi);
+    });
   }
 };

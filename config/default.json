@@ -4,6 +4,7 @@
   "help_url": "https://aide.conseiller-numerique.gouv.fr/fr/",
   "backoffice_hostname":  "https://admin.conseiller-numerique.gouv.fr",
   "espace_coop_hostname": "https://beta.coop.conseiller-numerique.gouv.fr",
+  "pix_hostname": "https://pix.fr/abc-pix-cnfs/",
   "port": 8080,
   "paginate": {
     "default": 20,
