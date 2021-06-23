@@ -192,12 +192,12 @@ exports.Structures = class Structures extends Service {
       // eslint-disable-next-line max-len
       const conseillerCandidat = await misesEnRelationService.find({ query: { 'conseillerObj.idPG': { $in: ListeConseillerStructure }, 'statut': 'finalisee' } });
       console.log('conseillerCandidat:', conseillerCandidat);
-      const ok = Object.assign({ misesEnRelation, conseillerCandidat });
+      const objMiseEnRelation = Object.assign({ misesEnRelation, conseillerCandidat });
       if (misesEnRelation.total === 0) {
-        res.send(ok);
+        res.send(objMiseEnRelation);
         return;
       }
-      res.send(ok);
+      res.send(objMiseEnRelation);
     });
 
     app.get('/structures/:id/relance-inscription', async (req, res) => {
