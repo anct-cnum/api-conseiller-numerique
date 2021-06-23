@@ -184,11 +184,7 @@ exports.Structures = class Structures extends Service {
         queryFilter['$sort'] = sort;
       }
       const misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
-      console.log('misesEnRelation:', misesEnRelation.total);
-
-      // je creer une liste pour récuperer tout les idPG des conseiller lier à la structure
       const ListeConseillerStructure = await misesEnRelation.data.map(o => o.conseillerObj.idPG);
-      // je fais un find des conseillers qui contient les idPG dans la liste
       // eslint-disable-next-line max-len
       const conseillerCandidat = await misesEnRelationService.find({ query: { 'conseillerObj.idPG': { $in: ListeConseillerStructure }, 'statut': 'finalisee' } });
       misesEnRelation.conseillerCandidat = conseillerCandidat;
