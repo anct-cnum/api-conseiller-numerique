@@ -7,4 +7,5 @@ module.exports = {
   ...require('./durees'),
   ...require('./ages'),
   ...require('./statuts'),
+  ...require('./evolutions'),
 };

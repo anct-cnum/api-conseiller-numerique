@@ -54,4 +54,14 @@ module.exports = {
       db.collection('cras').createIndex({ 'cra.duree': 1 }),
     ]);
   },
+  stats_conseillers_cras: db => {
+    return Promise.all([
+      db.collection('stats_conseillers_cras').createIndex({ 'conseiller.$id': 1 }),
+    ]);
+  },
+  stats_daily_cras: db => {
+    return Promise.all([
+      db.collection('stats_daily_cras').createIndex({ 'date': 1 }),
+    ]);
+  },
 };

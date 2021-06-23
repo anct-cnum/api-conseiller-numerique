@@ -125,6 +125,9 @@ exports.Stats = class Stats extends Service {
         //Statut des usagers (total de chaque catégorie en %)
         stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
 
+        //Evolutions du nb de cras
+        stats.statsEvolutions = await statsCras.getStatsEvolutions(db, conseiller._id);
+
         res.send(stats);
       });
     });
