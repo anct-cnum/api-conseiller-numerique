@@ -20,7 +20,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const structures = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC' }).sort({ codeDepartement: 1 }).toArray();
   let posteParDepartement = [];
   structures.forEach(structure => {
-    let coselecPositif = utilsStructure.getCoselecPositif(structure);
+    let coselecPositif = utilsStructure.getCoselec(structure);
     if (coselecPositif) {
       const departement = String(structure.codeDepartement);
       if (posteParDepartement[departement]) {
@@ -45,7 +45,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const structuresPostesValides = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC' }).sort({ nom: 1 }).toArray();
   lignes = [];
   structuresPostesValides.forEach(structure => {
-    let coselecPositif = utilsStructure.getCoselecPositif(structure);
+    let coselecPositif = utilsStructure.getCoselec(structure);
     if (coselecPositif) {
       lignes.push({
         'structure': structure.nom,
