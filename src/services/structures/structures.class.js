@@ -191,13 +191,12 @@ exports.Structures = class Structures extends Service {
       // je fais un find des conseillers qui contient les idPG dans la liste
       // eslint-disable-next-line max-len
       const conseillerCandidat = await misesEnRelationService.find({ query: { 'conseillerObj.idPG': { $in: ListeConseillerStructure }, 'statut': 'finalisee' } });
-      console.log('conseillerCandidat:', conseillerCandidat);
-      const objMiseEnRelation = Object.assign({ misesEnRelation, conseillerCandidat });
+      misesEnRelation.conseillerCandidat = conseillerCandidat;
       if (misesEnRelation.total === 0) {
-        res.send(objMiseEnRelation);
+        res.send(misesEnRelation);
         return;
       }
-      res.send(objMiseEnRelation);
+      res.send(misesEnRelation);
     });
 
     app.get('/structures/:id/relance-inscription', async (req, res) => {
