@@ -57,6 +57,7 @@ exports.Users = class Users extends Service {
           roles: ['prefet'],
           departement: req.body.departement,
           token: uuidv4(),
+          tokenCreatedAt: new Date(),
           passwordCreated: false,
           createdAt: new Date()
         };
@@ -157,7 +158,7 @@ exports.Users = class Users extends Service {
       }
 
       try {
-        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, passwordCreated: false } });
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date(), passwordCreated: false } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
 
