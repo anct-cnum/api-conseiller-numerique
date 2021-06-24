@@ -187,6 +187,7 @@ exports.Structures = class Structures extends Service {
       const ListeConseillerStructure = await misesEnRelation.data.map(o => o.conseillerObj.idPG);
       // eslint-disable-next-line max-len
       const conseillerCandidat = await misesEnRelationService.find({ query: { 'conseillerObj.idPG': { $in: ListeConseillerStructure }, 'statut': 'finalisee' } });
+
       misesEnRelation.conseillerCandidat = conseillerCandidat;
       if (misesEnRelation.total === 0) {
         res.send(misesEnRelation);
