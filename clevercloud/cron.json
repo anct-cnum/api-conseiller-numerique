@@ -4,6 +4,7 @@
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-prefets.sh",
   "*/5 * * * * $ROOT/src/tools/jobs/create-account-structures.sh",
   "*/5 * * * * $ROOT/src/tools/jobs/send-email-structures.sh",
+  "0 5 * * * $ROOT/src/tools/jobs/metabase.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh"
 ]
 
