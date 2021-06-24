@@ -12,11 +12,10 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
   let promises = [];
   let count = 0;
-  const dateDebut = dayjs(Date()).subtract(7, 'days').format('YYYY/MM/DD 00:00:00');
-  const dateFin = dayjs(Date()).subtract(7, 'days').format('YYYY/MM/DD 23:59:59');
+  const date = dayjs(Date()).subtract(7, 'days').format('YYYY/MM/DD 23:59:59');
 
   await db.collection('users').find(
-    { $or: [{ tokenCreatedAt: { $gte: new Date(dateDebut), $lt: new Date(dateFin) } }, { tokenCreatedAt: { $exists: false } }] }
+    { $or: [{ tokenCreatedAt: { $lt: new Date(date) } }, { tokenCreatedAt: { $exists: false } }] }
   ).forEach(function(user) {
     promises.push(new Promise(async resolve => {
       try {
