@@ -16,13 +16,13 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   const dateFin = dayjs(Date()).subtract(7, 'days').format('YYYY/MM/DD 23:59:59');
 
   await db.collection('users').find(
-    { tokenCreateAt: { $gte: new Date(dateDebut), $lt: new Date(dateFin) } }
+    { tokenCreatedAt: { $gte: new Date(dateDebut), $lt: new Date(dateFin) } }
   ).forEach(function(user) {
     promises.push(new Promise(async resolve => {
       try {
         await db.collection('users').updateOne(
           { _id: new ObjectID(user._id) },
-          { $set: { 'token': null, 'tokenCreateAt': null } }
+          { $set: { 'token': null, 'tokenCreatedAt': null } }
         );
       } catch (error) {
         logger.error(error);
