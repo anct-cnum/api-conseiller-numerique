@@ -112,6 +112,9 @@ exports.Users = class Users extends Service {
               let conseiller = await app.service('conseillers').get(user.entity?.oid);
               message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
               await message.send(user, conseiller);
+              // Envoi d'un deuxième email pour l'inscription à Pix Orga
+              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+              await messagePix.send(user, conseiller);
               break;
             default:
               break;

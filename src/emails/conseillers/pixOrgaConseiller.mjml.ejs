@@ -1,0 +1,47 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+    <mj-wrapper css-class="wrapper">
+      <mj-section>
+        <mj-column>
+          <mj-text css-class="text-primary">
+            Bonjour,
+          </mj-text>
+          <mj-text>
+            Vous êtes désormais utilisateur de la plateforme Coop, plateforme à partir de laquelle vous pourrez notamment bénéficier de ressources pour la réalisation de vos missions de conseiller numérique.
+          </mj-text>
+          <mj-text>
+            ABC Pix est un des outils mis à votre disposition pour l’accompagnement de vos usagers.
+          </mj-text>
+          <mj-text>
+            Les tests ABC Pix sont des tests basés sur Pix abordant spécifiquement les compétences numériques essentielles pour la e-citoyenneté (navigation Internet, usage de la messagerie, droits et risques du numérique...).
+            Intégrés à votre accompagnement, ils vous permettent de diagnostiquer, accompagner et valoriser vos apprenants.
+          </mj-text>
+          <mj-text>
+            Pour utiliser ces tests vous devez obtenir un accès à Pix Orga, l’interface de Pix pour l’administration et le suivi des tests. Cet accès est gratuit pour les conseillers numériques. Pour l’obtenir, il vous suffit de suivre le lien ci-dessous :
+          </mj-text>
+          <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold" text-transform="uppercase">
+            Demander un accès à Pix Orga
+          </mj-button>
+          <mj-text>
+            Une question ? N’hésitez pas à consulter notre Centre d’Aide : <a href="https://support.pix.org/fr/support/home">support.pix.fr</a>
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>
+
+
+
+
+
+
+
+
+
