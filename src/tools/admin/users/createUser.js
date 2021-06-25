@@ -61,6 +61,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
     password: password,
     roles: Array(role),
     token: uuidv4(),
+    tokenCreatedAt: new Date(),
     mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
     passwordCreated: true,
     createdAt: new Date(),
