@@ -75,6 +75,7 @@ module.exports = {
           if (rolesUserAllowed.length < 1 && context.id.toString() !== user?._id.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
+          // TODO pour faire coter PG
         }
       }
     ],
