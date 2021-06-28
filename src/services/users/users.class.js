@@ -57,6 +57,7 @@ exports.Users = class Users extends Service {
           roles: ['prefet'],
           departement: req.body.departement,
           token: uuidv4(),
+          tokenCreatedAt: new Date(),
           passwordCreated: false,
           createdAt: new Date()
         };
@@ -111,6 +112,9 @@ exports.Users = class Users extends Service {
               let conseiller = await app.service('conseillers').get(user.entity?.oid);
               message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
               await message.send(user, conseiller);
+              // Envoi d'un deuxième email pour l'inscription à Pix Orga
+              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+              await messagePix.send(user, conseiller);
               break;
             default:
               break;
@@ -157,7 +161,7 @@ exports.Users = class Users extends Service {
       }
 
       try {
-        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, passwordCreated: false } });
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date(), passwordCreated: false } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
 

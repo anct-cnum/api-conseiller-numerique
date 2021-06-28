@@ -25,6 +25,7 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
           '$db': dbName
         },
         token: uuidv4(),
+        tokenCreatedAt: new Date(),
         mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
         passwordCreated: false,
         createdAt: new Date(),
