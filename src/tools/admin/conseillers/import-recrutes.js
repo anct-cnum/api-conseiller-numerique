@@ -57,7 +57,6 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
               }
             });
 
-            console.log({ 'conseillerObj.email': email, 'structureObj.idPG': structureId })
             await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId }, {
               $set: {
                 statut: 'finalisee',
