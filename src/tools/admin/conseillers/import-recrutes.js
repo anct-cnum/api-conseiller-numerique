@@ -2,6 +2,7 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const moment = require('moment');
 const { v4: uuidv4 } = require('uuid');
+const slugify = require('slugify');
 
 program
 .option('-c, --csv <path>', 'CSV file path');
@@ -20,7 +21,7 @@ const readCSV = async filePath => {
 
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
+execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
 
   logger.info('Import des conseillers recrutés');
   let count = 0;
@@ -32,43 +33,50 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
+          const exist = await db.collection('conseillers').countDocuments({ email });
           if (alreadyRecruted > 0) {
+            logger.error(`Un conseiller avec l'email '${email}' a déjà été recruté`);
             Sentry.captureException(`Un conseiller avec l'email '${email}' a déjà été recruté`);
             errors++;
             reject();
+          } else if (exist === 0) {
+            logger.error(`Conseiller avec l'email '${email}' introuvable`);
+            Sentry.captureException(`Conseiller avec l'email '${email}' introuvable`);
+            errors++;
+            reject();
           } else {
-
-            const structureId = conseiller['ID structure (plateforme)'];
-
-            const result = await db.collection('conseillers').updateOne({ email }, {
+            const structureId = parseInt(conseiller['ID structure (plateforme)']);
+            await db.collection('conseillers').updateOne({ email }, {
               $set: {
                 statut: 'RECRUTE',
                 disponible: false,
                 estRecrute: true,
-                datePrisePoste: moment(conseiller['Date de prise de poste / départ en formation'], 'DD/MM/YYYY'),
-                dateFinFormation: moment(conseiller['Date de fin de formation'], 'DD/MM/YYYY'),
+                datePrisePoste: moment(conseiller['Date de prise de poste / départ en formation'], 'MM/DD/YY').toDate(),
+                dateFinFormation: moment(conseiller['Date de fin de formation'], 'MM/DD/YY').toDate(),
                 structureId
               }
             });
 
-            await db.collection('miseEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId }, {
+            console.log({ 'conseillerObj.email': email, 'structureObj.idPG': structureId })
+            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId }, {
               $set: {
                 statut: 'finalisee',
               }
             });
 
-            await db.collection('miseEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': { $ne: structureId } }, {
+            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': email, 'structureObj.idPG': { $ne: structureId } }, {
               $set: {
                 statut: 'finalisee_non_disponible',
               }
-            });
+            }, { multi: true });
 
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
             const conseillerDoc = await db.collection('conseillers').findOne({ email });
+            const gandi = app.get('gandi');
             await feathers.service('users').create({
-              name: email,
-              password: null,
+              name: slugify(`${conseillerDoc.prenom}.${conseillerDoc.nom}@${gandi.domain}`).toLowerCase(),
+              password: uuidv4(), // random password (required to create user)
               roles: Array(role),
               entity: {
                 '$ref': `${role}s`,
@@ -80,15 +88,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               passwordCreated: false,
               createdAt: new Date(),
             });
-
-            if (result.matchedCount === 1) {
-              count++;
-              resolve();
-            } else {
-              Sentry.captureException(`Conseiller avec l'email '${email}' introuvable`);
-              errors++;
-              reject();
-            }
+            count++;
+            resolve();
           }
         });
         promises.push(p);
