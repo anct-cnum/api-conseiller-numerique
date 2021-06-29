@@ -2,7 +2,6 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const moment = require('moment');
 const { v4: uuidv4 } = require('uuid');
-const slugify = require('slugify');
 
 program
 .option('-c, --csv <path>', 'CSV file path');
