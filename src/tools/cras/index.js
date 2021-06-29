@@ -67,7 +67,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
 
   try {
     if (!cli.day && !cli.month) {
-      logger.info('Début de récupération des données cras du jour ...' + moment(new Date(dateDebut)).format('DD/MM/YYYY'));
+      logger.info('Début de récupération des données CRAs du jour ...' + moment(new Date(dateDebut)).format('DD/MM/YYYY'));
     }
     //Total de cras du jour précédent
     let dailyCras = cli.month ? 0 : await insertDailyCrasStats(db, query, logger, dateDebut);
@@ -77,7 +77,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       await insertDailyCrasStatsByConseiller(db, query, logger, dateDebut, cli.month);
     }
 
-    logger.info('Fin de récupération des statistiques CRA');
+    logger.info('Fin de récupération des statistiques CRAs');
   } catch (error) {
     Sentry.captureException(error);
     logger.error(error);

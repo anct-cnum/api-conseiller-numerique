@@ -66,7 +66,7 @@ const insertDailyCrasStatsByConseiller = async (db, query, logger, dateDebut, mo
       if (!alreadyUpdate) {
         const update = { $push: { [year]: { 'mois': month, 'totalCras': newStat } } };
         await db.collection('stats_conseillers_cras').updateOne(queryUpd, update, options);
-        logger.info('Stat cra du conseiller mis à jour', conseiller);
+        logger.info(`Statistiques CRAs du conseiller (id=${conseiller.idConseiller} totalCras=${conseiller.totalCras}) mis à jour`);
       }
       resolve();
     }));

@@ -2,6 +2,6 @@
 
 cd ${APP_HOME}
 
-echo "Stats daily Cras: START\n"
+echo "Stats daily CRAs: START\n"
 node src/tools/cras/index.js
-echo "Stats daily Cras: END\n"
+echo "Stats daily CRAs: END\n"

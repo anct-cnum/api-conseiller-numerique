@@ -12,7 +12,7 @@ const insertDailyCrasStats = async (db, query, logger, dateDebut) => {
   const update = { $set: dailyCras };
   const options = { upsert: true };
   db.collection('stats_daily_cras').updateOne(queryUpd, update, options);
-  logger.info('Total de cras par jour inséré en base : ' + totalCras);
+  logger.info('Total de CRAs par jour inséré en base : ' + totalCras);
 
   return totalCras;
 
