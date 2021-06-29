@@ -21,7 +21,7 @@ const readCSV = async filePath => {
 
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
+execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
   logger.info('Import des conseillers recrutés');
   let count = 0;
@@ -72,9 +72,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
             const conseillerDoc = await db.collection('conseillers').findOne({ email });
-            const gandi = app.get('gandi');
             await feathers.service('users').create({
-              name: slugify(`${conseillerDoc.prenom}.${conseillerDoc.nom}@${gandi.domain}`).toLowerCase(),
+              name: email,
               password: uuidv4(), // random password (required to create user)
               roles: Array(role),
               entity: {
