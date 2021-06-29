@@ -1,6 +1,6 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const checkPermissions = require('feathers-permissions');
-const { Forbidden } = require('@feathersjs/errors');
+const { Forbidden, GeneralError } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
 
 const {
@@ -75,7 +75,15 @@ module.exports = {
           if (rolesUserAllowed.length < 1 && context.id.toString() !== user?._id.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
-          // TODO pour faire coter PG
+          context.app.get('mongoClient').then(async db => {
+            // j'ai voulue mettre countDocuments() mais ça me renvoyer ça comme erreur alors que tout fonctionne pourtant !
+            //error: Unhandled Rejection at: Promise
+            const verificationEmail = await db.collection('users').find({ name: context?.data?.name }).count();
+            console.log('verificationEmail:', verificationEmail);
+            if (verificationEmail !== 0) {
+              throw new GeneralError('l\'email est déjà utiliser par une autre structure validée Coselec');
+            }
+          });
         }
       }
     ],
