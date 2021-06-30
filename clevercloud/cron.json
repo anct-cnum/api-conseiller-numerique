@@ -5,6 +5,7 @@
   "*/5 * * * * $ROOT/src/tools/jobs/create-account-structures.sh",
   "*/5 * * * * $ROOT/src/tools/jobs/send-email-structures.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh",
-  "0 5 * * * $ROOT/src/tools/jobs/metabase.sh"
+  "0 5 * * * $ROOT/src/tools/jobs/metabase.sh",
+  "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh"
 ]
 

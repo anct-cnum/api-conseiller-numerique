@@ -8,7 +8,7 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'candidat'],
         field: 'roles',
       })
     ],
@@ -21,8 +21,8 @@ module.exports = {
       }, search({ escape: false })],
     get: [
       async context => {
-        //Restreindre les permissions : les conseillers ne peuvent voir que les informations les concernant
-        if (context.params?.user?.roles.includes('conseiller')) {
+        //Restreindre les permissions : les conseillers et candidats ne peuvent voir que les informations les concernant
+        if (context.params?.user?.roles.includes('conseiller') || context.params?.user?.roles.includes('candidat')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
@@ -37,12 +37,12 @@ module.exports = {
     ],
     update: [
       checkPermissions({
-        roles: ['admin', 'conseiller'],
+        roles: ['admin', 'conseiller', 'candidat'],
         field: 'roles',
       }),
       async context => {
-        //Restreindre les permissions : les conseillers ne peuvent mettre à jour que les informations les concernant
-        if (context.params?.user?.roles.includes('conseiller')) {
+        //Restreindre les permissions : les conseillers et candidats ne peuvent mettre à jour que les informations les concernant
+        if (context.params?.user?.roles.includes('conseiller') || context.params?.user?.roles.includes('candidat')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
@@ -51,12 +51,12 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin', 'conseiller'],
+        roles: ['admin', 'conseiller', 'candidat'],
         field: 'roles',
       }),
       async context => {
-        //Restreindre les permissions : les conseillers ne peuvent mettre à jour que les informations les concernant
-        if (context.params?.user?.roles.includes('conseiller')) {
+        //Restreindre les permissions : les conseillers et candidats ne peuvent mettre à jour que les informations les concernant
+        if (context.params?.user?.roles.includes('conseiller') || context.params?.user?.roles.includes('candidat')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }

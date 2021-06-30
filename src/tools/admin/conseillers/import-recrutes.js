@@ -2,7 +2,6 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const moment = require('moment');
 const { v4: uuidv4 } = require('uuid');
-const slugify = require('slugify');
 
 program
 .option('-c, --csv <path>', 'CSV file path');
@@ -21,7 +20,7 @@ const readCSV = async filePath => {
 
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
+execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
   logger.info('Import des conseillers recrutés');
   let count = 0;
@@ -82,9 +81,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
             const conseillerDoc = await db.collection('conseillers').findOne({ email });
-            const gandi = app.get('gandi');
             await feathers.service('users').create({
-              name: slugify(`${conseillerDoc.prenom}.${conseillerDoc.nom}@${gandi.domain}`).toLowerCase(),
+              name: email,
               prenom: conseillerDoc.prenom,
               nom: conseillerDoc.nom,
               password: uuidv4(), // random password (required to create user)
