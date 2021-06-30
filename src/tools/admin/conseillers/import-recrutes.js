@@ -32,8 +32,14 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
-          const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
+          const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: false });
           const exist = await db.collection('conseillers').countDocuments({ email });
+          const structureId = parseInt(conseiller['ID structure (plateforme)']);
+          const structure = await db.collection('structures').findOne({ idPG: structureId });
+          const miseEnRelation = await db.collection('misesEnRelation').findOne({
+            'conseillerObj.email': email,
+            'structureObj.idPG': structureId
+          });
           if (alreadyRecruted > 0) {
             logger.error(`Un conseiller avec l'email '${email}' a déjà été recruté`);
             Sentry.captureException(`Un conseiller avec l'email '${email}' a déjà été recruté`);
@@ -44,16 +50,20 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
             Sentry.captureException(`Conseiller avec l'email '${email}' introuvable`);
             errors++;
             reject();
+          } else if (structure === null) { // TODO à tester
+            logger.error(`Structure avec l'idPG '${structureId}' introuvable`);
+            Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
+            errors++;
+            reject();
           } else {
-            const structureId = parseInt(conseiller['ID structure (plateforme)']);
-            await db.collection('conseillers').updateOne({ email }, {
+            await db.collection('conseillers').updateOne({ _id: miseEnRelation.conseillerObj._id }, {
               $set: {
                 statut: 'RECRUTE',
                 disponible: false,
                 estRecrute: true,
                 datePrisePoste: moment(conseiller['Date de prise de poste / départ en formation'], 'MM/DD/YY').toDate(),
                 dateFinFormation: moment(conseiller['Date de fin de formation'], 'MM/DD/YY').toDate(),
-                structureId
+                structureId: structure._id
               }
             });
 
@@ -75,6 +85,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry, app }) => {
             const gandi = app.get('gandi');
             await feathers.service('users').create({
               name: slugify(`${conseillerDoc.prenom}.${conseillerDoc.nom}@${gandi.domain}`).toLowerCase(),
+              prenom: conseillerDoc.prenom,
+              nom: conseillerDoc.nom,
               password: uuidv4(), // random password (required to create user)
               roles: Array(role),
               entity: {

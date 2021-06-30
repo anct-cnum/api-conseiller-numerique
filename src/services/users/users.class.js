@@ -1,8 +1,11 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound } = require('@feathersjs/errors');
 
+const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
+const slugify = require('slugify');
+const { createMailbox } = require('../../utils/mailbox');
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -90,12 +93,29 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
+      const role = user.roles[0];
       app.service('users').patch(user._id, { password: password, passwordCreated: true });
+
+      if (role === 'conseiller') {
+        app.get('mongoClient').then(async db => {
+          const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+          const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
+          createMailbox({
+            gandi: app.get('gandi'),
+            conseillerId: user.entity.oid,
+            login,
+            password,
+            db,
+            logger,
+            Sentry: app.get('sentry')
+          });
+        });
+      }
 
       try {
         let message;
         if (typeEmail === 'bienvenue') {
-          switch (user.roles[0]) {
+          switch (role) {
             case 'admin':
               message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
               await message.send(user);
@@ -119,7 +139,7 @@ exports.Users = class Users extends Service {
             default:
               break;
           }
-        } else if (user.roles[0] === 'conseiller' && typeEmail === 'renouvellement') {
+        } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
           //Renouvellement conseiller => envoi email perso
           let conseiller = await app.service('conseillers').get(user.entity?.oid);
           user.persoEmail = conseiller.email;
@@ -131,6 +151,7 @@ exports.Users = class Users extends Service {
         }
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error()
       }
 
       res.send(user);

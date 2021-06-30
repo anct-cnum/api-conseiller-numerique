@@ -43,7 +43,7 @@ module.exports = {
         //Restreindre les permissions : les conseillers ne peuvent voir que les informations de la structure associée
         if (context.params?.user?.roles.includes('conseiller')) {
           const conseiller = await context.app.service('conseillers').get(context.params?.user?.entity?.oid);
-          if (context.id.toString() !== conseiller?.idStructure.toString()) {
+          if (context.id.toString() !== conseiller?.structureId.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
