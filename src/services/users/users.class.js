@@ -100,8 +100,14 @@ exports.Users = class Users extends Service {
         app.get('mongoClient').then(async db => {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
           const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
+          const gandi = app.get('gandi');
+          await db.collection('users').updateOne({ _id: user.entity.oid }, {
+            $set: {
+              name: `${login}@${gandi.domain}`
+            }
+          });
           createMailbox({
-            gandi: app.get('gandi'),
+            gandi,
             conseillerId: user.entity.oid,
             login,
             password,
