@@ -34,7 +34,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       logger.error('Paramètre day invalide');
       return;
     } else {
-      logger.info('Recalcul du nb total de cras pour la journée du ' + moment(new Date(cli.day)).format('DD/MM/YYYY'));
+      logger.info('Recalcul du nombre total de CRAs pour la journée du ' + moment(new Date(cli.day)).format('DD/MM/YYYY'));
       let dayCustom = new Date(cli.day);
       dateDebut = new Date(dayCustom);
       dateFin = new Date(dayCustom);
