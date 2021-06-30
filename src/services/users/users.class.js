@@ -151,7 +151,7 @@ exports.Users = class Users extends Service {
         }
       } catch (err) {
         app.get('sentry').captureException(err);
-        logger.error()
+        logger.error(err);
       }
 
       res.send(user);
