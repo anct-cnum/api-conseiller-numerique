@@ -18,22 +18,6 @@ exports.Users = class Users extends Service {
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
 
-    app.get('/users/connect/:_id', async (req, res) => {
-      const id = req.params._id;
-      const users = await this.find({
-        query: {
-          _id: req.params._id
-        }
-      });
-      if (users.total === 0) {
-        res.status(404).send(new NotFound('User not found', {
-          id
-        }).toJSON());
-        return;
-      }
-      res.send(users.data[0]);
-    });
-
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
       const users = await this.find({
