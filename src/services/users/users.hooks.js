@@ -77,14 +77,11 @@ module.exports = {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
           context.app.get('mongoClient').then(async db => {
-            // j'ai voulue mettre countDocuments() mais ça me renvoyer ça comme erreur alors que tout fonctionne pourtant !
-            //error: Unhandled Rejection at: Promise
-            const verificationEmail = await db.collection('users').find({ name: context?.data?.name }).count();
+            const verificationEmail = await db.collection('users').countDocuments({ name: context?.data?.name });
             if (verificationEmail !== 0) {
               throw new GeneralError('l\'email est déjà utiliser par une autre structure validée Coselec');
             }
-            // partie pour vérifier si dans la collection structure il y a le meme "ancien" email et si oui il le update
-            const miseAJourEmail = await db.collection('structures').find({ 'contact.email': context?.params?.user?.name }).count();
+            const miseAJourEmail = await db.collection('structures').countDocuments({ 'contact.email': context?.params?.user?.name });
             if (miseAJourEmail !== 0) {
               await db.collection('structures').updateOne({ 'contact.email': context?.params?.user?.name }, { $set: { 'contact.email': context?.data?.name } });
             }
