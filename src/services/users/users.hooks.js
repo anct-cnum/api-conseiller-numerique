@@ -1,6 +1,6 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const checkPermissions = require('feathers-permissions');
-const { Forbidden, GeneralError } = require('@feathersjs/errors');
+const { Forbidden, Conflict } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
 
 const {
@@ -68,7 +68,6 @@ module.exports = {
         field: 'roles',
       }),
       async context => {
-        console.log('context:', context?.params?.user?.name);
         //Restreindre les permissions : les users non admin ne peuvent mettre à jour que les informations les concernant
         if (context.params.authentication !== undefined) {
           const user = await getUserBytoken(context);
@@ -76,18 +75,13 @@ module.exports = {
           if (rolesUserAllowed.length < 1 && context.id.toString() !== user?._id.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
-          context.app.get('mongoClient').then(async db => {
-            const verificationEmail = await db.collection('users').countDocuments({ name: context?.data?.name });
-            if (verificationEmail !== 0) {
-              throw new GeneralError('l\'email est déjà utiliser par une autre structure validée Coselec');
-            }
-            const miseAJourEmail = await db.collection('structures').countDocuments({ 'contact.email': context?.params?.user?.name });
-            if (miseAJourEmail !== 0) {
-              await db.collection('structures').updateOne({ 'contact.email': context?.params?.user?.name }, { $set: { 'contact.email': context?.data?.name } });
-            }
-
-          });
         }
+        context.app.get('mongoClient').then(async db => {
+          const verificationEmail = await db.collection('users').countDocuments({ name: context?.data?.name });
+          if (verificationEmail !== 0) {
+            throw new Conflict('l\'email est déjà utilisé par une autre structure validée Coselec');
+          }
+        });
       }
     ],
     remove: [
