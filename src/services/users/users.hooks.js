@@ -86,9 +86,7 @@ module.exports = {
           if (verificationEmail !== 0) {
             throw new Conflict('l\'email est déjà utilisé par une autre structure validée Coselec');
           } else {
-
             await db.collection('users').updateOne({ _id: idUser }, { $set: { token: uuidv4() } });
-            
             try {
               const user = await db.collection('users').findOne({ _id: idUser });
               user.nouveauEmail = nouveauEmail;
@@ -101,6 +99,7 @@ module.exports = {
             } catch (error) {
               context.app.get('sentry').captureException(error);
             }
+            await db.collection('users').updateOne({ _id: idUser }, { $set: { name: context?.params?.user?.name } });
             return;
           }
 
