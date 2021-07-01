@@ -18,6 +18,34 @@ exports.Users = class Users extends Service {
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
 
+    app.patch('/confirmation-email/:token', async (req, res) => {
+      // Je ne rentre pas dans l'api
+      console.log('APi');
+      const token = req.params.token;
+      const user = await this.findOne({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      if (user.total === 0) {
+        res.status(404).send(new NotFound('User not found', {
+          token
+        }).toJSON());
+        return;
+      }
+      await this.updateOne({
+        $set: {
+          name: user.nouveauEmail
+        },
+        $unset: {
+          mailAModifier: user.mailAModifier
+        } });
+
+      res.send('/email-confirmer');
+      res.end();
+    });
+
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
       const users = await this.find({
