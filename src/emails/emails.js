@@ -11,6 +11,7 @@ const candidatPointRecrutement = require('./conseillers/candidatPointRecrutement
 const bienvenueCompteConseiller = require('./conseillers/bienvenueCompteConseiller');
 const candidatPixEnAttente = require('./conseillers/candidatPixEnAttente');
 const creationCompteConseiller = require('./conseillers/creationCompteConseiller');
+const confirmeNouveauEmail = require('./confirmChangeEmail/confirmeNouveauEmail');
 
 module.exports = (db, mailer, app) => {
 
@@ -28,6 +29,7 @@ module.exports = (db, mailer, app) => {
     bienvenueCompteConseiller(db, mailer, app),
     candidatPixEnAttente(db, mailer, app),
     creationCompteConseiller(db, mailer, app),
+    confirmeNouveauEmail(db, mailer, app)
   ];
 
   return {

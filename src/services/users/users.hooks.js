@@ -1,8 +1,11 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const checkPermissions = require('feathers-permissions');
-const { Forbidden, Conflict } = require('@feathersjs/errors');
+const { Forbidden, Conflict, NotFound } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
+const confirmenouveauEmail = require('../../emails/confirmChangeEmail/confirmeNouveauEmail');
 const { v4: uuidv4 } = require('uuid');
+const createEmails = require('../../emails/emails');
+const createMailer = require('../../mailer');
 const {
   hashPassword, protect
 } = require('@feathersjs/authentication-local').hooks;
@@ -77,11 +80,26 @@ module.exports = {
           }
         }
         context.app.get('mongoClient').then(async db => {
-          const verificationEmail = await db.collection('users').countDocuments({ name: context?.data?.name });
+          const nouveauEmail = context?.data?.name;
+          const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
             throw new Conflict('l\'email est déjà utilisé par une autre structure validée Coselec');
+          } else {
+            try {
+              const idUser = context?.params?.user?._id;
+              const user = await db.collection('users').findOne({ _id: idUser });
+              user.nouveauEmail = nouveauEmail;
+              let mailer = createMailer(context.app, nouveauEmail);
+              const emails = createEmails(db, mailer);
+              let message = emails.getEmailMessageByTemplateName('confirmeNouveauEmail');
+              await message.render(user);
+              await message.send(user, nouveauEmail);
+
+            } catch (error) {
+              context.app.get('sentry').captureException(error);
+            }
+            return;
           }
-          await db.collection('users').updateOne({ _id: context?.params?.user?._id }, { $set: { token: uuidv4() } });
 
         });
       }
