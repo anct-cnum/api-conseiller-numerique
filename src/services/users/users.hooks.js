@@ -80,12 +80,16 @@ module.exports = {
         }
         context.app.get('mongoClient').then(async db => {
           const nouveauEmail = context?.data?.name;
+          const idUser = context?.params?.user?._id;
+
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
             throw new Conflict('l\'email est déjà utilisé par une autre structure validée Coselec');
           } else {
+
+            await db.collection('users').updateOne({ _id: idUser }, { $set: { token: uuidv4() } });
+            
             try {
-              const idUser = context?.params?.user?._id;
               const user = await db.collection('users').findOne({ _id: idUser });
               user.nouveauEmail = nouveauEmail;
               let mailer = createMailer(context.app, nouveauEmail);
