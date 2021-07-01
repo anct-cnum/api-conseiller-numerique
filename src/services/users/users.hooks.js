@@ -2,7 +2,7 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 const checkPermissions = require('feathers-permissions');
 const { Forbidden, Conflict } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
-
+const { v4: uuidv4 } = require('uuid');
 const {
   hashPassword, protect
 } = require('@feathersjs/authentication-local').hooks;
@@ -81,6 +81,8 @@ module.exports = {
           if (verificationEmail !== 0) {
             throw new Conflict('l\'email est déjà utilisé par une autre structure validée Coselec');
           }
+          await db.collection('users').updateOne({ _id: context?.params?.user?._id }, { $set: { token: uuidv4() } });
+
         });
       }
     ],
