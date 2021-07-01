@@ -61,7 +61,6 @@ module.exports = app => {
     createMailer: () => {
       return {
         sendEmail: async (emailAddress, message, options = {}) => {
-          console.log('emailAddress:', emailAddress);
 
           const schema = await Joi.object({
             subject: Joi.string().required(),

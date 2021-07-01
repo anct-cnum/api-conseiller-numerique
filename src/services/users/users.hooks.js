@@ -1,8 +1,7 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const checkPermissions = require('feathers-permissions');
-const { Forbidden, Conflict, NotFound } = require('@feathersjs/errors');
+const { Forbidden, Conflict } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
-const confirmenouveauEmail = require('../../emails/confirmChangeEmail/confirmeNouveauEmail');
 const { v4: uuidv4 } = require('uuid');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
