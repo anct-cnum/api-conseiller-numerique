@@ -49,5 +49,10 @@
     "environment": "SENTRY_ENVIRONMENT",
     "dsn": "SENTRY_DSN",
     "traceSampleRate": "SENTRY_TRACE_SAMPLE_RATE"
+  },
+  "mattermost": {
+    "endPoint": "MATTERMOST_ENDPOINT",
+    "login": "MATTERMOST_LOGIN",
+    "password": "MATTERMOST_PASSWORD"
   }
 }
