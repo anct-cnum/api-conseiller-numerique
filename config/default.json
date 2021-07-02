@@ -67,5 +67,10 @@
     "environment": "local",
     "dsn": "https://xxx@yyy.ingest.sentry.io/zzz",
     "traceSampleRate": "1"
+  },
+  "mattermost": {
+    "endPoint": "https://discussion.conseiller-numerique.gouv.fr",
+    "login": "login",
+    "password": "password"
   }
 }
