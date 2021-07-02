@@ -31,7 +31,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
-          const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: false });
+          const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
           const exist = await db.collection('conseillers').countDocuments({ email });
           const structureId = parseInt(conseiller['ID structure (plateforme)']);
           const structure = await db.collection('structures').findOne({ idPG: structureId });
@@ -49,7 +49,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Conseiller avec l'email '${email}' introuvable`);
             errors++;
             reject();
-          } else if (structure === null) { // TODO à tester
+          } else if (structure === null) {
             logger.error(`Structure avec l'idPG '${structureId}' introuvable`);
             Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
             errors++;
