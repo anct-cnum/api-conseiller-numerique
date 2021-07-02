@@ -19,10 +19,8 @@ exports.Users = class Users extends Service {
     const emails = createEmails(db, mailer, app);
 
     app.patch('/confirmation-email/:token', async (req, res) => {
-      // Je ne rentre pas dans l'api
-      console.log('APi');
       const token = req.params.token;
-      const user = await this.findOne({
+      const user = await this.find({
         query: {
           token: token,
           $limit: 1,
@@ -34,16 +32,17 @@ exports.Users = class Users extends Service {
         }).toJSON());
         return;
       }
-      await this.updateOne({
-        $set: {
-          name: user.nouveauEmail
-        },
-        $unset: {
-          mailAModifier: user.mailAModifier
-        } });
-
-      res.send('/email-confirmer');
-      res.end();
+      const userInfo = user?.data[0];
+      try {
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+      try {
+        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
     });
 
     app.get('/users/verifyToken/:token', async (req, res) => {
