@@ -4,12 +4,14 @@
 const { program } = require('commander');
 const axios = require('axios');
 const slugify = require('slugify');
+const { ObjectID } = require('mongodb');
 
 require('dotenv').config();
 
 const { execute } = require('../../utils');
+const { createMailbox } = require('../../../utils/mailbox');
 
-execute(__filename, async ({ feathers, logger, exit, app }) => {
+execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
 
   program.option('-p, --password <password>', 'password: clear text');
   program.option('-i, --id <id>', 'id: MongoDB ObjecID');
@@ -23,52 +25,28 @@ execute(__filename, async ({ feathers, logger, exit, app }) => {
 
   if (!password || !operation || !id) {
     exit('Paramètres invalides');
+    return;
   }
 
   if (!['create', 'updatePassword'].includes(operation)) {
     exit('Action non reconnu');
+    return;
   }
 
-  const conseillers = await feathers.service('conseillers').find({
-    query: {
-      _id: id
-    }
+  const conseiller = await db.collection('conseillers').findOne({
+    _id: new ObjectID(id)
   });
-  if (conseillers.total === 0) {
+
+  if (conseiller === null) {
     exit('Conseiller introuvable');
+    return;
   }
 
-  const conseiller = conseillers.data[0];
-  const login = slugify(`${conseiller.prenom}.${conseiller.nom}`).toLowerCase();
+  const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
 
   const gandi = app.get('gandi');
   if (operation === 'create') {
-    try {
-      await axios({
-        method: 'post',
-        url: `${gandi.endPoint}/mailboxes/${gandi.domain}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Apikey ${gandi.token}`
-        },
-        data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
-      });
-      const result = await axios({
-        method: 'get',
-        url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Apikey ${gandi.token}`
-        }
-      });
-      // TODO : utiliser client mongo natif
-      await feathers.service('conseillers').patch(conseiller._id, { emailCN: { address: result.data[0].address, id: result.data[0].id } });
-      logger.info('Boite email créée');
-    } catch (e) {
-      e.response.data.errors.forEach(error => {
-        logger.error(error.description);
-      });
-    }
+    createMailbox({ gandi, conseillerId: conseiller._id, login, password, db, logger, Sentry });
   } else if (operation === 'updatePassword') {
     try {
       await axios({
