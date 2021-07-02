@@ -43,6 +43,13 @@ exports.Users = class Users extends Service {
       } catch (err) {
         app.get('sentry').captureException(err);
       }
+      const apresEmailConfirmer = await this.find({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      res.send(apresEmailConfirmer.data[0]);
     });
 
     app.get('/users/verifyToken/:token', async (req, res) => {
