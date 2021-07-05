@@ -22,6 +22,40 @@ exports.Users = class Users extends Service {
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
 
+    app.patch('/confirmation-email/:token', async (req, res) => {
+      const token = req.params.token;
+      const user = await this.find({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      if (user.total === 0) {
+        res.status(404).send(new NotFound('User not found', {
+          token
+        }).toJSON());
+        return;
+      }
+      const userInfo = user?.data[0];
+      try {
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+      try {
+        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+      const apresEmailConfirmer = await this.find({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      res.send(apresEmailConfirmer.data[0]);
+    });
+
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
       const users = await this.find({
