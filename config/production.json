@@ -4,6 +4,7 @@
   "help_url": "HELP_URL",
   "backoffice_hostname": "BACKOFFICE_HOSTNAME",
   "espace_coop_hostname": "ESPACE_COOP_HOSTNAME",
+  "pix_hostname": "PIX_HOSTNAME",
   "port": "PORT",
   "authentication": {
     "secret": "AUTHENTICATION_SECRET",
@@ -48,5 +49,10 @@
     "environment": "SENTRY_ENVIRONMENT",
     "dsn": "SENTRY_DSN",
     "traceSampleRate": "SENTRY_TRACE_SAMPLE_RATE"
+  },
+  "mattermost": {
+    "endPoint": "MATTERMOST_ENDPOINT",
+    "login": "MATTERMOST_LOGIN",
+    "password": "MATTERMOST_PASSWORD"
   }
 }

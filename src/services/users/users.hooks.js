@@ -23,7 +23,7 @@ module.exports = {
     get: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -48,7 +48,7 @@ module.exports = {
       hashPassword('password'),
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -66,7 +66,7 @@ module.exports = {
       hashPassword('password'),
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'candidat'],
         field: 'roles',
       }),
       async context => {
