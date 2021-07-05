@@ -84,7 +84,7 @@ module.exports = {
 
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
-            throw new Conflict('l\'email est déjà utilisé par une autre structure validée Coselec');
+            throw new Conflict('Erreur: l\'email est déjà utilisé par une autre structure');
           } else {
             await db.collection('users').updateOne({ _id: idUser }, { $set: { token: uuidv4() } });
             try {

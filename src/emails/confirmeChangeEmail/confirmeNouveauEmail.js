@@ -40,7 +40,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         user.nouveauEmail,
         {
-          subject: 'Confirmer votre nouvelle adresse mail',
+          subject: 'Confirmez votre nouvelle adresse mail',
           body: await render(user),
         },
       )
