@@ -9,7 +9,7 @@ const { createMailbox } = require('../../utils/mailbox');
 const { createAccount } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
-
+const { ObjectId, ObjectID } = require('mongodb');
 exports.Users = class Users extends Service {
   constructor(options, app) {
     super(options);
@@ -54,6 +54,26 @@ exports.Users = class Users extends Service {
         }
       });
       res.send(apresEmailConfirmer.data[0]);
+    });
+
+    app.get('/information-candidat/:id', async (req, res) => {
+      const id = req.params.id;
+      const candidat = await this.find({
+        query: {
+          _id: new ObjectId(id),
+          $limit: 1,
+        }
+      });
+      if (candidat.total === 0) {
+        res.status(404).send(new NotFound('Candidat not found', {
+          id
+        }).toJSON());
+        return;
+      }
+
+      const candidatInfoId = candidat?.data[0].entity?.oid;
+      const informations = await app.service('conseillers').get(new ObjectID(candidatInfoId));
+      res.send(informations);
     });
 
     app.get('/users/verifyToken/:token', async (req, res) => {
