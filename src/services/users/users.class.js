@@ -9,7 +9,7 @@ const { createMailbox } = require('../../utils/mailbox');
 const { createAccount } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
-const { ObjectId, ObjectID } = require('mongodb');
+const { ObjectId } = require('mongodb');
 
 exports.Users = class Users extends Service {
   constructor(options, app) {
