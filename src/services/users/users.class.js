@@ -10,6 +10,7 @@ const { createAccount } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
 const { ObjectId, ObjectID } = require('mongodb');
+
 exports.Users = class Users extends Service {
   constructor(options, app) {
     super(options);
@@ -72,7 +73,7 @@ exports.Users = class Users extends Service {
       }
 
       const candidatInfoId = candidat?.data[0].entity?.oid;
-      const informations = await app.service('conseillers').get(new ObjectID(candidatInfoId));
+      const informations = await app.service('conseillers').get(candidatInfoId);
       res.send(informations);
     });
 
