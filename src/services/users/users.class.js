@@ -6,6 +6,7 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const slugify = require('slugify');
 const { createMailbox } = require('../../utils/mailbox');
+const { createAccount } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -101,6 +102,7 @@ exports.Users = class Users extends Service {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
           const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
           const gandi = app.get('gandi');
+          const mattermost = app.get('mattermost');
           await db.collection('users').updateOne({ _id: user.entity.oid }, {
             $set: {
               name: `${login}@${gandi.domain}`
@@ -109,6 +111,15 @@ exports.Users = class Users extends Service {
           createMailbox({
             gandi,
             conseillerId: user.entity.oid,
+            login,
+            password,
+            db,
+            logger,
+            Sentry: app.get('sentry')
+          });
+          createAccount({
+            mattermost,
+            conseiller,
             login,
             password,
             db,
