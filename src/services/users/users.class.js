@@ -6,7 +6,7 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const slugify = require('slugify');
 const { createMailbox } = require('../../utils/mailbox');
-const { createAccount, joinChannel } = require('../../utils/mattermost');
+const { createAccount } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
 
