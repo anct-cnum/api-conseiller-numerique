@@ -5,11 +5,49 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
 const utils = require('../../utils/index.js');
+const cli = require('commander');
+const CSVToJSON = require('csvtojson');
 
 const { execute } = require('../utils');
 
-execute(__filename, async ({ logger, db }) => {
-  const miseEnrelations = await db.collection('misesEnRelation').find({ statut: 'recrutee' }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+cli.description('Export candidats')
+.option('-n, --nom <NOM>', 'définir le nom')
+.option('-s, --siret <SIRET>', 'définir un SIRET')
+.option('-sl, --siretList <Nom de fichier>', 'Le nom du fichier qui contient la liste des SIRET')
+.helpOption('-e', 'HELP command')
+.parse(process.argv);
+
+execute(__filename, async ({ logger, db, exit }) => {
+  let parametre = { };
+  const siretList = cli.siretList;
+  const nom = cli.nom;
+  const siret = cli.siret;
+  if ((siretList && nom) || (nom ^ siret)) {
+    exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps');
+    return;
+  }
+
+  if (nom) {
+    parametre = { 'statut': 'recrutee', 'structureObj.nom': nom };
+  } else if (siret) {
+    parametre = { 'statut': 'recrutee', 'structureObj.siret': siret };
+  } else if (siretList) {
+    const siretArray = async () => {
+      try {
+        // eslint-disable-next-line new-cap
+        const structures = await CSVToJSON().fromFile(`data/imports/${siretList}`);
+        return structures;
+      } catch (err) {
+        throw err;
+      }
+    };
+    const list = await siretArray();
+    const listSiret = await list.map(item => item.SIRET);
+    parametre = { 'statut': 'recrutee', 'structureObj.siret': { $in: listSiret } };
+  }
+
+  // eslint-disable-next-line max-len
+  const miseEnrelations = await db.collection('misesEnRelation').find(parametre).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
   let promises = [];
 
   logger.info(`Generating CSV file...`);

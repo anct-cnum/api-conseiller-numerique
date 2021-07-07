@@ -98,11 +98,21 @@ exports.Structures = class Structures extends Service {
 
       const stats = await db.collection('misesEnRelation').aggregate([
         { '$match': { 'structure.$id': structureId } },
-        { '$group': { _id: '$statut', count: { $sum: 1 } } }
+        { '$group': { _id: '$statut', count: { $sum: 1 } } },
       ]).toArray();
+
+      /* ajout des candidats dont le recrutement est finalisé dans détails structure*/
+      const misesEnRelation = await db.collection('misesEnRelation').find({ 'statut': 'finalisee', 'structure.$id': structureId }).toArray();
+      const candidats = misesEnRelation.map(item => {
+        item = `${item.conseillerObj.nom} ${item.conseillerObj.prenom}`;
+        return item;
+      });
 
       res.send(stats.map(item => {
         item.statut = item._id;
+        if (item.statut === 'finalisee') {
+          item.candidats = candidats;
+        }
         delete item._id;
         return item;
       }));
@@ -138,7 +148,7 @@ exports.Structures = class Structures extends Service {
       const { filter } = req.query;
       const search = req.query['$search'];
       if (filter) {
-        const allowedFilters = ['nouvelle', 'interessee', 'nonInteressee', 'recrutee', 'toutes'];
+        const allowedFilters = ['nouvelle', 'interessee', 'nonInteressee', 'recrutee', 'finalisee', 'toutes'];
         if (allowedFilters.includes(filter)) {
           if (filter !== 'toutes') {
             queryFilter = { statut: filter };

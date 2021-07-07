@@ -11,6 +11,9 @@ const candidatPointRecrutement = require('./conseillers/candidatPointRecrutement
 const bienvenueCompteConseiller = require('./conseillers/bienvenueCompteConseiller');
 const candidatPixEnAttente = require('./conseillers/candidatPixEnAttente');
 const creationCompteConseiller = require('./conseillers/creationCompteConseiller');
+const confirmeNouveauEmail = require('./confirmeChangeEmail/confirmeNouveauEmail');
+const pixOrgaConseiller = require('./conseillers/pixOrgaConseiller');
+
 
 module.exports = (db, mailer, app) => {
 
@@ -28,6 +31,9 @@ module.exports = (db, mailer, app) => {
     bienvenueCompteConseiller(db, mailer, app),
     candidatPixEnAttente(db, mailer, app),
     creationCompteConseiller(db, mailer, app),
+    pixOrgaConseiller(db, mailer, app),
+    confirmeNouveauEmail(db, mailer, app)
+
   ];
 
   return {

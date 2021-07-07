@@ -2,20 +2,19 @@
 'use strict';
 
 const { program } = require('commander');
-const axios = require('axios');
 const slugify = require('slugify');
 const { ObjectID } = require('mongodb');
 
 require('dotenv').config();
 
 const { execute } = require('../../utils');
-const { createMailbox } = require('../../../utils/mailbox');
+const { createAccount } = require('../../../utils/mattermost');
 
 execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
 
   program.option('-p, --password <password>', 'password: clear text');
   program.option('-i, --id <id>', 'id: MongoDB ObjecID');
-  program.option('-a, --operation <operation>', 'operation: create / updatePassword');
+  program.option('-a, --operation <operation>', 'operation: create');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -28,7 +27,7 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
     return;
   }
 
-  if (!['create', 'updatePassword'].includes(operation)) {
+  if (!['create'].includes(operation)) {
     exit('Action non reconnu');
     return;
   }
@@ -44,25 +43,8 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
 
   const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
 
-  const gandi = app.get('gandi');
+  const mattermost = app.get('mattermost');
   if (operation === 'create') {
-    createMailbox({ gandi, conseillerId: conseiller._id, login, password, db, logger, Sentry });
-  } else if (operation === 'updatePassword') {
-    try {
-      await axios({
-        method: 'patch',
-        url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${conseiller.emailCN.id}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Apikey ${gandi.token}`
-        },
-        data: { 'login': login, 'password': password, 'aliases': [] }
-      });
-      logger.info('Boite email mise à jour');
-    } catch (e) {
-      e.response.data.errors.forEach(error => {
-        logger.error(error.description);
-      });
-    }
+    createAccount({ mattermost, conseiller, login, password, db, logger, Sentry });
   }
 });

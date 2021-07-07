@@ -1,8 +1,12 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound } = require('@feathersjs/errors');
 
+const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
+const slugify = require('slugify');
+const { createMailbox } = require('../../utils/mailbox');
+const { createAccount } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -17,6 +21,40 @@ exports.Users = class Users extends Service {
     const db = app.get('mongoClient');
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
+
+    app.patch('/confirmation-email/:token', async (req, res) => {
+      const token = req.params.token;
+      const user = await this.find({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      if (user.total === 0) {
+        res.status(404).send(new NotFound('User not found', {
+          token
+        }).toJSON());
+        return;
+      }
+      const userInfo = user?.data[0];
+      try {
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+      try {
+        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+      const apresEmailConfirmer = await this.find({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      res.send(apresEmailConfirmer.data[0]);
+    });
 
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
@@ -57,6 +95,7 @@ exports.Users = class Users extends Service {
           roles: ['prefet'],
           departement: req.body.departement,
           token: uuidv4(),
+          tokenCreatedAt: new Date(),
           passwordCreated: false,
           createdAt: new Date()
         };
@@ -89,12 +128,45 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
+      const role = user.roles[0];
       app.service('users').patch(user._id, { password: password, passwordCreated: true });
+
+      if (role === 'conseiller') {
+        app.get('mongoClient').then(async db => {
+          const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+          const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
+          const gandi = app.get('gandi');
+          const mattermost = app.get('mattermost');
+          await db.collection('users').updateOne({ _id: user.entity.oid }, {
+            $set: {
+              name: `${login}@${gandi.domain}`
+            }
+          });
+          createMailbox({
+            gandi,
+            conseillerId: user.entity.oid,
+            login,
+            password,
+            db,
+            logger,
+            Sentry: app.get('sentry')
+          });
+          createAccount({
+            mattermost,
+            conseiller,
+            login,
+            password,
+            db,
+            logger,
+            Sentry: app.get('sentry')
+          });
+        });
+      }
 
       try {
         let message;
         if (typeEmail === 'bienvenue') {
-          switch (user.roles[0]) {
+          switch (role) {
             case 'admin':
               message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
               await message.send(user);
@@ -111,11 +183,14 @@ exports.Users = class Users extends Service {
               let conseiller = await app.service('conseillers').get(user.entity?.oid);
               message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
               await message.send(user, conseiller);
+              // Envoi d'un deuxième email pour l'inscription à Pix Orga
+              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+              await messagePix.send(user, conseiller);
               break;
             default:
               break;
           }
-        } else if (user.roles[0] === 'conseiller' && typeEmail === 'renouvellement') {
+        } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
           //Renouvellement conseiller => envoi email perso
           let conseiller = await app.service('conseillers').get(user.entity?.oid);
           user.persoEmail = conseiller.email;
@@ -127,6 +202,7 @@ exports.Users = class Users extends Service {
         }
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(err);
       }
 
       res.send(user);
@@ -157,7 +233,7 @@ exports.Users = class Users extends Service {
       }
 
       try {
-        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, passwordCreated: false } });
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date(), passwordCreated: false } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
 

@@ -47,4 +47,51 @@ module.exports = {
       }, { name: 'bo-search-fulltext' }),
     ]);
   },
+  cras: db => {
+    return Promise.all([
+      db.collection('cras').createIndex({ 'conseiller.$id': 1 }),
+      db.collection('cras').createIndex({ 'createdAt': 1 }),
+      db.collection('cras').createIndex({ 'cra.duree': 1 }),
+    ]);
+  },
+  stats_conseillers_cras: db => {
+    return Promise.all([
+      db.collection('stats_conseillers_cras').createIndex({ 'conseiller.$id': 1 }),
+    ]);
+  },
+  stats_daily_cras: db => {
+    return Promise.all([
+      db.collection('stats_daily_cras').createIndex({ 'date': 1 }),
+    ]);
+  },
+  stats_PostesValidesDepartement: db => {
+    return Promise.all([
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_PostesValidesStructure: db => {
+    return Promise.all([
+      db.collection('stats_PostesValidesStructure').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_ConseillersRecrutesDepartement: db => {
+    return Promise.all([
+      db.collection('stats_ConseillersRecrutesDepartement').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_ConseillersRecrutesStructure: db => {
+    return Promise.all([
+      db.collection('stats_ConseillersRecrutesStructure').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_Candidats: db => {
+    return Promise.all([
+      db.collection('stats_Candidats').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
+  stats_StructuresCandidates: db => {
+    return Promise.all([
+      db.collection('stats_StructuresCandidates').createIndex({ 'key': 1 }, { unique: true })
+    ]);
+  },
 };
