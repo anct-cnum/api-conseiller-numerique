@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound } = require('@feathersjs/errors');
+const { NotFound, Conflict } = require('@feathersjs/errors');
 
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
@@ -56,6 +56,32 @@ exports.Users = class Users extends Service {
       res.send(apresEmailConfirmer.data[0]);
     });
 
+    app.patch('/users/validateEmailChange/:token', async (req, res) => {
+      const nouveauEmail = req.body.name;
+      const token = req.params.token;
+      app.get('mongoClient').then(async db => {
+        const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
+        if (verificationEmail !== 0) {
+          throw new Conflict('Erreur: l\'email est déjà utilisé par une autre structure');
+        }
+
+        const resultUser = await this.find({ query: { token: token } });
+        const idUser = resultUser.data[0]._id;
+        await this.patch(idUser, { $set: { token: uuidv4() } });
+        try {
+          const user = await this.find({ query: { _id: idUser } });
+          user.data[0].nouveauEmail = nouveauEmail;
+          let mailer = createMailer(app, nouveauEmail);
+          const emails = createEmails(db, mailer);
+          let message = emails.getEmailMessageByTemplateName('confirmeNouveauEmail');
+          await message.render(user.data[0]);
+          await message.send(user.data[0], nouveauEmail);
+          res.send(user.data[0]);
+        } catch (error) {
+          context.app.get('sentry').captureException(error);
+        }
+      });
+    });
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
       const users = await this.find({
