@@ -56,17 +56,14 @@ exports.Users = class Users extends Service {
       res.send(apresEmailConfirmer.data[0]);
     });
 
-    app.patch('/users/validateEmailChange/:token', async (req, res) => {
+    app.patch('/users/sendEmailUpdate/:id', async (req, res) => {
       const nouveauEmail = req.body.name;
-      const token = req.params.token;
+      const idUser = req.params.id;
       app.get('mongoClient').then(async db => {
         const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
         if (verificationEmail !== 0) {
           throw new Conflict('Erreur: l\'email est déjà utilisé par une autre structure');
         }
-
-        const resultUser = await this.find({ query: { token: token } });
-        const idUser = resultUser.data[0]._id;
         await this.patch(idUser, { $set: { token: uuidv4() } });
         try {
           const user = await this.find({ query: { _id: idUser } });
