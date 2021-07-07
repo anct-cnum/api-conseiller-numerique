@@ -53,6 +53,7 @@
   "mattermost": {
     "endPoint": "MATTERMOST_ENDPOINT",
     "login": "MATTERMOST_LOGIN",
-    "password": "MATTERMOST_PASSWORD"
+    "password": "MATTERMOST_PASSWORD",
+    "teamid": "MATTERMOST_TEAMID"
   }
 }

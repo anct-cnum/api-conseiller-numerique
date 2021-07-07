@@ -6,7 +6,7 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const slugify = require('slugify');
 const { createMailbox } = require('../../utils/mailbox');
-const { createAccount } = require('../../utils/mattermost');
+const { createAccount, joinChannel } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -30,6 +30,7 @@ exports.Users = class Users extends Service {
           $limit: 1,
         }
       });
+
       if (users.total === 0) {
         res.status(404).send(new NotFound('User not found', {
           token
@@ -103,7 +104,7 @@ exports.Users = class Users extends Service {
           const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
-          await db.collection('users').updateOne({ _id: user.entity.oid }, {
+          await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
               name: `${login}@${gandi.domain}`
             }
