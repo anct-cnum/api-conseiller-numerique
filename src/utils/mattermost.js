@@ -1,7 +1,7 @@
 const axios = require('axios');
 const slugify = require('slugify');
 
-const createAccount = async ({ mattermost, conseiller, login, password, db, logger, Sentry }) => {
+const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
 
   try {
     const resultLogin = await axios({
@@ -22,7 +22,7 @@ const createAccount = async ({ mattermost, conseiller, login, password, db, logg
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      data: { 'email': conseiller.emailCN.address, 'username': login, 'password': password }
+      data: { 'email': email, 'username': login, 'password': password }
     });
 
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
