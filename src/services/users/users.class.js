@@ -161,11 +161,13 @@ exports.Users = class Users extends Service {
           const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
+          const email = `${login}@${gandi.domain}`;
           await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
-              name: `${login}@${gandi.domain}`
+              name: email
             }
           });
+          user.name = email;
           createMailbox({
             gandi,
             conseillerId: user.entity.oid,
@@ -178,6 +180,7 @@ exports.Users = class Users extends Service {
           createAccount({
             mattermost,
             conseiller,
+            email,
             login,
             password,
             db,
