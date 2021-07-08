@@ -164,7 +164,8 @@ exports.Users = class Users extends Service {
           const email = `${login}@${gandi.domain}`;
           await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
-              name: email
+              name: email,
+              token: uuidv4()
             }
           });
           user.name = email;
