@@ -153,9 +153,9 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       const role = user.roles[0];
-      app.service('users').patch(user._id, { password: password, passwordCreated: true });
+      app.service('users').patch(user._id, { password: password, passwordCreated: true, passwordCreatedAt: new Date() });
 
-      if (role === 'conseiller') {
+      if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
           const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
@@ -187,52 +187,58 @@ exports.Users = class Users extends Service {
             logger,
             Sentry: app.get('sentry')
           });
-        });
-      }
 
-      try {
-        let message;
-        if (typeEmail === 'bienvenue') {
-          switch (role) {
-            case 'admin':
-              message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
-              await message.send(user);
-              break;
-            case 'structure':
-              message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
-              await message.send(user);
-              break;
-            case 'prefet':
-              message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
-              await message.send(user);
-              break;
-            case 'conseiller':
-              let conseiller = await app.service('conseillers').get(user.entity?.oid);
-              message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-              await message.send(user, conseiller);
-              // Envoi d'un deuxième email pour l'inscription à Pix Orga
-              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-              await messagePix.send(user, conseiller);
-              break;
-            default:
-              break;
+          try {
+            let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+            await message.send(user, conseiller);
+
+            // Envoi d'un deuxième email pour l'inscription à Pix Orga
+            let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+            await messagePix.send(user, conseiller);
+
+            res.send(user);
+            return;
+          } catch (err) {
+            app.get('sentry').captureException(err);
+            logger.error(err);
           }
-        } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
-          //Renouvellement conseiller => envoi email perso
-          let conseiller = await app.service('conseillers').get(user.entity?.oid);
-          user.persoEmail = conseiller.email;
-          message = emails.getEmailMessageByTemplateName('renouvellementCompte');
-          await message.send(user);
-        } else {
-          message = emails.getEmailMessageByTemplateName('renouvellementCompte');
-          await message.send(user);
+        });
+      } else {
+        try {
+          let message;
+          if (typeEmail === 'bienvenue') {
+            switch (role) {
+              case 'admin':
+                message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
+                await message.send(user);
+                break;
+              case 'structure':
+                message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
+                await message.send(user);
+                break;
+              case 'prefet':
+                message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
+                await message.send(user);
+                break;
+              default:
+                break;
+            }
+          } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
+            //Renouvellement conseiller => envoi email perso
+            let conseiller = await app.service('conseillers').get(user.entity?.oid);
+            user.persoEmail = conseiller.email;
+            message = emails.getEmailMessageByTemplateName('renouvellementCompte');
+            await message.send(user);
+          } else {
+            message = emails.getEmailMessageByTemplateName('renouvellementCompte');
+            await message.send(user);
+          }
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
         }
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
+        res.send(user);
       }
-
-      res.send(user);
     });
 
     app.post('/users/sendForgottenPasswordEmail', async (req, res) => {
