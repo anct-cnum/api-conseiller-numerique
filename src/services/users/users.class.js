@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound } = require('@feathersjs/errors');
+const { NotFound, Conflict } = require('@feathersjs/errors');
 
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
@@ -56,6 +56,29 @@ exports.Users = class Users extends Service {
       res.send(apresEmailConfirmer.data[0]);
     });
 
+    app.patch('/users/sendEmailUpdate/:id', async (req, res) => {
+      const nouveauEmail = req.body.name;
+      const idUser = req.params.id;
+      app.get('mongoClient').then(async db => {
+        const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
+        if (verificationEmail !== 0) {
+          throw new Conflict('Erreur: l\'email est déjà utilisé par une autre structure');
+        }
+        await this.patch(idUser, { $set: { token: uuidv4() } });
+        try {
+          const user = await this.find({ query: { _id: idUser } });
+          user.data[0].nouveauEmail = nouveauEmail;
+          let mailer = createMailer(app, nouveauEmail);
+          const emails = createEmails(db, mailer);
+          let message = emails.getEmailMessageByTemplateName('confirmeNouveauEmail');
+          await message.render(user.data[0]);
+          await message.send(user.data[0], nouveauEmail);
+          res.send(user.data[0]);
+        } catch (error) {
+          context.app.get('sentry').captureException(error);
+        }
+      });
+    });
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
       const users = await this.find({
@@ -64,6 +87,7 @@ exports.Users = class Users extends Service {
           $limit: 1,
         }
       });
+
       if (users.total === 0) {
         res.status(404).send(new NotFound('User not found', {
           token
@@ -137,11 +161,13 @@ exports.Users = class Users extends Service {
           const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
-          await db.collection('users').updateOne({ _id: user.entity.oid }, {
+          const email = `${login}@${gandi.domain}`;
+          await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
-              name: `${login}@${gandi.domain}`
+              name: email
             }
           });
+          user.name = email;
           createMailbox({
             gandi,
             conseillerId: user.entity.oid,
@@ -154,6 +180,7 @@ exports.Users = class Users extends Service {
           createAccount({
             mattermost,
             conseiller,
+            email,
             login,
             password,
             db,

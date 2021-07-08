@@ -71,6 +71,7 @@
   "mattermost": {
     "endPoint": "https://discussion.conseiller-numerique.gouv.fr",
     "login": "login",
-    "password": "password"
+    "password": "password",
+    "teamid": "teamid"
   }
 }

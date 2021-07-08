@@ -1,10 +1,8 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const checkPermissions = require('feathers-permissions');
-const { Forbidden, Conflict } = require('@feathersjs/errors');
+const { Forbidden } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
-const { v4: uuidv4 } = require('uuid');
-const createEmails = require('../../emails/emails');
-const createMailer = require('../../mailer');
+
 const {
   hashPassword, protect
 } = require('@feathersjs/authentication-local').hooks;
@@ -78,32 +76,6 @@ module.exports = {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
-        context.app.get('mongoClient').then(async db => {
-          const nouveauEmail = context?.data?.name;
-          const idUser = context?.params?.user?._id;
-
-          const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
-          if (verificationEmail !== 0) {
-            throw new Conflict('Erreur: l\'email est déjà utilisé par une autre structure');
-          } else {
-            await db.collection('users').updateOne({ _id: idUser }, { $set: { token: uuidv4() } });
-            try {
-              const user = await db.collection('users').findOne({ _id: idUser });
-              user.nouveauEmail = nouveauEmail;
-              let mailer = createMailer(context.app, nouveauEmail);
-              const emails = createEmails(db, mailer);
-              let message = emails.getEmailMessageByTemplateName('confirmeNouveauEmail');
-              await message.render(user);
-              await message.send(user, nouveauEmail);
-
-            } catch (error) {
-              context.app.get('sentry').captureException(error);
-            }
-            await db.collection('users').updateOne({ _id: idUser }, { $set: { name: context?.params?.user?.name } });
-            return;
-          }
-
-        });
       }
     ],
     remove: [
