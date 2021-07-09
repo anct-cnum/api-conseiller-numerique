@@ -7,6 +7,8 @@ const createMailer = require('../../mailer');
 const slugify = require('slugify');
 const { createMailbox } = require('../../utils/mailbox');
 const { createAccount } = require('../../utils/mattermost');
+const { Pool } = require('pg');
+const pool = new Pool();
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -57,7 +59,21 @@ exports.Users = class Users extends Service {
           }
         });
       }
-
+      try {
+        const { idPG } = await app.service('conseillers').get(userConnected?.data[0].entity?.oid);
+        await pool.query(`UPDATE djapp_coach
+            SET (
+                  first_name,
+                  last_name,
+                  phone)
+                  =
+                  ($2,$3,$4)
+                WHERE id = $1`,
+        [idPG, prenom, nom, telephone]);
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+      }
     });
 
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {
@@ -80,6 +96,16 @@ exports.Users = class Users extends Service {
         await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
       } catch (err) {
         app.get('sentry').captureException(err);
+      }
+      try {
+        const { idPG } = await app.service('conseillers').get(userInfo?.entity?.oid);
+        await pool.query(`UPDATE djapp_coach
+            SET email = $2
+                WHERE id = $1`,
+        [idPG, userInfo.mailAModifier]);
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
       }
       try {
         await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
