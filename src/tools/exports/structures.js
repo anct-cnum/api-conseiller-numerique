@@ -69,12 +69,14 @@ execute(__filename, async ({ logger, db, exit }) => {
           }
 
           // Adresse
-          const adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
+          let adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
             (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
             (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + '\n' +
             (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + '\n' : '') +
             (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
             (structure?.insee?.etablissement?.adresse?.localite ?? '');
+
+          adresse = adresse.replace(/["']/g, '');
 
           // eslint-disable-next-line max-len
           file.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}"\n`);
