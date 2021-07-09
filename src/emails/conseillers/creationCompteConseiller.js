@@ -39,7 +39,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         conseiller.name,
         {
-          subject: 'Activer votre compte Coop des Conseillers numériques France Services',
+          subject: 'Veuillez activer votre compte Coop des Conseillers numériques France Services',
           body: await render(conseiller),
         },
       )

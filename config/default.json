@@ -72,6 +72,6 @@
     "endPoint": "https://discussion.conseiller-numerique.gouv.fr",
     "login": "login",
     "password": "password",
-    "teamid": "teamid"
+    "teamId": "teamId"
   }
 }

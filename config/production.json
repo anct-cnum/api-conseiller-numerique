@@ -54,6 +54,6 @@
     "endPoint": "MATTERMOST_ENDPOINT",
     "login": "MATTERMOST_LOGIN",
     "password": "MATTERMOST_PASSWORD",
-    "teamid": "MATTERMOST_TEAMID"
+    "teamId": "MATTERMOST_TEAMID"
   }
 }
