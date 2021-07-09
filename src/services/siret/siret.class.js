@@ -43,7 +43,7 @@ exports.Siret = class Siret {
         code_postal: result.adresse.code_postal,
       };
     } catch (err) {
-      return new NotFound('SIRET not found' + e);
+      return new NotFound('SIRET not found' + err);
     }
   }
 };
