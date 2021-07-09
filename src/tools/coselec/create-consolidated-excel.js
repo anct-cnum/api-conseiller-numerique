@@ -628,7 +628,7 @@ execute(__filename, async ({ db, logger }) => {
         });
 
       // Fin des valeurs
-
+/*
       for (let j = 1; j < 32; j++) {
         let cell1 = xl.getExcelCellRef(i + start + 1, j);
         ws.addConditionalFormattingRule(cell1, {
@@ -650,6 +650,7 @@ execute(__filename, async ({ db, logger }) => {
           style: styleRouge,
         });
       }
+*/
     });
 
     ws.column(3).freeze(4);
