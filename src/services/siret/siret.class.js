@@ -34,7 +34,7 @@ exports.Siret = class Siret {
       result = results.data.etablissement;
 
     } catch (e) {
-      return new NotFound('SIRET not found');
+      return new NotFound('SIRET not found' + e);
     }
     try {
       const resultsSiren = await axios.get(urlSiren, { params: params });
@@ -43,7 +43,7 @@ exports.Siret = class Siret {
         code_postal: result.adresse.code_postal,
       };
     } catch (err) {
-      return new NotFound('SIRET not found');
+      return new NotFound('SIRET not found' + e);
     }
   }
 };
