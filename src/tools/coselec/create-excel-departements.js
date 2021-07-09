@@ -273,22 +273,20 @@ execute(__filename, async ({ db, exit }) => {
         // DOM sur 3 chiffres
         query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,3) = $1 AND departement_code = \'00\' AND type = ANY ($2) ORDER BY id ASC';
       }
-    } else { // Métropole et DOM
-      if (departement === '2A') {
-        // Corse du Sud
-        query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'200\' OR' +
-          ' SUBSTRING(zip_code,1,3) = \'201\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
-      } else if (departement === '2B') {
-        // Haute-Corse
-        query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'202\' OR' +
-          ' SUBSTRING(zip_code,1,3) = \'206\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
-      } else if (/^\d\d\d$/.test(departement)) {
-        // DOM sur 3 chiffres
-        query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,3) = $1 AND type = ANY ($2) ORDER BY id ASC';
-      } else if (/^\d\d$/.test(departement)) {
-        // Les autres sur 2 chiffres
-        query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC';
-      }
+    } else if (departement === '2A') {
+      // Corse du Sud
+      query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'200\' OR' +
+        ' SUBSTRING(zip_code,1,3) = \'201\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
+    } else if (departement === '2B') {
+      // Haute-Corse
+      query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'202\' OR' +
+        ' SUBSTRING(zip_code,1,3) = \'206\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
+    } else if (/^\d\d\d$/.test(departement)) {
+      // DOM sur 3 chiffres
+      query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,3) = $1 AND type = ANY ($2) ORDER BY id ASC';
+    } else if (/^\d\d$/.test(departement)) {
+      // Les autres sur 2 chiffres
+      query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC';
     }
 
     try {
@@ -796,7 +794,8 @@ execute(__filename, async ({ db, exit }) => {
 
     const confPubliques = {
       titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
-      departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` : `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+      departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` :
+      `Département ${departement} ${deps.get(String(departement)).dep_name}`,
       departementNumero: String(departement),
       nombre: `Nombre de structures publiques candidates : ${structuresPubliques.length}`,
       liste: 'Liste A : Structures publiques',
@@ -805,7 +804,8 @@ execute(__filename, async ({ db, exit }) => {
 
     const confPrivees = {
       titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
-      departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` : `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+      departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` :
+      `Département ${departement} ${deps.get(String(departement)).dep_name}`,
       departementNumero: String(departement),
       nombre: `Nombre de structures privées candidates : ${structuresPrivees.length}`,
       liste: 'Liste B : Structures privées',
