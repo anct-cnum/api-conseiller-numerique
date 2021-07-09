@@ -24,7 +24,7 @@ exports.Users = class Users extends Service {
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
 
-    app.patch('/candidat/sendEmailUpdate/:id', async (req, res) => {
+    app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
       const nouveauEmail = req.body.email;
       const { nom, prenom, telephone } = req.body;
       const idUser = req.params.id;
