@@ -24,7 +24,8 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       },
       data: { 'email': email, 'username': login, 'password': password }
     });
-
+    logger.debug(resultCreation);
+    
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { mattermost:
