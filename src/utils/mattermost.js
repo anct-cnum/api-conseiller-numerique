@@ -24,7 +24,8 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       },
       data: { 'email': email, 'username': login, 'password': password }
     });
-
+    logger.debug(resultCreation);
+    
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { mattermost:
@@ -50,8 +51,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
         'Authorization': `Bearer ${token}`
       }
     });
+    logger.debug(resultChannel);
 
-    await axios({
+    const resultJoinTeam = await axios({
       method: 'post',
       url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/members`,
       headers: {
@@ -63,8 +65,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
         'team_id': mattermost.teamId
       }
     });
+    logger.debug(resultJoinTeam);
 
-    await axios({
+    const resultJoinChannel = await axios({
       method: 'post',
       url: `${mattermost.endPoint}/api/v4/channels/${resultChannel.data.id}/members`,
       headers: {
@@ -75,6 +78,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
         'user_id': resultCreation.data.id
       }
     });
+    logger.debug(resultJoinChannel);
 
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
     return true;
