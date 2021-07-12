@@ -7,6 +7,8 @@ const createMailer = require('../../mailer');
 const slugify = require('slugify');
 const { createMailbox } = require('../../utils/mailbox');
 const { createAccount } = require('../../utils/mattermost');
+const { Pool } = require('pg');
+const pool = new Pool();
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -21,6 +23,103 @@ exports.Users = class Users extends Service {
     const db = app.get('mongoClient');
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
+
+    app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
+      const nouveauEmail = req.body.email;
+      const { nom, prenom, telephone } = req.body;
+      const idUser = req.params.id;
+      const userConnected = await this.find({ query: { _id: idUser } });
+      const changeInfos = { nom, prenom, telephone };
+      try {
+        await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+
+      if (nouveauEmail !== userConnected.data[0].name) {
+
+        app.get('mongoClient').then(async db => {
+          const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
+          if (verificationEmail !== 0) {
+            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', nouveauEmail)).toJSON();
+            return;
+          }
+          await this.patch(idUser, { $set: { token: uuidv4() } });
+          try {
+            const user = await this.find({ query: { _id: idUser } });
+            user.data[0].nouveauEmail = nouveauEmail;
+            let mailer = createMailer(app, nouveauEmail);
+            const emails = createEmails(db, mailer);
+            let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
+            await message.render(user.data[0]);
+            await message.send(user.data[0], nouveauEmail);
+            res.send(user.data[0]);
+          } catch (error) {
+            context.app.get('sentry').captureException(error);
+          }
+        });
+      }
+      try {
+        const { idPG } = await app.service('conseillers').get(userConnected?.data[0].entity?.oid);
+        await pool.query(`UPDATE djapp_coach
+            SET (
+                  first_name,
+                  last_name,
+                  phone)
+                  =
+                  ($2,$3,$4)
+                WHERE id = $1`,
+        [idPG, prenom, nom, telephone]);
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+      }
+    });
+
+    app.patch('/candidat/confirmation-email/:token', async (req, res) => {
+      const token = req.params.token;
+      const user = await this.find({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      if (user.total === 0) {
+        res.status(404).send(new NotFound('User not found', {
+          token
+        }).toJSON());
+        return;
+      }
+      const userInfo = user?.data[0];
+      try {
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
+        await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+      try {
+        const { idPG } = await app.service('conseillers').get(userInfo?.entity?.oid);
+        await pool.query(`UPDATE djapp_coach
+            SET email = $2
+                WHERE id = $1`,
+        [idPG, userInfo.mailAModifier]);
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+      }
+      try {
+        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+      }
+      const apresEmailConfirmer = await this.find({
+        query: {
+          token: token,
+          $limit: 1,
+        }
+      });
+      res.send(apresEmailConfirmer.data[0]);
+    });
 
     app.patch('/confirmation-email/:token', async (req, res) => {
       const token = req.params.token;
@@ -75,10 +174,11 @@ exports.Users = class Users extends Service {
           await message.send(user.data[0], nouveauEmail);
           res.send(user.data[0]);
         } catch (error) {
-          context.app.get('sentry').captureException(error);
+          app.get('sentry').captureException(error);
         }
       });
     });
+
     app.get('/users/verifyToken/:token', async (req, res) => {
       const token = req.params.token;
       const users = await this.find({
