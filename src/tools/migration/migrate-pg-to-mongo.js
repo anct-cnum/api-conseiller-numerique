@@ -87,10 +87,10 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         aUneExperienceMedNum: c.has_experience,
         codePostal: c.zip_code,
         location: c.location,
-        nomCommune: c.geo_name,
+        /*nomCommune: c.geo_name,
         codeCommune: c.commune_code,
         codeDepartement: c.departement_code,
-        codeRegion: c.region_code,
+        codeRegion: c.region_code,*/
         emailConfirmedAt: c.email_confirmed,
         emailConfirmationKey: c.email_confirmation_key,
         unsubscribedAt: c.unsubscribed,
