@@ -9,6 +9,7 @@ const { createMailbox } = require('../../utils/mailbox');
 const { createAccount } = require('../../utils/mattermost');
 
 const { v4: uuidv4 } = require('uuid');
+const { DBRef, ObjectId } = require('mongodb');
 
 exports.Users = class Users extends Service {
   constructor(options, app) {
@@ -132,6 +133,44 @@ exports.Users = class Users extends Service {
       const token = req.params.token;
       const expectedToken = app.get('authentication').prefet.token;
       res.send({ isValid: token === expectedToken });
+    });
+
+    app.post('/users/inviteStructure', async (req, res) => {
+      const email = req.body.email;
+      const structureId = req.body.structureId;
+
+      app.get('mongoClient').then(async db => {
+        const verificationEmail = await db.collection('users').countDocuments({ name: email });
+        if (verificationEmail !== 0) {
+          throw new Conflict('Erreur: l\'email est déjà utilisé pour une structure');
+        }
+
+        try {
+          const connection = app.get('mongodb');
+          const database = connection.substr(connection.lastIndexOf('/') + 1);
+          const newUser = {
+            name: email.toLowerCase(),
+            roles: ['structure'],
+            entity: new DBRef('structures', new ObjectId(structureId), database),
+            token: uuidv4(),
+            tokenCreatedAt: new Date(),
+            passwordCreated: false,
+            createdAt: new Date(),
+            resend: false
+          };
+          await app.service('users').create(newUser);
+
+          let mailer = createMailer(app, email);
+          const emails = createEmails(db, mailer);
+          let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
+          await message.send(newUser, email);
+
+          res.send({ status: 'Invitation à rejoindre la structure envoyée !' });
+        } catch (error) {
+          context.app.get('sentry').captureException(error);
+          logger.error(error);
+        }
+      });
     });
 
     app.post('/users/choosePassword/:token', async (req, res) => {
