@@ -173,6 +173,17 @@ exports.Users = class Users extends Service {
       });
     });
 
+    app.get('/users/listByIdStructure/:id', async (req, res) => {
+      const idStructure = req.params.id;
+      const users = await this.find({
+        query: {
+          'entity.$id': new ObjectId(idStructure),
+        }
+      });
+
+      res.send(users.data);
+    });
+
     app.post('/users/choosePassword/:token', async (req, res) => {
       const token = req.params.token;
       const password = req.body.password;
