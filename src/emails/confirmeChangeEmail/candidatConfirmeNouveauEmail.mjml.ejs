@@ -1,0 +1,46 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Confirmez votre nouvelle adresse mail
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
+          <mj-column border="1px solid #C8CBCE">
+            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
+              Votre nouvelle adresse mail que vous avez saisie est :
+            </mj-text>
+            <mj-text font-size="14px" line-height="21px">
+              <%= user.nouveauEmail %>
+            </mj-text>
+
+            <mj-text padding="0" css-class="text-secondary">
+              Pour confirmer votre nouvelle adresse mail, cliquez sur le button "confirmer"
+            </mj-text>
+
+            <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
+              text-transform="uppercase">
+              Confirmer
+            </mj-button>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <%- include('../commun/signature.mjml.ejs'); %>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+  </mj-body>
+</mjml>
