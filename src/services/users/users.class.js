@@ -242,7 +242,8 @@ exports.Users = class Users extends Service {
       app.get('mongoClient').then(async db => {
         const verificationEmail = await db.collection('users').countDocuments({ name: email });
         if (verificationEmail !== 0) {
-          throw new Conflict('Erreur: l\'email est déjà utilisé pour une structure');
+          res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé pour une structure').toJSON());
+          return;
         }
 
         try {
@@ -258,8 +259,8 @@ exports.Users = class Users extends Service {
             createdAt: new Date(),
             resend: false
           };
-          await app.service('users').create(newUser);
 
+          await app.service('users').create(newUser);
           let mailer = createMailer(app, email);
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
@@ -269,6 +270,7 @@ exports.Users = class Users extends Service {
         } catch (error) {
           context.app.get('sentry').captureException(error);
           logger.error(error);
+          res.send('Une erreur est survenue lors de l\'envoi de l\'invitation !');
         }
       });
     });
