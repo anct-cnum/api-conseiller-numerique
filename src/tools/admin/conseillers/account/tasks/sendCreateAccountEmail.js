@@ -1,3 +1,4 @@
+const usersHooks = require('../../../../../services/users/users.hooks');
 let { delay } = require('../../../../utils');
 
 module.exports = async (db, logger, emails, Sentry, action, options = {}) => {
@@ -17,13 +18,18 @@ module.exports = async (db, logger, emails, Sentry, action, options = {}) => {
   cursor.batchSize(10);
 
   while (await cursor.hasNext()) {
-    let conseiller = await cursor.next();
-    logger.info(`Sending email to conseiller user ${conseiller.name}`);
+    let user = await cursor.next();
+    logger.info(`Sending email to conseiller user ${user.name}`);
 
     stats.total++;
     try {
       let message = emails.getEmailMessageByTemplateName('creationCompteConseiller');
-      await message.send(conseiller);
+      await message.send(user);
+
+      const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+      const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
+      message = emails.getEmailMessageByTemplateName('ouvertureEspaceCoopStructure');
+      await message.send(structure);
 
       if (options.delay) {
         await delay(options.delay);
