@@ -14,7 +14,7 @@ const creationCompteConseiller = require('./conseillers/creationCompteConseiller
 const confirmeNouveauEmail = require('./confirmeChangeEmail/confirmeNouveauEmail');
 const pixOrgaConseiller = require('./conseillers/pixOrgaConseiller');
 const candidatConfirmeNouveauEmail = require('./confirmeChangeEmail/candidatConfirmeNouveauEmail');
-const ouvertureEspaceCoopStructure = require('.structures/ouvertureEspaceCoopStructure');
+const ouvertureEspaceCoopStructure = require('./structures/ouvertureEspaceCoopStructure');
 
 module.exports = (db, mailer, app) => {
 
