@@ -11,6 +11,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 
 const { v4: uuidv4 } = require('uuid');
+const { DBRef, ObjectId } = require('mongodb');
 
 exports.Users = class Users extends Service {
   constructor(options, app) {
@@ -232,6 +233,57 @@ exports.Users = class Users extends Service {
       const token = req.params.token;
       const expectedToken = app.get('authentication').prefet.token;
       res.send({ isValid: token === expectedToken });
+    });
+
+    app.post('/users/inviteStructure', async (req, res) => {
+      const email = req.body.email;
+      const structureId = req.body.structureId;
+
+      app.get('mongoClient').then(async db => {
+        const verificationEmail = await db.collection('users').countDocuments({ name: email });
+        if (verificationEmail !== 0) {
+          res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé pour une structure').toJSON());
+          return;
+        }
+
+        try {
+          const connection = app.get('mongodb');
+          const database = connection.substr(connection.lastIndexOf('/') + 1);
+          const newUser = {
+            name: email.toLowerCase(),
+            roles: ['structure'],
+            entity: new DBRef('structures', new ObjectId(structureId), database),
+            token: uuidv4(),
+            tokenCreatedAt: new Date(),
+            passwordCreated: false,
+            createdAt: new Date(),
+            resend: false
+          };
+
+          await app.service('users').create(newUser);
+          let mailer = createMailer(app, email);
+          const emails = createEmails(db, mailer);
+          let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
+          await message.send(newUser, email);
+
+          res.send({ status: 'Invitation à rejoindre la structure envoyée !' });
+        } catch (error) {
+          context.app.get('sentry').captureException(error);
+          logger.error(error);
+          res.send('Une erreur est survenue lors de l\'envoi de l\'invitation !');
+        }
+      });
+    });
+
+    app.get('/users/listByIdStructure/:id', async (req, res) => {
+      const idStructure = req.params.id;
+      const users = await this.find({
+        query: {
+          'entity.$id': new ObjectId(idStructure),
+        }
+      });
+
+      res.send(users.data);
     });
 
     app.post('/users/choosePassword/:token', async (req, res) => {
