@@ -28,9 +28,9 @@ execute(__filename, async ({ logger, db, exit }) => {
   }
 
   if (nom) {
-    parametre = { 'statut': 'recrutee', 'structureObj.nom': nom };
+    parametre = { '$or': [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }], 'structureObj.nom': nom };
   } else if (siret) {
-    parametre = { 'statut': 'recrutee', 'structureObj.siret': siret };
+    parametre = { '$or': [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }], 'structureObj.siret': siret };
   } else if (siretList) {
     const siretArray = async () => {
       try {
@@ -43,7 +43,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     };
     const list = await siretArray();
     const listSiret = await list.map(item => item.SIRET);
-    parametre = { 'statut': 'recrutee', 'structureObj.siret': { $in: listSiret } };
+    parametre = { '$or': [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }], 'structureObj.siret': { $in: listSiret } };
   }
 
   // eslint-disable-next-line max-len

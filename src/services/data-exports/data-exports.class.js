@@ -31,7 +31,9 @@ exports.DataExports = class DataExports {
         return;
       }
 
-      const miseEnrelations = await db.collection('misesEnRelation').find({ statut: 'recrutee' }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+      const miseEnrelations = await db.collection('misesEnRelation').find({
+        $or: [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }]
+      }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
 
       // eslint-disable-next-line max-len
