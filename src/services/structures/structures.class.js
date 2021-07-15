@@ -183,7 +183,17 @@ exports.Structures = class Structures extends Service {
       if (sort) {
         queryFilter['$sort'] = sort;
       }
-      const misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
+      let misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
+      const mesMiseEnRelation = await db.collection('misesEnRelation').find({ 'structure.$id': structureId }).toArray();
+      const arrayId = mesMiseEnRelation.map(id => new ObjectID(id.conseillerObj._id));
+      let listDejaRecrutee = await db.collection('misesEnRelation').find({ 'statut': 'finalisee', 'conseillerObj._id': { $in: arrayId } }).toArray();
+      const candidatDejaRecrutee = listDejaRecrutee.map(o => o.conseillerObj.idPG);
+
+      misesEnRelation = {
+        ...misesEnRelation,
+        dejaRecrutee: candidatDejaRecrutee
+      };
+
       if (misesEnRelation.total === 0) {
         res.send(misesEnRelation);
         return;
