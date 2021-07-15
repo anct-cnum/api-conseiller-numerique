@@ -26,6 +26,7 @@ module.exports = {
     return Promise.all([
       db.collection('misesEnRelation').createIndex({ 'statut': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structure.$id': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'structure.oid': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseiller.$id': 1 }),
       db.collection('misesEnRelation').createIndex({
         'conseillerObj.nom': 'text',
