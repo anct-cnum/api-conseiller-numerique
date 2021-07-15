@@ -1,4 +1,3 @@
-const usersHooks = require('../../../../../services/users/users.hooks');
 let { delay } = require('../../../../utils');
 
 module.exports = async (db, logger, emails, Sentry, action, options = {}) => {
