@@ -40,8 +40,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             'structureObj.idPG': structureId
           });
           if (alreadyRecruted > 0) {
-            logger.error(`Un conseiller avec l'email '${email}' a déjà été recruté`);
-            Sentry.captureException(`Un conseiller avec l'email '${email}' a déjà été recruté`);
+            logger.warn(`Un conseiller avec l'email '${email}' a déjà été recruté`);
             errors++;
             reject();
           } else if (exist === 0) {
