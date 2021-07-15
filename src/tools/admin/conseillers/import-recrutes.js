@@ -33,7 +33,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
           const exist = await db.collection('conseillers').countDocuments({ email });
-          const structureId = parseInt(conseiller['ID structure (plateforme)']);
+          const structureId = parseInt(conseiller['ID structure']);
           const structure = await db.collection('structures').findOne({ idPG: structureId });
           const miseEnRelation = await db.collection('misesEnRelation').findOne({
             'conseillerObj.email': email,
