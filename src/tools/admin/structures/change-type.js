@@ -24,7 +24,6 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   const structure = await db.collection('structures').findOne({ idPG: id });
 
-
   if (structure.length === 0) {
     exit('id PG inconnu dans MongoDB');
     return;
@@ -32,13 +31,9 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   await db.collection('structures').updateOne({ idPG: id }, { $set: { type: type } });
 
-  const miseEnRelationStructure = await db.collection('misesEnRelation').countDocuments({ 'structureObj._id': new ObjectID(structure._id) });
+  await db.collection('misesEnRelation').updateMany({ 'structureObj._id': new ObjectID(structure._id) }, { $set: { 'structureObj.type': type } });
 
-  if (miseEnRelationStructure !== 0) {
-    await db.collection('misesEnRelation').updateMany({ 'structureObj._id': new ObjectID(structure._id) }, { $set: { 'structureObj.type': type } });
-  }
   try {
-
     await pool.query(`UPDATE djapp_hostorganization
       SET type = $2 WHERE id = $1`,
     [structure.idPG, type]);
