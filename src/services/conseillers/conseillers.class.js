@@ -1,7 +1,7 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound, Conflict, BadFormat } = require('@feathersjs/errors');
 const { ObjectId } = require('mongodb');
-const logger = require('./logger');
+const logger = require('../../logger');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
