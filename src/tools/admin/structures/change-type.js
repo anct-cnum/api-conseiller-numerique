@@ -1,5 +1,5 @@
 const { program } = require('commander');
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 const { ObjectID } = require('mongodb');
 const { Pool } = require('pg');
 const pool = new Pool();
