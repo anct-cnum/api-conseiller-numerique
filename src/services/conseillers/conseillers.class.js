@@ -1,5 +1,7 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadFormat } = require('@feathersjs/errors');
+const { ObjectId } = require('mongodb');
+const logger = require('../../logger');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -65,6 +67,41 @@ exports.Conseillers = class Conseillers extends Service {
       }
 
       res.send({ isValid: true, conseiller: conseillers.data[0] });
+    });
+
+    app.post('/conseillers/createSexeAge', async (req, res) => {
+      const user = req.body.user;
+
+      if (user.sexe === '' || user.dateDeNaissance === '') {
+        res.status(409).send(new BadFormat('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
+        return;
+      }
+
+      let conseiller = await this.find({
+        query: {
+          _id: new ObjectId(user.idCandidat),
+          $limit: 1,
+        }
+      });
+
+      if (conseiller.total === 0) {
+        res.status(409).send(new Conflict('Ce compte candidat n\'existe pas ! Vous allez être déconnecté.').toJSON());
+        return;
+      }
+
+      try {
+        await this.patch(new ObjectId(user.idCandidat),
+          { $set: {
+            sexe: user.sexe,
+            dateDeNaissance: user.dateDeNaissance
+          } });
+      } catch (error) {
+        app.get('sentry').captureException(error);
+        logger.error(error);
+        res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
+      }
+
+      res.send({ isUpdated: true });
     });
   }
 };
