@@ -1,6 +1,8 @@
 const { program } = require('commander');
 const { execute } = require('../utils');
 const { ObjectID } = require('mongodb');
+const { Pool } = require('pg');
+const pool = new Pool();
 
 execute(__filename, async ({ db, logger, exit }) => {
 
@@ -34,6 +36,15 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   if (miseEnRelationStructure !== 0) {
     await db.collection('misesEnRelation').updateMany({ 'structureObj._id': new ObjectID(structure._id) }, { $set: { 'structureObj.type': type } });
+  }
+  try {
+
+    await pool.query(`UPDATE djapp_hostorganization
+      SET type = $2 WHERE id = $1`,
+    [structure.idPG, type]);
+
+  } catch (error) {
+    logger.info(`Erreur DB : ${error.message}`);
   }
 
   logger.info(`Type mis à jour pour la structure avec l'idPG: ${structure.idPG}`);
