@@ -1,6 +1,7 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadFormat } = require('@feathersjs/errors');
 const { ObjectId } = require('mongodb');
+const logger = require('./logger');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -72,7 +73,7 @@ exports.Conseillers = class Conseillers extends Service {
       const user = req.body.user;
 
       if (user.sexe === '' || user.dateDeNaissance === '') {
-        res.status(409).send(new Conflict('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
+        res.status(409).send(new BadFormat('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
         return;
       }
 
@@ -96,6 +97,7 @@ exports.Conseillers = class Conseillers extends Service {
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
+        logger.error(error);
         res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
       }
 
