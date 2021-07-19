@@ -42,6 +42,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     logger.info(`Erreur DB : ${error.message}`);
   }
 
-  logger.info(`Type mis à jour pour la structure avec l'idPG: ${structure.idPG}`);
+  logger.info(`Type mis à jour pour la structure avec l'idPG: ${structure.idPG} qui avait un type à l'origine ${structure.type} mis à jour avec ${type}`);
   exit();
 });
