@@ -24,7 +24,7 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   const structure = await db.collection('structures').findOne({ idPG: id });
 
-  if (structure.length === 0) {
+  if (structure === null) {
     exit('id PG inconnu dans MongoDB');
     return;
   }
