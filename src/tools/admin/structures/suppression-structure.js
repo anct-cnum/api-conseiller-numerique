@@ -19,7 +19,7 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   const structure = await db.collection('structures').findOne({ idPG: id });
 
-  if (structure.length === 0) {
+  if (structure === null) {
     exit('id PG inconnu dans MongoDB');
     return;
   }
@@ -34,6 +34,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     logger.info(`Erreur DB : ${error.message}`);
   }
 
-  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimé `);
+  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimée `);
   exit();
 });
