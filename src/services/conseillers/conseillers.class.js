@@ -115,7 +115,7 @@ exports.Conseillers = class Conseillers extends Service {
       res.send({ isUpdated: true });
     });
 
-    app.post('/conseillers/uploadCV', upload.single('file'), async (req, res) => {
+    app.post('/conseillers/cv', upload.single('file'), async (req, res) => {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));

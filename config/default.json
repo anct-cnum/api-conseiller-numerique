@@ -73,5 +73,11 @@
     "login": "login",
     "password": "password",
     "teamId": "teamId"
+  },
+  "aws": {
+    "aws_endpoint": "AWS_ENDPOINT",
+    "aws_access_key_id": "AWS_ACCESS_KEY_ID",
+    "aws_secret_access_key": "AWS_ACCESS_KEY_SECRET",
+    "aws_cv_bucket": "AWS_CV_BUCKET"
   }
 }
