@@ -6,6 +6,7 @@ const decode = require('jwt-decode');
 const aws = require('aws-sdk');
 const multer = require('multer');
 const fileType = require('file-type');
+const crypto = require('crypto');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -125,7 +126,7 @@ exports.Conseillers = class Conseillers extends Service {
       const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!candidatUser?.roles.includes('candidat')) {
         res.status(403).send(new Forbidden('User not authorized', {
-          userId: candidatUser
+          userId: userId
         }).toJSON());
         return;
       }
@@ -154,8 +155,21 @@ exports.Conseillers = class Conseillers extends Service {
       //Nom du fichier avec id conseiller + extension fichier envoyé
       let nameCVFile = candidatUser.entity.oid + '.' + cvFile.originalname.split('.').pop();
 
-      //TODO STOCK DANS MONGO le lien du fichier
-      //CRYPTER LES FICHIERS
+      //Vérification existance conseiller avec cet ID pour sécurité
+      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(candidatUser.entity.oid) });
+      if (conseiller === null) {
+        res.status(404).send(new NotFound('Conseiller not found', {
+          conseillerId: candidatUser.entity.oid
+        }).toJSON());
+        return;
+      }
+
+      //Chiffrement du CV
+      const cryptoConfig = app.get('crypto');
+      let key = crypto.createHash('sha256').update(cryptoConfig.crypto_key).digest('base64').substr(0, 32);
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv(cryptoConfig.crypto_algorithm, key, iv);
+      const bufferCrypt = Buffer.concat([iv, cipher.update(cvFile.buffer), cipher.final()]);
 
       //initialisation AWS
       const awsConfig = app.get('aws');
@@ -163,19 +177,29 @@ exports.Conseillers = class Conseillers extends Service {
       const ep = new aws.Endpoint(awsConfig.aws_endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
-      let params = { Bucket: awsConfig.aws_cv_bucket, Key: nameCVFile, Body: cvFile.buffer };
-
+      let params = { Bucket: awsConfig.aws_cv_bucket, Key: nameCVFile, Body: bufferCrypt };
       // eslint-disable-next-line no-unused-vars
       s3.putObject(params, function(error, data) {
         if (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
           res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
-        } else {
-          res.send({ isUploaded: true });
         }
       });
 
+      //Insertion du nom du cv dans MongoDb
+      try {
+        await db.collection('conseillers').updateOne({ '_id': conseiller._id },
+          { $set: {
+            cvFichier: nameCVFile,
+          } });
+      } catch (error) {
+        app.get('sentry').captureException(error);
+        logger.error(error);
+        res.status(500).send(new GeneralError('La mise à jour dans MongoDb a échoué').toJSON());
+      }
+
+      res.send({ isUploaded: true });
     });
 
   }
