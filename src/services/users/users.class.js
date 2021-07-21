@@ -35,28 +35,36 @@ exports.Users = class Users extends Service {
         await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(err);
       }
 
       if (nouveauEmail !== userConnected.data[0].name) {
 
         app.get('mongoClient').then(async db => {
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
+          console.log('verificationEmail:', verificationEmail);
           if (verificationEmail !== 0) {
-            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', nouveauEmail)).toJSON();
+            app.get('sentry').captureException(`Erreur: l'email ${nouveauEmail}  est déjà utilisé par une autre structure`);
+            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
+            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
+              nouveauEmail
+            }).toJSON());
             return;
           }
-          await this.patch(idUser, { $set: { token: uuidv4() } });
           try {
+            await this.patch(idUser, { $set: { token: uuidv4() } });
             const user = await this.find({ query: { _id: idUser } });
             user.data[0].nouveauEmail = nouveauEmail;
             let mailer = createMailer(app, nouveauEmail);
             const emails = createEmails(db, mailer);
             let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
             await message.render(user.data[0]);
-            await message.send(user.data[0], nouveauEmail);
+            await message.send(user.data[0]);
+            await this.patch(idUser, { $set: { mailAModifier: nouveauEmail } });
             res.send(user.data[0]);
           } catch (error) {
             context.app.get('sentry').captureException(error);
+            logger.error(error);
           }
         });
       }
@@ -86,6 +94,8 @@ exports.Users = class Users extends Service {
         }
       });
       if (user.total === 0) {
+        app.get('sentry').captureException(`Le token inconnue dans la DB: ${token}`);
+        logger.error(`Le token inconnue dans la DB: ${token}`);
         res.status(404).send(new NotFound('User not found', {
           token
         }).toJSON());
@@ -97,6 +107,7 @@ exports.Users = class Users extends Service {
         await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(`Erreur BD: ${err}`);
       }
       try {
         const { idPG } = await app.service('conseillers').get(userInfo?.entity?.oid);
@@ -110,8 +121,10 @@ exports.Users = class Users extends Service {
       }
       try {
         await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+        await this.patch(userInfo._id, { $set: { token: uuidv4() } });
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(`Erreur BD: ${err}`);
       }
       const apresEmailConfirmer = await this.find({
         query: {
