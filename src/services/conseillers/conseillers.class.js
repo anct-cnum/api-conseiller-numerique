@@ -152,6 +152,13 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
+      //Verification taille CV (limite max à 10 Mo)
+      let sizeCV = ~~(cvFile.size / (1024 * 1024)); //convertion en Mo
+      if (sizeCV >= 10) {
+        res.status(400).send(new BadRequest('Erreur : Taille du CV envoyé doit être inférieure à 10 Mo').toJSON());
+        return;
+      }
+
       //Nom du fichier avec id conseiller + extension fichier envoyé
       let nameCVFile = candidatUser.entity.oid + '.' + cvFile.originalname.split('.').pop();
 
@@ -177,6 +184,30 @@ exports.Conseillers = class Conseillers extends Service {
       const ep = new aws.Endpoint(awsConfig.aws_endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
+      //Suprresion de l'ancien CV si présent dans S3 et le nom du fichier dans MongoDb
+      if (conseiller.cvFichier) {
+        let paramsDelete = { Bucket: awsConfig.aws_cv_bucket, Key: conseiller.cvFichier };
+        // eslint-disable-next-line no-unused-vars
+        s3.deleteObject(paramsDelete, function(error, data) {
+          if (error) {
+            logger.error(error);
+            app.get('sentry').captureException(error);
+            res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
+          }
+        });
+
+        try {
+          await db.collection('conseillers').updateOne({ '_id': conseiller._id },
+            { $unset: {
+              cvFichier: '',
+            } });
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('La suppression du CV dans MongoDb a échoué').toJSON());
+        }
+      }
+
       let params = { Bucket: awsConfig.aws_cv_bucket, Key: nameCVFile, Body: bufferCrypt };
       // eslint-disable-next-line no-unused-vars
       s3.putObject(params, function(error, data) {
@@ -196,7 +227,7 @@ exports.Conseillers = class Conseillers extends Service {
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
-        res.status(500).send(new GeneralError('La mise à jour dans MongoDb a échoué').toJSON());
+        res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDb a échoué').toJSON());
       }
 
       res.send({ isUploaded: true });
