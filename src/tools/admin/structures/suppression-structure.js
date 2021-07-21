@@ -28,12 +28,23 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   await db.collection('misesEnRelation').deleteMany({ 'structureObj._id': new ObjectID(structure._id) });
 
+  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimée dans mongoDB`);
+
   try {
-    await pool.query(`DELETE FROM djapp_hostorganization WHERE id = $1`, [structure.idPG]);
+    await pool.query(`DELETE FROM djapp_matching WHERE host_id = $1`, [structure.idPG]);
   } catch (error) {
-    logger.info(`Erreur DB : ${error.message}`);
+    logger.info(`Erreur PG pour supprimer dans la table djapp_matching : ${error.message}`);
+    return;
   }
 
-  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimée `);
+  try {
+    await pool.query(`DELETE FROM djapp_hostorganization WHERE id = $1`, [structure.idPG]);
+    logger.info(`La structure avec l'id: ${structure.idPG} est supprimée dans PostgreSQL`);
+  } catch (error) {
+    logger.info(`Erreur PG pour supprimer dans la table djapp_hostorganization: ${error.message}`);
+    return;
+  }
+
+  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimée avec succès`);
   exit();
 });
