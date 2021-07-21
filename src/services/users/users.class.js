@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict, BadRequest } = require('@feathersjs/errors');
+const { NotFound, Conflict } = require('@feathersjs/errors');
 
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
@@ -137,13 +137,6 @@ exports.Users = class Users extends Service {
         return;
       }
       const userInfo = user?.data[0];
-      
-      if (userInfo.mailAModifier === undefined) {
-        res.status(400).send(new BadRequest('La clé mailAModifier est undefined', {
-          token
-        }).toJSON());
-        return;
-      }
       try {
         await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
       } catch (err) {
@@ -154,7 +147,6 @@ exports.Users = class Users extends Service {
       } catch (err) {
         app.get('sentry').captureException(err);
       }
-      await this.patch(userInfo._id, { $set: { token: uuidv4() } });
       const apresEmailConfirmer = await this.find({
         query: {
           token: token,
