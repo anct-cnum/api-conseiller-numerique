@@ -4,7 +4,7 @@ const { ObjectID } = require('mongodb');
 const { Pool } = require('pg');
 const pool = new Pool();
 
-execute(__filename, async ({ db, logger, exit }) => {
+execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
   program.option('-i, --id <id>', 'idPG: idPG de la structure');
   program.helpOption('-e', 'HELP command');
@@ -33,7 +33,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   try {
     await pool.query(`DELETE FROM djapp_matching WHERE host_id = $1`, [structure.idPG]);
   } catch (error) {
-    logger.info(`Erreur PG pour supprimer dans la table djapp_matching : ${error.message}`);
+    logger.error(`Erreur PG pour supprimer dans la table djapp_matching : ${error.message}`);
+    Sentry.captureException(`Erreur PG pour supprimer dans la table djapp_matching (id: ${structure.idPG}): ${error.message}`);
     return;
   }
 
@@ -41,7 +42,8 @@ execute(__filename, async ({ db, logger, exit }) => {
     await pool.query(`DELETE FROM djapp_hostorganization WHERE id = $1`, [structure.idPG]);
     logger.info(`La structure avec l'id: ${structure.idPG} est supprimée dans PostgreSQL`);
   } catch (error) {
-    logger.info(`Erreur PG pour supprimer dans la table djapp_hostorganization: ${error.message}`);
+    logger.error(`Erreur PG pour supprimer dans la table djapp_hostorganization: ${error.message}`);
+    Sentry.captureException(`Erreur PG pour supprimer dans la table djapp_hostorganization (id: ${structure.idPG}) : ${error.message}`);
     return;
   }
 
