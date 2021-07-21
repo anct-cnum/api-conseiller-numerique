@@ -154,6 +154,7 @@ exports.Users = class Users extends Service {
       } catch (err) {
         app.get('sentry').captureException(err);
       }
+      await this.patch(userInfo._id, { $set: { token: uuidv4() } });
       const apresEmailConfirmer = await this.find({
         query: {
           token: token,
