@@ -139,23 +139,23 @@ exports.Users = class Users extends Service {
       const userInfo = user?.data[0];
 
       if (userInfo.mailAModifier === undefined) {
+        app.get('sentry').captureException(`La clé mailAModifier est ${userInfo.mailAModifier}`);
+        logger.error(`La clé mailAModifier est ${userInfo.mailAModifier}`);
         res.status(400).send(new BadRequest('La clé mailAModifier est undefined', {
           token
         }).toJSON());
         return;
       }
+      try {
 
-      try {
         await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
-      } catch (err) {
-        app.get('sentry').captureException(err);
-      }
-      try {
         await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+        await this.patch(userInfo._id, { $set: { token: uuidv4() } });
+
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(`Erreur BD: ${err}`);
       }
-      await this.patch(userInfo._id, { $set: { token: uuidv4() } });
 
       const apresEmailConfirmer = await this.find({
         query: {
