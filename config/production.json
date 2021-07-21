@@ -55,5 +55,16 @@
     "login": "MATTERMOST_LOGIN",
     "password": "MATTERMOST_PASSWORD",
     "teamId": "MATTERMOST_TEAMID"
-  }
+  },
+  "aws": {
+    "endpoint": "AWS_ENDPOINT",
+    "access_key_id": "AWS_ACCESS_KEY_ID",
+    "secret_access_key": "AWS_ACCESS_KEY_SECRET",
+    "cv_bucket": "AWS_CV_BUCKET"
+  },
+  "crypto": {
+    "algorithm": "CRYPTO_ALGORITHM",
+    "key": "CRYPTO_KEY"
+  },
+  "cv_file_max_size": "CV_FILE_MAX_SIZE"
 }
