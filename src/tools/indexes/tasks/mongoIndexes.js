@@ -46,6 +46,7 @@ module.exports = {
         'prenom': 'text',
         'email': 'text',
       }, { name: 'bo-search-fulltext' }),
+      db.collection('conseillers').createIndex({ 'cv.date': 1 }),
     ]);
   },
   cras: db => {
