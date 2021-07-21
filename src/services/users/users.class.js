@@ -170,22 +170,30 @@ exports.Users = class Users extends Service {
       const nouveauEmail = req.body.name;
       const idUser = req.params.id;
       app.get('mongoClient').then(async db => {
+
         const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
         if (verificationEmail !== 0) {
-          throw new Conflict('Erreur: l\'email est déjà utilisé par une autre structure');
+          app.get('sentry').captureException(`Erreur: l'email ${nouveauEmail}  est déjà utilisé par une autre structure`);
+          logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
+          res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
+            nouveauEmail
+          }).toJSON());
+          return;
         }
-        await this.patch(idUser, { $set: { token: uuidv4() } });
         try {
+          await this.patch(idUser, { $set: { token: uuidv4() } });
           const user = await this.find({ query: { _id: idUser } });
           user.data[0].nouveauEmail = nouveauEmail;
           let mailer = createMailer(app, nouveauEmail);
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('confirmeNouveauEmail');
           await message.render(user.data[0]);
-          await message.send(user.data[0], nouveauEmail);
+          await message.send(user.data[0]);
+          await this.patch(idUser, { $set: { mailAModifier: nouveauEmail } });
           res.send(user.data[0]);
         } catch (error) {
           app.get('sentry').captureException(error);
+          logger.error(`Erreur : ${error}`);
         }
       });
     });
