@@ -65,5 +65,6 @@
   "crypto": {
     "crypto_algorithm": "CRYPTO_ALGORITHM",
     "crypto_key": "CRYPTO_KEY"
-  }
+  },
+  "cv_file_max_size": "CV_FILE_MAX_SIZE"
 }

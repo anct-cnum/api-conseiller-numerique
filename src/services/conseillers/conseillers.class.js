@@ -152,10 +152,10 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
-      //Verification taille CV (limite max à 10 Mo)
+      //Verification taille CV (limite configurée dans variable env cv_file_max_size)
       let sizeCV = ~~(cvFile.size / (1024 * 1024)); //convertion en Mo
-      if (sizeCV >= 10) {
-        res.status(400).send(new BadRequest('Erreur : Taille du CV envoyé doit être inférieure à 10 Mo').toJSON());
+      if (sizeCV >= app.get('cv_file_max_size')) {
+        res.status(400).send(new BadRequest('Erreur : Taille du CV envoyé doit être inférieure à ' + app.get('cv_file_max_size') + ' Mo').toJSON());
         return;
       }
 
