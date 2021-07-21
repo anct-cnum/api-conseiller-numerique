@@ -173,20 +173,20 @@ exports.Conseillers = class Conseillers extends Service {
 
       //Chiffrement du CV
       const cryptoConfig = app.get('crypto');
-      let key = crypto.createHash('sha256').update(cryptoConfig.crypto_key).digest('base64').substr(0, 32);
+      let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv(cryptoConfig.crypto_algorithm, key, iv);
+      const cipher = crypto.createCipheriv(cryptoConfig.algorithm, key, iv);
       const bufferCrypt = Buffer.concat([iv, cipher.update(cvFile.buffer), cipher.final()]);
 
       //initialisation AWS
       const awsConfig = app.get('aws');
-      aws.config.update({ accessKeyId: awsConfig.aws_access_key_id, secretAccessKey: awsConfig.aws_secret_access_key });
-      const ep = new aws.Endpoint(awsConfig.aws_endpoint);
+      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
+      const ep = new aws.Endpoint(awsConfig.endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
       //Suprresion de l'ancien CV si présent dans S3 et le nom du fichier dans MongoDb
       if (conseiller.cvFichier) {
-        let paramsDelete = { Bucket: awsConfig.aws_cv_bucket, Key: conseiller.cvFichier };
+        let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cvFichier };
         // eslint-disable-next-line no-unused-vars
         s3.deleteObject(paramsDelete, function(error, data) {
           if (error) {
@@ -208,7 +208,7 @@ exports.Conseillers = class Conseillers extends Service {
         }
       }
 
-      let params = { Bucket: awsConfig.aws_cv_bucket, Key: nameCVFile, Body: bufferCrypt };
+      let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
       // eslint-disable-next-line no-unused-vars
       s3.putObject(params, function(error, data) {
         if (error) {

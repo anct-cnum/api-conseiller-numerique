@@ -57,14 +57,14 @@
     "teamId": "MATTERMOST_TEAMID"
   },
   "aws": {
-    "aws_endpoint": "AWS_ENDPOINT",
-    "aws_access_key_id": "AWS_ACCESS_KEY_ID",
-    "aws_secret_access_key": "AWS_ACCESS_KEY_SECRET",
-    "aws_cv_bucket": "AWS_CV_BUCKET"
+    "endpoint": "AWS_ENDPOINT",
+    "access_key_id": "AWS_ACCESS_KEY_ID",
+    "secret_access_key": "AWS_ACCESS_KEY_SECRET",
+    "cv_bucket": "AWS_CV_BUCKET"
   },
   "crypto": {
-    "crypto_algorithm": "CRYPTO_ALGORITHM",
-    "crypto_key": "CRYPTO_KEY"
+    "algorithm": "CRYPTO_ALGORITHM",
+    "key": "CRYPTO_KEY"
   },
   "cv_file_max_size": "CV_FILE_MAX_SIZE"
 }
