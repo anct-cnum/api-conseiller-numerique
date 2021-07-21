@@ -184,9 +184,9 @@ exports.Conseillers = class Conseillers extends Service {
       const ep = new aws.Endpoint(awsConfig.endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
-      //Suprresion de l'ancien CV si présent dans S3 et le nom du fichier dans MongoDb
-      if (conseiller.cvFichier) {
-        let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cvFichier };
+      //Suprresion de l'ancien CV si présent dans S3 et dans MongoDb
+      if (conseiller.cv?.file) {
+        let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
         s3.deleteObject(paramsDelete, function(error, data) {
           if (error) {
@@ -199,7 +199,7 @@ exports.Conseillers = class Conseillers extends Service {
         try {
           await db.collection('conseillers').updateOne({ '_id': conseiller._id },
             { $unset: {
-              cvFichier: '',
+              cv: ''
             } });
         } catch (error) {
           app.get('sentry').captureException(error);
@@ -218,11 +218,14 @@ exports.Conseillers = class Conseillers extends Service {
         }
       });
 
-      //Insertion du nom du cv dans MongoDb
+      //Insertion du cv dans MongoDb
       try {
         await db.collection('conseillers').updateOne({ '_id': conseiller._id },
           { $set: {
-            cvFichier: nameCVFile,
+            cv: {
+              file: nameCVFile,
+              date: new Date()
+            }
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
