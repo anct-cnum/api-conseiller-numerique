@@ -200,6 +200,7 @@ exports.Conseillers = class Conseillers extends Service {
           await db.collection('conseillers').updateOne({ '_id': conseiller._id },
             { $unset: {
               cvFichier: '',
+              cvDate: '',
             } });
         } catch (error) {
           app.get('sentry').captureException(error);
@@ -223,6 +224,7 @@ exports.Conseillers = class Conseillers extends Service {
         await db.collection('conseillers').updateOne({ '_id': conseiller._id },
           { $set: {
             cvFichier: nameCVFile,
+            cvDate: new Date(),
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
