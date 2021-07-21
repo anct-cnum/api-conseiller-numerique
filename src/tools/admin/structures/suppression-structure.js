@@ -4,7 +4,7 @@ const { ObjectID } = require('mongodb');
 const { Pool } = require('pg');
 const pool = new Pool();
 
-execute(__filename, async ({ db, logger, exit }) => {
+execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
   program.option('-i, --id <id>', 'idPG: idPG de la structure');
   program.helpOption('-e', 'HELP command');
@@ -28,12 +28,25 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   await db.collection('misesEnRelation').deleteMany({ 'structureObj._id': new ObjectID(structure._id) });
 
+  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimée dans mongoDB`);
+
   try {
-    await pool.query(`DELETE FROM djapp_hostorganization WHERE id = $1`, [structure.idPG]);
+    await pool.query(`DELETE FROM djapp_matching WHERE host_id = $1`, [structure.idPG]);
   } catch (error) {
-    logger.info(`Erreur DB : ${error.message}`);
+    logger.error(`Erreur PG pour supprimer dans la table djapp_matching : ${error.message}`);
+    Sentry.captureException(`Erreur PG pour supprimer dans la table djapp_matching (id: ${structure.idPG}): ${error.message}`);
+    return;
   }
 
-  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimée `);
+  try {
+    await pool.query(`DELETE FROM djapp_hostorganization WHERE id = $1`, [structure.idPG]);
+    logger.info(`La structure avec l'id: ${structure.idPG} est supprimée dans PostgreSQL`);
+  } catch (error) {
+    logger.error(`Erreur PG pour supprimer dans la table djapp_hostorganization: ${error.message}`);
+    Sentry.captureException(`Erreur PG pour supprimer dans la table djapp_hostorganization (id: ${structure.idPG}) : ${error.message}`);
+    return;
+  }
+
+  logger.info(`La structure avec l'idPG: ${structure.idPG} est supprimée avec succès`);
   exit();
 });
