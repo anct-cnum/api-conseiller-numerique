@@ -254,7 +254,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
 
       //Verification existence du conseiller associé
-      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(user.entity.oid) });
+      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(req.params.id) });
       if (conseiller === null) {
         res.status(404).send(new NotFound('Conseiller not found', {
           conseillerId: user.entity.oid
