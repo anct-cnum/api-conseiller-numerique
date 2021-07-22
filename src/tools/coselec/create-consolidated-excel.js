@@ -52,11 +52,6 @@ execute(__filename, async ({ db, logger }) => {
     return null;
   };
 
-
-  let styleVert;
-  let styleOrange;
-  let styleRouge;
-
   const styleConf = {
     font: {
       name: 'Arial',
@@ -628,29 +623,6 @@ execute(__filename, async ({ db, logger }) => {
         });
 
       // Fin des valeurs
-/*
-      for (let j = 1; j < 32; j++) {
-        let cell1 = xl.getExcelCellRef(i + start + 1, j);
-        ws.addConditionalFormattingRule(cell1, {
-          type: 'expression',
-          priority: 1, // rule priority order (required)
-          formula: `IF(AND(L${i + start + 1}="POSITIF",X${i + start + 1}="POSITIF"),1,0)`, // formula that returns nonzero or 0
-          style: styleVert,
-        });
-        ws.addConditionalFormattingRule(cell1, {
-          type: 'expression',
-          priority: 2, // rule priority order (required)
-          formula: `IF(L${i + start + 1}="EXAMEN COMPLÉMENTAIRE",1,0)`, // formula that returns nonzero or 0
-          style: styleOrange,
-        });
-        ws.addConditionalFormattingRule(cell1, {
-          type: 'expression',
-          priority: 3, // rule priority order (required)
-          formula: `IF(L${i + start + 1}="NÉGATIF",1,0)`, // formula that returns nonzero or 0
-          style: styleRouge,
-        });
-      }
-*/
     });
 
     ws.column(3).freeze(4);
@@ -678,33 +650,6 @@ execute(__filename, async ({ db, logger }) => {
         windowWidth: 15000, // Specifies the width of the workbook window. The unit of measurement for this value is twips..
       },
       author: 'ANCT Conseiller Numérique',
-    });
-
-    styleVert = wb.createStyle({
-      fill: {
-        type: 'pattern',
-        patternType: 'solid',
-        bgColor: '#63BE7B',
-        fgColor: '#63BE7B',
-      },
-    });
-
-    styleOrange = wb.createStyle({
-      fill: {
-        type: 'pattern',
-        patternType: 'solid',
-        bgColor: '#FFEB84',
-        fgColor: '#FFEB84',
-      },
-    });
-
-    styleRouge = wb.createStyle({
-      fill: {
-        type: 'pattern',
-        patternType: 'solid',
-        bgColor: '#F8696B',
-        fgColor: '#F8696B',
-      },
     });
 
     // Add Worksheets to the workbook
