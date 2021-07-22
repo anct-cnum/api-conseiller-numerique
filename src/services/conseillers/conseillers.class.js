@@ -160,7 +160,8 @@ exports.Conseillers = class Conseillers extends Service {
       }
 
       //Nom du fichier avec id conseiller + extension fichier envoyé
-      let nameCVFile = candidatUser.entity.oid + '.' + cvFile.originalname.split('.').pop();
+      let extensionCVFile = cvFile.mimetype === 'application/msword' ? 'doc' : detectingFormat.ext; //cas particulier du .doc mal considéré par file-type
+      let nameCVFile = candidatUser.entity.oid + '.' + extensionCVFile;
 
       //Vérification existance conseiller avec cet ID pour sécurité
       let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(candidatUser.entity.oid) });
@@ -224,6 +225,7 @@ exports.Conseillers = class Conseillers extends Service {
           { $set: {
             cv: {
               file: nameCVFile,
+              extension: extensionCVFile,
               date: new Date()
             }
           } });
