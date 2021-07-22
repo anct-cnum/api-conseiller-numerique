@@ -238,5 +238,63 @@ exports.Conseillers = class Conseillers extends Service {
       res.send({ isUploaded: true });
     });
 
+    app.get('/conseillers/:id/cv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+
+      //Verification rôle candidat ou structure pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString()) && !user?.roles.includes('structure')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
+
+      //Verification existence du conseiller associé
+      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(user.entity.oid) });
+      if (conseiller === null) {
+        res.status(404).send(new NotFound('Conseiller not found', {
+          conseillerId: user.entity.oid
+        }).toJSON());
+        return;
+      }
+
+      //Verification existence CV du conseiller
+      if (!conseiller.cv?.file) {
+        res.status(404).send(new NotFound('CV not found for this conseiller', {
+          conseillerId: user.entity.oid
+        }).toJSON());
+        return;
+      }
+
+      //Récupération du CV crypté
+      const awsConfig = app.get('aws');
+      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
+      const ep = new aws.Endpoint(awsConfig.endpoint);
+      const s3 = new aws.S3({ endpoint: ep });
+
+      let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };/*  */
+      s3.getObject(params, function(error, data) {
+        if (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError('La récupération du cv a échoué.').toJSON());
+        } else {
+          //Dechiffrement du CV (le buffer se trouve dans data.Body)
+          const cryptoConfig = app.get('crypto');
+          let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
+          const iv = data.Body.slice(0, 16);
+          data.Body = data.Body.slice(16);
+          const decipher = crypto.createDecipheriv(cryptoConfig.algorithm, key, iv);
+          const bufferDecrypt = Buffer.concat([decipher.update(data.Body), decipher.final()]);
+
+          res.send(bufferDecrypt);
+        }
+      });
+    });
+
   }
 };
