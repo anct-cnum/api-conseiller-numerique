@@ -50,14 +50,13 @@ exports.Users = class Users extends Service {
             return;
           }
           try {
-            await this.patch(idUser, { $set: { token: uuidv4() } });
+            await this.patch(idUser, { $set: { token: uuidv4(), mailAModifier: nouveauEmail } });
             const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
             user.nouveauEmail = nouveauEmail;
             let mailer = createMailer(app, nouveauEmail);
             const emails = createEmails(db, mailer);
             let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
             await message.send(user);
-            await this.patch(idUser, { $set: { mailAModifier: nouveauEmail } });
             res.send(user);
           } catch (error) {
             context.app.get('sentry').captureException(error);
@@ -116,8 +115,7 @@ exports.Users = class Users extends Service {
         app.get('sentry').captureException(error);
       }
       try {
-        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
-        await this.patch(userInfo._id, { $set: { token: uuidv4() } });
+        await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(`Erreur BD: ${err}`);
@@ -149,13 +147,13 @@ exports.Users = class Users extends Service {
 
       if (userInfo.mailAModifier === undefined) {
         logger.error(`La clé mailAModifier est ${userInfo.mailAModifier}`);
+        res.status(400).send(new BadRequest('La clé mailAModifier est undefined', {
+          token
+        }).toJSON());
+        return;
       }
       try {
-
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
-        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
-        await this.patch(userInfo._id, { $set: { token: uuidv4() } });
-
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier, token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(`Erreur BD: ${err}`);
