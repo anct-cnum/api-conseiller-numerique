@@ -795,7 +795,7 @@ execute(__filename, async ({ db, exit }) => {
     const confPubliques = {
       titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
       departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` :
-      `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+        `Département ${departement} ${deps.get(String(departement)).dep_name}`,
       departementNumero: String(departement),
       nombre: `Nombre de structures publiques candidates : ${structuresPubliques.length}`,
       liste: 'Liste A : Structures publiques',
@@ -805,7 +805,7 @@ execute(__filename, async ({ db, exit }) => {
     const confPrivees = {
       titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
       departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` :
-      `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+        `Département ${departement} ${deps.get(String(departement)).dep_name}`,
       departementNumero: String(departement),
       nombre: `Nombre de structures privées candidates : ${structuresPrivees.length}`,
       liste: 'Liste B : Structures privées',
