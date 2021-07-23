@@ -1,6 +1,7 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
 const { ObjectID } = require('mongodb');
+const { getCoselecPositif } = require('../../../utils/index');
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
@@ -24,15 +25,18 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   }
 
   try {
-    const arrayCoselec = structure.coselec;
-    let index = arrayCoselec[arrayCoselec.length - 1];
-    index.nombreConseillersCoselec = nombre;
-    await db.collection('structures').updateOne({ idPG: id }, { $set: { coselec: arrayCoselec } });
-    await db.collection('misesEnRelation').updateMany({ 'structureObj._id': new ObjectID(structure._id) }, { $set: { 'structureObj.coselec': arrayCoselec } });
+    const arrayCoselecActuel = structure.coselec;
+    const dernierObjCoselec = getCoselecPositif(structure);
+    const autreObjCoselec = arrayCoselecActuel.find(id => id !== dernierObjCoselec);
+    dernierObjCoselec.nombreConseillersCoselec = nombre;
+    const arrayFinal = [autreObjCoselec, dernierObjCoselec];
+
+    await db.collection('structures').updateOne({ idPG: id }, { $set: { coselec: arrayFinal } });
+    await db.collection('misesEnRelation').updateMany({ 'structureObj._id': new ObjectID(structure._id) }, { $set: { 'structureObj.coselec': arrayFinal } });
 
   } catch (err) {
     logger.error(`Erreur Mongo pour modifier le nombre de Conseillers Coselec : ${err.message}`);
-    Sentry.captureException(`Erreur Mongo pour modifier le nombre de Conseillers Coselec : ${err.message}`);
+    Sentry.captureException(err);
     return;
   }
 
