@@ -27,12 +27,17 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   try {
     const arrayCoselecActuel = structure.coselec;
     const dernierObjCoselec = getCoselecPositif(structure);
-    const autreObjCoselec = arrayCoselecActuel.find(id => id !== dernierObjCoselec);
+    const autreObjCoselec = arrayCoselecActuel.filter(id => id !== dernierObjCoselec);
     dernierObjCoselec.nombreConseillersCoselec = nombre;
-    const arrayFinal = [autreObjCoselec, dernierObjCoselec];
+    autreObjCoselec.push(dernierObjCoselec);
 
-    await db.collection('structures').updateOne({ idPG: id }, { $set: { coselec: arrayFinal } });
-    await db.collection('misesEnRelation').updateMany({ 'structureObj._id': new ObjectID(structure._id) }, { $set: { 'structureObj.coselec': arrayFinal } });
+
+    await db.collection('structures').updateOne({ idPG: id }, { $set: { coselec: autreObjCoselec } });
+    await db.collection('misesEnRelation').updateMany({
+      'structureObj._id': new ObjectID(structure._id) },
+    {
+      $set: { 'structureObj.coselec': autreObjCoselec
+      } });
 
   } catch (err) {
     logger.error(`Erreur Mongo pour modifier le nombre de Conseillers Coselec : ${err.message}`);
