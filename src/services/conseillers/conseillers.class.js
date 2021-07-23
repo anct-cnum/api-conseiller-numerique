@@ -216,26 +216,26 @@ exports.Conseillers = class Conseillers extends Service {
           logger.error(error);
           app.get('sentry').captureException(error);
           res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
+        } else {
+          //Insertion du cv dans MongoDb
+          try {
+            db.collection('conseillers').updateOne({ '_id': conseiller._id },
+              { $set: {
+                cv: {
+                  file: nameCVFile,
+                  extension: extensionCVFile,
+                  date: new Date()
+                }
+              } });
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDb a échoué').toJSON());
+          }
+
+          res.send({ isUploaded: true });
         }
       });
-
-      //Insertion du cv dans MongoDb
-      try {
-        await db.collection('conseillers').updateOne({ '_id': conseiller._id },
-          { $set: {
-            cv: {
-              file: nameCVFile,
-              extension: extensionCVFile,
-              date: new Date()
-            }
-          } });
-      } catch (error) {
-        app.get('sentry').captureException(error);
-        logger.error(error);
-        res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDb a échoué').toJSON());
-      }
-
-      res.send({ isUploaded: true });
     });
 
     app.get('/conseillers/:id/cv', async (req, res) => {
