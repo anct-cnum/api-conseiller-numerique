@@ -243,10 +243,11 @@ exports.Conseillers = class Conseillers extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
       }
 
-      //Verification rôle candidat ou structure pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
+      //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString()) && !user?.roles.includes('structure')) {
+      // eslint-disable-next-line max-len
+      if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString()) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -254,7 +255,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
 
       //Verification existence du conseiller associé
-      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(user.entity.oid) });
+      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(req.params.id) });
       if (conseiller === null) {
         res.status(404).send(new NotFound('Conseiller not found', {
           conseillerId: user.entity.oid
