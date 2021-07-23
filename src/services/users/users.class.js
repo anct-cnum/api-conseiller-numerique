@@ -373,6 +373,10 @@ exports.Users = class Users extends Service {
                 message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
                 await message.send(user);
                 break;
+              case 'candidat':
+                message = emails.getEmailMessageByTemplateName('bienvenueCompteCandidat');
+                await message.send(user);
+                break;
               default:
                 break;
             }
