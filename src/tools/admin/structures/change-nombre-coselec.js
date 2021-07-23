@@ -27,7 +27,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   try {
     const arrayCoselecActuel = structure.coselec;
     const dernierObjCoselec = getCoselecPositif(structure);
-    const autreObjCoselec = arrayCoselecActuel.filter(id => id !== dernierObjCoselec);
+    const autreObjCoselec = arrayCoselecActuel.filter(coselec => coselec !== dernierObjCoselec);
     dernierObjCoselec.nombreConseillersCoselec = nombre;
     autreObjCoselec.push(dernierObjCoselec);
 
