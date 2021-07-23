@@ -181,14 +181,13 @@ exports.Users = class Users extends Service {
           return;
         }
         try {
-          await this.patch(idUser, { $set: { token: uuidv4() } });
+          await this.patch(idUser, { $set: { token: uuidv4(), mailAModifier: nouveauEmail } });
           const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
           user.nouveauEmail = nouveauEmail;
           let mailer = createMailer(app, nouveauEmail);
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('confirmeNouveauEmail');
           await message.send(user);
-          await this.patch(idUser, { $set: { mailAModifier: nouveauEmail } });
           res.send(user);
         } catch (error) {
           app.get('sentry').captureException(error);
