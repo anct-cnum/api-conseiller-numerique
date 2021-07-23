@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadRequest } = require('@feathersjs/errors');
 
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
@@ -11,7 +11,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 
 const { v4: uuidv4 } = require('uuid');
-const { DBRef, ObjectId } = require('mongodb');
+const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
 exports.Users = class Users extends Service {
   constructor(options, app) {
@@ -35,6 +35,7 @@ exports.Users = class Users extends Service {
         await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(err);
       }
 
       if (nouveauEmail !== userConnected.data[0].name) {
@@ -42,21 +43,24 @@ exports.Users = class Users extends Service {
         app.get('mongoClient').then(async db => {
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
-            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', nouveauEmail)).toJSON();
+            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
+            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
+              nouveauEmail
+            }).toJSON());
             return;
           }
-          await this.patch(idUser, { $set: { token: uuidv4() } });
           try {
-            const user = await this.find({ query: { _id: idUser } });
-            user.data[0].nouveauEmail = nouveauEmail;
+            await this.patch(idUser, { $set: { token: uuidv4(), mailAModifier: nouveauEmail } });
+            const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
+            user.nouveauEmail = nouveauEmail;
             let mailer = createMailer(app, nouveauEmail);
             const emails = createEmails(db, mailer);
             let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
-            await message.render(user.data[0]);
-            await message.send(user.data[0], nouveauEmail);
-            res.send(user.data[0]);
+            await message.send(user);
+            res.send(user);
           } catch (error) {
             context.app.get('sentry').captureException(error);
+            logger.error(error);
           }
         });
       }
@@ -86,6 +90,7 @@ exports.Users = class Users extends Service {
         }
       });
       if (user.total === 0) {
+        logger.error(`Token inconnu: ${token}`);
         res.status(404).send(new NotFound('User not found', {
           token
         }).toJSON());
@@ -97,6 +102,7 @@ exports.Users = class Users extends Service {
         await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(err);
       }
       try {
         const { idPG } = await app.service('conseillers').get(userInfo?.entity?.oid);
@@ -109,9 +115,10 @@ exports.Users = class Users extends Service {
         app.get('sentry').captureException(error);
       }
       try {
-        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+        await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(err);
       }
       const apresEmailConfirmer = await this.find({
         query: {
@@ -137,16 +144,20 @@ exports.Users = class Users extends Service {
         return;
       }
       const userInfo = user?.data[0];
-      try {
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
-      } catch (err) {
-        app.get('sentry').captureException(err);
+
+      if (userInfo.mailAModifier === undefined) {
+        res.status(400).send(new BadRequest('le nouveau mail n\'est pas renseignée', {
+          token
+        }).toJSON());
+        return;
       }
       try {
-        await this.patch(userInfo._id, { $unset: { mailAModifier: userInfo.mailAModifier } });
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier, token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
       } catch (err) {
         app.get('sentry').captureException(err);
+        logger.error(`Erreur BD: ${err}`);
       }
+
       const apresEmailConfirmer = await this.find({
         query: {
           token: token,
@@ -160,22 +171,27 @@ exports.Users = class Users extends Service {
       const nouveauEmail = req.body.name;
       const idUser = req.params.id;
       app.get('mongoClient').then(async db => {
+
         const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
         if (verificationEmail !== 0) {
-          throw new Conflict('Erreur: l\'email est déjà utilisé par une autre structure');
+          logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
+          res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
+            nouveauEmail
+          }).toJSON());
+          return;
         }
-        await this.patch(idUser, { $set: { token: uuidv4() } });
         try {
-          const user = await this.find({ query: { _id: idUser } });
-          user.data[0].nouveauEmail = nouveauEmail;
+          await this.patch(idUser, { $set: { token: uuidv4(), mailAModifier: nouveauEmail } });
+          const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
+          user.nouveauEmail = nouveauEmail;
           let mailer = createMailer(app, nouveauEmail);
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('confirmeNouveauEmail');
-          await message.render(user.data[0]);
-          await message.send(user.data[0], nouveauEmail);
-          res.send(user.data[0]);
+          await message.send(user);
+          res.send(user);
         } catch (error) {
           app.get('sentry').captureException(error);
+          logger.error(error);
         }
       });
     });
