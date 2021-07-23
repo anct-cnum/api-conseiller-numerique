@@ -90,7 +90,7 @@ exports.Users = class Users extends Service {
         }
       });
       if (user.total === 0) {
-        logger.error(`Le token inconnue dans la DB: ${token}`);
+        logger.error(`Token inconnu: ${token}`);
         res.status(404).send(new NotFound('User not found', {
           token
         }).toJSON());
@@ -102,7 +102,7 @@ exports.Users = class Users extends Service {
         await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
       } catch (err) {
         app.get('sentry').captureException(err);
-        logger.error(`Erreur BD: ${err}`);
+        logger.error(err);
       }
       try {
         const { idPG } = await app.service('conseillers').get(userInfo?.entity?.oid);
@@ -118,7 +118,7 @@ exports.Users = class Users extends Service {
         await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
       } catch (err) {
         app.get('sentry').captureException(err);
-        logger.error(`Erreur BD: ${err}`);
+        logger.error(err);
       }
       const apresEmailConfirmer = await this.find({
         query: {
@@ -146,7 +146,6 @@ exports.Users = class Users extends Service {
       const userInfo = user?.data[0];
 
       if (userInfo.mailAModifier === undefined) {
-        logger.error(`La clé mailAModifier est ${userInfo.mailAModifier}`);
         res.status(400).send(new BadRequest('le nouveau mail n\'est pas renseignée', {
           token
         }).toJSON());
@@ -193,7 +192,7 @@ exports.Users = class Users extends Service {
           res.send(user);
         } catch (error) {
           app.get('sentry').captureException(error);
-          logger.error(`Erreur : ${error}`);
+          logger.error(error);
         }
       });
     });
