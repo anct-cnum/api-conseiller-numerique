@@ -106,7 +106,7 @@ exports.Conseillers = class Conseillers extends Service {
       res.send({ isUpdated: true });
     });
 
-    app.get('/conseillers/statistiquesPDF', async (req, res) => {
+    app.get('/conseillers/statistiquesPDF/:dateDebut/:dateFin', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
       }
@@ -120,11 +120,13 @@ exports.Conseillers = class Conseillers extends Service {
             }).toJSON());
             return;
           }
-          resolve(sondage);
+          resolve();
         });
         resolve(p);
       });
-      /*
+
+      const dateDebut = new Date(req.params.dateDebut);
+      const dateFin = new Date(req.params.dateFin);
 
       const browser = await puppeteer.launch();
       const page = await browser.newPage();
@@ -132,11 +134,12 @@ exports.Conseillers = class Conseillers extends Service {
       await page.goto('http://localhost:3000/statistiques', {
         waitUntil: 'networkidle2',
       });
-      await page.pdf({ path: 'hn.pdf', format: 'a4' });
+      await page.pdf({ path: 'Statistiques.pdf', format: 'a4' });
 
       await browser.close();
 
-      res.send({ });*/
+      res.send({});
     });
+
   }
-}
+};
