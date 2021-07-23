@@ -147,7 +147,7 @@ exports.Users = class Users extends Service {
 
       if (userInfo.mailAModifier === undefined) {
         logger.error(`La clé mailAModifier est ${userInfo.mailAModifier}`);
-        res.status(400).send(new BadRequest('La clé mailAModifier est undefined', {
+        res.status(400).send(new BadRequest('le nouveau mail n\'est pas renseignée', {
           token
         }).toJSON());
         return;
