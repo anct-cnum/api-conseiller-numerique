@@ -105,7 +105,7 @@ exports.Conseillers = class Conseillers extends Service {
         await this.patch(new ObjectId(user.idCandidat),
           { $set: {
             sexe: user.sexe,
-            dateDeNaissance: user.dateDeNaissance
+            dateDeNaissance: new Date(user.dateDeNaissance)
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
