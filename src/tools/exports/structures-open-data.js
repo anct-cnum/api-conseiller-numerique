@@ -61,9 +61,9 @@ execute(__filename, async ({ logger, db }) => {
 
         // France Services
         let label = 'non renseigné';
-        if (structure?.estLabelliseFranceServices && structure.estLabelliseFranceServices === 'OUI') {
+        if (structure?.estLabelliseFranceServices === 'OUI') {
           label = 'oui';
-        } else if (structure?.estLabelliseFranceServices && structure.estLabelliseFranceServices === 'NON') {
+        } else if (structure?.estLabelliseFranceServices === 'NON') {
           label = 'non';
         }
 
@@ -106,6 +106,7 @@ execute(__filename, async ({ logger, db }) => {
         // eslint-disable-next-line max-len
         file.write(`${structure?.insee?.entreprise?.raison_sociale ?? ''};${structure?.insee?.etablissement?.commune_implantation?.value ?? ''};${deps.get(structure.codeDepartement).dep_name};${deps.get(structure.codeDepartement).region_name};${coselec?.nombreConseillersCoselec};${coselecs[coselec?.numero]};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.etablissement?.adresse?.code_insee_localite};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
       } catch (e) {
+        Sentry.captureException(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
         logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
       }
       count++;
