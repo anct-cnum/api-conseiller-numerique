@@ -8,7 +8,7 @@ module.exports = (db, mailer) => {
 
     return mailer.render(__dirname, templateName, {
       user,
-      link: utils.getBackofficeUrl(`/candidat/confirmation-email/${(user.token)}`),
+      link: utils.getEspaceCandidatUrl(`/candidat/confirmation-email/${(user.token)}`),
     });
   };
 
