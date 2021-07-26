@@ -12,6 +12,7 @@ const utils = require('../../utils/index.js');
 
 program
 .option('-d, --departement <departement>', 'département')
+.option('-t, --tom', 'TOM')
 .option('-v, --vague <vague>', 'vague')
 .option('-w, --revision <revision>', 'révision')
 .option('-r, --referents <referents>', 'CSV file path')
@@ -75,12 +76,18 @@ const styleHeaderConf = {
   }
 };
 
-execute(__filename, async ({ db }) => {
+execute(__filename, async ({ db, exit }) => {
   // Liste des départements
   const departements = require('./departements-region.json');
   const deps = new Map();
   for (const value of departements) {
     deps.set(String(value.num_dep), value);
+  }
+
+  const tomsJSON = require('./tom.json');
+  const toms = new Map();
+  for (const value of tomsJSON) {
+    toms.set(String(value.num_tom), value);
   }
 
   const codePostal2departementRegion = cp => {
@@ -124,10 +131,11 @@ execute(__filename, async ({ db }) => {
       s.type = types[match.type] ? types[match.type] : '';
 
       // Département et région
-      const depReg = codePostal2departementRegion(String(match.codePostal));
-      s.departement = depReg.dep_name;
-      s.region = depReg.region_name;
-
+      if (!program.tom) {
+        const depReg = codePostal2departementRegion(String(match.codePostal));
+        s.departement = depReg.dep_name;
+        s.region = depReg.region_name;
+      }
       // Siret
       s.siret = match.siret;
 
@@ -174,9 +182,11 @@ execute(__filename, async ({ db }) => {
         s.id = match.idPG;
 
         // Département et région
-        const depReg = codePostal2departementRegion(String(match.codePostal));
-        s.departement = depReg.dep_name;
-        s.region = depReg.region_name;
+        if (!program.tom) {
+          const depReg = codePostal2departementRegion(String(match.codePostal));
+          s.departement = depReg.dep_name;
+          s.region = depReg.region_name;
+        }
 
         // Statut
         s.statut = match.statut;
@@ -258,19 +268,24 @@ execute(__filename, async ({ db }) => {
 
   const getStructures = async (departement, types) => {
     let query;
-    if (departement === '2A') {
-    // Corse du Sud
+    if (program.tom) {
+      if (/^\d\d\d$/.test(departement)) {
+        // DOM sur 3 chiffres
+        query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,3) = $1 AND departement_code = \'00\' AND type = ANY ($2) ORDER BY id ASC';
+      }
+    } else if (departement === '2A') {
+      // Corse du Sud
       query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'200\' OR' +
-      ' SUBSTRING(zip_code,1,3) = \'201\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
+        ' SUBSTRING(zip_code,1,3) = \'201\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
     } else if (departement === '2B') {
-    // Haute-Corse
+      // Haute-Corse
       query = 'SELECT * FROM djapp_hostorganization WHERE (SUBSTRING(zip_code,1,3) = \'202\' OR' +
-      ' SUBSTRING(zip_code,1,3) = \'206\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
+        ' SUBSTRING(zip_code,1,3) = \'206\') AND type = ANY ($2) AND $1=$1 ORDER BY id ASC';
     } else if (/^\d\d\d$/.test(departement)) {
-    // DOM sur 3 chiffres
+      // DOM sur 3 chiffres
       query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,3) = $1 AND type = ANY ($2) ORDER BY id ASC';
     } else if (/^\d\d$/.test(departement)) {
-    // Les autres sur 2 chiffres
+      // Les autres sur 2 chiffres
       query = 'SELECT * FROM djapp_hostorganization WHERE SUBSTRING(zip_code,1,2) = $1 AND type = ANY ($2) ORDER BY id ASC';
     }
 
@@ -779,7 +794,8 @@ execute(__filename, async ({ db }) => {
 
     const confPubliques = {
       titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
-      departement: `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+      departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` :
+        `Département ${departement} ${deps.get(String(departement)).dep_name}`,
       departementNumero: String(departement),
       nombre: `Nombre de structures publiques candidates : ${structuresPubliques.length}`,
       liste: 'Liste A : Structures publiques',
@@ -788,7 +804,8 @@ execute(__filename, async ({ db }) => {
 
     const confPrivees = {
       titre: 'PROGRAMME SOCIETE NUMERIQUE - ANCT',
-      departement: `Département ${departement} ${deps.get(String(departement)).dep_name}`,
+      departement: program.tom ? `${departement} ${toms.get(String(departement)).tom_name}` :
+        `Département ${departement} ${deps.get(String(departement)).dep_name}`,
       departementNumero: String(departement),
       nombre: `Nombre de structures privées candidates : ${structuresPrivees.length}`,
       liste: 'Liste B : Structures privées',
@@ -805,9 +822,15 @@ execute(__filename, async ({ db }) => {
     const structuresPrivees = await getStructures(departement, 'PRIVATE');
     const structuresPubliques = await getStructures(departement, 'COLLECTIVITE,COMMUNE,EPCI,DEPARTEMENT,REGION,GIP');
     const wb = await createWorkbook(departement, structuresPubliques, structuresPrivees);
-    wb.write(`conseiller-numerique-${departement}-${deps.get(String(departement)).dep_name.replace(' ', '-')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')}-vague-${program.vague}-version-${program.revision}.xlsx`);
+    if (program.tom) {
+      wb.write(`conseiller-numerique-${departement}-${toms.get(String(departement)).tom_name.replace(' ', '-')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')}-vague-${program.vague}-version-${program.revision}.xlsx`);
+    } else {
+      wb.write(`conseiller-numerique-${departement}-${deps.get(String(departement)).dep_name.replace(' ', '-')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')}-vague-${program.vague}-version-${program.revision}.xlsx`);
+    }
   };
 
   const createExcelForAllDeps = async () => {
@@ -815,6 +838,11 @@ execute(__filename, async ({ db }) => {
       await createExcelForDep(d.num_dep);
     }
   };
+
+  if (program.tom && !program.departement) {
+    exit('Option TOM uniquement pour un seul département');
+    return;
+  }
 
   doublonsSiret = await getDoublonsSiret();
   doublonsSiretEtEmail = await getDoublonsSiretEtEmail();
