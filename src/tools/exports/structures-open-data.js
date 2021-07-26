@@ -30,7 +30,7 @@ const coselecs = {
   'COSELEC 16': '15/07/2021',
 };
 
-execute(__filename, async ({ logger, db }) => {
+execute(__filename, async ({ logger, db, Sentry }) => {
   // Liste des départements et régions
   const departements = require('../coselec/departements-region.json');
   const deps = new Map();
