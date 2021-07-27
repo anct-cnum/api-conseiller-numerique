@@ -88,6 +88,15 @@ module.exports = {
                   });
                 resolve();
                 if (miseEnRelationCount === 0) {
+                  const dejaFinalisee = await db.collection('misesEnRelation').countDocuments(
+                    {
+                      'statut': 'finalisee',
+                      'conseillerObj._id': conseiller._id
+                    });
+
+                  if (dejaFinalisee === 1) {
+                    conseiller.finalisee = true;
+                  }
                   result.push(conseiller);
                 }
               });
