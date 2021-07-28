@@ -136,19 +136,13 @@ exports.Conseillers = class Conseillers extends Service {
         res.status(400).send(new BadRequest('Erreur : cv non envoyé').toJSON());
         return;
       }
-      //verification type PDF / DOC / DOCX (ne pas faire confiance qu'au mime/type envoyé)
-      const allowedExt = ['pdf', 'doc', 'docx'];
-      const allowedMime = [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/msword'
-      ];
+      //verification type PDF (ne pas faire confiance qu'au mime/type envoyé)
+      const allowedExt = ['pdf'];
+      const allowedMime = ['application/pdf'];
       let detectingFormat = await fileType.fromBuffer(cvFile.buffer);
 
-      //Cas particulier du .doc : l'extension file-type le considere comme un fichier cfb donc passer la verif du buffer pour ce cas uniquement
-      let docFile = cvFile.mimetype === 'application/msword';
-      if (!docFile && (!allowedExt.includes(detectingFormat.ext) || !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime))) {
-        res.status(400).send(new BadRequest('Erreur : mauvais format de CV').toJSON());
+      if (!allowedExt.includes(detectingFormat.ext) || !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
+        res.status(400).send(new BadRequest('Erreur : format de CV non autorisé').toJSON());
         return;
       }
 
@@ -160,8 +154,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
 
       //Nom du fichier avec id conseiller + extension fichier envoyé
-      let extensionCVFile = cvFile.mimetype === 'application/msword' ? 'doc' : detectingFormat.ext; //cas particulier du .doc mal considéré par file-type
-      let nameCVFile = candidatUser.entity.oid + '.' + extensionCVFile;
+      let nameCVFile = candidatUser.entity.oid + '.' + detectingFormat.ext;
 
       //Vérification existance conseiller avec cet ID pour sécurité
       let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(candidatUser.entity.oid) });
@@ -202,6 +195,10 @@ exports.Conseillers = class Conseillers extends Service {
             { $unset: {
               cv: ''
             } });
+          await db.collection('misesEnRelation').updateMany({ 'conseillerObj._id': conseiller._id },
+            { $unset: {
+              'conseillerObj.cv': ''
+            } });
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
@@ -223,7 +220,15 @@ exports.Conseillers = class Conseillers extends Service {
               { $set: {
                 cv: {
                   file: nameCVFile,
-                  extension: extensionCVFile,
+                  extension: detectingFormat.ext,
+                  date: new Date()
+                }
+              } });
+            db.collection('misesEnRelation').updateMany({ 'conseillerObj._id': conseiller._id },
+              { $set: {
+                'conseillerObj.cv': {
+                  file: nameCVFile,
+                  extension: detectingFormat.ext,
                   date: new Date()
                 }
               } });
