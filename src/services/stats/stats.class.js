@@ -12,6 +12,13 @@ exports.Stats = class Stats extends Service {
       this.Model = db.collection('stats');
     });
 
+    app.get('/stats/conseillers/total', async (req, res) => {
+      app.get('mongoClient').then(async db => {
+        const conseillers = await db.collection('misesEnRelation').countDocuments({ statut: 'finalisee' });
+        res.send({ conseillerTotalFinalisee: conseillers });
+      });
+    });
+
     app.get('/stats/dashboard', async (req, res) => {
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
