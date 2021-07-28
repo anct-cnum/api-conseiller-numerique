@@ -12,8 +12,19 @@ exports.Stats = class Stats extends Service {
       this.Model = db.collection('stats');
     });
 
-    app.get('/stats/conseillers/total', async (req, res) => {
+    app.get('/stats/conseillers/finalisees', async (req, res) => {
       app.get('mongoClient').then(async db => {
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+        }
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!['structure', 'admin'].includes(user?.roles)) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: user
+          }).toJSON());
+          return;
+        }
         const conseillers = await db.collection('misesEnRelation').countDocuments({ statut: 'finalisee' });
         res.send({ conseillerTotalFinalisee: conseillers });
       });
