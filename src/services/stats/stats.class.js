@@ -19,7 +19,7 @@ exports.Stats = class Stats extends Service {
         }
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!['structure', 'admin'].includes(user?.roles)) {
+        if (!['structure', 'admin'].includes(user?.roles[0])) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: user
           }).toJSON());
