@@ -191,7 +191,7 @@ exports.Structures = class Structures extends Service {
       res.send(misesEnRelation);
     });
 
-    app.get('/structures/:id/relance-inscription', async (req, res) => {
+    app.post('/structures/:id/relance-inscription', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
       }
@@ -212,6 +212,19 @@ exports.Structures = class Structures extends Service {
           id: req.params.id
         }).toJSON());
         return;
+      }
+
+      //La structure associée doit etre validée en COSELEC pour relancer une inscription
+      let structure = await db.collection('structures').findOne({ _id: structureId });
+      if (structure === null) {
+        res.status(404).send(new NotFound('Structure not found', {
+          structureId: structureId,
+        }).toJSON());
+      }
+      if (structure.statut !== 'VALIDATION_COSELEC') {
+        res.status(400).send(new BadRequest('Structure not validated in COSELEC', {
+          structure: structure,
+        }).toJSON());
       }
 
       try {

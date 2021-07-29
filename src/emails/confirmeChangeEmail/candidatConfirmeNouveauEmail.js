@@ -8,19 +8,16 @@ module.exports = (db, mailer) => {
 
     return mailer.render(__dirname, templateName, {
       user,
-      link: utils.getBackofficeUrl(`/candidat/confirmation-email/${(user.token)}`),
+      link: utils.getEspaceCandidatUrl(`/candidat/confirmation-email/${(user.token)}`),
     });
   };
 
   return {
     templateName,
     render,
-    send: async (user, nouveauEmail) => {
+    send: async user => {
       let onSuccess = () => {
         return db.collection('users').updateOne({ '_id': user._id }, {
-          $set: {
-            mailAModifier: nouveauEmail
-          },
           $unset: {
             mailConfirmError: '',
             mailConfirmErrorDetail: ''

@@ -15,12 +15,9 @@ module.exports = (db, mailer) => {
   return {
     templateName,
     render,
-    send: async (user, nouveauEmail) => {
+    send: async user => {
       let onSuccess = () => {
         return db.collection('users').updateOne({ '_id': user._id }, {
-          $set: {
-            mailAModifier: nouveauEmail
-          },
           $unset: {
             mailConfirmError: '',
             mailConfirmErrorDetail: ''
@@ -42,7 +39,7 @@ module.exports = (db, mailer) => {
         {
           subject: 'Confirmez votre nouvelle adresse mail',
           body: await render(user),
-        },
+        }
       )
       .then(onSuccess)
       .catch(onError);
