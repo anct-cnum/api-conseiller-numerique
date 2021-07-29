@@ -195,7 +195,7 @@ exports.Conseillers = class Conseillers extends Service {
             { $unset: {
               cv: ''
             } });
-          await db.collection('misesEnRelation').updateMany({ 'conseillerObj._id': conseiller._id },
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
             { $unset: {
               'conseillerObj.cv': ''
             } });
@@ -224,7 +224,7 @@ exports.Conseillers = class Conseillers extends Service {
                   date: new Date()
                 }
               } });
-            db.collection('misesEnRelation').updateMany({ 'conseillerObj._id': conseiller._id },
+            db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
               { $set: {
                 'conseillerObj.cv': {
                   file: nameCVFile,
