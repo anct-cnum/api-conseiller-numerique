@@ -106,40 +106,89 @@ exports.Conseillers = class Conseillers extends Service {
       res.send({ isUpdated: true });
     });
 
-    app.get('/conseillers/statistiquesPDF/:dateDebut/:dateFin', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-      }
-      let userId = decode(req.feathers.authentication.accessToken).sub;
-      const p = new Promise(async resolve => {
-        app.get('mongoClient').then(db => {
-          const user = db.collection('users').findOne({ _id: new ObjectId(userId) });
-          if (!user?.roles.includes('conseiller')) {
-            res.status(403).send(new Forbidden('User not authorized', {
-              userId: user
-            }).toJSON());
-            return;
-          }
-          resolve();
-        });
-        resolve(p);
+    app.post('/conseillers/statistiquesPDF/:dateDebut/:dateFin', async (req, res) => {
+      app.get('mongoClient').then(async db => {
+
+        const accessToken = req.feathers?.authentication?.accessToken;
+
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+        }
+        let userId = decode(accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+        if (!user?.roles.includes('conseiller')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        const dateDebut = req.params.dateDebut;
+        const dateFin = req.params.dateFin;
+
+        /** Ouverture d'un navigateur en headless afin de générer le PDF **/
+        try {
+
+          const browser = await puppeteer.launch();
+
+          browser.on('targetchanged', async target => {
+            const targetPage = await target.page();
+            const client = await targetPage.target().createCDPSession();
+            await client.send('Runtime.evaluate', {
+              expression: `localStorage.setItem('user', '{"accessToken":"${accessToken}",` +
+              `"authentication":{` +
+                `"strategy":"local",` +
+                `"accessToken":"${accessToken}"},` +
+              `"user":{` +
+                `"_id":"${user._id}",` +
+                `"name":"${user.name}",` +
+                `"entity":{"$ref":"${user.entity.namespace}",` +
+                `"$id":"${user.entity.oid}",` +
+                `"$db":"${user.entity.db}"},` +
+                `"token":${user.token},` +
+                `"mailSentDate":${user.mailSentDate},` +
+                `"passwordCreated":${user.passwordCreated},` +
+                `"createdAt":"${user.createdAt}",` +
+                `"tokenCreatedAt":${user.tokenCreatedAt},` +
+                `"pdfGenerator": true,` +
+                `"role":"${user.roles[0]}"}}')`
+            });
+          });
+
+
+          const page = await browser.newPage();
+
+          // Pour utilisation en local => 'http://localhost:3000/statistiques'
+          await Promise.all([
+            page.goto(/*app.get('espace_coop_hostname')+*/ 'http://localhost:3000/statistiques', { waitUntil: 'networkidle0' }),
+          ]);
+
+          await page.focus('#datePickerDebutPDF');
+          await page.keyboard.type(dateDebut.toString());
+
+          await page.focus('#datePickerFinPDF');
+          await page.keyboard.type(dateFin.toString());
+
+          await page.click('#chargePDF');
+          await page.waitForTimeout(500);
+
+          let pdf;
+          await Promise.all([
+            page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none } #formPDF { display: none}' }),
+            pdf = page.pdf({ format: 'A4', printBackground: true })
+          ]);
+
+          await browser.close();
+
+          res.contentType('application/pdf');
+          pdf.then(buffer => res.send(buffer));
+
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(409).send(new Conflict('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+        }
       });
-
-      const dateDebut = new Date(req.params.dateDebut);
-      const dateFin = new Date(req.params.dateFin);
-
-      const browser = await puppeteer.launch();
-      const page = await browser.newPage();
-
-      await page.goto('http://localhost:3000/statistiques', {
-        waitUntil: 'networkidle2',
-      });
-      await page.pdf({ path: 'Statistiques.pdf', format: 'a4' });
-
-      await browser.close();
-
-      res.send({});
     });
-
   }
 };
