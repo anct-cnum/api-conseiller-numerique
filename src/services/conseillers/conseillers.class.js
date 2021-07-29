@@ -303,7 +303,8 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.post('/conseillers/statistiquesPDF/:dateDebut/:dateFin', async (req, res) => {
+    app.post('/conseillers/statistiquesPDF', async (req, res) => {
+
       app.get('mongoClient').then(async db => {
 
         const accessToken = req.feathers?.authentication?.accessToken;
@@ -320,12 +321,15 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const dateDebut = req.params.dateDebut;
-        const dateFin = req.params.dateFin;
+        const dateDebut = new Date(req.body.datesRecrutement.dateDebut).getTime();
+        const dateFin = new Date(req.body.datesRecrutement.dateFin).getTime();
+        user.role = user.roles[0];
+        user.pdfGenerator = true;
+        delete user.roles;
+        delete user.password;
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
-
           const browser = await puppeteer.launch();
 
           browser.on('targetchanged', async target => {
@@ -336,28 +340,15 @@ exports.Conseillers = class Conseillers extends Service {
               `"authentication":{` +
                 `"strategy":"local",` +
                 `"accessToken":"${accessToken}"},` +
-              `"user":{` +
-                `"_id":"${user._id}",` +
-                `"name":"${user.name}",` +
-                `"entity":{"$ref":"${user.entity.namespace}",` +
-                `"$id":"${user.entity.oid}",` +
-                `"$db":"${user.entity.db}"},` +
-                `"token":${user.token},` +
-                `"mailSentDate":${user.mailSentDate},` +
-                `"passwordCreated":${user.passwordCreated},` +
-                `"createdAt":"${user.createdAt}",` +
-                `"tokenCreatedAt":${user.tokenCreatedAt},` +
-                `"pdfGenerator": true,` +
-                `"role":"${user.roles[0]}"}}')`
+              `"user":${JSON.stringify(user)}}')`
             });
           });
-
 
           const page = await browser.newPage();
 
           // Pour utilisation en local => 'http://localhost:3000/statistiques'
           await Promise.all([
-            page.goto(/*app.get('espace_coop_hostname')+*/ 'http://localhost:3000/statistiques', { waitUntil: 'networkidle0' }),
+            page.goto(app.get('espace_coop_hostname') + '/statistiques', { waitUntil: 'networkidle0' }),
           ]);
 
           await page.focus('#datePickerDebutPDF');
@@ -383,7 +374,7 @@ exports.Conseillers = class Conseillers extends Service {
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(409).send(new Conflict('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+          res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
         }
       });
     });
