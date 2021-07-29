@@ -1,13 +1,24 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict, BadFormat, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
+const { NotFound, Conflict, GeneralError, NotAuthenticated, Forbidden, BadRequest } = require('@feathersjs/errors');
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const decode = require('jwt-decode');
+const aws = require('aws-sdk');
+const multer = require('multer');
+const fileType = require('file-type');
+const crypto = require('crypto');
 const puppeteer = require('puppeteer');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
     super(options);
+
+    let db;
+    app.get('mongoClient').then(mongoDB => {
+      db = mongoDB;
+    });
+
+    const upload = multer();
 
     app.get('mongoClient').then(db => {
       this.Model = db.collection('conseillers');
@@ -75,7 +86,7 @@ exports.Conseillers = class Conseillers extends Service {
       const user = req.body.user;
 
       if (user.sexe === '' || user.dateDeNaissance === '') {
-        res.status(409).send(new BadFormat('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
+        res.status(400).send(new BadRequest('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
         return;
       }
 
@@ -95,7 +106,7 @@ exports.Conseillers = class Conseillers extends Service {
         await this.patch(new ObjectId(user.idCandidat),
           { $set: {
             sexe: user.sexe,
-            dateDeNaissance: user.dateDeNaissance
+            dateDeNaissance: new Date(user.dateDeNaissance)
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
@@ -104,6 +115,192 @@ exports.Conseillers = class Conseillers extends Service {
       }
 
       res.send({ isUpdated: true });
+    });
+
+    app.post('/conseillers/cv', upload.single('file'), async (req, res) => {
+
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      //Verification role candidat
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      if (!candidatUser?.roles.includes('candidat')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
+
+      const cvFile = req.file;
+      if (cvFile === undefined) {
+        res.status(400).send(new BadRequest('Erreur : cv non envoyé').toJSON());
+        return;
+      }
+      //verification type PDF (ne pas faire confiance qu'au mime/type envoyé)
+      const allowedExt = ['pdf'];
+      const allowedMime = ['application/pdf'];
+      let detectingFormat = await fileType.fromBuffer(cvFile.buffer);
+
+      if (!allowedExt.includes(detectingFormat.ext) || !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
+        res.status(400).send(new BadRequest('Erreur : format de CV non autorisé').toJSON());
+        return;
+      }
+
+      //Verification taille CV (limite configurée dans variable env cv_file_max_size)
+      let sizeCV = ~~(cvFile.size / (1024 * 1024)); //convertion en Mo
+      if (sizeCV >= app.get('cv_file_max_size')) {
+        res.status(400).send(new BadRequest('Erreur : Taille du CV envoyé doit être inférieure à ' + app.get('cv_file_max_size') + ' Mo').toJSON());
+        return;
+      }
+
+      //Nom du fichier avec id conseiller + extension fichier envoyé
+      let nameCVFile = candidatUser.entity.oid + '.' + detectingFormat.ext;
+
+      //Vérification existance conseiller avec cet ID pour sécurité
+      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(candidatUser.entity.oid) });
+      if (conseiller === null) {
+        res.status(404).send(new NotFound('Conseiller not found', {
+          conseillerId: candidatUser.entity.oid
+        }).toJSON());
+        return;
+      }
+
+      //Chiffrement du CV
+      const cryptoConfig = app.get('crypto');
+      let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv(cryptoConfig.algorithm, key, iv);
+      const bufferCrypt = Buffer.concat([iv, cipher.update(cvFile.buffer), cipher.final()]);
+
+      //initialisation AWS
+      const awsConfig = app.get('aws');
+      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
+      const ep = new aws.Endpoint(awsConfig.endpoint);
+      const s3 = new aws.S3({ endpoint: ep });
+
+      //Suprresion de l'ancien CV si présent dans S3 et dans MongoDb
+      if (conseiller.cv?.file) {
+        let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
+        // eslint-disable-next-line no-unused-vars
+        s3.deleteObject(paramsDelete, function(error, data) {
+          if (error) {
+            logger.error(error);
+            app.get('sentry').captureException(error);
+            res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
+          }
+        });
+
+        try {
+          await db.collection('conseillers').updateOne({ '_id': conseiller._id },
+            { $unset: {
+              cv: ''
+            } });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+            { $unset: {
+              'conseillerObj.cv': ''
+            } });
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('La suppression du CV dans MongoDb a échoué').toJSON());
+        }
+      }
+
+      let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
+      // eslint-disable-next-line no-unused-vars
+      s3.putObject(params, function(error, data) {
+        if (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
+        } else {
+          //Insertion du cv dans MongoDb
+          try {
+            db.collection('conseillers').updateOne({ '_id': conseiller._id },
+              { $set: {
+                cv: {
+                  file: nameCVFile,
+                  extension: detectingFormat.ext,
+                  date: new Date()
+                }
+              } });
+            db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+              { $set: {
+                'conseillerObj.cv': {
+                  file: nameCVFile,
+                  extension: detectingFormat.ext,
+                  date: new Date()
+                }
+              } });
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDb a échoué').toJSON());
+          }
+
+          res.send({ isUploaded: true });
+        }
+      });
+    });
+
+    app.get('/conseillers/:id/cv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+
+      //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      // eslint-disable-next-line max-len
+      if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString()) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
+
+      //Verification existence du conseiller associé
+      let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(req.params.id) });
+      if (conseiller === null) {
+        res.status(404).send(new NotFound('Conseiller not found', {
+          conseillerId: user.entity.oid
+        }).toJSON());
+        return;
+      }
+
+      //Verification existence CV du conseiller
+      if (!conseiller.cv?.file) {
+        res.status(404).send(new NotFound('CV not found for this conseiller', {
+          conseillerId: user.entity.oid
+        }).toJSON());
+        return;
+      }
+
+      //Récupération du CV crypté
+      const awsConfig = app.get('aws');
+      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
+      const ep = new aws.Endpoint(awsConfig.endpoint);
+      const s3 = new aws.S3({ endpoint: ep });
+
+      let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };/*  */
+      s3.getObject(params, function(error, data) {
+        if (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError('La récupération du cv a échoué.').toJSON());
+        } else {
+          //Dechiffrement du CV (le buffer se trouve dans data.Body)
+          const cryptoConfig = app.get('crypto');
+          let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
+          const iv = data.Body.slice(0, 16);
+          data.Body = data.Body.slice(16);
+          const decipher = crypto.createDecipheriv(cryptoConfig.algorithm, key, iv);
+          const bufferDecrypt = Buffer.concat([decipher.update(data.Body), decipher.final()]);
+
+          res.send(bufferDecrypt);
+        }
+      });
     });
 
     app.post('/conseillers/statistiquesPDF/:dateDebut/:dateFin', async (req, res) => {

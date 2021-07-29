@@ -38,6 +38,8 @@ module.exports = app => {
 
   let getEspaceCoopUrl = path => `${app.get('espace_coop_hostname')}${path}`;
 
+  let getEspaceCandidatUrl = path => `${app.get('espace_candidat_hostname')}${path}`;
+
   let getPixUrl = path => `${app.get('pix_hostname')}${path}`;
 
   let getHelpUrl = app.get('help_url');
@@ -47,6 +49,7 @@ module.exports = app => {
     getPublicUrl,
     getBackofficeUrl,
     getEspaceCoopUrl,
+    getEspaceCandidatUrl,
     getPixUrl,
     getHelpUrl,
   };
