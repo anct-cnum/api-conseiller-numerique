@@ -83,15 +83,15 @@ module.exports = {
               const p = new Promise(async resolve => {
                 let miseEnRelationCount = await db.collection('misesEnRelation').countDocuments(
                   {
-                    'structureObj._id': context.params?.user.entity.oid,
-                    'conseillerObj._id': conseiller._id
+                    'structure.$id': context.params?.user.entity.oid,
+                    'conseiller.$id': conseiller._id
                   });
                 resolve();
                 if (miseEnRelationCount === 0) {
                   const dejaFinalisee = await db.collection('misesEnRelation').countDocuments(
                     {
                       'statut': 'finalisee',
-                      'conseillerObj._id': conseiller._id
+                      'conseiller.$id': conseiller._id
                     });
 
                   if (dejaFinalisee === 1) {
