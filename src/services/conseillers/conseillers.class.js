@@ -321,8 +321,8 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const dateDebut = new Date(req.body.datesRecrutement.dateDebut).getTime();
-        const dateFin = new Date(req.body.datesRecrutement.dateFin).getTime();
+        const dateDebut = new Date(req.body.datesStatsPDF.dateDebut).getTime();
+        const dateFin = new Date(req.body.datesStatsPDF.dateFin).getTime();
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
@@ -346,7 +346,6 @@ exports.Conseillers = class Conseillers extends Service {
 
           const page = await browser.newPage();
 
-          // Pour utilisation en local => 'http://localhost:3000/statistiques'
           await Promise.all([
             page.goto(app.get('espace_coop_hostname') + '/statistiques', { waitUntil: 'networkidle0' }),
           ]);
