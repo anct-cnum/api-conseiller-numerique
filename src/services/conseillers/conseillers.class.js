@@ -362,7 +362,7 @@ exports.Conseillers = class Conseillers extends Service {
 
           let pdf;
           await Promise.all([
-            page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none } #formPDF { display: none}' }),
+            page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none }' }),
             pdf = page.pdf({ format: 'A4', printBackground: true })
           ]);
 
