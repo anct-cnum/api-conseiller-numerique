@@ -8,7 +8,7 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'candidat'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin COOP', 'candidat'],
         field: 'roles',
       })
     ],
@@ -37,7 +37,7 @@ module.exports = {
     ],
     update: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin COOP', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -51,7 +51,7 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin COOP', 'candidat'],
         field: 'roles',
       }),
       async context => {
