@@ -91,18 +91,18 @@ exports.Conseillers = class Conseillers extends Service {
 
       let conseiller = await this.find({
         query: {
-          _id: new ObjectId(user.idCandidat),
+          _id: new ObjectId(user.idConseiller),
           $limit: 1,
         }
       });
 
       if (conseiller.total === 0) {
-        res.status(409).send(new Conflict('Ce compte candidat n\'existe pas ! Vous allez être déconnecté.').toJSON());
+        res.status(404).send(new NotFound('Ce compte n\'existe pas ! Vous allez être déconnecté.').toJSON());
         return;
       }
 
       try {
-        await this.patch(new ObjectId(user.idCandidat),
+        await this.patch(new ObjectId(user.idConseiller),
           { $set: {
             sexe: user.sexe,
             dateDeNaissance: new Date(user.dateDeNaissance)
