@@ -11,7 +11,7 @@ const { program } = require('commander');
 
 const pool = new Pool();
 
-execute(__filename, async ({ logger, exit }) => {
+execute(__filename, async ({ logger, exit, Sentry }) => {
 
   program.option('-i, --id <id>', 'id PG de la structure');
   program.helpOption('-e', 'HELP command');
@@ -33,6 +33,7 @@ execute(__filename, async ({ logger, exit }) => {
       }
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
+      Sentry.captureException(`Erreur DB : ${error.message}`);
     }
   };
 
@@ -60,6 +61,7 @@ execute(__filename, async ({ logger, exit }) => {
       [s.id, geo.geometry]);
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
+      Sentry.captureException(`Erreur DB : ${error.message}`);
     }
   };
 
