@@ -54,7 +54,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
     }
   };
 
-  const storeGeo = async (s, geo) => {
+  const storeGeoPG = async (s, geo) => {
     try {
       await pool.query(`UPDATE djapp_hostorganization SET location = ST_GeomFromGeoJSON
             ($2) WHERE id=$1`,
@@ -63,6 +63,24 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
       logger.error(`Erreur DB : ${error.message}`);
       Sentry.captureException(`Erreur DB : ${error.message}`);
     }
+  };
+
+  const storeGeo = async (s, geo) => {
+    const filter = { idPG: s.id };
+
+    const updateDoc = {
+      $set: {
+        location: geo.geometry,
+      }
+    };
+
+    const options = {};
+
+    const result = await db.collection('structures').updateOne(filter, updateDoc, options);
+
+    logger.info(
+      `structure,${s.id},${result.matchedCount},${result.modifiedCount}`
+    );
   };
 
   logger.info('Recherche de la structure...');
@@ -77,6 +95,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
     if (geo.length === 0) {
       logger.info(`Aucun résultat pour ${s.commune_code}`);
     } else {
+      await storeGeoPG(s, geo);
       await storeGeo(s, geo);
       count++;
       logger.info(`${geo.properties.nom}`);
