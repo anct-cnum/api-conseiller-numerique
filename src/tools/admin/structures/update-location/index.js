@@ -9,14 +9,18 @@ const { Pool } = require('pg');
 const { execute } = require('../../../utils');
 const { program } = require('commander');
 
-program
-.option('-i, --id <id>', 'id PG de la structure');
-
-program.parse(process.argv);
-
 const pool = new Pool();
 
 execute(__filename, async ({ logger, exit }) => {
+
+  program.option('-i, --id <id>', 'id PG de la structure');
+  program.helpOption('-e', 'HELP command');
+  program.parse(process.argv);
+
+  if (!program.id) {
+    exit('id PG obligatoire');
+    return;
+  }
 
   const getStructure = async id => {
     try {
