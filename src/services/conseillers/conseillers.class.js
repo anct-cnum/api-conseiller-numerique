@@ -91,7 +91,7 @@ exports.Conseillers = class Conseillers extends Service {
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
 
-      if (!user.roles.includes('conseiller') && !user.roles.includes('candidat')) {
+      if (!user?.roles.includes('conseiller') && !user?.roles.includes('candidat')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
