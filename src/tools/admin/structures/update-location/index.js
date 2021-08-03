@@ -11,7 +11,7 @@ const { program } = require('commander');
 
 const pool = new Pool();
 
-execute(__filename, async ({ logger, exit, Sentry }) => {
+execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
   program.option('-i, --id <id>', 'id PG de la structure');
   program.helpOption('-e', 'HELP command');
