@@ -33,7 +33,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       }
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
-      Sentry.captureException(`Erreur DB : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
@@ -61,7 +61,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       [s.id, geo.geometry]);
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
-      Sentry.captureException(`Erreur DB : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
