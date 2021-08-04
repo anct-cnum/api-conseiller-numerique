@@ -4,7 +4,7 @@ const { ObjectID } = require('mongodb');
 
 execute(__filename, async ({ db, logger, exit }) => {
 
-  program.option('-s, --statut <email>', 'statut: ANNULEE ou DOUBLON');
+  program.option('-s, --statut <statut>', 'statut: ANNULEE ou DOUBLON ou ABANDON');
   program.option('-i, --id <id>', 'id: id PG de la structure');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
@@ -13,10 +13,10 @@ execute(__filename, async ({ db, logger, exit }) => {
   let statut = program.statut;
 
   if (id === 0 || !statut) {
-    exit('Paramètres invalides. Veuillez préciser un id et un staut');
+    exit('Paramètres invalides. Veuillez préciser un id et un statut');
     return;
-  } else if (!['ANNULEE', 'DOUBLON'].includes(statut)) {
-    exit('Statut invalide. Veuillez préciser un statut qui est égal à ANNULEE ou DOUBLON');
+  } else if (!['ANNULEE', 'DOUBLON', 'ABANDON'].includes(statut)) {
+    exit('Statut invalide. Veuillez préciser un statut qui est égal à ANNULEE ou DOUBLON ou ABANDON');
     return;
   }
 
