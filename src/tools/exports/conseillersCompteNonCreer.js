@@ -2,6 +2,7 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
+const moment = require('moment');
 
 const { execute } = require('../utils');
 
@@ -24,7 +25,7 @@ execute(__filename, async ({ logger, db }) => {
     promises.push(new Promise(async resolve => {
       let conseiller = await db.collection('conseillers').findOne({ nom: user.nom, prenom: user.prenom });
       // eslint-disable-next-line max-len
-      file.write(`${conseiller.prenom};${conseiller.nom};${user.mailSentDate};${conseiller.telephone}\n`);
+      file.write(`${conseiller.prenom};${conseiller.nom};${moment(user.mailSentDate).format('DD/MM/yyyy')};${conseiller.telephone}\n`);
       resolve();
     }));
   });
