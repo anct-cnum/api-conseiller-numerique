@@ -5,7 +5,7 @@ const cli = require('commander');
 const { execute } = require('../../utils');
 const moment = require('moment');
 require('moment/locale/fr');
-const departements = require('../../../../src/tools/coselec/departements-region.json');
+const departements = require('../../coselec/departements-region.json');
 
 cli.description('Statistiques CRAs mensuels par département')
 .option('-m, --month <mois>', 'Recalcul pour le nb de CRAs par département mensuel des conseillers avec debut mois au format 2021-06-01')
@@ -14,28 +14,29 @@ cli.description('Statistiques CRAs mensuels par département')
 
 execute(__filename, async ({ logger, db, Sentry }) => {
 
-  //Lancement en cron tous les débuts de mois : calcul les stats par departement du mois précédent
+  //Lancement en cron tous les débuts de mois : calcul les stats CRAs par département du mois précédent
   let dateDebut = new Date();
   dateDebut.setDate(1); //1er jour du mois
   dateDebut.setMonth(dateDebut.getMonth() - 1); //Mois précédent
   dateDebut.setUTCHours(0, 0, 0, 0);
-  let lastDayOfMonth = new Date(dateDebut.getUTCFullYear(), dateDebut.getUTCMonth() + 1, 0).getDate();
+
+  let dernierJourMois = new Date(dateDebut.getUTCFullYear(), dateDebut.getUTCMonth() + 1, 0).getDate();
   let dateFin = new Date(dateDebut);
-  dateFin.setDate(dateDebut.getDate() + lastDayOfMonth - 1);
+  dateFin.setDate(dateDebut.getDate() + dernierJourMois - 1);
   dateFin.setUTCHours(23, 59, 59, 59);
 
-  //Si paramètre saisi : on prend le paramètre fourni
+  //Si paramètre saisi : on prend le mois choisit manuellement (utile pour une reprise si besoin)
   if (cli.month) {
     if (isNaN(new Date(cli.month))) {
       logger.error('Paramètre month fourni invalide');
       return;
     } else {
-      logger.info('Recalcul des stats CRAs par departement pour le mois ' + moment(new Date(cli.month)).format('MMMM'));
-      let monthCustom = new Date(cli.month);
-      dateDebut = new Date(monthCustom);
-      let lastDayOfMonth = new Date(dateDebut.getUTCFullYear(), dateDebut.getUTCMonth() + 1, 0).getDate();
-      dateFin = new Date(monthCustom);
-      dateFin.setDate(dateDebut.getDate() + lastDayOfMonth - 1);
+      logger.info('Recalcul des stats CRAs par département pour le mois de ' + moment(new Date(cli.month)).format('MMMM'));
+      let moisChoisi = new Date(cli.month);
+      dateDebut = new Date(moisChoisi);
+      dernierJourMois = new Date(dateDebut.getUTCFullYear(), dateDebut.getUTCMonth() + 1, 0).getDate();
+      dateFin = new Date(moisChoisi);
+      dateFin.setDate(dateDebut.getDate() + dernierJourMois - 1);
       dateFin.setUTCHours(23, 59, 59, 59);
     }
   }
@@ -49,7 +50,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
 
   try {
     if (!cli.month) {
-      logger.info('Début de récupération stats CRAs par departement pour le mois ' + moment(new Date(dateDebut)).format('MMMM'));
+      logger.info('Début de récupération stats CRAs par département pour le mois de ' + moment(new Date(dateDebut)).format('MMMM'));
     }
 
     //Cas des départements DOMs sur 3 digits (et pas saint martin)
@@ -182,7 +183,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     });
     await Promise.all(promises);
 
-    logger.info('Fin de récupération des stats CRAs par departement');
+    logger.info('Fin de récupération des stats CRAs mensuelles par département');
   } catch (error) {
     Sentry.captureException(error);
     logger.error(error);
