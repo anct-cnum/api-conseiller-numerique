@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-const { ObjectID } = require('mongodb');
 const { execute } = require('../utils');
 const { program } = require('commander');
 
@@ -17,7 +16,7 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   const deleteMisesEnRelation = async s => {
     const filter = {
-      'structure.$id': new ObjectID(s._id)
+      'structure.$id': s._id
     };
 
     const result = await db.collection('misesEnRelation').deleteMany(filter);
