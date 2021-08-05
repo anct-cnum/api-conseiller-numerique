@@ -83,16 +83,24 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.post('/conseillers/createSexeAge', async (req, res) => {
-      const user = req.body.user;
 
-      if (user.sexe === '' || user.dateDeNaissance === '') {
-        res.status(400).send(new BadRequest('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+      if (!user?.roles.includes('conseiller') && !user?.roles.includes('candidat')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
         return;
       }
 
       let conseiller = await this.find({
         query: {
-          _id: new ObjectId(user.idConseiller),
+          _id: new ObjectId(user.entity.oid),
           $limit: 1,
         }
       });
@@ -102,11 +110,20 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
+      const sexe = req.body.sexe;
+      const dateDeNaissance = req.body.dateDeNaissance;
+
+
+      if (sexe === '' || dateDeNaissance === '') {
+        res.status(400).send(new BadRequest('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
+        return;
+      }
+
       try {
-        await this.patch(new ObjectId(user.idConseiller),
+        await this.patch(new ObjectId(user.entity.oid),
           { $set: {
-            sexe: user.sexe,
-            dateDeNaissance: new Date(user.dateDeNaissance)
+            sexe: sexe,
+            dateDeNaissance: new Date(dateDeNaissance)
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
