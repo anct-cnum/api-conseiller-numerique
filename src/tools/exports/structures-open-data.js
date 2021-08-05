@@ -28,6 +28,7 @@ const coselecs = {
   'COSELEC 14': '30/06/2021',
   'COSELEC 15': '07/07/2021',
   'COSELEC 16': '15/07/2021',
+  'COSELEC 17': '28/07/2021',
 };
 
 execute(__filename, async ({ logger, db, Sentry }) => {
@@ -36,6 +37,12 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const deps = new Map();
   for (const value of departements) {
     deps.set(String(value.num_dep), value);
+  }
+
+  const tomsJSON = require('../coselec/tom.json');
+  const toms = new Map();
+  for (const value of tomsJSON) {
+    toms.set(String(value.num_tom), value);
   }
 
   let query = { statut: 'VALIDATION_COSELEC', userCreated: true };
@@ -69,11 +76,11 @@ execute(__filename, async ({ logger, db, Sentry }) => {
 
         // Adresse
         let adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
-            (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
-            (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + '\n' +
-            (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + '\n' : '') +
-            (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
-            (structure?.insee?.etablissement?.adresse?.localite ?? '');
+          (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + '\n' +
+          (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + '\n' : '') +
+          (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.localite ?? '');
 
         adresse = adresse.replace(/["']/g, '');
 
@@ -103,8 +110,20 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           investissement = (50000 + 4805) * coselec.nombreConseillersCoselec;
         }
 
+        // Nom département, région ou TOM
+        let structureDepartement = '';
+        let structureRegion = '';
+
+        if (deps.has(structure.codeDepartement)) {
+          structureDepartement = deps.get(structure.codeDepartement).dep_name;
+          structureRegion = deps.get(structure.codeDepartement).region_name;
+        } else if (toms.has(structure.codeDepartement)) {
+          structureDepartement = toms.get(structure.codeDepartement).tom_name;
+          structureRegion = toms.get(structure.codeDepartement).tom_name;
+        }
+
         // eslint-disable-next-line max-len
-        file.write(`${structure?.insee?.entreprise?.raison_sociale ?? ''};${structure?.insee?.etablissement?.commune_implantation?.value ?? ''};${deps.get(structure.codeDepartement).dep_name};${deps.get(structure.codeDepartement).region_name};${coselec?.nombreConseillersCoselec};${coselecs[coselec?.numero]};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.etablissement?.adresse?.code_insee_localite};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
+        file.write(`${structure?.insee?.entreprise?.raison_sociale ?? ''};${structure?.insee?.etablissement?.commune_implantation?.value ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${coselecs[coselec?.numero]};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.etablissement?.adresse?.code_insee_localite};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
       } catch (e) {
         Sentry.captureException(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
         logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
