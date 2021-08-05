@@ -25,9 +25,10 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
 
     } catch (error) {
       logger.error('Une erreur est survenue lors de l\'envoi du mail à :' + user.name);
+      user.roles.pop();
       db.collection('users').updateOne({ '_id': user._id }, {
         $set: {
-          roles: ['structure'],
+          roles: user.roles,
           token: null,
           tokenCreatedAt: null
         }
@@ -41,7 +42,7 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
       { $match: { 'statut': { $eq: 'RECRUTE' }, 'structureId': { $ne: null } } },
       { $lookup: { from: 'users', localField: 'structureId', foreignField: 'entity.$id', as: 'userStructure' } },
       { $unwind: '$userStructure' },
-      { $match: { 'userStructure.roles': { $ne: 'admin COOP' } } },
+      { $match: { 'userStructure.roles': { $ne: 'admin_coop' } } },
       { $group: { _id: '$userStructure' } }
     ]).toArray();
 
@@ -51,9 +52,9 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
         const user = userStructure._id;
         user.token = uuidv4();
         user.tokenCreatedAt = new Date();
-        user.roles.push('admin COOP');
+        user.roles.push('admin_coop');
 
-        logger.info('Ajout du rôle admin pour :' + user.name);
+        logger.info('Ajout du rôle admin COOP pour:' + user.name);
         db.collection('users').updateOne({ '_id': user._id }, {
           $set: {
             roles: user.roles,

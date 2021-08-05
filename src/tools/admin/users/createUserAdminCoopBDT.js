@@ -27,13 +27,13 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
     return;
   }
 
-  if (user.roles.includes('admin COOP')) {
+  if (user.roles.includes('admin_coop')) {
     logger.error('L\'utilisateur a déjà un rôle admin COOP !');
     return;
   }
   try {
-    logger.info('Ajout du rôle admin pour :' + user.name);
-    user.roles.push('admin COOP');
+    logger.info('Ajout du rôle admin COOP pour:' + user.name);
+    user.roles.push('admin_coop');
     db.collection('users').updateOne({ '_id': user._id }, {
       $set: {
         roles: user.roles
