@@ -20,7 +20,7 @@ const createMailbox = async ({ gandi, conseillerId, login, password, db, logger,
     logger.info(`Boite email créée ${login} pour le conseiller id=${conseillerId}`);
     return true;
   } catch (e) {
-    Sentry.captureException(e.message);
+    Sentry.captureException(e);
     logger.error(e.message);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:

@@ -83,8 +83,8 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
     return true;
   } catch (e) {
-    Sentry.captureException(e.message);
-    logger.error(e);
+    Sentry.captureException(e);
+    logger.error(e.message);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { mattermost:
