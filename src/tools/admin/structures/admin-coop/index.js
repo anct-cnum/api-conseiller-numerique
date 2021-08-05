@@ -1,0 +1,75 @@
+#!/usr/bin/env node
+'use strict';
+/*
+              --------------------------------
+              SCRIPT EN STANDBY POUR LE MOMENT
+              --------------------------------
+
+*/
+require('dotenv').config();
+
+const { v4: uuidv4 } = require('uuid');
+const createEmails = require('../../../../emails/emails');
+const createMailer = require('../../../../mailer');
+const { execute } = require('../../../utils');
+
+execute(__filename, async ({ db, app, logger, Sentry }) => {
+
+  const envoyerEmailInvitation = async user => {
+    try {
+      logger.info('Envoi d\'un email d\'invitation à :' + user.name);
+      let mailer = createMailer(app);
+      const emails = createEmails(db, mailer);
+      let message = emails.getEmailMessageByTemplateName('invitationAdminEspaceCoop');
+      await message.send(user, user.name);
+
+    } catch (error) {
+      logger.error('Une erreur est survenue lors de l\'envoi du mail à :' + user.name);
+      db.collection('users').updateOne({ '_id': user._id }, {
+        $set: {
+          roles: ['structure'],
+          token: null,
+          tokenCreatedAt: null
+        }
+      });
+      Sentry.captureException(error);
+    }
+  };
+
+  const userStructures = await db.collection('conseillers').aggregate(
+    [
+      { $match: { 'statut': { $eq: 'RECRUTE' }, 'structureId': { $ne: null } } },
+      { $lookup: { from: 'users', localField: 'structureId', foreignField: 'entity.$id', as: 'userStructure' } },
+      { $unwind: '$userStructure' },
+      { $match: { 'userStructure.roles': { $ne: 'admin COOP' } } },
+      { $group: { _id: '$userStructure' } }
+    ]).toArray();
+
+  if (userStructures.length > 0) {
+    userStructures.forEach(userStructure => {
+      try {
+        const user = userStructure._id;
+        user.token = uuidv4();
+        user.tokenCreatedAt = new Date();
+        user.roles.push('admin COOP');
+
+        logger.info('Ajout du rôle admin pour :' + user.name);
+        db.collection('users').updateOne({ '_id': user._id }, {
+          $set: {
+            roles: user.roles,
+            token: user.token,
+            tokenCreatedAt: user.tokenCreatedAt
+          }
+        });
+
+        envoyerEmailInvitation(user);
+
+      } catch (error) {
+        logger.error('Une erreur est survenue lors de la modification du user');
+        Sentry.captureException(error);
+      }
+    });
+  } else {
+    logger.info('Il n\'y a pas de structure à traiter');
+  }
+});
