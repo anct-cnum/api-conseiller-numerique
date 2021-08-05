@@ -11,7 +11,7 @@ execute(__filename, async ({ logger, db }) => {
   const conseillersTotal = await db.collection('users').countDocuments({ passwordCreated: false, roles: { $elemMatch: { $eq: 'conseiller' } } });
   let promises = [];
 
-  logger.info(`Il y a en tout ${conseillersTotal} qui n'ont pas créer leurs compte`);
+  logger.info(`${conseillersTotal} conseillers n'ont pas créés leur compte`);
   logger.info(`Generating CSV file...`);
   let csvFile = path.join(__dirname, '../../../data/exports', 'conseillers_compte_non_cree.csv');
 
