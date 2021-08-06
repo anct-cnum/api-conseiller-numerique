@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict, BadRequest } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadRequest, GeneralError } = require('@feathersjs/errors');
 
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
@@ -439,15 +439,14 @@ exports.Users = class Users extends Service {
       }
 
       try {
-        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date(), passwordCreated: false } });
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date() } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
-
+        res.status(200).json({ success: true });
       } catch (err) {
         app.get('sentry').captureException(err);
+        res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }
-
-      res.send(user);
     });
   }
 };
