@@ -410,7 +410,7 @@ exports.Users = class Users extends Service {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send(user);
+        res.send({ roles : user.roles});
       }
     });
 
