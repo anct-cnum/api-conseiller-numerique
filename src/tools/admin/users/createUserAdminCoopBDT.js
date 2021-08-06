@@ -40,7 +40,7 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
       }
     });
   } catch (error) {
-    logger.error('Une erreur est survenue lors de la modification du user');
+    logger.error('Une erreur est survenue lors de la modification du user: ' + user._id);
     Sentry.captureException(error);
   }
 
