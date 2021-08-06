@@ -51,13 +51,14 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
     let message = emails.getEmailMessageByTemplateName('invitationAdminEspaceCoopBDT');
     await message.send(user, user.name);
   } catch (error) {
-    logger.error('Une erreur est survenue lors de l\'envoi du mail à : ' + user.name);
+    logger.error('Une erreur est survenue lors de l\'envoi du mail au user: ' + user._id);
     user.roles.pop();
     db.collection('users').updateOne({ '_id': user._id }, {
       $set: {
         roles: user.roles
       }
     });
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }

@@ -33,6 +33,7 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
           tokenCreatedAt: null
         }
       });
+      logger.error(error);
       Sentry.captureException(error);
     }
   };
@@ -48,8 +49,8 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
 
   if (userStructures.length > 0) {
     userStructures.forEach(userStructure => {
+      const user = userStructure._id;
       try {
-        const user = userStructure._id;
         user.token = uuidv4();
         user.tokenCreatedAt = new Date();
         user.roles.push('admin_coop');
@@ -66,7 +67,7 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
         envoyerEmailInvitation(user);
 
       } catch (error) {
-        logger.error('Une erreur est survenue lors de la modification du user');
+        logger.error('Une erreur est survenue lors de la modification du user: ' + user._id);
         Sentry.captureException(error);
       }
     });
