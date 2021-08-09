@@ -33,10 +33,9 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
   }
   try {
     logger.info('Ajout du rôle admin COOP pour:' + user.name);
-    user.roles.push('admin_coop');
     db.collection('users').updateOne({ '_id': user._id }, {
-      $set: {
-        roles: user.roles
+      $push: {
+        roles: 'admin_coop'
       }
     });
   } catch (error) {
@@ -52,10 +51,9 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
     await message.send(user, user.name);
   } catch (error) {
     logger.error('Une erreur est survenue lors de l\'envoi du mail au user: ' + user._id);
-    user.roles.pop();
     db.collection('users').updateOne({ '_id': user._id }, {
-      $set: {
-        roles: user.roles
+      $pull: {
+        roles: 'admin_coop'
       }
     });
     logger.error(error);
