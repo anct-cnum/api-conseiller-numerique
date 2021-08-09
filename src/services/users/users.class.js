@@ -442,7 +442,7 @@ exports.Users = class Users extends Service {
         this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date() } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
-        res.status(200).json({ success: true });
+        res.status(200).json({ successResetPassword: true });
       } catch (err) {
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
