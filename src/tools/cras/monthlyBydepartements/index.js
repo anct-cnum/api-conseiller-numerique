@@ -55,32 +55,25 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     }
 
     //Cas des départements DOMs sur 3 digits (sauf saint martin)
-    let statsDoms = await statsAlltasks.getStatsDoms(db, query);
+    await statsAlltasks.getStatsDoms(db, query);
 
     //Cas ST MARTIN (97150)
-    let statsStMartin = await statsAlltasks.getStatsStMartin(db, query);
+    await statsAlltasks.getStatsStMartin(db, query);
 
     //Cas Corse 2A ('200XX', '201XX')
-    let statsCorse2A = await statsAlltasks.getStatsCorse2A(db, query);
+    await statsAlltasks.getStatsCorse2A(db, query);
 
     //Cas Corse 2B ('202XX', '206XX')
-    let statsCorse2B = await statsAlltasks.getStatsCorse2B(db, query);
+    await statsAlltasks.getStatsCorse2B(db, query);
 
     //Les autres départements
-    let statsAllOthersDeps = await statsAlltasks.getStatsAllOthers(db, query);
+    await statsAlltasks.getStatsAllOthers(db, query);
 
     //Formattage du résultat souhaité
     const nouvelleColonne = moment(new Date(dateDebut)).format('MMMM').toString() + ' ' + dateDebut.getFullYear(); //Nom colonne en mois année
-    const depsListFormatted = await statsAlltasks.getListDepsFormatted(
-      departements,
-      nouvelleColonne,
-      statsDoms,
-      statsStMartin,
-      statsCorse2A,
-      statsCorse2B,
-      statsAllOthersDeps);
+    const depsListFormatted = await statsAlltasks.getListDepsFormatted(db, departements, nouvelleColonne);
 
-    //insertion dans la collection Mongo stats_departements_cras
+    //insertion dans la collection Mongo stats_departements_cras la nouvelle colonne mois année
     let promises = [];
     depsListFormatted.forEach(departement => {
       promises.push(new Promise(async resolve => {
@@ -92,6 +85,13 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       }));
     });
     await Promise.all(promises);
+
+    //Suppression des collections temporaires de calcul
+    await db.collection('temporary_corse2a_stats_departements_cras').drop();
+    await db.collection('temporary_corse2b_stats_departements_cras').drop();
+    await db.collection('temporary_doms_stats_departements_cras').drop();
+    await db.collection('temporary_others_stats_departements_cras').drop();
+    await db.collection('temporary_stmartin_departements_cras').drop();
 
     logger.info('Fin de récupération des stats CRAs mensuelles par département');
   } catch (error) {

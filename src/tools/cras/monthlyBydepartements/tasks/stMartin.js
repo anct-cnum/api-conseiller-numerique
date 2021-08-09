@@ -1,6 +1,6 @@
 const getStatsStMartin = async (db, query) => {
 
-  let statsStMartin = await db.collection('cras').aggregate(
+  await db.collection('cras').aggregate(
     [
       { $match: { ...query, 'cra.codePostal': { $eq: '97150' } } },
       { $group: { _id: {
@@ -10,11 +10,10 @@ const getStatsStMartin = async (db, query) => {
       count: { $sum: {
         $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
       } } } },
-      { $project: { 'departement': '$departement', 'mois': '$month', 'annee': '$year', 'valeur': '$count' } }
+      { $project: { 'departement': '$departement', 'mois': '$month', 'annee': '$year', 'valeur': '$count' } },
+      { $out: 'temporary_stmartin_departements_cras' }
     ]
-  ).toArray();
-
-  return statsStMartin;
+  ).toArray(); //besoin du toArray même avec $out pour l'iteration du curseur mais renverra un tableau vide
 
 };
 
