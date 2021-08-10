@@ -396,6 +396,20 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.get('/conseillers/:id/employeur', async (req, res) => {
+
+      const accessToken = req.feathers?.authentication?.accessToken;
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      let userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      if (!user?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
+
       const id = req.params.id;
       const conseillers = await this.find({
         query: {
