@@ -216,9 +216,11 @@ exports.Users = class Users extends Service {
       if (users.data[0].roles[0] === 'conseiller') {
         let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
         users.data[0].persoEmail = conseiller.email;
+        res.send({ roles: users.data[0].roles,
+          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: users.data[0].nom, prenom: users.data[0].prenom });
+      } else {
+        res.send({ roles: users.data[0].roles, name: users.data[0].name });
       }
-
-      res.send(users.data[0]);
     });
 
     app.post('/users/inviteAccountsPrefet', async (req, res) => {
