@@ -394,5 +394,35 @@ exports.Conseillers = class Conseillers extends Service {
         }
       });
     });
+
+    app.get('/conseillers/:id/employeur', async (req, res) => {
+      const id = req.params.id;
+      const conseillers = await this.find({
+        query: {
+          _id: id,
+          $limit: 1,
+        }
+      });
+
+      if (conseillers.total === 0) {
+        res.status(404).send(new NotFound('Conseiller not found', {
+          id
+        }).toJSON());
+        return;
+      }
+
+      const miseEnRelation = await db.collection('misesEnRelation').findOne({
+        'conseiller.$id': new ObjectId(id),
+        'statut': 'finalisee'
+      });
+
+      if (miseEnRelation === null) {
+        res.status(404).send(new NotFound('Structure not found', {
+          id
+        }).toJSON());
+        return;
+      }
+      res.send({ nomStructure: miseEnRelation.structureObj.nom });
+    });
   }
 };
