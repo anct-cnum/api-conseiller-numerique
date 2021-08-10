@@ -5,9 +5,9 @@ name: Validation des fichiers de configuration
 
 on:
   push:
-    branches: [ main, recette ]
+    branches: [ main, recette, demo ]
   pull_request:
-    branches: [ main, recette ]
+    branches: [ main, recette, demo ]
 
 jobs:
   build:
