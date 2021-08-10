@@ -394,5 +394,49 @@ exports.Conseillers = class Conseillers extends Service {
         }
       });
     });
+
+    app.get('/conseillers/:id/employeur', async (req, res) => {
+
+      const accessToken = req.feathers?.authentication?.accessToken;
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      let userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      if (!user?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
+
+      const id = req.params.id;
+      const conseillers = await this.find({
+        query: {
+          _id: id,
+          $limit: 1,
+        }
+      });
+
+      if (conseillers.total === 0) {
+        res.status(404).send(new NotFound('Conseiller not found', {
+          id
+        }).toJSON());
+        return;
+      }
+
+      const miseEnRelation = await db.collection('misesEnRelation').findOne({
+        'conseiller.$id': new ObjectId(id),
+        'statut': 'finalisee'
+      });
+
+      if (miseEnRelation === null) {
+        res.status(404).send(new NotFound('Structure not found', {
+          id
+        }).toJSON());
+        return;
+      }
+      res.send({ nomStructure: miseEnRelation.structureObj.nom });
+    });
   }
 };
