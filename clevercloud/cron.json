@@ -1,1 +1,3 @@
-[]
+[
+  "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh"
+]
