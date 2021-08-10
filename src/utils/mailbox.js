@@ -3,7 +3,7 @@ const axios = require('axios');
 const createMailbox = async ({ gandi, conseillerId, login, password, db, logger, Sentry }) => {
 
   try {
-    await axios({
+    const resultCreation = await axios({
       method: 'post',
       url: `${gandi.endPoint}/mailboxes/${gandi.domain}`,
       headers: {
@@ -12,6 +12,8 @@ const createMailbox = async ({ gandi, conseillerId, login, password, db, logger,
       },
       data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
     });
+    logger.info(resultCreation);
+    
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:
         { emailCNError: false,
