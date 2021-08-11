@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict, BadRequest } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadRequest, GeneralError } = require('@feathersjs/errors');
 
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
@@ -216,9 +216,11 @@ exports.Users = class Users extends Service {
       if (users.data[0].roles[0] === 'conseiller') {
         let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
         users.data[0].persoEmail = conseiller.email;
+        res.send({ roles: users.data[0].roles,
+          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: users.data[0].nom, prenom: users.data[0].prenom });
+      } else {
+        res.send({ roles: users.data[0].roles, name: users.data[0].name });
       }
-
-      res.send(users.data[0]);
     });
 
     app.post('/users/inviteAccountsPrefet', async (req, res) => {
@@ -410,7 +412,7 @@ exports.Users = class Users extends Service {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send(user);
+        res.send({ roles: user.roles });
       }
     });
 
@@ -439,15 +441,14 @@ exports.Users = class Users extends Service {
       }
 
       try {
-        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date(), passwordCreated: false } });
+        this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date() } });
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
-
+        res.status(200).json({ successResetPassword: true });
       } catch (err) {
         app.get('sentry').captureException(err);
+        res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }
-
-      res.send(user);
     });
   }
 };
