@@ -4,13 +4,27 @@ module.exports = (db, mailer, app) => {
   let { utils } = mailer;
 
   let render = async user => {
-    return mailer.render(__dirname, templateName, {
-      user,
-      //eslint-disable-next-line max-len
-      link: user.roles[0] !== 'conseiller' ? utils.getBackofficeUrl(`/renouveler-mot-de-passe/${(user.token)}`) : utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`),
-    });
-  };
+    if (user.roles[0] === 'conseiller') {
+      return mailer.render(__dirname, templateName, {
+        user,
+        //eslint-disable-next-line max-len
+        link: utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`)
+      });
+    } else if (user.roles[0] === 'candidat') {
+      return mailer.render(__dirname, templateName, {
+        user,
+        //eslint-disable-next-line max-len
+        link: utils.getEspaceCandidatUrl(`/renouveler-mot-de-passe/${(user.token)}`)
+      });
+    } else {
+      return mailer.render(__dirname, templateName, {
+        user,
+        //eslint-disable-next-line max-len
+        link: utils.getBackofficeUrl(`/renouveler-mot-de-passe/${(user.token)}`)
+      });
+    }
 
+  };
   return {
     templateName,
     render,
