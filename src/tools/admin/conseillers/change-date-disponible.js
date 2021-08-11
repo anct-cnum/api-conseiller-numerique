@@ -1,6 +1,5 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { ObjectID } = require('mongodb');
 const { Pool } = require('pg');
 const pool = new Pool();
 const dayjs = require('dayjs');
@@ -31,7 +30,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: { dateDisponibilite: disponible } });
     await db.collection('misesEnRelation').updateMany(
-      { 'conseillerObj._id': new ObjectID(conseiller._id) },
+      { 'conseillerObj._id': conseiller._id },
       { $set: { 'conseillerObj.dateDisponibilite': disponible }
       });
 
