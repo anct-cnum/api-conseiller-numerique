@@ -26,7 +26,7 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
     } catch (error) {
       logger.error('Une erreur est survenue lors de l\'envoi du mail à :' + user.name);
       user.roles.pop();
-      db.collection('users').updateOne({ '_id': user._id }, {
+      await db.collection('users').updateOne({ '_id': user._id }, {
         $set: {
           roles: user.roles,
           token: null,
@@ -48,29 +48,33 @@ execute(__filename, async ({ db, app, logger, Sentry }) => {
     ]).toArray();
 
   if (userStructures.length > 0) {
+    let promises = [];
     userStructures.forEach(userStructure => {
-      const user = userStructure._id;
-      try {
-        user.token = uuidv4();
-        user.tokenCreatedAt = new Date();
-        user.roles.push('admin_coop');
+      promises.push(new Promise(async resolve => {
+        const user = userStructure._id;
+        try {
+          user.token = uuidv4();
+          user.tokenCreatedAt = new Date();
+          user.roles.push('admin_coop');
 
-        logger.info('Ajout du rôle admin COOP pour:' + user.name);
-        db.collection('users').updateOne({ '_id': user._id }, {
-          $set: {
-            roles: user.roles,
-            token: user.token,
-            tokenCreatedAt: user.tokenCreatedAt
-          }
-        });
-
-        envoyerEmailInvitation(user);
-
-      } catch (error) {
-        logger.error('Une erreur est survenue lors de la modification du user: ' + user._id);
-        Sentry.captureException(error);
-      }
+          logger.info('Ajout du rôle admin COOP pour:' + user.name);
+          await db.collection('users').updateOne({ '_id': user._id }, {
+            $set: {
+              roles: user.roles,
+              token: user.token,
+              tokenCreatedAt: user.tokenCreatedAt
+            }
+          });
+          envoyerEmailInvitation(user);
+        } catch (error) {
+          logger.error('Une erreur est survenue lors de la modification du user: ' + user._id);
+          Sentry.captureException(error);
+        }
+        resolve();
+      }));
     });
+
+    await Promise.all(promises);
   } else {
     logger.info('Il n\'y a pas de structure à traiter');
   }
