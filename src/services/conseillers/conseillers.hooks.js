@@ -116,7 +116,7 @@ module.exports = {
         const p = new Promise(resolve => {
           const result = context.app.get('mongoClient').then(async db => {
             const miseEnRelationRecruteeFinalisee = await db.collection('misesEnRelation').findOne({
-              '$or': [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }],
+              'statut': 'recrutee',
               'conseiller.$id': context.result._id
             });
             if (miseEnRelationRecruteeFinalisee?.dateRecrutement) {
@@ -124,7 +124,6 @@ module.exports = {
             }
             return context;
           });
-
           resolve(result);
         });
         return await p;
