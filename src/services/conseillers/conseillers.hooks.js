@@ -2,6 +2,7 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
 const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
+const { ObjectId } = require('mongodb');
 
 module.exports = {
   before: {
@@ -115,12 +116,33 @@ module.exports = {
           context.params?.user?.roles.includes('admin')) {
         const p = new Promise(resolve => {
           const result = context.app.get('mongoClient').then(async db => {
-            const miseEnRelationRecruteeFinalisee = await db.collection('misesEnRelation').findOne({
-              'statut': 'recrutee',
-              'conseiller.$id': context.result._id
-            });
-            if (miseEnRelationRecruteeFinalisee?.dateRecrutement) {
-              context.result.dateRecrutement = miseEnRelationRecruteeFinalisee?.dateRecrutement;
+
+            if (context.params?.user?.roles.includes('structure')) {
+              const miseEnRelationRecrutee = await db.collection('misesEnRelation').findOne(
+                {
+                  'statut': 'recrutee',
+                  'conseiller.$id': context.result._id,
+                  'structure.$id': context.params?.user?.entity?.oid
+                }
+              );
+              if (miseEnRelationRecrutee?.dateRecrutement) {
+                context.result.dateRecrutement = [miseEnRelationRecrutee?.dateRecrutement];
+              }
+            } else {
+              const miseEnRelationRecrutees = await db.collection('misesEnRelation').find(
+                {
+                  'statut': 'recrutee',
+                  'conseiller.$id': context.result._id
+                }
+              ).toArray();
+
+              let dateRecrutement = [];
+              miseEnRelationRecrutees.forEach(miseEnRelationRecrutee => {
+                if (miseEnRelationRecrutee?.dateRecrutement) {
+                  dateRecrutement.push(miseEnRelationRecrutee?.dateRecrutement);
+                }
+              });
+              context.result.dateRecrutement = dateRecrutement;
             }
             return context;
           });
