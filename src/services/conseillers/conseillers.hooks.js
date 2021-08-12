@@ -110,7 +110,26 @@ module.exports = {
         await p;
       }
     }],
-    get: [],
+    get: [async context => {
+      if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||
+          context.params?.user?.roles.includes('admin')) {
+        const p = new Promise(resolve => {
+          const result = context.app.get('mongoClient').then(async db => {
+            const miseEnRelationRecruteeFinalisee = await db.collection('misesEnRelation').findOne({
+              '$or': [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }],
+              'conseiller.$id': context.result._id
+            });
+            if (miseEnRelationRecruteeFinalisee?.dateRecrutement) {
+              context.result.dateRecrutement = miseEnRelationRecruteeFinalisee?.dateRecrutement;
+            }
+            return context;
+          });
+
+          resolve(result);
+        });
+        return await p;
+      }
+    }],
     create: [],
     update: [],
     patch: [],
