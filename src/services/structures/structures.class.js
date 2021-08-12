@@ -175,7 +175,7 @@ exports.Structures = class Structures extends Service {
         queryFilter['conseillerObj.estDiplomeMedNum'] = (diplome === 'true');
       }
       if (cv !== undefined) {
-        queryFilter['conseillerObj.cv'] = (cv === 'true') ? { '$ne': null } : { $in: [null, undefined] };
+        queryFilter['conseillerObj.cv'] = (cv === 'true') ? { '$ne': null } : { $in: [null] };
       }
 
       const skip = req.query['$skip'];
