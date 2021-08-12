@@ -166,13 +166,16 @@ exports.Structures = class Structures extends Service {
       }
 
       //User Filters
-      let { pix, diplome } = req.query;
+      let { pix, diplome, cv } = req.query;
       if (pix !== undefined) {
         pix = pix.split(',').map(k => parseInt(k));
         queryFilter['conseillerObj.pix.palier'] = { $in: pix };
       }
       if (diplome !== undefined) {
         queryFilter['conseillerObj.estDiplomeMedNum'] = (diplome === 'true');
+      }
+      if (cv !== undefined) {
+        queryFilter['conseillerObj.cv'] = (cv === 'true') ? { '$ne': null } : { $in: [null] };
       }
 
       const skip = req.query['$skip'];
@@ -183,6 +186,7 @@ exports.Structures = class Structures extends Service {
       if (sort) {
         queryFilter['$sort'] = sort;
       }
+
       const misesEnRelation = await misesEnRelationService.find({ query: Object.assign({ 'structure.$id': structureId }, queryFilter) });
       if (misesEnRelation.total === 0) {
         res.send(misesEnRelation);
