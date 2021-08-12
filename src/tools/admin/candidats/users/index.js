@@ -1,0 +1,112 @@
+#!/usr/bin/env node
+/* eslint-disable guard-for-in */
+'use strict';
+
+const ObjectID = require('mongodb').ObjectID;
+const { program } = require('commander');
+
+const { v4: uuidv4 } = require('uuid');
+
+require('dotenv').config();
+
+const { execute } = require('../../../utils');
+
+const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
+  return new Promise(async (resolve, reject) => {
+    const conseillerDoc = await db.collection('conseillers').findOne({ _id: _id });
+    try {
+      await feathers.service('users').create({
+        name: conseillerDoc.email,
+        prenom: conseillerDoc.prenom,
+        nom: conseillerDoc.nom,
+        password: uuidv4(), // mandatory param
+        roles: Array('candidat'),
+        entity: {
+          '$ref': `conseillers`,
+          '$id': _id,
+          '$db': dbName
+        },
+        token: uuidv4(),
+        tokenCreatedAt: new Date(),
+        mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
+        passwordCreated: false,
+        createdAt: new Date(),
+      });
+      await db.collection('conseillers').updateOne({ _id }, { $set: {
+        userCreated: true
+      } });
+      resolve();
+    } catch (e) {
+      Sentry.captureException(e);
+      logger.error(`Une erreur est survenue pour la création de l'utilisateur du conseiller id: ${conseillerDoc._id}`);
+      await db.collection('conseillers').updateOne({ _id }, { $set: {
+        userCreationError: true
+      } });
+      reject();
+    }
+  });
+};
+
+execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
+  program.option('-a, --all', 'all: tout les candidats');
+  program.option('-l, --limit <limit>', 'limit: limite le nombre de candidats à traiter', parseInt);
+  program.option('-i, --id <id>', 'id: une seul candidat');
+  program.helpOption('-e', 'HELP command');
+  program.parse(process.argv);
+
+  const quit = (usersCreatedCount, usersCreationErrorCount) => {
+    logger.info(`${usersCreatedCount} utilisateurs créés, ${usersCreationErrorCount} utilisateurs en échec de création`);
+    exit();
+  };
+
+  let { all, limit = 1, id } = program;
+
+  let usersCreatedCount = 0;
+  let usersCreationErrorCount = 0;
+
+  const dbName = db.serverConfig.s.options.dbName;
+
+  if (!(!(!all && id) ^ !(all && !id))) {
+    exit('Paramètres invalides. Veuillez précisez un id ou le paramètre all');
+  }
+
+  if (all && !limit) {
+    exit('Paramètres invalides. La limit est obligatoire avec le paramètre all.');
+  }
+
+  if (id) {
+    const _id = new ObjectID(id);
+    const count = await db.collection('conseillers').countDocuments({ userCreated: true, _id: _id });
+    if (count > 0) {
+      exit('Un utilisateur existe déjà pour ce conseiller');
+    }
+    await doCreateUser(db, feathers, dbName, _id, logger, Sentry);
+    usersCreatedCount++;
+  } else {
+    const structures = await db.collection('conseillers').find({
+      userCreated: false,
+      userCreationError: { $ne: true },
+      statut: { $ne: 'RECRUTE' }
+    }).toArray();
+
+    let promises = [];
+    structures.forEach(structure => {
+      const p = new Promise(async (resolve, reject) => {
+        doCreateUser(db, feathers, dbName, structure._id, logger, Sentry).then(() => {
+          usersCreatedCount++;
+          resolve();
+          if (usersCreatedCount === limit) {
+            quit(usersCreatedCount);
+          }
+        }).catch(() => {
+          usersCreationErrorCount++;
+          reject();
+        });
+      });
+      promises.push(p);
+    });
+    await Promise.allSettled(promises);
+  }
+
+  quit(usersCreatedCount, usersCreationErrorCount);
+});
