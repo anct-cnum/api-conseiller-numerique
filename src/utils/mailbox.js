@@ -13,7 +13,7 @@ const createMailbox = async ({ gandi, conseillerId, login, password, db, logger,
       data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
     });
     logger.info(resultCreation);
-    
+
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:
         { emailCNError: false,
@@ -32,4 +32,53 @@ const createMailbox = async ({ gandi, conseillerId, login, password, db, logger,
   }
 };
 
-module.exports = { createMailbox };
+const updateMailboxPassword = async (gandi, conseillerId, login, password, db, logger, Sentry) => {
+
+  try {
+    //Récuperation de l'id mailbox associé au login pour patcher
+    const mailbox = await axios({
+      method: 'get',
+      url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
+      headers: {
+        'Authorization': `Apikey ${gandi.token}`
+      }
+    });
+
+    //Si trouvé : mise à jour du password
+    if (mailbox?.data.length === 1) {
+      const resultUpdatePassword = await axios({
+        method: 'patch',
+        url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Apikey ${gandi.token}`
+        },
+        data: { 'password': password }
+      });
+      logger.info(resultUpdatePassword);
+      logger.info(`Mot de passe Webmail Gandi mis à jour du login ${login} pour le conseiller id=${conseillerId}`);
+      await db.collection('conseillers').updateOne({ _id: conseillerId },
+        { $set:
+          { resetPasswordCNError: false }
+        });
+      return true;
+    } else {
+      logger.error(`Login ${login} inexistant dans Gandi`);
+      await db.collection('conseillers').updateOne({ _id: conseillerId },
+        { $set:
+          { resetPasswordCNError: true }
+        });
+      return false;
+    }
+  } catch (e) {
+    Sentry.captureException(e);
+    logger.error(e.message);
+    await db.collection('conseillers').updateOne({ _id: conseillerId },
+      { $set:
+        { resetPasswordCNError: true }
+      });
+    return false;
+  }
+};
+
+module.exports = { createMailbox, updateMailboxPassword };
