@@ -47,6 +47,9 @@ module.exports = {
         'email': 'text',
       }, { name: 'bo-search-fulltext' }),
       db.collection('conseillers').createIndex({ 'cv.date': 1 }),
+      db.collection('conseillers').createIndex({ 'statut': 1 }),
+      db.collection('conseillers').createIndex({ 'userCreated': 1 }),
+      db.collection('conseillers').createIndex({ 'userCreationError': 1 }),
     ]);
   },
   cras: db => {

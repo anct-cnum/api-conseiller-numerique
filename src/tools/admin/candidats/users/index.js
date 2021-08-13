@@ -87,7 +87,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       userCreated: false,
       userCreationError: { $ne: true },
       statut: { $ne: 'RECRUTE' }
-    }).toArray();
+    }, { limit: limit }).toArray();
 
     let promises = [];
     structures.forEach(structure => {
@@ -95,9 +95,6 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
         doCreateUser(db, feathers, dbName, structure._id, logger, Sentry).then(() => {
           usersCreatedCount++;
           resolve();
-          if (usersCreatedCount === limit) {
-            quit(usersCreatedCount);
-          }
         }).catch(() => {
           usersCreationErrorCount++;
           reject();
