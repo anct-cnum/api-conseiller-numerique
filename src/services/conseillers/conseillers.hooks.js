@@ -121,27 +121,28 @@ module.exports = {
                 {
                   'statut': 'recrutee',
                   'conseiller.$id': context.result._id,
+                  'dateRecrutement': { $ne: null },
                   'structure.$id': context.params?.user?.entity?.oid
                 }
               );
-              if (miseEnRelationRecrutee?.dateRecrutement) {
-                context.result.dateRecrutement = [miseEnRelationRecrutee?.dateRecrutement];
-              }
+              context.result.dateRecrutement = [miseEnRelationRecrutee?.dateRecrutement];
             } else {
               const miseEnRelationRecrutees = await db.collection('misesEnRelation').find(
                 {
                   'statut': 'recrutee',
+                  'dateRecrutement': { $ne: null },
                   'conseiller.$id': context.result._id
                 }
               ).toArray();
 
               let dateRecrutement = [];
+              let nomStructures = [];
               miseEnRelationRecrutees.forEach(miseEnRelationRecrutee => {
-                if (miseEnRelationRecrutee?.dateRecrutement) {
-                  dateRecrutement.push(miseEnRelationRecrutee?.dateRecrutement);
-                }
+                dateRecrutement.push(miseEnRelationRecrutee?.dateRecrutement);
+                nomStructures.push(miseEnRelationRecrutee?.structureObj?.nom);
               });
               context.result.dateRecrutement = dateRecrutement;
+              context.result.nomStructures = nomStructures;
             }
             return context;
           });
