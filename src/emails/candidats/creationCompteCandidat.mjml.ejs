@@ -1,0 +1,65 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Activer votre espace candidat Conseillers numériques France Services.
+            </mj-text>
+            <mj-text>
+              Madame, Monsieur,
+            </mj-text>
+            <mj-text>
+              Un nouvel espace candidat a spécialement été créé à destination des Conseillers numériques. Cet outil vous permet de consulter, modifier vos informations personnelles et de <strong>télécharger votre CV.</strong>
+            </mj-text>
+            <mj-text>
+              Afin d'augmenter vos chances d'être contacté par une structure, nous vous invitons à télécharger votre cv sur votre espace dans la rubrique "Mes informations".
+            </mj-text>
+            <mj-text>
+              Suivez le lien pour créer votre mot de passe et accéder ensuite à votre espace candidat.
+            </mj-text>
+            <mj-text>
+              Nous demeurons à votre disposition pour toute question.
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
+          <mj-column border="1px solid #C8CBCE">
+            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
+              Votre identifiant
+            </mj-text>
+            <mj-text font-size="14px" line-height="21px">
+              <%= conseiller.name %>
+            </mj-text>
+
+            <mj-text padding="0" css-class="text-secondary">
+              Suivez ce lien pour créer votre mot de passe
+            </mj-text>
+
+            <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
+              text-transform="uppercase">
+              Activer mon espace candidat
+            </mj-button>
+            <mj-text css-class="text-secondary">
+              <%= link %>
+            </mj-text>
+          </mj-column>
+        </mj-section>
+        <mj-section>
+          <mj-column>
+            <%- include('../commun/signature.mjml.ejs'); %>
+            <mj-text css-class="text-secondary">
+              https://www.conseiller-numerique.gouv.fr/
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+  </mj-body>
+</mjml>

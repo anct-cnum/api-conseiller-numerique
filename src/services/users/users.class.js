@@ -5,8 +5,8 @@ const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const slugify = require('slugify');
-const { createMailbox } = require('../../utils/mailbox');
-const { createAccount } = require('../../utils/mattermost');
+const { createMailbox, updateMailboxPassword } = require('../../utils/mailbox');
+const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
 
@@ -399,8 +399,20 @@ exports.Users = class Users extends Service {
                 break;
             }
           } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
+            const conseiller = await app.service('conseillers').get(user.entity?.oid);
+            //Mise à jour du password également dans Mattermost et Gandi
+            const adressCN = conseiller.emailCN?.address;
+            if (adressCN === undefined) {
+              logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
+              res.status(404).send(new NotFound('Adresse Conseiller numerique non trouvé').toJSON());
+              return;
+            }
+            const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
+            app.get('mongoClient').then(async db => {
+              await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
+              await updateAccountPassword(app.get('mattermost'), conseiller, password, db, logger, app.get('sentry'));
+            });
             //Renouvellement conseiller => envoi email perso
-            let conseiller = await app.service('conseillers').get(user.entity?.oid);
             user.persoEmail = conseiller.email;
             message = emails.getEmailMessageByTemplateName('renouvellementCompte');
             await message.send(user);
