@@ -110,7 +110,47 @@ module.exports = {
         await p;
       }
     }],
-    get: [],
+    get: [async context => {
+      if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||
+          context.params?.user?.roles.includes('admin')) {
+        const p = new Promise(resolve => {
+          const result = context.app.get('mongoClient').then(async db => {
+
+            if (context.params?.user?.roles.includes('structure')) {
+              const miseEnRelationRecrutee = await db.collection('misesEnRelation').findOne(
+                {
+                  'statut': 'recrutee',
+                  'conseiller.$id': context.result._id,
+                  'dateRecrutement': { $ne: null },
+                  'structure.$id': context.params?.user?.entity?.oid
+                }
+              );
+              context.result.dateRecrutement = [miseEnRelationRecrutee?.dateRecrutement];
+            } else {
+              const miseEnRelationRecrutees = await db.collection('misesEnRelation').find(
+                {
+                  'statut': 'recrutee',
+                  'dateRecrutement': { $ne: null },
+                  'conseiller.$id': context.result._id
+                }
+              ).toArray();
+
+              let dateRecrutement = [];
+              let nomStructures = [];
+              miseEnRelationRecrutees.forEach(miseEnRelationRecrutee => {
+                dateRecrutement.push(miseEnRelationRecrutee?.dateRecrutement);
+                nomStructures.push(miseEnRelationRecrutee?.structureObj?.nom);
+              });
+              context.result.dateRecrutement = dateRecrutement;
+              context.result.nomStructures = nomStructures;
+            }
+            return context;
+          });
+          resolve(result);
+        });
+        return await p;
+      }
+    }],
     create: [],
     update: [],
     patch: [],
