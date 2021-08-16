@@ -19,9 +19,8 @@ execute(__filename, async ({ logger, db }) => {
   });
 
   file.write('idPG; SIRET;Nom de la structure\n');
-  structureWithoutContact.forEach(info => {
+  structureWithoutContact.forEach(structure => {
     promises.push(new Promise(async resolve => {
-      let structure = await db.collection('structures').findOne({_id: info._id});
       file.write(`${structure.idPG};${structure.siret};${structure.nom}\n`);
       resolve();
     }));
