@@ -97,4 +97,48 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
   }
 };
 
-module.exports = { createAccount };
+const updateAccountPassword = async (mattermost, conseiller, newPassword, db, logger, Sentry) => {
+
+  try {
+
+    //Connexion à l'API de Mattermost
+    const resultLogin = await axios({
+      method: 'post',
+      url: `${mattermost.endPoint}/api/v4/users/login`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: { 'login_id': mattermost.login, 'password': mattermost.password }
+    });
+
+    const token = resultLogin.request.res.headers.token;
+
+    const resultUpdatePassword = await axios({
+      method: 'put',
+      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/password`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      data: { 'new_password': newPassword }
+    });
+    logger.info(resultUpdatePassword);
+    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id}`);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      { $set:
+        { 'mattermost.errorResetPassword': false }
+      });
+    return true;
+  } catch (e) {
+    Sentry.captureException(e);
+    logger.error(e.message);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      { $set:
+        { 'mattermost.errorResetPassword': true }
+      });
+    return false;
+  }
+
+};
+
+module.exports = { createAccount, updateAccountPassword };

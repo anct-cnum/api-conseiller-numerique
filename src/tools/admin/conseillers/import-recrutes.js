@@ -37,7 +37,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
           const structure = await db.collection('structures').findOne({ idPG: structureId });
           const miseEnRelation = await db.collection('misesEnRelation').findOne({
             'conseillerObj.email': email,
-            'structureObj.idPG': structureId
+            'structureObj.idPG': structureId,
+            'statut': 'recrutee'
           });
           if (alreadyRecruted > 0) {
             logger.warn(`Un conseiller avec l'email '${email}' a déjà été recruté`);
@@ -59,7 +60,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
                 statut: 'RECRUTE',
                 disponible: false,
                 estRecrute: true,
-                datePrisePoste: moment(conseiller['Date de prise de poste / départ en formation'], 'MM/DD/YY').toDate(),
+                datePrisePoste: moment(conseiller['Date de départ en formation'], 'MM/DD/YY').toDate(),
                 dateFinFormation: moment(conseiller['Date de fin de formation'], 'MM/DD/YY').toDate(),
                 structureId: structure._id
               }
@@ -80,22 +81,36 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
             const conseillerDoc = await db.collection('conseillers').findOne({ email });
-            await feathers.service('users').create({
-              name: email,
-              prenom: conseillerDoc.prenom,
-              nom: conseillerDoc.nom,
-              password: uuidv4(), // random password (required to create user)
-              roles: Array(role),
-              entity: {
-                '$ref': `${role}s`,
-                '$id': conseillerDoc._id,
-                '$db': dbName
-              },
-              token: uuidv4(),
-              mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
-              passwordCreated: false,
-              createdAt: new Date(),
-            });
+            if (!conseillerDoc.userCreated) {
+              await feathers.service('users').create({
+                name: email,
+                prenom: conseillerDoc.prenom,
+                nom: conseillerDoc.nom,
+                password: uuidv4(), // random password (required to create user)
+                roles: Array(role),
+                entity: {
+                  '$ref': `${role}s`,
+                  '$id': conseillerDoc._id,
+                  '$db': dbName
+                },
+                token: uuidv4(),
+                mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
+                passwordCreated: false,
+                createdAt: new Date(),
+              });
+            } else {
+              await db.collection('users').updateOne({ name: email }, {
+                $set: {
+                  roles: Array(role),
+                  token: uuidv4(),
+                  mailSentDate: null,
+                  passwordCreated: false,
+                }
+              });
+            }
+            await db.collection('conseillers').updateOne({ _id: conseillerDoc._id }, { $set: {
+              userCreated: true
+            } });
             count++;
             resolve();
           }
