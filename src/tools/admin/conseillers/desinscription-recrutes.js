@@ -1,3 +1,5 @@
+const { deleteMailbox } = require('../../../utils/mailbox');
+const dayjs = require('dayjs');
 const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 
@@ -18,7 +20,7 @@ const readCSV = async filePath => {
 
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ db, logger, exit, Sentry }) => {
+execute(__filename, async ({ db, logger, exit, Sentry, gandi }) => {
 
   logger.info('Désinscription des conseillers déjà recrutés');
   let promises = [];
@@ -40,6 +42,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             'roles': { $in: ['conseiller'] },
             'entity.$id': conseillerCoop?._id
           });
+          const login = conseillerCoop?.emailCN?.address.substring(0, conseillerCoop.emailCN?.address.lastIndexOf('@'));
           if (conseillerCoop === null) {
             logger.warn(`Aucun conseiller recruté avec l'email '${email}' n'a été trouvé`);
             errors++;
@@ -48,19 +51,30 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             logger.warn(`Aucun utilisateur recruté avec l'email '${email}' n'a été trouvé`);
             errors++;
             reject();
+          } else if (login === undefined) {
+            logger.warn(`Login Gandi inexistant avec l'email '${email}'`);
+            errors++;
+            reject();
           } else {
             //Mise à jour du statut
             await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
-              $set: { statut: 'RUPTURE' }
+              $set: {
+                statut: 'RUPTURE',
+                dateRuptureContrat: conseiller['Date rupture de contrat'] ? dayjs(conseiller['Date rupture de contrat'], 'YYYY-MM-DD').toDate() : new Date()
+              }
             });
             //Suppression du user associé
             await db.collection('users').deleteOne({ _id: userCoop._id });
             ok++;
+            //Suppression compte Gandi
+            await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
+
           }
           count++;
           if (total === count) {
             logger.info(`[DESINSCRIPTION COOP] Des conseillers ont été désinscrits :  ` +
                 `${ok} désinscrits / ${errors} erreurs`);
+            exit();
           }
         });
         promises.push(p);
