@@ -10,7 +10,7 @@ execute(__filename, async ({ logger, db }) => {
 
   let promises = [];
 
-  logger.info(`${structureWithoutContact.length} structure sont sans donnée de contact`);
+  logger.info(`${structureWithoutContact.length} structure(s) sans données de contact`);
   logger.info(`Generating CSV file...`);
   let csvFile = path.join(__dirname, '../../../data/exports', 'structures_sans_contact.csv');
 
