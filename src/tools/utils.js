@@ -31,6 +31,7 @@ app.hooks(appHooks);
 
 const logger = require('../logger');
 const gandi = app.get('gandi');
+const mattermost = app.get('mattermost');
 
 let transaction = null;
 
@@ -80,7 +81,7 @@ module.exports = {
     let mailer = createMailer(app);
 
     const emails = createEmails(db, mailer, app);
-    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app, Sentry, gandi });
+    let jobComponents = Object.assign({}, { feathers: f, db, logger, exit, emails, app, Sentry, gandi, mattermost });
 
     try {
       let launchTime = new Date().getTime();

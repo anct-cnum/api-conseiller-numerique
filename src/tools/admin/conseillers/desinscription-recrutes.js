@@ -1,4 +1,5 @@
 const { deleteMailbox } = require('../../../utils/mailbox');
+const { deleteAccount } = require('../../../utils/mattermost');
 const dayjs = require('dayjs');
 const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
@@ -20,7 +21,7 @@ const readCSV = async filePath => {
 
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ db, logger, exit, Sentry, gandi }) => {
+execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
 
   logger.info('Désinscription des conseillers déjà recrutés');
   let promises = [];
@@ -68,7 +69,8 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi }) => {
             ok++;
             //Suppression compte Gandi
             await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
-
+            //Suppression compte Mattermost
+            await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
           }
           count++;
           if (total === count) {
