@@ -119,17 +119,18 @@ module.exports = {
             if (context.params?.user?.roles.includes('structure')) {
               const miseEnRelationRecrutee = await db.collection('misesEnRelation').findOne(
                 {
-                  'statut': 'recrutee',
+                  '$or': [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }],
                   'conseiller.$id': context.result._id,
                   'dateRecrutement': { $ne: null },
                   'structure.$id': context.params?.user?.entity?.oid
                 }
               );
+
               context.result.dateRecrutement = [miseEnRelationRecrutee?.dateRecrutement];
             } else {
               const miseEnRelationRecrutees = await db.collection('misesEnRelation').find(
                 {
-                  'statut': 'recrutee',
+                  '$or': [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }],
                   'dateRecrutement': { $ne: null },
                   'conseiller.$id': context.result._id
                 }
