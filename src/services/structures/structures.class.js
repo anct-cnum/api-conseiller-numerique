@@ -251,5 +251,22 @@ exports.Structures = class Structures extends Service {
 
     });
 
+
+    app.post('/structures/updateStructureSiret', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
+
+    });
+
   }
 };
