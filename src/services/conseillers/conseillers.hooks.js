@@ -86,7 +86,6 @@ module.exports = {
                     'structure.$id': context.params?.user.entity.oid,
                     'conseiller.$id': conseiller._id
                   });
-                resolve();
                 if (miseEnRelationCount === 0) {
                   const dejaFinalisee = await db.collection('misesEnRelation').countDocuments(
                     {
@@ -99,11 +98,12 @@ module.exports = {
                   }
                   result.push(conseiller);
                 }
+                context.result.data = result;
+                resolve();
               });
               promises.push(p);
             });
             await Promise.all(promises);
-            context.result.data = result;
             resolve();
           });
         });
