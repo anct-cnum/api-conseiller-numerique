@@ -97,7 +97,7 @@ exports.Users = class Users extends Service {
         return;
       }
       const userInfo = user?.data[0];
-      if (userInfo?.mailAModifier === null || userInfo?.mailAModifier === undefined) {
+      if (!userInfo?.mailAModifier) {
         res.status(404).send(new NotFound('mailAModifier not found').toJSON());
         return;
       }
