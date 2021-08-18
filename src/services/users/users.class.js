@@ -97,6 +97,10 @@ exports.Users = class Users extends Service {
         return;
       }
       const userInfo = user?.data[0];
+      if (userInfo?.mailAModifier === null || userInfo?.mailAModifier === undefined) {
+        res.status(404).send(new NotFound('mailAModifier not found').toJSON());
+        return;
+      }
       try {
         await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
         await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
