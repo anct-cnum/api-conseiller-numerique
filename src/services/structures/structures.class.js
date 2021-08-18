@@ -278,7 +278,7 @@ exports.Structures = class Structures extends Service {
           object: 'checkSiret',
         };
         const result = await axios.get(urlSiret, { params: params });
-        return res.send({ 'structure': result.data.etablissement.adresse.l1 });
+        return res.send({ 'nomStructure': result.data.etablissement.adresse.l1 });
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
