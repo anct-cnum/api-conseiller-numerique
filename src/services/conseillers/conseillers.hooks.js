@@ -109,6 +109,10 @@ module.exports = {
         });
         await p;
       }
+
+      if (context.params?.user?.roles.includes('admin_coop')) {
+
+      }
     }],
     get: [async context => {
       if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||
