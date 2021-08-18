@@ -6,7 +6,7 @@ const { execute } = require('../../utils');
 
 const pool = new Pool();
 
-execute(__filename, async ({ db, logger, exit }) => {
+execute(__filename, async ({ db, logger, exit, Sentry }) => {
   const getConseiller = async id => {
     try {
       const { rows } = await pool.query(`
@@ -70,6 +70,18 @@ execute(__filename, async ({ db, logger, exit }) => {
   await db.collection('conseillers').updateOne({ idPG: id }, { $set: {
     disponible: disponibleChange
   } }, {});
+
+  if (disponibleChange === false) {
+    const conseiller = await db.collection('conseillers').findOne({ idPG: id });
+    try {
+      await db.collection('users').deleteOne({ 'entity.$id': conseiller._id });
+      await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': conseiller._id });
+    } catch (error) {
+      logger.error(`Erreur Mongo (delete): ${error.message}`);
+      Sentry.captureException(error);
+      return;
+    }
+  }
 
   logger.info('Disponibilité mis à jour');
   exit();
