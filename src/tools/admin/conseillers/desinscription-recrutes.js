@@ -43,7 +43,7 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
             'roles': { $in: ['conseiller'] },
             'entity.$id': conseillerCoop?._id
           });
-          const login = conseillerCoop?.emailCN?.address.substring(0, conseillerCoop.emailCN?.address.lastIndexOf('@'));
+          const login = conseillerCoop?.emailCN?.address?.substring(0, conseillerCoop.emailCN?.address?.lastIndexOf('@'));
           if (conseillerCoop === null) {
             logger.warn(`Aucun conseiller recruté avec l'email '${email}' n'a été trouvé`);
             errors++;
@@ -56,6 +56,10 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
             logger.warn(`Login Gandi inexistant avec l'email '${email}'`);
             errors++;
             reject();
+          } else if (conseillerCoop.mattermost?.id === undefined) {
+            logger.warn(`Id Mattermost inexistant avec l'email '${email}'`);
+            errors++;
+            reject();
           } else {
             //Mise à jour du statut
             await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
@@ -66,11 +70,11 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
             });
             //Suppression du user associé
             await db.collection('users').deleteOne({ _id: userCoop._id });
-            ok++;
             //Suppression compte Gandi
             await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
             //Suppression compte Mattermost
             await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
+            ok++;
           }
           count++;
           if (total === count) {

@@ -157,10 +157,10 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
     const token = resultLogin.request.res.headers.token;
 
-    //TODO ajouter ?permanent=true quand ServiceSettings.EnableAPIUserDeletion est à true (suppression définitive sinon désactivation)
+    //Query parameter permanent pour la suppression définitive (il faut que le paramètre ServiceSettings.EnableAPIUserDeletion soit configuré à true)
     const resultDeleteAccount = await axios({
       method: 'delete',
-      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}`,
+      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}?permanent=true`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
