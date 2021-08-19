@@ -26,7 +26,7 @@ exports.Users = class Users extends Service {
     const emails = createEmails(db, mailer, app);
 
     app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
-      const nouveauEmail = req.body.email;
+      const nouveauEmail = req.body.email.toLowerCase();
       const { nom, prenom, telephone } = req.body;
       const idUser = req.params.id;
       const userConnected = await this.find({ query: { _id: idUser } });
