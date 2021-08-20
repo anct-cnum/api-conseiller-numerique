@@ -19,6 +19,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       return rows;
     } catch (error) {
       logger.info(`Erreur DB for GET Conseiller : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
@@ -33,9 +34,23 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       return rows;
     } catch (error) {
       logger.info(`Erreur DB for update Conseiller : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
+  const deleteConseiller = async id => {
+    try {
+      const { rows } = await pool.query(`
+        DELETE FROM djapp_coach WHERE id = $1`,
+      [id]);
+      return rows;
+    } catch (error) {
+      logger.info(`Erreur DB for delete Conseiller : ${error.message}`);
+      Sentry.captureException(error);
+    }
+  };
+
+  program.option('--deleteTotal', 'Suppression total d\'un conseiller');
   program.option('--disponible', 'activer le conseiller ');
   program.option('--non-disponible', 'désactiver le conseiller');
   program.option('-i, --id <id>', 'id: id PostgreSQL du conseiller');
@@ -45,9 +60,10 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let id = ~~program.id;
   let disponible = program.disponible;
   let nonDisponible = program.nonDisponible;
+  let forceSuppressionTotal = program.deleteTotal;
 
-  if (id === 0 || !(disponible ^ nonDisponible)) {
-    exit('Paramètres invalides. Veuillez préciser un id et la disponibilité ou la non disponibilité');
+  if (id === 0) {
+    exit('Paramètres invalides. Veuillez préciser un id');
     return;
   }
 
@@ -64,25 +80,48 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     exit('id PG inconnu dans PostgreSQL');
     return;
   }
-  let disponibleChange = program.disponible === true;
-  updateConseiller(id, disponibleChange);
-
-  await db.collection('conseillers').updateOne({ idPG: id }, { $set: {
-    disponible: disponibleChange
-  } }, {});
-
-  if (disponibleChange === false) {
-    const conseiller = await db.collection('conseillers').findOne({ idPG: id });
+  const conseiller = await db.collection('conseillers').findOne({ idPG: id });
+  if (forceSuppressionTotal === true) {
+    // SUPPRESSION TOTAL DU CONSEILLER avec la commande --deleteTotal
     try {
       await db.collection('users').deleteOne({ 'entity.$id': conseiller._id });
       await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': conseiller._id });
+      await db.collection('conseillers').deleteOne({ _id: conseiller._id });
+      deleteConseiller(id);
     } catch (error) {
       logger.error(`Erreur Mongo (delete): ${error.message}`);
       Sentry.captureException(error);
       return;
     }
-  }
 
-  logger.info('Disponibilité mis à jour');
+    logger.info(`Conseiller ${conseiller.nom} ${conseiller.prenom} avec l'id : ${id} est totalement supprimer`);
+  } else {
+    // CHANGER LE STATUS DISPONIBLE OU NON DISPONIBLE dans 'conseillers' + 'PG djapp_coach' + 'misesEnrelation'
+    if (!(disponible ^ nonDisponible)) {
+      // eslint-disable-next-line max-len
+      exit('Paramètres invalides. Veuillez préciser la disponibilité ou la non disponibilité ou alors lancer la commande --deleteTotal pour supprimer la totalité d\'un conseiller');
+      return;
+    }
+    let disponibleChange = program.disponible === true;
+    console.log('disponibleChange:', disponibleChange);
+    try {
+      console.log('id:', id);
+      await db.collection('conseillers').updateOne({ idPG: id }, { $set: { disponible: disponibleChange } });
+      await db.collection('misesEnRelation').updateMany({ 'conseillerObj.idPG': id }, {
+        $set: {
+          'conseillerObj.disponible': disponibleChange
+        }
+      }, {});
+      updateConseiller(id, disponibleChange);
+      const après = await db.collection('conseillers').findOne({ idPG: id });
+      console.log('après:', après.disponible);
+    } catch (error) {
+      logger.error(`Erreur Mongo (update): ${error.message}`);
+      Sentry.captureException(error);
+      return;
+    }
+
+    logger.info('Disponibilité mis à jour');
+  }
   exit();
 });
