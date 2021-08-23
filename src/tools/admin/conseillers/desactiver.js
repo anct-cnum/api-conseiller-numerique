@@ -50,6 +50,18 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     }
   };
 
+  const deleteMatchingConseiller = async id => {
+    try {
+      const { rows } = await pool.query(`
+      DELETE FROM djapp_matching WHERE host_id = $1`,
+      [id]);
+      return rows;
+    } catch (error) {
+      logger.info(`Erreur DB for delete Conseiller : ${error.message}`);
+      Sentry.captureException(error);
+    }
+  };
+
   program.option('--supprimer', 'Suppression total d\'un conseiller');
   program.option('--disponible', 'activer le conseiller ');
   program.option('--non-disponible', 'désactiver le conseiller');
@@ -81,7 +93,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
-  
+
   if (forceSuppressionTotal === true) {
     // SUPPRESSION TOTAL DU CONSEILLER avec la commande --supprimer
     if (conseiller.userCreated === true) {
@@ -95,6 +107,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       await db.collection('users').deleteOne({ 'entity.$id': conseiller._id });
       await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': conseiller._id });
       await db.collection('conseillers').deleteOne({ _id: conseiller._id });
+      deleteMatchingConseiller(id);// supprimer également dans matching sinon erreur "constraint" coter PG
       deleteConseiller(id);
     } catch (error) {
       logger.error(`Erreur Mongo (delete): ${error.message}`);
@@ -111,9 +124,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       return;
     }
     let disponibleChange = program.disponible === true;
-    console.log('disponibleChange:', disponibleChange);
     try {
-      console.log('id:', id);
       await db.collection('conseillers').updateOne({ idPG: id }, { $set: { disponible: disponibleChange } });
       await db.collection('misesEnRelation').updateMany({ 'conseillerObj.idPG': id }, {
         $set: {
@@ -121,8 +132,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         }
       }, {});
       updateConseiller(id, disponibleChange);
-      const après = await db.collection('conseillers').findOne({ idPG: id });
-      console.log('après:', après.disponible);
     } catch (error) {
       logger.error(`Erreur Mongo (update): ${error.message}`);
       Sentry.captureException(error);
