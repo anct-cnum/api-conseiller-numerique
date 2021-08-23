@@ -50,7 +50,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     }
   };
 
-  program.option('--deleteTotal', 'Suppression total d\'un conseiller');
+  program.option('--supprimer', 'Suppression total d\'un conseiller');
   program.option('--disponible', 'activer le conseiller ');
   program.option('--non-disponible', 'désactiver le conseiller');
   program.option('-i, --id <id>', 'id: id PostgreSQL du conseiller');
@@ -60,7 +60,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let id = ~~program.id;
   let disponible = program.disponible;
   let nonDisponible = program.nonDisponible;
-  let forceSuppressionTotal = program.deleteTotal;
+  let forceSuppressionTotal = program.supprimer;
 
   if (id === 0) {
     exit('Paramètres invalides. Veuillez préciser un id');
@@ -82,7 +82,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
   if (forceSuppressionTotal === true) {
-    // SUPPRESSION TOTAL DU CONSEILLER avec la commande --deleteTotal
+    // SUPPRESSION TOTAL DU CONSEILLER avec la commande --supprimer
     try {
       await db.collection('users').deleteOne({ 'entity.$id': conseiller._id });
       await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': conseiller._id });
@@ -99,7 +99,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     // CHANGER LE STATUS DISPONIBLE OU NON DISPONIBLE dans 'conseillers' + 'PG djapp_coach' + 'misesEnrelation'
     if (!(disponible ^ nonDisponible)) {
       // eslint-disable-next-line max-len
-      exit('Paramètres invalides. Veuillez préciser la disponibilité ou la non disponibilité ou alors lancer la commande --deleteTotal pour supprimer la totalité d\'un conseiller');
+      exit('Paramètres invalides. Veuillez préciser la disponibilité ou la non disponibilité ou alors lancer la commande --supprimer pour supprimer la totalité d\'un conseiller');
       return;
     }
     let disponibleChange = program.disponible === true;
