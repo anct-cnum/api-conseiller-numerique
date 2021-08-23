@@ -81,8 +81,16 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
+  
   if (forceSuppressionTotal === true) {
     // SUPPRESSION TOTAL DU CONSEILLER avec la commande --supprimer
+    if (conseiller.userCreated === true) {
+      const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
+      if (user.roles[0] === 'conseiller') {
+        exit(`le conseiller: ${conseiller.nom} ${conseiller.prenom} avec l'idPG : ${conseiller.idPG} déjà invité à lespace coop`);
+        return;
+      }
+    }
     try {
       await db.collection('users').deleteOne({ 'entity.$id': conseiller._id });
       await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': conseiller._id });
