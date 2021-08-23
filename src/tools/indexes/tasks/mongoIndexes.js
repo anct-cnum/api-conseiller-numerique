@@ -72,32 +72,37 @@ module.exports = {
   },
   stats_PostesValidesDepartement: db => {
     return Promise.all([
-      db.collection('stats_PostesValidesDepartement').createIndex({ 'key': 1 }, { unique: true })
+      db.collection('stats_PostesValidesDepartement').createIndex({ 'date': 1 }, { unique: true })
     ]);
   },
   stats_PostesValidesStructure: db => {
     return Promise.all([
-      db.collection('stats_PostesValidesStructure').createIndex({ 'key': 1 }, { unique: true })
+      db.collection('stats_PostesValidesStructure').createIndex({ 'date': 1 }, { unique: true })
     ]);
   },
   stats_ConseillersRecrutesDepartement: db => {
     return Promise.all([
-      db.collection('stats_ConseillersRecrutesDepartement').createIndex({ 'key': 1 }, { unique: true })
+      db.collection('stats_ConseillersRecrutesDepartement').createIndex({ 'date': 1 }, { unique: true })
+    ]);
+  },
+  stats_ConseillersFinalisesDepartement: db => {
+    return Promise.all([
+      db.collection('stats_ConseillersFinalisesDepartement').createIndex({ 'date': 1 }, { unique: true })
     ]);
   },
   stats_ConseillersRecrutesStructure: db => {
     return Promise.all([
-      db.collection('stats_ConseillersRecrutesStructure').createIndex({ 'key': 1 }, { unique: true })
+      db.collection('stats_ConseillersRecrutesStructure').createIndex({ 'date': 1 }, { unique: true })
     ]);
   },
   stats_Candidats: db => {
     return Promise.all([
-      db.collection('stats_Candidats').createIndex({ 'key': 1 }, { unique: true })
+      db.collection('stats_Candidats').createIndex({ 'date': 1 }, { unique: true })
     ]);
   },
   stats_StructuresCandidates: db => {
     return Promise.all([
-      db.collection('stats_StructuresCandidates').createIndex({ 'key': 1 }, { unique: true })
+      db.collection('stats_StructuresCandidates').createIndex({ 'date': 1 }, { unique: true })
     ]);
   },
 };
