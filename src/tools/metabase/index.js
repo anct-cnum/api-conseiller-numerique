@@ -33,7 +33,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   departements.forEach(departement => {
     if (posteParDepartement[departement.num_dep]) {
       lignes.push({
-        'numeroDepartement': departement.num_dep,
+        'numeroDepartement': String(departement.num_dep),
         'departement': departement.dep_name,
         'nombrePostesValides': posteParDepartement[departement.num_dep]
       });
@@ -79,6 +79,29 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   }
   const conseillersRecrutesDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
+  /* Nombre de conseillers finalisés par département */
+  const queryNombreConseillersFinalisesDepartement = [
+    { '$match': { 'statut': { $eq: 'finalisee' } } },
+    { $group: { _id: '$structureObj.codeDepartement', count: { $sum: 1 } } },
+    { $sort: { _id: 1 } }
+  ];
+  const listConseillersFinalisesDepartement = await db.collection('misesEnRelation').aggregate(queryNombreConseillersFinalisesDepartement).toArray();
+  lignes = [];
+  if (listConseillersFinalisesDepartement.length > 0) {
+    listConseillersFinalisesDepartement.forEach(conseiller => {
+      departements.forEach(departement => {
+        if (String(departement.num_dep) === String(conseiller._id)) {
+          lignes.push({
+            'numeroDepartement': conseiller._id,
+            'departement': departement.dep_name,
+            'nombreConseillers': conseiller.count
+          });
+        }
+      });
+    });
+  }
+  const conseillersFinalisesDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
+
   /* Nombre de conseillers recrutés par structure */
   const queryNombreConseillersRecrutesStructure = [
     { '$match': { 'statut': { $eq: 'recrutee' } } },
@@ -96,9 +119,9 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   }
   const conseillersRecrutesStructure = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
-  /* Nombre de candidats par département */
+  /* Nombre de mises en relation de candidats par département */
   const queryNombreCandidats = [
-    { '$match': { 'conseillerObj.disponible': true, 'statut': { $ne: 'recrutee' } } },
+    { '$match': { 'conseillerObj.disponible': true, 'statut': { $nin: ['finalisee_non_disponible', 'recrutee', 'finalisee'] } } },
     { $group: { _id: '$structureObj.codeDepartement', count: { $sum: 1 } } },
     { $sort: { _id: 1 } }
   ];
@@ -147,6 +170,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     db.collection('stats_PostesValidesDepartement').insertOne(postesValidesDepartement);
     db.collection('stats_PostesValidesStructure').insertOne(postesValidesStructure);
     db.collection('stats_ConseillersRecrutesDepartement').insertOne(conseillersRecrutesDepartement);
+    db.collection('stats_ConseillersFinalisesDepartement').insertOne(conseillersFinalisesDepartement);
     db.collection('stats_ConseillersRecrutesStructure').insertOne(conseillersRecrutesStructure);
     db.collection('stats_Candidats').insertOne(candidats);
     db.collection('stats_StructuresCandidates').insertOne(structuresCandidates);

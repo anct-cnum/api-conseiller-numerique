@@ -386,11 +386,11 @@ exports.Conseillers = class Conseillers extends Service {
 
           res.contentType('application/pdf');
           pdf.then(buffer => res.send(buffer));
-
+          return;
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+          return res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
         }
       });
     });

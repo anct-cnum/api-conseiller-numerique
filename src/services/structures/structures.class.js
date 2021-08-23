@@ -1,12 +1,16 @@
 const { ObjectID, DBRef } = require('mongodb');
 
-const { BadRequest, NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
+const { BadRequest, NotFound, Forbidden, NotAuthenticated, GeneralError } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
 
+const axios = require('axios');
+const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const decode = require('jwt-decode');
+const { Pool } = require('pg');
+const pool = new Pool();
 
 exports.Structures = class Structures extends Service {
   constructor(options, app) {
@@ -251,5 +255,81 @@ exports.Structures = class Structures extends Service {
 
     });
 
+    app.post('/structures/verifyStructureSiret', async (req, res) => {
+
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
+      try {
+        const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
+        const params = {
+          token: process.env.API_ENTREPRISE_KEY,
+          context: 'cnum',
+          recipient: 'cnum',
+          object: 'checkSiret',
+        };
+        const result = await axios.get(urlSiret, { params: params });
+        return res.send({ 'nomStructure': result.data.etablissement.adresse.l1 });
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(404).send(new NotFound('Le numéro de SIRET ( N° ' + req.body.siret + ' ) que vous avez demandé n\'existe pas !').toJSON());
+      }
+    });
+
+    app.post('/structures/updateStructureSiret', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
+      const structure = await db.collection('structures').findOne({ _id: new ObjectID(req.body.structureId) });
+      if (!structure) {
+        return res.status(404).send(new NotFound('Structure not found', {
+          structureId: req.body.structureId
+        }).toJSON());
+      }
+
+      const updateStructurePG = async (id, siret) => {
+        try {
+          const row = await pool.query(`
+            UPDATE djapp_hostorganization
+            SET disponible = $2
+            WHERE id = $1`,
+          [id, siret]);
+          return row;
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          return res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
+        }
+      };
+
+      try {
+        await updateStructurePG(structure.idPG, req.body.siret);
+        await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret } });
+        return res.send({ siretUpdated: true });
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(500).send(new GeneralError('La modification du siret a échoué ! Veuillez recommencer.'));
+      }
+    });
   }
 };
