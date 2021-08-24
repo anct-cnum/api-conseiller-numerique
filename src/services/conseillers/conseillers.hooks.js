@@ -111,8 +111,31 @@ module.exports = {
       }
 
       if (context.params?.user?.roles.includes('admin_coop')) {
-
+        const p = new Promise(resolve => {
+          context.app.get('mongoClient').then(async db => {
+            let promises = [];
+            let result = [];
+            context.result.data.filter(async conseiller => {
+              const p = new Promise(async resolve => {
+                const structure = await db.collection('structures').findOne({
+                  'structure.$id': conseiller.structureId
+                });
+                if (structure) {
+                  conseiller.nomStructure = structure?.nom;
+                }
+                result.push(conseiller);
+                context.result.data = result;
+                resolve();
+              });
+              promises.push(p);
+            });
+            await Promise.all(promises);
+            resolve();
+          });
+        });
+        return await p;
       }
+
     }],
     get: [async context => {
       if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||
