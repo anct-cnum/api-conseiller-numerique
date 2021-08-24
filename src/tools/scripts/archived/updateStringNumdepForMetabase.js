@@ -3,7 +3,7 @@
 
 require('dotenv').config();
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   logger.info('Rattrapage en string du numeroDepartement collection Metabase stats_PostesValidesDepartement');

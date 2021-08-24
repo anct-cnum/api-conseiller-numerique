@@ -41,21 +41,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   });
   const postesValidesDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
-  /* Nombre de postes validés par structure */
-  const structuresPostesValides = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC' }).sort({ nom: 1 }).toArray();
-  lignes = [];
-  structuresPostesValides.forEach(structure => {
-    let coselecPositif = utilsStructure.getCoselec(structure);
-    if (coselecPositif) {
-      lignes.push({
-        'structure': structure.nom,
-        'nombrePostesValides': coselecPositif.nombreConseillersCoselec
-      });
-    }
-  });
-
-  const postesValidesStructure = ({ 'key': key, 'date': new Date(date), 'data': lignes });
-
   /* Nombre de conseillers recrutés par département */
   const queryNombreConseillersRecrutesDepartement = [
     { '$match': { 'statut': { $eq: 'recrutee' } } },
@@ -101,23 +86,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     });
   }
   const conseillersFinalisesDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
-
-  /* Nombre de conseillers recrutés par structure */
-  const queryNombreConseillersRecrutesStructure = [
-    { '$match': { 'statut': { $eq: 'recrutee' } } },
-    { $group: { _id: '$structureObj._id', count: { $sum: 1 }, nomStructure: { $first: '$structureObj.nom' } } },
-  ];
-  const listConseillersRecrutesStructure = await db.collection('misesEnRelation').aggregate(queryNombreConseillersRecrutesStructure).toArray();
-  lignes = [];
-  if (listConseillersRecrutesStructure.length > 0) {
-    listConseillersRecrutesStructure.forEach(conseiller => {
-      lignes.push({
-        'structure': conseiller.nomStructure,
-        'nombreConseillers': conseiller.count
-      });
-    });
-  }
-  const conseillersRecrutesStructure = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
   /* Nombre de mises en relation de candidats par département */
   const queryNombreCandidats = [
@@ -166,12 +134,99 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   }
   const structuresCandidates = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
+  /* Liste des structures validées Coselec avec détails financement, nb de postes validés... */
+  let promises = [];
+  const structuresValideesCoselec = await db.collection('structures').find({ statut: 'VALIDATION_COSELEC', userCreated: true }).toArray();
+  structuresValideesCoselec.forEach(structure => {
+    promises.push(new Promise(async resolve => {
+      try {
+        // Cherche le bon Coselec
+        const coselec = utilsStructure.getCoselec(structure);
+
+        // France Services
+        let label = 'non renseigné';
+        if (structure?.estLabelliseFranceServices === 'OUI') {
+          label = 'oui';
+        } else if (structure?.estLabelliseFranceServices === 'NON') {
+          label = 'non';
+        }
+
+        // Adresse
+        let adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + ' ' : '') +
+          (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.localite ?? '');
+
+        let investissement = 0;
+        if (structure.type === 'PRIVATE') {
+          investissement = (32000 + 4805) * coselec.nombreConseillersCoselec;
+        } else if (structure.codeDepartement === '971' || structure.codeDepartement === '972' || structure.codeDepartement === '973') {
+          investissement = (70000 + 4805) * coselec.nombreConseillersCoselec;
+        } else if (structure.codeDepartement === '974' || structure.codeDepartement === '976') {
+          investissement = (67500 + 4805) * coselec.nombreConseillersCoselec;
+        } else {
+          investissement = (50000 + 4805) * coselec.nombreConseillersCoselec;
+        }
+
+        // Nom département
+        let structureDepartement = '';
+        let structureRegion = '';
+        const deps = new Map();
+        for (const value of departements) {
+          deps.set(String(value.num_dep), value);
+        }
+        if (deps.has(structure.codeDepartement)) {
+          structureDepartement = deps.get(structure.codeDepartement).dep_name;
+          structureRegion = deps.get(structure.codeDepartement).region_name;
+        }
+
+        // Nombre de conseillers 'recrutee' et 'finalisee'
+        let nbConseillers = await db.collection('misesEnRelation').aggregate([
+          { $match: { 'structure.$id': structure._id, 'statut': { $in: ['recrutee', 'finalisee'] } } },
+          { $group: { _id: '$statut', count: { $sum: 1 } } },
+        ]).toArray();
+
+        //Enregistrement de la structure dans une collection metabase en upsert
+        const queryUpd = {
+          idStructure: structure._id
+        };
+        const update = {
+          nomStructure: structure.insee?.entreprise?.raison_sociale ?? structure.nom,
+          communeInsee: structure.insee?.etablissement?.commune_implantation?.value ?? '',
+          codeCommuneInsee: structure.insee?.etablissement?.adresse?.code_insee_localite ?? '',
+          codeDepartement: structure.codeDepartement,
+          departement: structureDepartement,
+          region: structureRegion,
+          nombreConseillersValidesCoselec: coselec?.nombreConseillersCoselec,
+          numeroCoselec: coselec?.numero,
+          type: structure.type === 'PRIVATE' ? 'privée' : 'publique',
+          siret: structure.siret,
+          adresse: adresse,
+          codePostal: structure.codePostal,
+          investissementEstimatifEtat: investissement,
+          zrr: structure.estZRR ? 'oui' : 'non',
+          qpv: structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini',
+          LabelFranceServices: label,
+          nbConseillersRecrutees: nbConseillers?.find(stat => stat._id === 'recrutee')?.count ?? 0,
+          nbConseillersFinalisees: nbConseillers?.find(stat => stat._id === 'finalisee')?.count ?? 0,
+        };
+        const options = { upsert: true };
+        await db.collection('stats_StructuresValidees').updateOne(queryUpd, update, options);
+      } catch (e) {
+        Sentry.captureException(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
+        logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
+      }
+      resolve();
+    }));
+  });
+
+
   try {
     db.collection('stats_PostesValidesDepartement').insertOne(postesValidesDepartement);
-    db.collection('stats_PostesValidesStructure').insertOne(postesValidesStructure);
     db.collection('stats_ConseillersRecrutesDepartement').insertOne(conseillersRecrutesDepartement);
     db.collection('stats_ConseillersFinalisesDepartement').insertOne(conseillersFinalisesDepartement);
-    db.collection('stats_ConseillersRecrutesStructure').insertOne(conseillersRecrutesStructure);
     db.collection('stats_Candidats').insertOne(candidats);
     db.collection('stats_StructuresCandidates').insertOne(structuresCandidates);
   } catch (error) {
