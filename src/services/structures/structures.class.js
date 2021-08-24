@@ -308,7 +308,7 @@ exports.Structures = class Structures extends Service {
         }).toJSON());
       }
 
-      const updateStructurePG = async (id, siret) => {
+      const updateStructure = async (id, siret) => {
         try {
           await pool.query(`
             UPDATE djapp_hostorganization
@@ -324,7 +324,7 @@ exports.Structures = class Structures extends Service {
         }
       };
 
-      await updateStructurePG(structure.idPG, req.body.siret);
+      await updateStructure(structure.idPG, req.body.siret);
 
 
     });
