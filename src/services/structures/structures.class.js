@@ -10,6 +10,8 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const decode = require('jwt-decode');
 const { Pool } = require('pg');
+const configuration = require('@feathersjs/configuration');
+const config = configuration();
 const pool = new Pool();
 
 exports.Structures = class Structures extends Service {
@@ -270,10 +272,9 @@ exports.Structures = class Structures extends Service {
       }
 
       try {
-        //process.env.API_ENTREPRISE_KEY
         const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
         const params = {
-          token: process.env.API_ENTREPRISE_KEY,
+          token: config().siret.apiEntreprise,
           context: 'cnum',
           recipient: 'cnum',
           object: 'checkSiret',

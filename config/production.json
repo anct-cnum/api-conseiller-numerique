@@ -67,5 +67,8 @@
     "algorithm": "CRYPTO_ALGORITHM",
     "key": "CRYPTO_KEY"
   },
-  "cv_file_max_size": "CV_FILE_MAX_SIZE"
+  "cv_file_max_size": "CV_FILE_MAX_SIZE",
+  "siret": {
+    "apiEntreprise": "API_ENTREPRISE_KEY"
+  }
 }

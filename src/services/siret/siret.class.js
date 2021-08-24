@@ -1,5 +1,7 @@
 const Joi = require('joi');
 const axios = require('axios');
+const configuration = require('@feathersjs/configuration');
+const config = configuration();
 const { NotFound, BadRequest } = require('@feathersjs/errors');
 
 /* eslint-disable no-unused-vars */
@@ -22,7 +24,7 @@ exports.Siret = class Siret {
 
 
     params = {
-      token: process.env.API_ENTREPRISE_KEY,
+      token: config().siret.apiEntreprise,
       context: 'cnum',
       recipient: 'cnum',
       object: 'checkSiret',
