@@ -270,6 +270,7 @@ exports.Structures = class Structures extends Service {
       }
 
       try {
+        //process.env.API_ENTREPRISE_KEY
         const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
         const params = {
           token: process.env.API_ENTREPRISE_KEY,
@@ -308,28 +309,23 @@ exports.Structures = class Structures extends Service {
 
       const updateStructurePG = async (id, siret) => {
         try {
-          const row = await pool.query(`
+          await pool.query(`
             UPDATE djapp_hostorganization
             SET disponible = $2
             WHERE id = $1`,
           [id, siret]);
-          return row;
+          await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret } });
+          res.send({ siretUpdated: true });
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
-          return res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
+          res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
         }
       };
 
-      try {
-        await updateStructurePG(structure.idPG, req.body.siret);
-        await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret } });
-        return res.send({ siretUpdated: true });
-      } catch (error) {
-        logger.error(error);
-        app.get('sentry').captureException(error);
-        return res.status(500).send(new GeneralError('La modification du siret a échoué ! Veuillez recommencer.'));
-      }
+      await updateStructurePG(structure.idPG, req.body.siret);
+
+
     });
   }
 };
