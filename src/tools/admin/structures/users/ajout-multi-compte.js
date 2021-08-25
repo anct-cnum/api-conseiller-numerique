@@ -11,7 +11,7 @@ const createEmails = require('../../../../emails/emails');
 execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
 
   program.option('-u, --username <username>', 'username');
-  program.option('-i, --id <id>', 'id MongoDB pour les structures et les conseillers');
+  program.option('-i, --id <id>', 'id: id qui correspond à l\'idPG d\'une structure');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
