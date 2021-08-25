@@ -3,6 +3,7 @@
 const axios = require('axios');
 const { execute } = require('../utils');
 const { program } = require('commander');
+const app = require('./app');
 
 program.parse(process.argv);
 
@@ -37,7 +38,7 @@ execute(__filename, async ({ db, logger }) => {
     const urlSiren = `https://entreprise.api.gouv.fr/v2/entreprises/${siret.substring(0, 9)}`;
 
     const params = {
-      token: process.env.API_ENTREPRISE_KEY,
+      token: app.get('api_entreprise'),
       context: 'cnum',
       recipient: 'cnum',
       object: 'checkSiret',

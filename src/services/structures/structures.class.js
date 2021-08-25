@@ -10,6 +10,7 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const decode = require('jwt-decode');
 const { Pool } = require('pg');
+
 const pool = new Pool();
 
 exports.Structures = class Structures extends Service {
@@ -272,7 +273,7 @@ exports.Structures = class Structures extends Service {
       try {
         const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
         const params = {
-          token: process.env.API_ENTREPRISE_KEY,
+          token: app.get('api_entreprise'),
           context: 'cnum',
           recipient: 'cnum',
           object: 'checkSiret',
@@ -306,30 +307,25 @@ exports.Structures = class Structures extends Service {
         }).toJSON());
       }
 
-      const updateStructurePG = async (id, siret) => {
+      const updateStructure = async (id, siret) => {
         try {
-          const row = await pool.query(`
+          await pool.query(`
             UPDATE djapp_hostorganization
             SET disponible = $2
             WHERE id = $1`,
           [id, siret]);
-          return row;
+          await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret } });
+          res.send({ siretUpdated: true });
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
-          return res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
+          res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
         }
       };
 
-      try {
-        await updateStructurePG(structure.idPG, req.body.siret);
-        await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret } });
-        return res.send({ siretUpdated: true });
-      } catch (error) {
-        logger.error(error);
-        app.get('sentry').captureException(error);
-        return res.status(500).send(new GeneralError('La modification du siret a échoué ! Veuillez recommencer.'));
-      }
+      await updateStructure(structure.idPG, req.body.siret);
+
+
     });
   }
 };
