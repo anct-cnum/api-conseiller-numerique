@@ -38,7 +38,7 @@ execute(__filename, async ({ db, logger }) => {
     const urlSiren = `https://entreprise.api.gouv.fr/v2/entreprises/${siret.substring(0, 9)}`;
 
     const params = {
-      token: app.get('siret').apiEntreprise,
+      token: app.get('api_entreprise'),
       context: 'cnum',
       recipient: 'cnum',
       object: 'checkSiret',

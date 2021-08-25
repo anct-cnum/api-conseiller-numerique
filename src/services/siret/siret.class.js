@@ -23,7 +23,7 @@ exports.Siret = class Siret {
 
 
     params = {
-      token: app.get('siret').apiEntreprise,
+      token: app.get('api_entreprise'),
       context: 'cnum',
       recipient: 'cnum',
       object: 'checkSiret',

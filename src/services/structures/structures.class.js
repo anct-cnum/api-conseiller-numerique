@@ -273,7 +273,7 @@ exports.Structures = class Structures extends Service {
       try {
         const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
         const params = {
-          token: app.get('siret').apiEntreprise,
+          token: app.get('api_entreprise'),
           context: 'cnum',
           recipient: 'cnum',
           object: 'checkSiret',
