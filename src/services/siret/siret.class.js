@@ -1,7 +1,6 @@
 const Joi = require('joi');
 const axios = require('axios');
-const configuration = require('@feathersjs/configuration');
-const config = configuration();
+const app = require('./app');
 const { NotFound, BadRequest } = require('@feathersjs/errors');
 
 /* eslint-disable no-unused-vars */
@@ -24,7 +23,7 @@ exports.Siret = class Siret {
 
 
     params = {
-      token: config().siret.apiEntreprise,
+      token: app.get().siret.apiEntreprise,
       context: 'cnum',
       recipient: 'cnum',
       object: 'checkSiret',
