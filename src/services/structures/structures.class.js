@@ -311,7 +311,7 @@ exports.Structures = class Structures extends Service {
         try {
           await pool.query(`
             UPDATE djapp_hostorganization
-            SET disponible = $2
+            SET siret = $2
             WHERE id = $1`,
           [id, siret]);
           await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret } });
