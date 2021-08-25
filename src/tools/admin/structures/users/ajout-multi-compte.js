@@ -11,16 +11,14 @@ const createEmails = require('../../../../emails/emails');
 execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
 
   program.option('-u, --username <username>', 'username');
-  program.option('-p, --password <password>', 'password');
   program.option('-i, --id <id>', 'id MongoDB pour les structures et les conseillers');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   const username = program.username;
-  const password = program.password;
   const id = program.id;
 
-  if (!username || !password || !id) {
+  if (!username || !id) {
     exit('Paramètres invalides');
     return;
   }
@@ -35,7 +33,7 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
   const dbName = db.serverConfig.s.options.dbName;
   const user = {
     name: username.toLowerCase(),
-    password: password,
+    password: uuidv4(),
     roles: ['structure'],
     entity: {
       '$ref': 'stuctures',
@@ -52,7 +50,7 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
 
   try {
 
-    await db.collection('users').insertOne(user);
+    await db.collection('users').insertOne(.user);
     let mailer = createMailer(app, username);
     const emails = createEmails(db, mailer);
     let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
