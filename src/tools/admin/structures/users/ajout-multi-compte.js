@@ -3,10 +3,12 @@
 
 const { program } = require('commander');
 const { v4: uuidv4 } = require('uuid');
+const { execute } = require('../../../utils');
 require('dotenv').config();
-const { execute } = require('../../utils');
+const createMailer = require('../../../../mailer');
+const createEmails = require('../../../../emails/emails');
 
-execute(__filename, async ({ feathers, db, logger, Sentry, exit }) => {
+execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
 
   program.option('-u, --username <username>', 'username');
   program.option('-p, --password <password>', 'password');
@@ -14,44 +16,52 @@ execute(__filename, async ({ feathers, db, logger, Sentry, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const username = program.username.toLowerCase();
-  const id = program.id;
+  const username = program.username;
   const password = program.password;
+  const id = program.id;
 
   if (!username || !password || !id) {
     exit('Paramètres invalides');
     return;
   }
+
   const count = await db.collection('users').countDocuments({ name: username });
   if (count > 0) {
-    exit('Un utilisateur avec nom existe déjà');
+    exit(`Un utilisateur avec ${username} existe déjà`);
+    return;
   }
-  const dbName = db.serverConfig.s.options.dbName;
-  const structure = await db.collection('structures').findOne({ idPG: id });
+  const { _id } = await db.collection('structures').findOne({ idPG: parseInt(id) });
 
-  let user = {
-    name: username,
+  const dbName = db.serverConfig.s.options.dbName;
+  const user = {
+    name: username.toLowerCase(),
     password: password,
     roles: ['structure'],
-    token: uuidv4(),
-    tokenCreatedAt: new Date(),
-    mailSentDate: new Date(), // pour empecher l'envoi de l'email d'activation SA
-    passwordCreated: false,
-    createdAt: new Date(),
     entity: {
-      '$ref': 'structures',
-      '$id': structure._id,
+      '$ref': 'stuctures',
+      '$id': _id,
       '$db': dbName
     },
-    resend: false
+    token: uuidv4(),
+    tokenCreatedAt: new Date(),
+    passwordCreated: false,
+    createdAt: new Date(),
+    resend: false,
+    mailSentDate: new Date()
   };
-  
-  try {
-    await feathers.service('users').create(user);
-  } catch (err) {
 
-    logger.error(`[Multi Compte] Erreur lors de la création de l'user : ${err.message}`);
-    Sentry.captureException(err.message);
+  try {
+
+    await db.collection('users').insertOne(user);
+    let mailer = createMailer(app, username);
+    const emails = createEmails(db, mailer);
+    let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
+    await message.send(user, username);
+  } catch (error) {
+    logger.error(error.message);
+    Sentry.captureException(error);
+    return;
   }
 
+  logger.info(`compte avec l'email ${username} a bien était crée`);
 });
