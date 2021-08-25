@@ -8,7 +8,7 @@ const multer = require('multer');
 const fileType = require('file-type');
 const crypto = require('crypto');
 const puppeteer = require('puppeteer');
-const moment = require('moment');
+const dayjs = require('dayjs');
 const Joi = require('joi');
 
 exports.Conseillers = class Conseillers extends Service {
@@ -112,10 +112,8 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
-      const todayDate = new Date();
-      const minDate = moment(new Date(`01-01-${todayDate.getFullYear() - 99}`)).toDate();
-      const maxDate = moment(new Date(`12-31-${todayDate.getFullYear() - 18}`)).toDate();
-
+      const minDate = dayjs().subtract(99, 'year');
+      const maxDate = dayjs().subtract(18, 'year');
       const sexe = req.body.sexe;
       const dateDeNaissance = new Date(req.body.dateDeNaissance);
 
