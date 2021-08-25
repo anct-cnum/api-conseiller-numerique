@@ -50,7 +50,7 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
 
   try {
 
-    await db.collection('users').insertOne(.user);
+    await db.collection('users').insertOne(user);
     let mailer = createMailer(app, username);
     const emails = createEmails(db, mailer);
     let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
@@ -61,5 +61,5 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
     return;
   }
 
-  logger.info(`compte avec l'email ${username} a bien était crée`);
+  logger.info(`compte avec l'email ${username} a bien été créé`);
 });
