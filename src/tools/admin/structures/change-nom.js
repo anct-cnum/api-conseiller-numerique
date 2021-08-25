@@ -44,6 +44,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     return;
   }
 
-  logger.info(`Nom bien mis à jour : ${nouveauNom}`);
+  logger.info(`Nom bien mis à jour avec comme nom: ${nouveauNom} (ancien nom: ${structure.nom})`);
   exit();
 });
