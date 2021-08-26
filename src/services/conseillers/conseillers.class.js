@@ -8,6 +8,8 @@ const multer = require('multer');
 const fileType = require('file-type');
 const crypto = require('crypto');
 const puppeteer = require('puppeteer');
+const dayjs = require('dayjs');
+const Joi = require('joi');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -110,9 +112,20 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
+      const minDate = dayjs().subtract(99, 'year');
+      const maxDate = dayjs().subtract(18, 'year');
       const sexe = req.body.sexe;
-      const dateDeNaissance = req.body.dateDeNaissance;
+      const dateDeNaissance = new Date(req.body.dateDeNaissance);
 
+      const schema = Joi.object({
+        dateDeNaissance: Joi.date().required().min(minDate).max(maxDate)
+        .error(new Error('La date de naissance est invalide')),
+        sexe: Joi.string().required().error(new Error('Le sexe est invalide')),
+      }).validate(req.body);
+
+      if (schema.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+      }
 
       if (sexe === '' || dateDeNaissance === '') {
         res.status(400).send(new BadRequest('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
@@ -123,7 +136,7 @@ exports.Conseillers = class Conseillers extends Service {
         await this.patch(new ObjectId(user.entity.oid),
           { $set: {
             sexe: sexe,
-            dateDeNaissance: new Date(dateDeNaissance)
+            dateDeNaissance: dateDeNaissance
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
