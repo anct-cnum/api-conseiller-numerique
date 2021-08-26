@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 'use strict';
-const { ObjectID } = require('mongodb');
 const path = require('path');
 const fs = require('fs');
 
@@ -19,7 +18,6 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  // eslint-disable-next-line max-len
   file.write('departement\n');
   departements.forEach(departement => {
     promises.push(new Promise(async resolve => {
