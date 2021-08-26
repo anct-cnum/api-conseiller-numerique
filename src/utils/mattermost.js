@@ -141,4 +141,48 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
 
 };
 
-module.exports = { createAccount, updateAccountPassword };
+const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
+
+  try {
+
+    //Connexion à l'API de Mattermost
+    const resultLogin = await axios({
+      method: 'post',
+      url: `${mattermost.endPoint}/api/v4/users/login`,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: { 'login_id': mattermost.login, 'password': mattermost.password }
+    });
+
+    const token = resultLogin.request.res.headers.token;
+
+    //Query parameter permanent pour la suppression définitive (il faut que le paramètre ServiceSettings.EnableAPIUserDeletion soit configuré à true)
+    const resultDeleteAccount = await axios({
+      method: 'delete',
+      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}?permanent=true`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    logger.info(resultDeleteAccount);
+    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id}`);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      { $set:
+        { 'mattermost.errorDeleteAccount': false }
+      });
+    return true;
+  } catch (e) {
+    Sentry.captureException(e);
+    logger.error(e.message);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      { $set:
+        { 'mattermost.errorDeleteAccount': true }
+      });
+    return false;
+  }
+
+};
+
+module.exports = { createAccount, updateAccountPassword, deleteAccount };
