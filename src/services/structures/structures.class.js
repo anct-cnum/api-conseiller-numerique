@@ -104,6 +104,7 @@ exports.Structures = class Structures extends Service {
       const stats = await db.collection('misesEnRelation').aggregate([
         { '$match': { 'structure.$id': structureId } },
         { '$group': { _id: '$statut', count: { $sum: 1 } } },
+        { '$sort': { '_id': 1 } }
       ]).toArray();
 
       /* ajout des candidats dont le recrutement est finalisé dans détails structure*/
