@@ -11,7 +11,7 @@ require('dotenv').config();
 
 const { execute } = require('../../../utils');
 
-const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
+const doCreateUser = async (db, feathers, dbName, _id, logger) => {
   return new Promise(async (resolve, reject) => {
     const structure = await db.collection('structures').findOne({ _id: _id, statut: 'VALIDATION_COSELEC' });
     try {
@@ -35,8 +35,7 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
       } });
       resolve();
     } catch (e) {
-      Sentry.captureException(e);
-      logger.error(`Une erreur est survenue pour la structure id: ${structure._id} SIRET: ${structure?.siret}`);
+      logger.warn(`Une erreur est survenue pour la structure id: ${structure._id} SIRET: ${structure?.siret}`);
       await db.collection('structures').updateOne({ _id }, { $set: {
         userCreationError: true
       } });
