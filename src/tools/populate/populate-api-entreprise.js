@@ -3,11 +3,10 @@
 const axios = require('axios');
 const { execute } = require('../utils');
 const { program } = require('commander');
-const app = require('./app');
 
 program.parse(process.argv);
 
-execute(__filename, async ({ db, logger }) => {
+execute(__filename, async ({ db, app, logger }) => {
   const store = async (s, insee) => {
     const filter = {
       '_id': s._id,
