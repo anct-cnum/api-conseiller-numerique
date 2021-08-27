@@ -41,8 +41,9 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
     exit('Conseiller introuvable');
     return;
   }
-
-  const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+  const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+  const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+  const login = `${prenom}.${nom}`;
 
   const gandi = app.get('gandi');
   if (operation === 'create') {
