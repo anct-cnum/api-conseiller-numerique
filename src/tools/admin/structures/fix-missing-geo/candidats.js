@@ -9,7 +9,7 @@ const { execute } = require('../../../utils');
 
 const pool = new Pool();
 
-execute(__filename, async ({ logger, exit }) => {
+execute(__filename, async ({ logger, exit, Sentry }) => {
 
   const getMissing = async () => {
     try {
@@ -22,6 +22,7 @@ execute(__filename, async ({ logger, exit }) => {
       }
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
@@ -40,6 +41,7 @@ execute(__filename, async ({ logger, exit }) => {
       return result.data;
     } catch (error) {
       logger.error(`API Error : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
@@ -50,6 +52,7 @@ execute(__filename, async ({ logger, exit }) => {
       logger.info(`STORE ${c.id}, ${geo.code}, ${geo.codeDepartement}, ${geo.codeRegion}, ${geo.nom}`);
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
