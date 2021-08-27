@@ -332,7 +332,7 @@ exports.Users = class Users extends Service {
       if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-          const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
+          const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
           const email = `${login}@${gandi.domain}`;
