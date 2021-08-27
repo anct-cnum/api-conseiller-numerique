@@ -38,8 +38,8 @@ execute(__filename, async ({ logger, exit }) => {
     try {
       const result = await axios.get(urlAPI, { params: params });
       return result.data;
-    } catch (e) {
-      throw new Error(`API Error : ${e}`);
+    } catch (error) {
+      logger.error(`API Error : ${error.message}`);
     }
   };
 
