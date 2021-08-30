@@ -11,6 +11,7 @@ module.exports = {
       db.collection('structures').createIndex({ 'type': 1 }),
       db.collection('structures').createIndex({ 'statut': 1 }),
       db.collection('structures').createIndex({ 'codeDepartement': 1 }),
+      db.collection('structures').createIndex({ 'codePostal': 1 }),
       db.collection('structures').createIndex({ 'codeRegion': 1 }),
       db.collection('structures').createIndex({ 'userCreated': 1 }),
       db.collection('structures').createIndex({ 'prefet.avisPrefet': 1 }),
@@ -28,6 +29,9 @@ module.exports = {
       db.collection('misesEnRelation').createIndex({ 'structure.$id': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structure.oid': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseiller.$id': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'statut': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'structureObj.codePostal': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'conseillerObj.disponible': 1 }),
       db.collection('misesEnRelation').createIndex({
         'conseillerObj.nom': 'text',
         'conseillerObj.prenom': 'text',
