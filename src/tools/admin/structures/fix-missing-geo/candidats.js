@@ -18,7 +18,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
         logger.info(`Nombre : ${rows.length}`);
         return rows;
       } else {
-        logger.info(`Aucun manquant`);
+        logger.info(`Aucun code departement manquant pour les candidats`);
       }
     } catch (error) {
       logger.error(error.message);
@@ -49,7 +49,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
     try {
       await pool.query('UPDATE djapp_coach SET commune_code=$2, departement_code=$3, region_code=$4, geo_name=$5 WHERE id=$1',
         [c.id, geo.code, geo.codeDepartement, geo.codeRegion, geo.nom]);
-      logger.info(`STORE ${c.id}, ${geo.code}, ${geo.codeDepartement}, ${geo.codeRegion}, ${geo.nom}`);
+      logger.info(`UPDATE PG ${c.id}, ${geo.code}, ${geo.codeDepartement}, ${geo.codeRegion}, ${geo.nom}`);
     } catch (error) {
       logger.error(error.message);
       Sentry.captureException(error);
@@ -70,7 +70,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
     } else if (geo.length === 1) {
       await storeGeo(c, geo[0]);
       count++;
-      logger.info(`${geo[0].nom}`);
+      logger.info(`Nom de la commune ${geo[0].nom}`);
     } else {
       // Plusieurs ville pour ce code postal
       // On ne stocke pas le nom de la ville
@@ -80,7 +80,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
       ville.nom = '';
       await storeGeo(c, ville);
       count++;
-      logger.info(`${ville.codeDepartement}`);
+      logger.info(`Code département ${ville.codeDepartement}`);
     }
   }
 
