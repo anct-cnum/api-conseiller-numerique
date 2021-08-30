@@ -21,7 +21,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
         logger.info(`Aucun manquant`);
       }
     } catch (error) {
-      logger.error(`Erreur DB : ${error.message}`);
+      logger.error(error.message);
       Sentry.captureException(error);
     }
   };
@@ -40,7 +40,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
       const result = await axios.get(urlAPI, { params: params });
       return result.data;
     } catch (error) {
-      logger.error(`API Error : ${error.message}`);
+      logger.error(error.message);
       Sentry.captureException(error);
     }
   };
@@ -51,7 +51,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
         [c.id, geo.code, geo.codeDepartement, geo.codeRegion, geo.nom]);
       logger.info(`STORE ${c.id}, ${geo.code}, ${geo.codeDepartement}, ${geo.codeRegion}, ${geo.nom}`);
     } catch (error) {
-      logger.error(`Erreur DB : ${error.message}`);
+      logger.error(error.message);
       Sentry.captureException(error);
     }
   };
