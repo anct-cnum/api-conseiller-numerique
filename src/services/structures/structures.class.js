@@ -10,6 +10,7 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const decode = require('jwt-decode');
 const { Pool } = require('pg');
+const utils = require('../../utils/index.js');
 
 const pool = new Pool();
 
@@ -327,5 +328,51 @@ exports.Structures = class Structures extends Service {
 
 
     });
+
+    app.get('/structures/getAvancementRecrutement', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+      }
+      //verify user role
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (user?.roles.filter(role => ['prefet'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: user
+        }).toJSON());
+        return;
+      }
+
+      let structures = [];
+      if (user?.region) {
+        structures = await db.collection('structures').find({ codeRegion: user?.region.toString() }).toArray();
+      } else if (user?.departement) {
+        structures = await db.collection('structures').find({ codeDepartement: user?.departement.toString() }).toArray();
+      }
+
+      let nombreCandidatsRecrutes = 0;
+      let nombreDotations = 0;
+      let promises = [];
+
+      structures.forEach(structure => {
+        const coselec = utils.getCoselec(structure);
+        if (coselec) {
+          nombreDotations += coselec.nombreConseillersCoselec;
+        }
+        promises.push(new Promise(async resolve => {
+          let candidatsRecrutes = await db.collection('misesEnRelation').countDocuments({
+            'statut': 'finalisee',
+            'structure.$id': new ObjectID(structure._id)
+          });
+          nombreCandidatsRecrutes += candidatsRecrutes;
+          resolve();
+        }));
+      });
+      await Promise.all(promises);
+      const pourcentage = nombreDotations !== 0 ? Math.round(nombreCandidatsRecrutes * 100 / nombreDotations) : 0;
+
+      return res.send({ 'candidatsRecrutes': nombreCandidatsRecrutes, 'dotations': nombreDotations, 'pourcentage': pourcentage });
+    });
+
   }
 };
