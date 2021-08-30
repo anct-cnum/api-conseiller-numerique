@@ -345,9 +345,15 @@ exports.Structures = class Structures extends Service {
 
       let structures = [];
       if (user?.region) {
-        structures = await db.collection('structures').find({ codeRegion: user?.region.toString() }).toArray();
+        structures = await db.collection('structures').find({
+          codeRegion: user?.region.toString(),
+          statut: 'VALIDATION_COSELEC',
+          userCreated: true }).toArray();
       } else if (user?.departement) {
-        structures = await db.collection('structures').find({ codeDepartement: user?.departement.toString() }).toArray();
+        structures = await db.collection('structures').find({
+          codeDepartement: user?.departement.toString(),
+          statut: 'VALIDATION_COSELEC',
+          userCreated: true }).toArray();
       }
 
       let nombreCandidatsRecrutes = 0;
