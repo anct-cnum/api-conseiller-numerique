@@ -14,11 +14,25 @@ module.exports = {
     ],
     find: [
       context => {
+        if (context.params.query.datePrisePoste.$gt) {
+          context.params.query.datePrisePoste.$gt = parseStringToDate(context.params.query.datePrisePoste.$gt);
+        }
+        if (context.params.query.datePrisePoste.$lt) {
+          context.params.query.datePrisePoste.$lt = parseStringToDate(context.params.query.datePrisePoste.$lt);
+        }
+        if (context.params.query.userCreated) {
+          context.params.query.userCreated = context.params.query.userCreated === 'true';
+        }
+        if (context.params.query.certifie) {
+          context.params.query.certifie = context.params.query.certifie === 'true';
+        }
+
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
         }
         return context;
-      }, search({ escape: false })],
+      }, search({ escape: false })
+    ],
     get: [
       async context => {
         //Restreindre les permissions : les conseillers et candidats ne peuvent voir que les informations les concernant
@@ -109,6 +123,33 @@ module.exports = {
         });
         await p;
       }
+
+      if (context.params?.user?.roles.includes('admin_coop')) {
+        const p = new Promise(resolve => {
+          context.app.get('mongoClient').then(async db => {
+            let promises = [];
+            let result = [];
+            context.result.data.filter(async conseiller => {
+              const p = new Promise(async resolve => {
+                const structure = await db.collection('structures').findOne({
+                  'structure.$id': conseiller.structureId
+                });
+                if (structure) {
+                  conseiller.nomStructure = structure?.nom;
+                }
+                result.push(conseiller);
+                context.result.data = result;
+                resolve();
+              });
+              promises.push(p);
+            });
+            await Promise.all(promises);
+            resolve();
+          });
+        });
+        return await p;
+      }
+
     }],
     get: [async context => {
       if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||
@@ -168,3 +209,11 @@ module.exports = {
     remove: []
   }
 };
+
+//Parse string to date
+function parseStringToDate(date) {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
+  return date;
+}
