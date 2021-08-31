@@ -41,7 +41,9 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
     return;
   }
 
-  const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
+  const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+  const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+  const login = `${prenom}.${nom}`;
 
   const mattermost = app.get('mattermost');
   if (operation === 'create') {

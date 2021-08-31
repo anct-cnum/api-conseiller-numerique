@@ -221,7 +221,7 @@ exports.Users = class Users extends Service {
         let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
         users.data[0].persoEmail = conseiller.email;
         res.send({ roles: users.data[0].roles,
-          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: users.data[0].nom, prenom: users.data[0].prenom });
+          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: conseiller.nom, prenom: conseiller.prenom });
       } else {
         res.send({ roles: users.data[0].roles, name: users.data[0].name });
       }
@@ -332,7 +332,9 @@ exports.Users = class Users extends Service {
       if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-          const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
+          const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+          const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+          const login = `${prenom}.${nom}`;
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
           const email = `${login}@${gandi.domain}`;
