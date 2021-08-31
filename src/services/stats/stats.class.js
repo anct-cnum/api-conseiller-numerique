@@ -151,5 +151,56 @@ exports.Stats = class Stats extends Service {
       });
     });
 
+    app.get('/stats/admincoop/dashboard', async (req, res) => {
+
+      //verify user role admin_coop
+      app.get('mongoClient').then(async db => {
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!adminUser?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: adminUser
+          }).toJSON());
+          return;
+        }
+
+        //Construction des statistiques
+        let stats = {};
+
+        //Total accompagnement
+        let nbAccompagnements = await db.collection('cras').aggregate(
+          [
+            { $unwind: '$cra.accompagnement' },
+            { $group: { _id: '$cra.accompagnement', count: { $sum: {
+              $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1]
+            } } } },
+          ]
+        ).toArray();
+        stats.totalAccompagnements = 0;
+        stats.totalAccompagnements += nbAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
+        stats.totalAccompagnements += nbAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
+        stats.totalAccompagnements += nbAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+
+        //Conseillers enregistrés
+        stats.conseillersEnregistres = await db.collection('users').countDocuments({
+          'roles': { $in: ['conseiller'] },
+          'passwordCreated': true
+        });
+
+        //Utilise Pix Orga
+        stats.utilisePixOrga = await db.collection('conseiller').countDocuments({
+          'statut': 'RECRUTE'
+          //PixOrga ?
+        });
+
+        //Utilise rdv solidarité
+        stats.utiliseRdvSolidarites = await db.collection('conseiller').countDocuments({
+          'statut': 'RECRUTE'
+          //Rdv solidarité ?
+        });
+
+        res.send(stats);
+      });
+    });
   }
 };
