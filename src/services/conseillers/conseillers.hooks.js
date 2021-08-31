@@ -14,10 +14,10 @@ module.exports = {
     ],
     find: [
       context => {
-        if (context.params.query.datePrisePoste.$gt) {
+        if (context.params.query.datePrisePoste?.$gt) {
           context.params.query.datePrisePoste.$gt = parseStringToDate(context.params.query.datePrisePoste.$gt);
         }
-        if (context.params.query.datePrisePoste.$lt) {
+        if (context.params.query.datePrisePoste?.$lt) {
           context.params.query.datePrisePoste.$lt = parseStringToDate(context.params.query.datePrisePoste.$lt);
         }
         if (context.params.query.userCreated) {
