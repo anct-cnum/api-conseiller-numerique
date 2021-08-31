@@ -15,6 +15,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
   program.option('-u, --username <username>', 'username');
   program.option('-p, --password <password>', 'password');
   program.option('-d, --departement <departement>', 'departement');
+  program.option('-c, --com <com>', 'com'); // Collectivité d'outre-mer
   program.option('-r, --role <role>', 'role : choisir entre admin, structure, conseiller, prefet');
   program.option('-i, --id <id>', 'id MongoDB pour les structures et les conseillers');
   program.helpOption('-e', 'HELP command');
@@ -23,6 +24,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
   const username = program.username.toLowerCase();
   const password = program.password;
   const departement = program.departement;
+  const com = program.com;
   const role = program.role;
   const id = program.id;
 
@@ -44,8 +46,8 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
   }
 
   if (role === 'prefet') {
-    if (!departement) {
-      exit('Paramètre département obligatoire pour le rôle préfet');
+    if (!departement || !com) {
+      exit('Paramètre département ou com obligatoire pour le rôle préfet');
       return;
     }
   }
@@ -73,7 +75,11 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
       '$db': dbName
     };
   } else if (role === 'prefet') {
-    user.departement = departement;
+    if (departement) {
+      user.departement = departement;
+    } else {
+      user.com = com;
+    }
   }
 
   await feathers.service('users').create(user);

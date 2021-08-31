@@ -58,7 +58,7 @@ exports.Stats = class Stats extends Service {
             { $group: { _id: '$structureObj._id' } },
             { $group: { _id: null, count: { $sum: 1 } } }
           ]).toArray();
-        stats.structuresQuiRecrutentCount = stats.structuresQuiRecrutentCount[0].count;
+        stats.structuresQuiRecrutentCount = stats.structuresQuiRecrutentCount.length > 0 ? stats.structuresQuiRecrutentCount[0].count : 0;
         stats.conseillersRecrutesCount = await db.collection('misesEnRelation').countDocuments({ statut: 'recrutee' });
         stats.conseillersRecrutesFinalisesCount = await db.collection('misesEnRelation').countDocuments({ statut: 'finalisee' });
         res.send(stats);
