@@ -6,7 +6,8 @@ const { execute } = require('../../utils');
 const { program } = require('commander');
 
 program
-.option('-c, --csv <path>', 'CSV file path');
+.option('-c, --csv <path>', 'CSV file path')
+.option('-w, --whitelist <path>', 'CSV whitelist path');
 
 program.parse(process.argv);
 
@@ -54,8 +55,40 @@ function diacriticSensitiveRegex(string = '') {
 }
 
 execute(__filename, async ({ db, logger }) => {
+  let whitelist;
   let k = 0;
   let l = 0;
+  let m = 0;
+
+  const checkWhitelist = async pix => {
+    for (const w of whitelist) {
+      if (w['pix_nom'] === pix['nom'] && w['pix_prenom'] === pix['prenom'] && ~~w['id'] === pix['id']) {
+        // il est dans la whitelist, on stocke
+        const filter = {
+          'idPG': pix['id'],
+        };
+
+        const updateDoc = {
+          $set: {
+            pix: {
+              partage: pix.partage === 'Oui',
+              datePartage: new Date(pix.datePartage),
+              palier: ~~pix.palier,
+              competence1: pix.competence1 === 'Oui',
+              competence2: pix.competence2 === 'Oui',
+              competence3: pix.competence3 === 'Oui',
+            },
+          }
+        };
+
+        const options = { };
+        logger.info(`Dans la whitelist : ${pix['id']}`);
+        await db.collection('conseillers').updateOne(filter, updateDoc, options);
+        m++;
+      }
+    }
+  };
+
   const insertPix = async pix => {
     try {
       // 1- Chercher avec nom et prénom (ignorer casse et accents)
@@ -63,11 +96,11 @@ execute(__filename, async ({ db, logger }) => {
       // On cherche aussi en inversant le nom et le prénom
       let query = {
         '$or': [{
-          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`), $options: 'i' },
-          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`), $options: 'i' },
+          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}$`), $options: 'i' },
+          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}$`), $options: 'i' },
         }, {
-          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}`), $options: 'i' },
-          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}`), $options: 'i' },
+          nom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.prenom)}$`), $options: 'i' },
+          prenom: { $regex: diacriticSensitiveRegex(`^${removeAccentsRegex(pix.nom)}$`), $options: 'i' },
         }]
       };
 
@@ -116,13 +149,21 @@ execute(__filename, async ({ db, logger }) => {
           logger.info(`KO2;${pix.nom};${pix.prenom};${pix.id}`);
         }
         k++;
+
+        // 3- Chercher dans la whitelist
+        if (program.whitelist) {
+          checkWhitelist(pix);
+        }
       }
     } catch (error) {
-      logger.info(`Erreur DB : ${error.message}`);
+      logger.error(`Erreur DB : ${error.message}`);
     }
   };
 
   const replies = await readCSV(program.csv);
+  if (program.whitelist) {
+    whitelist = await readCSV(program.whitelist);
+  }
 
   let i = 0;
   let j = 0;
@@ -136,11 +177,7 @@ execute(__filename, async ({ db, logger }) => {
     const competence1 = reply['Utilisation du numérique dans la vie professionnelle obtenu (O/N)'].replace(/\s/g, '');
     const competence2 = reply['Production de ressources obtenu (O/N)'].replace(/\s/g, '');
     const competence3 = reply['Compétences numériques en lien avec la e-citoyenneté obtenu (O/N)'].replace(/\s/g, '');
-    //const email = reply['Adresse email'];
-
     i++;
-
-    //logger.info(nom + ' ' + prenom + ' ' + partage + ' ' + palier);
 
     try {
       if (nom !== '' && prenom !== '' && partage === 'Oui') {
@@ -158,11 +195,12 @@ execute(__filename, async ({ db, logger }) => {
         });
       }
     } catch (error) {
-      logger.info(`KO ${error.message}`);
+      logger.error(`KO ${error.message}`);
     }
   }
   logger.info(`${i} lignes au total`);
   logger.info(`${j} partages`);
   logger.info(`${l} conseillers mis à jour dont les doublons`);
   logger.info(`${k} échecs`);
+  logger.info(`${m} trouvés dans la whitelist`);
 });
