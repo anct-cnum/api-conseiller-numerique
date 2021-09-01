@@ -37,7 +37,6 @@ function removeAccentsRegex(string = '') {
   .replace(/[C,ç,Ç]/g, 'c')
   .replace(/[-]/g, '')
   .replace(/[\s]+/g, ''); // supprime les espaces
-  //console.log(reg);
   return reg;
 }
 
@@ -50,7 +49,6 @@ function diacriticSensitiveRegex(string = '') {
   .replace(/o/g, '[o,ó,ö,ò,ô,O,Ó,Ö,Ò,Ô]')
   .replace(/u/g, '[u,ü,ú,ù,U,Ü,Ú,Ù]')
   .replace(/c/g, '[c,C,ç,Ç]');
-  //console.log(reg);
   return reg;
 }
 
