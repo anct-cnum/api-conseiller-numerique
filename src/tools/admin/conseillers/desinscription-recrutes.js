@@ -39,7 +39,6 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
           const email = conseiller['email'].toLowerCase();
           const conseillerCoop = await db.collection('conseillers').findOne({ email, statut: 'RECRUTE', estRecrute: true });
           const userCoop = await db.collection('users').findOne({
-            'name': conseillerCoop?.emailCN?.address,
             'roles': { $in: ['conseiller'] },
             'entity.$id': conseillerCoop?._id
           });
@@ -48,16 +47,8 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
             logger.warn(`Aucun conseiller recruté avec l'email '${email}' n'a été trouvé`);
             errors++;
             reject();
-          } else if (userCoop === null) {
-            logger.warn(`Aucun utilisateur recruté avec l'email '${email}' n'a été trouvé`);
-            errors++;
-            reject();
-          } else if (login === undefined) {
-            logger.warn(`Login Gandi inexistant avec l'email '${email}'`);
-            errors++;
-            reject();
-          } else if (conseillerCoop.mattermost?.id === undefined) {
-            logger.warn(`Id Mattermost inexistant avec l'email '${email}'`);
+          } else if (conseillerCoop.structureId === undefined) {
+            logger.warn(`Aucune structure associé au conseiller recruté avec l'email '${email}'`);
             errors++;
             reject();
           } else {
@@ -68,12 +59,30 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
                 dateRuptureContrat: conseiller['Date rupture de contrat'] ? dayjs(conseiller['Date rupture de contrat'], 'YYYY-MM-DD').toDate() : new Date()
               }
             });
+            //Mise à jour de la mise en relation
+            await db.collection('misesEnRelation').updateOne(
+              { 'conseiller.$id': conseillerCoop._id,
+                'structure.$id': conseillerCoop.structureId,
+                'statut': 'finalisee'
+              },
+              {
+                $set: {
+                  statut: 'finalisee_rupture',
+                }
+              }
+            );
             //Suppression du user associé
-            await db.collection('users').deleteOne({ _id: userCoop._id });
+            if (userCoop !== null) {
+              await db.collection('users').deleteOne({ _id: userCoop._id });
+            }
             //Suppression compte Gandi
-            await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
+            if (login !== undefined) {
+              await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
+            }
             //Suppression compte Mattermost
-            await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
+            if (conseillerCoop.mattermost?.id !== undefined) {
+              await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
+            }
             ok++;
           }
           count++;
