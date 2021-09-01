@@ -39,7 +39,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         let p = new Promise(async (resolve, reject) => {
           const siret = structure['SIRET'].replace(/\s/g, '');
           const email = structure['MAIL'];
-          const nomReseau = structure['RESEAU'].toLowerCase();
+          const nomReseau = structure['RESEAU'];
           const nbStructures = await db.collection('structures').countDocuments({ siret, 'contact.email': email });
 
           if (nbStructures === 0) {
