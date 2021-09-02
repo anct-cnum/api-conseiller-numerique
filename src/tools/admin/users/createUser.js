@@ -46,7 +46,7 @@ execute(__filename, async ({ feathers, db, logger, exit }) => {
   }
 
   if (role === 'prefet') {
-    if (!departement || !com) {
+    if (!departement && !com) {
       exit('Paramètre département ou com obligatoire pour le rôle préfet');
       return;
     }
