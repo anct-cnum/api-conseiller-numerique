@@ -126,6 +126,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (schema.error) {
         res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
       }
 
       if (sexe === '' || dateDeNaissance === '') {
@@ -361,6 +362,16 @@ exports.Conseillers = class Conseillers extends Service {
         user.pdfGenerator = true;
         delete user.roles;
         delete user.password;
+
+        const schema = Joi.object({
+          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+        }).validate(req.query);
+
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
