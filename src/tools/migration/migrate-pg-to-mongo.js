@@ -88,10 +88,10 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         aUneExperienceMedNum: c.has_experience,
         codePostal: c.zip_code,
         location: c.location,
-        /*nomCommune: c.geo_name,
+        nomCommune: c.geo_name,
         codeCommune: c.commune_code,
         codeDepartement: c.departement_code,
-        codeRegion: c.region_code,*/
+        codeRegion: c.region_code,
         codeCom: c.com_code,
         emailConfirmedAt: c.email_confirmed,
         emailConfirmationKey: c.email_confirmation_key,
@@ -141,6 +141,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           departement_code,
           geo_name,
           region_code,
+          com_code,
           blocked,
           email_confirmation_key,
           email_confirmed,
@@ -186,6 +187,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           departement_code,
           geo_name,
           region_code,
+          com_code,
           unsubscribe_extras,
           unsubscribed,
           disponible
