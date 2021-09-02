@@ -402,7 +402,6 @@ exports.Conseillers = class Conseillers extends Service {
           pdf.then(buffer => res.send(buffer));
           return;
         } catch (error) {
-          console.log(error);
           app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
