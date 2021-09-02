@@ -52,7 +52,7 @@ function diacriticSensitiveRegex(string = '') {
   return reg;
 }
 
-execute(__filename, async ({ db, logger }) => {
+execute(__filename, async ({ db, logger, Sentry }) => {
   let whitelist;
   let k = 0;
   let l = 0;
@@ -155,6 +155,7 @@ execute(__filename, async ({ db, logger }) => {
       }
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
+      Sentry.captureException(error);
     }
   };
 
@@ -194,6 +195,7 @@ execute(__filename, async ({ db, logger }) => {
       }
     } catch (error) {
       logger.error(`KO ${error.message}`);
+      Sentry.captureException(error);
     }
   }
   logger.info(`${i} lignes au total`);
