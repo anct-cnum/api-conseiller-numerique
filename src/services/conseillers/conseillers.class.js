@@ -88,6 +88,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
 
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -151,6 +152,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //Verification role candidat
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -277,6 +279,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/:id/cv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
 
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
@@ -329,12 +332,11 @@ exports.Conseillers = class Conseillers extends Service {
           const bufferDecrypt = Buffer.concat([decipher.update(data.Body), decipher.final()]);
 
           res.send(bufferDecrypt);
-          return;
         }
       });
     });
 
-    app.get('/conseillers/statistiquesPDF/:dateDebut/:dateFin', async (req, res) => {
+    app.get('/conseillers/statistiques.pdf', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
 
@@ -342,6 +344,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -352,8 +355,8 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const dateDebut = new Date(req.params.dateDebut).getTime();
-        const dateFin = new Date(req.params.dateFin).getTime();
+        const dateDebut = new Date(req.query.dateDebut).getTime();
+        const dateFin = new Date(req.query.dateFin).getTime();
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
@@ -414,6 +417,7 @@ exports.Conseillers = class Conseillers extends Service {
       const accessToken = req.feathers?.authentication?.accessToken;
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let userId = decode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
