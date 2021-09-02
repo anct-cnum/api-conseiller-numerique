@@ -260,6 +260,8 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           LabelFranceServices: label,
           nbConseillersRecrutees: nbConseillers?.find(stat => stat._id === 'recrutee')?.count ?? 0,
           nbConseillersFinalisees: nbConseillers?.find(stat => stat._id === 'finalisee')?.count ?? 0,
+          estGrandReseau: structure.reseau ? 'oui' : 'non',
+          nomGrandReseau: structure.reseau ?? ''
         }) };
         const options = { upsert: true };
         await db.collection('stats_StructuresValidees').updateOne(queryUpd, update, options);
