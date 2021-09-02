@@ -329,11 +329,12 @@ exports.Conseillers = class Conseillers extends Service {
           const bufferDecrypt = Buffer.concat([decipher.update(data.Body), decipher.final()]);
 
           res.send(bufferDecrypt);
+          return;
         }
       });
     });
 
-    app.post('/conseillers/statistiquesPDF', async (req, res) => {
+    app.get('/conseillers/statistiquesPDF/:dateDebut/:dateFin', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
 
@@ -351,8 +352,8 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const dateDebut = new Date(req.body.datesStatsPDF.dateDebut).getTime();
-        const dateFin = new Date(req.body.datesStatsPDF.dateFin).getTime();
+        const dateDebut = new Date(req.params.dateDebut).getTime();
+        const dateFin = new Date(req.params.dateFin).getTime();
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
@@ -401,6 +402,7 @@ exports.Conseillers = class Conseillers extends Service {
           pdf.then(buffer => res.send(buffer));
           return;
         } catch (error) {
+          console.log(error);
           app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
