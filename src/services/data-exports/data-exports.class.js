@@ -20,6 +20,7 @@ exports.DataExports = class DataExports {
     app.get('/exports/candidats.csv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role admin
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -57,6 +58,7 @@ exports.DataExports = class DataExports {
     app.get('/exports/candidatsByStructure.csv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role structure
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -100,6 +102,7 @@ exports.DataExports = class DataExports {
     app.get('/exports/structures.csv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role admin
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -156,6 +159,7 @@ exports.DataExports = class DataExports {
     app.get('/exports/structuresPrefet.csv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role prefet
       let userId = decode(req.feathers.authentication.accessToken).sub;

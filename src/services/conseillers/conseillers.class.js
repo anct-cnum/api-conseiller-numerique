@@ -88,6 +88,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
 
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -125,6 +126,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (schema.error) {
         res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
       }
 
       if (sexe === '' || dateDeNaissance === '') {
@@ -151,6 +153,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //Verification role candidat
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -277,6 +280,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/:id/cv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
 
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
@@ -333,7 +337,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.post('/conseillers/statistiquesPDF', async (req, res) => {
+    app.get('/conseillers/statistiques.pdf', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
 
@@ -341,6 +345,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -351,12 +356,22 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const dateDebut = new Date(req.body.datesStatsPDF.dateDebut).getTime();
-        const dateFin = new Date(req.body.datesStatsPDF.dateFin).getTime();
+        const dateDebut = new Date(req.query.dateDebut).getTime();
+        const dateFin = new Date(req.query.dateFin).getTime();
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
         delete user.password;
+
+        const schema = Joi.object({
+          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+        }).validate(req.query);
+
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
@@ -413,6 +428,7 @@ exports.Conseillers = class Conseillers extends Service {
       const accessToken = req.feathers?.authentication?.accessToken;
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let userId = decode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });

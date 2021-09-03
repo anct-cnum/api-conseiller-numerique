@@ -28,6 +28,7 @@ exports.Structures = class Structures extends Service {
     app.post('/structures/:id/preSelectionner/:conseillerId', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role structure
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -80,6 +81,7 @@ exports.Structures = class Structures extends Service {
     app.get('/structures/:id/misesEnRelation/stats', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -128,6 +130,7 @@ exports.Structures = class Structures extends Service {
     app.get('/structures/:id/misesEnRelation', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -205,6 +208,7 @@ exports.Structures = class Structures extends Service {
     app.post('/structures/:id/relance-inscription', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let adminId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
@@ -262,6 +266,7 @@ exports.Structures = class Structures extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let adminId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
@@ -292,6 +297,7 @@ exports.Structures = class Structures extends Service {
     app.post('/structures/updateStructureSiret', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let adminId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
@@ -333,6 +339,7 @@ exports.Structures = class Structures extends Service {
     app.get('/structures/getAvancementRecrutement', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role
       let userId = decode(req.feathers.authentication.accessToken).sub;
