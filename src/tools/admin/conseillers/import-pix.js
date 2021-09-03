@@ -80,7 +80,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         };
 
         const options = { };
-        logger.info(`Dans la whitelist : ${pix['id']}`);
+        logger.debug(`Dans la whitelist : ${pix['id']}`);
         await db.collection('conseillers').updateOne(filter, updateDoc, options);
         m++;
       }
@@ -110,7 +110,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         conseillers.forEach(c => {
           l++;
           const p = new Promise(async resolve => {
-            logger.info(`OK;${c.nom};${c.prenom};${pix.nom};${pix.prenom};${pix.id};${c.idPG};${c._id}`);
+            logger.debug(`OK;${c.nom};${c.prenom};${pix.nom};${pix.prenom};${pix.id};${c.idPG};${c._id}`);
 
             const filter = {
               '_id': c._id,
@@ -142,9 +142,9 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         // 2- Chercher avec l'id, et on logue
         const c = await db.collection('conseillers').findOne({ idPG: pix.id });
         if (c) {
-          logger.info(`KO1;${c.nom};${c.prenom};${pix.nom};${pix.prenom};${pix.id}`);
+          logger.debug(`KO1;${c.nom};${c.prenom};${pix.nom};${pix.prenom};${pix.id}`);
         } else {
-          logger.info(`KO2;${pix.nom};${pix.prenom};${pix.id}`);
+          logger.debug(`KO2;${pix.nom};${pix.prenom};${pix.id}`);
         }
         k++;
 
