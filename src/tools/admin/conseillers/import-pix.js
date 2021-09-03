@@ -198,9 +198,9 @@ execute(__filename, async ({ db, logger, Sentry }) => {
       Sentry.captureException(error);
     }
   }
-  logger.info(`${i} lignes au total`);
-  logger.info(`${j} partages`);
-  logger.info(`${l} conseillers mis à jour dont les doublons`);
-  logger.info(`${k} échecs`);
-  logger.info(`${m} trouvés dans la whitelist`);
+  logger.info(`[PIX] ${i} lignes au total`);
+  logger.info(`[PIX] ${j} partages`);
+  logger.info(`[PIX] ${l} conseillers mis à jour dont les doublons`);
+  logger.info(`[PIX] ${k} échecs`);
+  logger.info(`[PIX] ${m} trouvés dans la whitelist`);
 });
