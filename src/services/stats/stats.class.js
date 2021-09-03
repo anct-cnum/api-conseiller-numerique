@@ -16,6 +16,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
         }
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -34,6 +35,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
         }
         //verify user role admin
         let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -58,7 +60,7 @@ exports.Stats = class Stats extends Service {
             { $group: { _id: '$structureObj._id' } },
             { $group: { _id: null, count: { $sum: 1 } } }
           ]).toArray();
-        stats.structuresQuiRecrutentCount = stats.structuresQuiRecrutentCount[0].count;
+        stats.structuresQuiRecrutentCount = stats.structuresQuiRecrutentCount.length > 0 ? stats.structuresQuiRecrutentCount[0].count : 0;
         stats.conseillersRecrutesCount = await db.collection('misesEnRelation').countDocuments({ statut: 'recrutee' });
         stats.conseillersRecrutesFinalisesCount = await db.collection('misesEnRelation').countDocuments({ statut: 'finalisee' });
         res.send(stats);
@@ -70,6 +72,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
         }
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;

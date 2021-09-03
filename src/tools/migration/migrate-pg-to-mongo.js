@@ -36,6 +36,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         codeCommune: s.commune_code,
         codeDepartement: s.departement_code === null ? null : `${s.departement_code}`,
         codeRegion: s.region_code,
+        codeCom: s.com_code,
         emailConfirmedAt: s.email_confirmed,
         emailConfirmationKey: s.email_confirmation_key,
         unsubscribedAt: s.unsubscribed, // "cliquez ici pour ne plus recevoir de propositions"
@@ -87,10 +88,11 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         aUneExperienceMedNum: c.has_experience,
         codePostal: c.zip_code,
         location: c.location,
-        /*nomCommune: c.geo_name,
+        nomCommune: c.geo_name,
         codeCommune: c.commune_code,
         codeDepartement: c.departement_code,
-        codeRegion: c.region_code,*/
+        codeRegion: c.region_code,
+        codeCom: c.com_code,
         emailConfirmedAt: c.email_confirmed,
         emailConfirmationKey: c.email_confirmation_key,
         unsubscribedAt: c.unsubscribed,
@@ -139,6 +141,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           departement_code,
           geo_name,
           region_code,
+          com_code,
           blocked,
           email_confirmation_key,
           email_confirmed,
@@ -184,6 +187,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           departement_code,
           geo_name,
           region_code,
+          com_code,
           unsubscribe_extras,
           unsubscribed,
           disponible
