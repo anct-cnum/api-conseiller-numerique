@@ -16,6 +16,7 @@ module.exports = {
       db.collection('structures').createIndex({ 'userCreated': 1 }),
       db.collection('structures').createIndex({ 'prefet.avisPrefet': 1 }),
       db.collection('structures').createIndex({ 'coselec.avisCoselec': 1 }),
+      db.collection('structures').createIndex({ 'reseau': 1 }),
       db.collection('structures').createIndex({
         'siret': 'text',
         'nom': 'text',
