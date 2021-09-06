@@ -248,6 +248,13 @@ exports.Users = class Users extends Service {
         };
         await app.service('users').create(userInfo);
       });
+      try {
+        const config = app.get('authentication');
+        await app.set('authentication', { ...config, prefet: { token: uuidv4() } });
+      } catch (error) {
+        app.get('sentry').captureException(error);
+        logger.error(error);
+      }
       res.send({ status: 'accounts created' });
     });
 
