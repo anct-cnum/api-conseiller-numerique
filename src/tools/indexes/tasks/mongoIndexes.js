@@ -103,7 +103,8 @@ module.exports = {
   },
   stats_StructuresValidees: db => {
     return Promise.all([
-      db.collection('stats_StructuresValidees').createIndex({ 'idStructure': 1 }, { unique: true })
+      db.collection('stats_StructuresValidees').createIndex({ 'idStructure': 1 }, { unique: true }),
+      db.collection('stats_StructuresValidees').createIndex({ 'estGrandReseau': 1 }),
     ]);
   },
 };

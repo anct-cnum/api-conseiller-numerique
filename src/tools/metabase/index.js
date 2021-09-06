@@ -182,6 +182,8 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   /* Liste des structures validées Coselec avec détails financement, nb de postes validés... */
   let promises = [];
   const structuresValideesCoselec = await db.collection('structures').find({ statut: 'VALIDATION_COSELEC', userCreated: true }).toArray();
+  //Vidage de la liste avant recréation (abandons...)
+  await db.collection('stats_StructuresValidees').deleteMany({});
   structuresValideesCoselec.forEach(structure => {
     promises.push(new Promise(async resolve => {
       try {
