@@ -5,7 +5,7 @@ const pool = new Pool();
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
-  program.option('-distance, --distance <distance>', 'distance max en km');
+  program.option('-distance, --distance <distance>', 'distance max en km : 5 ou 10 ou 15 ou 20 ou 40 ou 100 ou 2000 (France entière)');
   program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
@@ -16,6 +16,9 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   if (id === 0 || !distance) {
     exit('Paramètres invalides. Veuillez préciser un id et un nombre en kilomètre');
     return;
+  } else if (!['5', '10', '15', '20', '40', '100', '2000'].includes(distance)) {
+    exit('distance invalide. Veuillez préciser nombre qui est égal à 5 ou 10 ou 15 ou 20 ou 40 ou 100 ou 2000 (France entière)');
+    return;
   }
 
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
@@ -24,7 +27,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     exit('id PG inconnu dans MongoDB');
     return;
   }
-
+  distance = parseInt(distance);
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance } });
     await db.collection('misesEnRelation').updateMany(
