@@ -28,7 +28,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance } });
     await db.collection('misesEnRelation').updateMany(
-      { 'conseillerObj._id': conseiller._id },
+      { 'conseiller.$id': conseiller._id },
       { $set: { 'conseillerObj.distanceMax': distance }
       });
   } catch (error) {
@@ -46,6 +46,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
 
-  logger.info(`distance géographique mis à jour de ${conseiller.distanceMax} km par ${distance} km pour le conseiller idPG: ${id}`);
+  logger.info(`distance géographique mise à jour de ${conseiller.distanceMax} km par ${distance} km pour le conseiller idPG: ${id}`);
   exit();
 });
