@@ -27,7 +27,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     exit('id PG inconnu dans MongoDB');
     return;
   }
-  distance = parseInt(distance);
+  distance = parseInt(distance, 10);
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance } });
     await db.collection('misesEnRelation').updateMany(
