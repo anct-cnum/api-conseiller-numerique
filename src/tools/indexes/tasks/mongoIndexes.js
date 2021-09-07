@@ -16,6 +16,7 @@ module.exports = {
       db.collection('structures').createIndex({ 'userCreated': 1 }),
       db.collection('structures').createIndex({ 'prefet.avisPrefet': 1 }),
       db.collection('structures').createIndex({ 'coselec.avisCoselec': 1 }),
+      db.collection('structures').createIndex({ 'reseau': 1 }),
       db.collection('structures').createIndex({
         'siret': 'text',
         'nom': 'text',
@@ -102,7 +103,8 @@ module.exports = {
   },
   stats_StructuresValidees: db => {
     return Promise.all([
-      db.collection('stats_StructuresValidees').createIndex({ 'idStructure': 1 }, { unique: true })
+      db.collection('stats_StructuresValidees').createIndex({ 'idStructure': 1 }, { unique: true }),
+      db.collection('stats_StructuresValidees').createIndex({ 'estGrandReseau': 1 }),
     ]);
   },
 };
