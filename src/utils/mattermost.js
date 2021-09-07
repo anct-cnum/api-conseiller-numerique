@@ -80,6 +80,19 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
     });
     logger.info(resultJoinChannel);
 
+    const resultJoinThemeChannel = await axios({
+      method: 'post',
+      url: `${mattermost.endPoint}/api/v4/channels/${mattermost.themeChannelId}/members`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        'user_id': resultCreation.data.id
+      }
+    });
+    logger.info(resultJoinThemeChannel);
+
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
     return true;
   } catch (e) {

@@ -73,7 +73,8 @@
     "endPoint": "https://discussion.conseiller-numerique.gouv.fr",
     "login": "login",
     "password": "password",
-    "teamId": "teamId"
+    "teamId": "teamId",
+    "themeChannelId": "themeChannelId"
   },
   "aws": {
     "endpoint": "AWS_ENDPOINT",
