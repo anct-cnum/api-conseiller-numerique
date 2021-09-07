@@ -14,7 +14,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   let distance = program.distance;
 
   if (id === 0 || !distance) {
-    exit('Paramètres invalides. Veuillez préciser un id et une date de disponibilité');
+    exit('Paramètres invalides. Veuillez préciser un id et un nombre en kilomètre');
     return;
   }
 
