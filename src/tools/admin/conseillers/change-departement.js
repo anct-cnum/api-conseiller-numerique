@@ -16,8 +16,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   let codePostal = program.codePostal;
   let codeCommune = program.codeCommune;
 
-  if (id === 0 || !codePostal || !codeCommune) {
-    exit('Paramètres invalides. Veuillez préciser un id , un code Postal et un code Commune');
+  if (id === 0 || !codeCommune) {
+    exit('Paramètres invalides. Veuillez préciser un id et un code Commune');
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
@@ -29,9 +29,16 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   const params = {};
   const urlAPI = `https://geo.api.gouv.fr/communes/${codeCommune}?format=geojson&geometry=centre`;
   const { data } = await axios.get(urlAPI, { params: params });
+
+  if (codePostal === undefined && data.properties.codesPostaux.length > 1) {
+    exit(`Veuillez entrez un code Postal car il y a plusieurs code postaux pour la commune ${data.properties.nom} => [${data.properties.codesPostaux}]`);
+    return;
+  }
+  const cp = codePostal === undefined ? data.properties.codesPostaux[0] : codePostal;
+
   const miseAJour = {
     location: data.geometry,
-    codePostal: codePostal,
+    codePostal: cp,
     nomCommune: data.properties.nom,
     codeCommune: data.properties.code,
     codeDepartement: data.properties.codeDepartement,
@@ -68,7 +75,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     [
       id,
       data.geometry,
-      codePostal,
+      cp,
       data.properties.nom,
       data.properties.code,
       data.properties.codeDepartement,
