@@ -16,8 +16,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   let codePostal = program.codePostal;
   let codeCommune = program.codeCommune;
 
-  if (id === 0 || !codePostal) {
-    exit('Paramètres invalides. Veuillez préciser un id et un nombre en kilomètre');
+  if (id === 0 || !codePostal || !codeCommune) {
+    exit('Paramètres invalides. Veuillez préciser un id , un code Postal et un code Commune');
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
@@ -27,8 +27,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
   const params = {};
-  const urlAPI2 = `https://geo.api.gouv.fr/communes/${codeCommune}?format=geojson&geometry=centre`;
-  const { data } = await axios.get(urlAPI2, { params: params });
+  const urlAPI = `https://geo.api.gouv.fr/communes/${codeCommune}?format=geojson&geometry=centre`;
+  const { data } = await axios.get(urlAPI, { params: params });
   const miseAJour = {
     location: data.geometry,
     codePostal: codePostal,
@@ -57,25 +57,23 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   try {
     await pool.query(`UPDATE djapp_coach
       SET (
+      location,
       zip_code,
       geo_name,
       commune_code,
       departement_code,
       region_code
-      ) = ($2,$3,$4,$5,$6)
+      ) = (ST_GeomFromGeoJSON ($2),$3,$4,$5,$6,$7)
        WHERE id = $1`,
     [
       id,
+      data.geometry,
       codePostal,
       data.properties.nom,
       data.properties.code,
       data.properties.codeDepartement,
       data.properties.codeRegion
     ]);
-    await pool.query(`UPDATE djapp_coach SET location = ST_GeomFromGeoJSON
-            ($2) WHERE id=$1`,
-    [id, data.geometry]);
-
   } catch (error) {
     logger.error(`Erreur PG : ${error.message}`);
     Sentry.captureException(error);
