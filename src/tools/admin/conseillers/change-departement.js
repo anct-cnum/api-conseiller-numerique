@@ -87,6 +87,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
 
-  logger.info(`le nouveau code Postal est bien le ${codePostal} => conseiller avec l'idPG: ${id}`);
+  logger.info(`le nouveau code Postal est bien le ${cp} => conseiller avec l'idPG: ${id}`);
   exit();
 });
