@@ -12,8 +12,26 @@ cli.description('Statistiques pour les territoires').parse(process.argv);
 
 execute(__filename, async ({ logger, db, Sentry }) => {
 
-  logger.info('Récupération des différentes données nécessaires aux statistiques par territoires...');
+  logger.info('Récupération des différentes données nécessaires aux statistiques par territoire...');
   const deps = new Map();
+  departements.push({
+    'num_dep': '00',
+    'dep_name': 'TOM',
+    'region_name': 'TOM',
+  }, {
+    'num_dep': '971',
+    'dep_name': 'Saint-Martin',
+    'region_name': 'Saint-Martin',
+  }, {
+    'num_dep': '978',
+    'dep_name': 'Saint-Martin',
+    'region_name': 'Saint-Martin',
+  }, {
+    'num_dep': '988',
+    'dep_name': 'Nouvelle-Calédonie',
+    'region_name': 'Nouvelle-Calédonie',
+  });
+
   for (const value of departements) {
     deps.set(String(value.num_dep), value);
   }
@@ -25,21 +43,25 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     promiseStructure.push(new Promise(async resolve => {
       const structures = await db.collection('structures').find({ 'statut': 'VALIDATION_COSELEC', 'codeDepartement': String(departement.num_dep) }).toArray();
 
-      let DepStats = {};
-      DepStats.date = dayjs(new Date()).format('DD/MM/YYYY');
-      DepStats.codeDepartement = String(departement.num_dep);
-      DepStats.nomDepartement = departement.dep_name;
-      DepStats.nomRegion = departement.region_name;
-      DepStats.nombreConseillersCoselec = 0;
-      DepStats.cnfsActives = 0;
-      DepStats.cnfsInactives = 0;
-      DepStats.conseillerIds = [];
+      let depStats = {};
+      depStats.date = dayjs(new Date()).format('DD/MM/YYYY');
+      depStats.nombreConseillersCoselec = 0;
+      depStats.cnfsActives = 0;
+      depStats.cnfsInactives = 0;
+      depStats.conseillerIds = [];
 
       structures.forEach(structure => {
-        DepStats.codeRegion = String(structure.codeRegion);
+        depStats.codeDepartement = String(departement.num_dep) === '00' ? String(structure.codeCommune.substring(0, 3)) : String(departement.num_dep);
+        depStats.codeRegion = String(structure.codeRegion) === '00' ? String(structure.codeCommune.substring(0, 3)) : String(structure.codeRegion);
+
+        depStats.nomDepartement = String(departement.num_dep) === '00' ?
+          departements.get(String(structure.codeCommune.substring(0, 3))).dep_name : departement.dep_name;
+        depStats.nomRegion = String(structure.codeRegion) === '00' ?
+          departements.get(String(structure.codeCommune.substring(0, 3))).dep_name : departement.region_name;
+
         const coselec = utilsStructure.getCoselec(structure);
-        DepStats.nombreConseillersCoselec += coselec?.nombreConseillersCoselec ?? 0;
-        DepStats.cnfsInactives = DepStats.nombreConseillersCoselec;
+        depStats.nombreConseillersCoselec += coselec?.nombreConseillersCoselec ?? 0;
+        depStats.cnfsInactives = depStats.nombreConseillersCoselec;
 
         promiseConseillers.push(new Promise(async resolve => {
 
@@ -51,14 +73,14 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           if (conseillers.length > 0) {
             let userPromises = [];
             conseillers.forEach(conseiller => {
-              DepStats.conseillerIds.push(conseiller._id);
+              depStats.conseillerIds.push(conseiller._id);
               userPromises.push(new Promise(async resolve => {
                 const isActive = await db.collection('users').countDocuments({
                   'entity.$id': new ObjectID(conseiller._id), 'entity.$ref': 'conseillers', 'passwordCreated': true
                 });
                 if (isActive > 0) {
-                  DepStats.cnfsActives += 1;
-                  DepStats.cnfsInactives -= 1;
+                  depStats.cnfsActives += 1;
+                  depStats.cnfsInactives -= 1;
                 }
                 resolve();
               }));
@@ -70,13 +92,12 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       });
       await Promise.all(promiseConseillers);
 
-      DepStats.tauxActivation = (DepStats?.cnfsActives) ??
-      DepStats?.cnfsActives * 100 / (DepStats?.nombreConseillersCoselec);
+      depStats.tauxActivation = (depStats?.nombreConseillersCoselec) ? Math.round(depStats?.cnfsActives * 100 / (depStats?.nombreConseillersCoselec)) : 0;
 
       if (structures.length > 0) {
         try {
           logger.info('Insertion de l\'aggregation des ' + structures.length + ' structure(s) du département  ' + departement.num_dep);
-          await db.collection('stats_Territoires').insertOne(DepStats);
+          await db.collection('stats_Territoires').insertOne(depStats);
         } catch (error) {
           logger.error(error);
           Sentry.captureException(error);

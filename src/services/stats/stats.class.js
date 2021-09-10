@@ -24,7 +24,7 @@ exports.Stats = class Stats extends Service {
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!['structure'].includes(user?.roles[0])) {
           res.status(403).send(new Forbidden('User not authorized', {
-            userId: user
+            userId: userId
           }).toJSON());
           return;
         }
@@ -82,7 +82,7 @@ exports.Stats = class Stats extends Service {
 
         if (!conseillerUser?.roles.includes('conseiller') && !conseillerUser?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
-            userId: conseillerUser
+            userId: userId
           }).toJSON());
           return;
         }
@@ -170,7 +170,7 @@ exports.Stats = class Stats extends Service {
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!adminUser?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
-            userId: adminUser
+            userId: userId
           }).toJSON());
           return;
         }
@@ -204,7 +204,7 @@ exports.Stats = class Stats extends Service {
         });
 
         stats.invitationsEnvoyees = conseillersNonEnregistres + stats.conseillersEnregistres;
-        stats.tauxActivationComptes = stats.conseillersEnregistres * 100 / stats.invitationsEnvoyees;
+        stats.tauxActivationComptes = stats.invitationsEnvoyees > 0 ? Math.round(stats.conseillersEnregistres * 100 / stats.invitationsEnvoyees) : 0;
 
         //Utilise Pix Orga
         stats.utilisePixOrga = await db.collection('conseiller').countDocuments({
@@ -233,7 +233,7 @@ exports.Stats = class Stats extends Service {
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!adminUser?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
-            userId: adminUser
+            userId: userId
           }).toJSON());
           return;
         }
@@ -251,13 +251,11 @@ exports.Stats = class Stats extends Service {
           res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
           return;
         }
-        const page = req.query.page;
-        const territoire = req.query.territoire;
+
+        const { page, territoire, nomOrdre, ordre } = req.query;
         const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
         const dateDebutQuery = new Date(req.query.dateDebut);
         const dateFinQuery = new Date(req.query.dateFin);
-        const nomOrdre = req.query.nomOrdre;
-        const ordre = req.query.ordre;
 
         //Construction des statistiques
         let items = {};
@@ -270,12 +268,12 @@ exports.Stats = class Stats extends Service {
             const ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
             statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
             .sort(ordreColonne)
-            .skip(page > 0 ? ((page - 1) * 10) : 0)
-            .limit(10).toArray();
+            .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
+            .limit(options.paginate.default).toArray();
           } else {
             statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
-            .skip(page > 0 ? ((page - 1) * 10) : 0)
-            .limit(10).toArray();
+            .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
+            .limit(options.paginate.default).toArray();
           }
 
           statsTerritoires.forEach(ligneStats => {
@@ -314,7 +312,7 @@ exports.Stats = class Stats extends Service {
 
           items.data = statsTerritoires;
           items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
-          items.limit = 10;
+          items.limit = options.paginate.default;
           items.skip = page;
         }
 
