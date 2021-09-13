@@ -19,10 +19,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     'dep_name': 'TOM',
     'region_name': 'TOM',
   }, {
-    'num_dep': '971',
-    'dep_name': 'Saint-Martin',
-    'region_name': 'Saint-Martin',
-  }, {
     'num_dep': '978',
     'dep_name': 'Saint-Martin',
     'region_name': 'Saint-Martin',
@@ -67,7 +63,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
 
           const conseillers = await db.collection('conseillers').find({
             'statut': 'RECRUTE',
-            'structureId': new ObjectID(structure._id)
+            'structureId': structure._id
           }).toArray();
 
           if (conseillers.length > 0) {
