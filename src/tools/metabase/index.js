@@ -206,15 +206,17 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
           (structure?.insee?.etablissement?.adresse?.localite ?? '');
 
+        //Coût par cnfs (formation + tenue/equipement + certification)
+        const coutCnfs = 4805 + 297.228 + 326.6;
         let investissement = 0;
         if (structure.type === 'PRIVATE') {
-          investissement = (32000 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (32000 + coutCnfs) * coselec?.nombreConseillersCoselec;
         } else if (structure.codeDepartement === '971' || structure.codeDepartement === '972' || structure.codeDepartement === '973') {
-          investissement = (70000 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (70000 + coutCnfs) * coselec?.nombreConseillersCoselec;
         } else if (structure.codeDepartement === '974' || structure.codeDepartement === '976') {
-          investissement = (67500 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (67500 + coutCnfs) * coselec?.nombreConseillersCoselec;
         } else {
-          investissement = (50000 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (50000 + coutCnfs) * coselec?.nombreConseillersCoselec;
         }
 
         // Nom département
@@ -263,7 +265,8 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           nbConseillersRecrutees: nbConseillers?.find(stat => stat._id === 'recrutee')?.count ?? 0,
           nbConseillersFinalisees: nbConseillers?.find(stat => stat._id === 'finalisee')?.count ?? 0,
           estGrandReseau: structure.reseau ? 'oui' : 'non',
-          nomGrandReseau: structure.reseau ?? ''
+          nomGrandReseau: structure.reseau ?? '',
+          categorieJuridique: structure.insee?.entreprise?.forme_juridique ?? ''
         }) };
         const options = { upsert: true };
         await db.collection('stats_StructuresValidees').updateOne(queryUpd, update, options);
