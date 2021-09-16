@@ -492,6 +492,7 @@ exports.Users = class Users extends Service {
           successCheckEmail: true
         });
       } catch (err) {
+        logger.error('Erreur mot de passe oublié.');
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }
