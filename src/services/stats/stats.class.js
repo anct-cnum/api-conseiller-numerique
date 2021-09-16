@@ -1,8 +1,10 @@
 const { Service } = require('feathers-mongodb');
 const decode = require('jwt-decode');
-const { Forbidden, NotAuthenticated } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, BadRequest } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
+const Joi = require('joi');
+const dayjs = require('dayjs');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -22,7 +24,7 @@ exports.Stats = class Stats extends Service {
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!['structure'].includes(user?.roles[0])) {
           res.status(403).send(new Forbidden('User not authorized', {
-            userId: user
+            userId: userId
           }).toJSON());
           return;
         }
@@ -77,15 +79,18 @@ exports.Stats = class Stats extends Service {
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!conseillerUser?.roles.includes('conseiller')) {
+
+        if (!conseillerUser?.roles.includes('conseiller') && !conseillerUser?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
-            userId: conseillerUser
+            userId: userId
           }).toJSON());
           return;
         }
 
         //Verification du conseiller associé à l'utilisateur correspondant
-        const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(conseillerUser.entity.oid) });
+        const id = conseillerUser?.roles.includes('admin_coop') ? req.body.idConseiller : conseillerUser.entity.oid;
+
+        const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
         if (conseiller?._id.toString() !== req.body?.idConseiller.toString()) {
           res.status(403).send(new Forbidden('User not authorized', {
             conseillerId: req.body.idConseiller
@@ -155,14 +160,17 @@ exports.Stats = class Stats extends Service {
     });
 
     app.get('/stats/admincoop/dashboard', async (req, res) => {
-
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
       //verify user role admin_coop
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!adminUser?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
-            userId: adminUser
+            userId: userId
           }).toJSON());
           return;
         }
@@ -190,6 +198,14 @@ exports.Stats = class Stats extends Service {
           'passwordCreated': true
         });
 
+        const conseillersNonEnregistres = await db.collection('users').countDocuments({
+          'roles': { $in: ['conseiller'] },
+          'passwordCreated': false
+        });
+
+        stats.invitationsEnvoyees = conseillersNonEnregistres + stats.conseillersEnregistres;
+        stats.tauxActivationComptes = stats.invitationsEnvoyees > 0 ? Math.round(stats.conseillersEnregistres * 100 / stats.invitationsEnvoyees) : 0;
+
         //Utilise Pix Orga
         stats.utilisePixOrga = await db.collection('conseiller').countDocuments({
           'statut': 'RECRUTE'
@@ -203,6 +219,104 @@ exports.Stats = class Stats extends Service {
         });
 
         res.send(stats);
+      });
+    });
+
+    app.get('/stats/admincoop/territoires', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+
+      app.get('mongoClient').then(async db => {
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!adminUser?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        const schema = Joi.object({
+          page: Joi.number().required().error(new Error('Le numéro de page est invalide')),
+          territoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
+          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+          nomOrdre: Joi.string().error(new Error('Le nom de l\'ordre est invalide')),
+          ordre: Joi.number().error(new Error('L\'ordre est invalide')),
+        }).validate(req.query);
+
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
+
+        const { page, territoire, nomOrdre, ordre } = req.query;
+        const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
+        const dateDebutQuery = new Date(req.query.dateDebut);
+        const dateFinQuery = new Date(req.query.dateFin);
+
+        //Construction des statistiques
+        let items = {};
+
+        if (territoire === 'departement') {
+          let promises = [];
+          let statsTerritoires = [];
+
+          if (nomOrdre) {
+            const ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
+            statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
+            .sort(ordreColonne)
+            .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
+            .limit(options.paginate.default).toArray();
+          } else {
+            statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
+            .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
+            .limit(options.paginate.default).toArray();
+          }
+
+          statsTerritoires.forEach(ligneStats => {
+
+            ligneStats.personnesAccompagnees = 0;
+            let cumulTerritoire = 0;
+
+            if (ligneStats.conseillerIds.length > 0) {
+              ligneStats.conseillerIds.forEach(conseillerId => {
+                let query = {
+                  'conseiller.$id': new ObjectID(conseillerId),
+                  'createdAt': {
+                    $gte: dateDebutQuery,
+                    $lt: dateFinQuery,
+                  }
+                };
+
+                promises.push(new Promise(async resolve => {
+                  let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
+                  if (statsAccompagnements.length > 0) {
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+                  }
+                  ligneStats.personnesAccompagnees = cumulTerritoire;
+                  resolve();
+                }));
+              });
+            }
+          });
+
+          await Promise.all(promises);
+
+          items.data = statsTerritoires;
+          items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
+          items.limit = options.paginate.default;
+          items.skip = page;
+        }
+
+        res.send({ items: items });
       });
     });
   }

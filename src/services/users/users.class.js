@@ -299,13 +299,13 @@ exports.Users = class Users extends Service {
 
     app.get('/users/listByIdStructure/:id', async (req, res) => {
       const idStructure = req.params.id;
-      const users = await this.find({
-        query: {
-          'entity.$id': new ObjectId(idStructure),
-        }
+      app.get('mongoClient').then(async db => {
+        const users = await db.collection('users').aggregate([
+          { '$match': { 'entity.$id': new ObjectId(idStructure) } },
+          { '$project': { name: 1, roles: 1 } }
+        ]).toArray();
+        res.send(users);
       });
-
-      res.send(users.data);
     });
 
     app.post('/users/choosePassword/:token', async (req, res) => {
