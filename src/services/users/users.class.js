@@ -477,9 +477,9 @@ exports.Users = class Users extends Service {
           domaine = match[2];
           extension = match[3];
         } else {
-          const err = new Error('Erreur de format de mail');
+          const err = new Error('Erreur mot de passe oublié, format email invalide');
+          logger.error(err.message);
           app.get('sentry').captureException(err);
-          logger.error('Erreur mot de passe oublié, format email invalide');
           res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
           return;
         }
@@ -492,7 +492,7 @@ exports.Users = class Users extends Service {
           successCheckEmail: true
         });
       } catch (err) {
-        logger.error('Erreur mot de passe oublié.');
+        logger.error(err.message);
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }
