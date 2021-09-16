@@ -10,7 +10,7 @@ execute(__filename, async ({ logger, db }) => {
 
   let promises = [];
 
-  logger.info(`${conseillers.length} conseiller qui ont crée leurs email @conseiller-numerique.fr`);
+  logger.info(`${conseillers.length} conseillers qui ont crée leurs email @conseiller-numerique.fr`);
   logger.info(`Generating CSV file...`);
   let csvFile = path.join(__dirname, '../../../data/exports', 'email_conseiller_numerique.csv');
 
@@ -18,7 +18,7 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  file.write('Nom; Prenom; Email conseiller-numerique.fr; Structure associé; SIRET\n');
+  file.write('Nom; Prenom; Email conseiller-numerique.fr; Structure associée; SIRET\n');
   conseillers.forEach(conseiller => {
     promises.push(new Promise(async resolve => {
       const infoConseiller = await db.collection('conseillers').findOne({ _id: conseiller?.entity?.oid });
