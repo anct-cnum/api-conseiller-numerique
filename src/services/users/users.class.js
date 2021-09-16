@@ -479,6 +479,7 @@ exports.Users = class Users extends Service {
         } else {
           const err = new Error('Erreur de format de mail');
           app.get('sentry').captureException(err);
+          logger.error('Erreur mot de passe oublié, format email invalide');
           res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
           return;
         }
