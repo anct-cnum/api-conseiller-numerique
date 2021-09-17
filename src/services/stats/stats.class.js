@@ -5,7 +5,6 @@ const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
 const dayjs = require('dayjs');
-const { EventListeners } = require('aws-sdk');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
