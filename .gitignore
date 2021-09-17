@@ -4,3 +4,4 @@ config/local.json
 data/exports/*
 .DS_Store
 .clever.json
+.idea/
