@@ -51,9 +51,9 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         depStats.codeRegion = String(structure.codeRegion) === '00' ? String(structure.codeCommune.substring(0, 3)) : String(structure.codeRegion);
 
         depStats.nomDepartement = String(departement.num_dep) === '00' ?
-          departements.find(d => d.num_dep === String(structure.codeCommune.substring(0, 3))).dep_name : departement.dep_name;
+          deps.find(d => d.num_dep === String(structure.codeCommune.substring(0, 3))).dep_name : departement.dep_name;
         depStats.nomRegion = String(structure.codeRegion) === '00' ?
-          departements.find(d => d.num_dep === String(structure.codeCommune.substring(0, 3))).dep_name : departement.region_name;
+          deps.find(d => d.num_dep === String(structure.codeCommune.substring(0, 3))).dep_name : departement.region_name;
 
         const coselec = utilsStructure.getCoselec(structure);
         depStats.nombreConseillersCoselec += coselec?.nombreConseillersCoselec ?? 0;

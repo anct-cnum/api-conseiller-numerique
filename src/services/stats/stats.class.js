@@ -5,6 +5,7 @@ const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
 const dayjs = require('dayjs');
+const { EventListeners } = require('aws-sdk');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -259,18 +260,17 @@ exports.Stats = class Stats extends Service {
 
         //Construction des statistiques
         let items = {};
+        let promises = [];
+        let statsTerritoires = [];
+        let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
 
         if (territoire === 'departement') {
-          let promises = [];
-          let statsTerritoires = [];
 
-          if (nomOrdre) {
-            const ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
-            statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
-            .sort(ordreColonne)
-            .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
-            .limit(options.paginate.default).toArray();
-          }
+          statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
+          .sort(ordreColonne)
+          .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
+          .limit(options.paginate.default).toArray();
+
 
           statsTerritoires.forEach(ligneStats => {
 
@@ -392,12 +392,49 @@ exports.Stats = class Stats extends Service {
         stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
 
         //Evolutions du nb de cras
-        query = {
-          'conseiller.$id': { $in: ids },
-        };
-        stats.statsEvolutions = await db.collection('stats_conseillers_cras').findOne(query, { projection: { '_id': 0, 'updatedAt': 0, 'conseiller': 0 } });
-        stats.statsEvolutions = stats.statsEvolutions ?? {};
+        if (ids.length === 1) {
+          stats.statsEvolutions = await statsCras.getStatsEvolutions(db, ids[0]);
+        } else {
+          let aggregateEvol = [];
+          const dateFinEvo = new Date();
+          let dateDebutEvo = new Date(dateFinEvo.setMonth(dateFinEvo.getMonth() - 4));
 
+          aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
+            { $match: { 'conseiller.$id': { $in: ids } } },
+            { $unwind: '$' + dateFinEvo.getFullYear() },
+            { $group: { '_id': '$' + dateFinEvo.getFullYear() + '.mois',
+              'totalCras': { $sum: '$' + dateFinEvo.getFullYear() + '.totalCras' } },
+            },
+            {
+              $addFields: { 'mois': '$_id', 'annee': dateFinEvo.getFullYear() }
+            },
+            { $project: { mois: '$_id' } }
+          ).toArray();
+
+          stats.statsEvolutions = JSON.parse('{"' + dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+
+          // Si année glissante on récupère les données de l'année n-1
+          if (dateDebutEvo.getFullYear() !== dateFinEvo.getFullYear()) {
+
+            const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
+              { $match: { 'conseiller.$id': { $in: ids } } },
+              { $unwind: '$' + dateDebutEvo.getFullYear() },
+              { $group: { '_id': '$' + dateDebutEvo.getFullYear() + '.mois',
+                'totalCras': { $sum: '$' + dateDebutEvo.getFullYear() + '.totalCras' } },
+              },
+              {
+                $addFields: { 'mois': '$_id', 'annee': dateDebutEvo.getFullYear() }
+              },
+              { $project: { mois: '$_id' } }
+            ).toArray();
+
+            stats.statsEvolutions = JSON.parse('{"' +
+            dateDebutEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
+            dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+          }
+        }
+
+        stats.statsEvolutions = stats.statsEvolutions ?? {};
         res.send(stats);
       });
     });
