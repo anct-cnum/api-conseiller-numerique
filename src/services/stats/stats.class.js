@@ -296,7 +296,7 @@ exports.Stats = class Stats extends Service {
                     // eslint-disable-next-line
                     cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
                   }
-                  ligneStats.personnesAccompagnees = cumulTerritoire;
+                  ligneStats.personnesAccompagnees += cumulTerritoire;
                   resolve();
                 }));
               });
@@ -304,12 +304,77 @@ exports.Stats = class Stats extends Service {
           });
 
           await Promise.all(promises);
-
-          items.data = statsTerritoires;
           items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
-          items.limit = options.paginate.default;
-          items.skip = page;
         }
+
+        if (territoire === 'region') {
+          statsTerritoires = await db.collection('stats_Territoires').aggregate(
+            { $match: { date: dateFin } },
+            { $unwind: { path: '$conseillerIds', preserveNullAndEmptyArrays: true } },
+            { $group: {
+              _id: {
+                codeRegion: '$codeRegion',
+                nomRegion: '$nomRegion'
+              },
+              nombreConseillersCoselec: { $sum: '$nombreConseillersCoselec' },
+              cnfsActives: { $sum: '$cnfsActives' },
+              cnfsInactives: { $sum: '$cnfsInactives' },
+              conseillerIds: { $push: '$conseillerIds' }
+            } },
+            { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
+            { $sort: ordreColonne },
+            { $skip: page > 0 ? ((page - 1) * options.paginate.default) : 0 },
+            { $limit: options.paginate.default },
+            { $project: { _id: 0 } },
+          ).toArray();
+
+          statsTerritoires.forEach(ligneStats => {
+            ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec) ?
+              Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
+
+            ligneStats.personnesAccompagnees = 0;
+            let cumulTerritoire = 0;
+
+            if (ligneStats.conseillerIds.length > 0) {
+              ligneStats.conseillerIds.forEach(conseillerId => {
+                let query = {
+                  'conseiller.$id': new ObjectID(conseillerId),
+                  'createdAt': {
+                    $gte: dateDebutQuery,
+                    $lt: dateFinQuery,
+                  }
+                };
+                promises.push(new Promise(async resolve => {
+                  let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
+
+                  if (statsAccompagnements.length > 0) {
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+                  }
+                  ligneStats.personnesAccompagnees += cumulTerritoire;
+                  resolve();
+                }));
+              });
+            }
+          });
+          await Promise.all(promises);
+
+          const statsTotal = await db.collection('stats_Territoires').aggregate(
+            { $match: { date: dateFin } },
+            { $group: { _id: { codeRegion: '$codeRegion' } } },
+            { $project: { _id: 0 } }
+          ).toArray();
+
+          items.total = statsTotal.length;
+        }
+
+        items.data = statsTerritoires;
+        items.limit = options.paginate.default;
+        items.skip = page;
 
         res.send({ items: items });
       });
