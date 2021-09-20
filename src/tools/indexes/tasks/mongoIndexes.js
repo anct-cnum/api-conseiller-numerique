@@ -107,4 +107,9 @@ module.exports = {
       db.collection('stats_StructuresValidees').createIndex({ 'estGrandReseau': 1 }),
     ]);
   },
+  stats_Territoires: db => {
+    return Promise.all([
+      db.collection('stats_Territoires').createIndex({ 'date': 1 }),
+    ]);
+  }
 };

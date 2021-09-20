@@ -162,11 +162,12 @@ exports.DataExports = class DataExports {
       const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': new ObjectID(structureUser.entity.oid) }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
       let promises = [];
 
-      res.write('Nom;Prenom;Email;Code postal;\n');
+      res.write('Nom;Prénom;Email;Code postal;Expérience;Test PIX;CV\n');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
-          res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};${conseiller.codePostal};\n`);
+          // eslint-disable-next-line max-len
+          res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};${conseiller.codePostal};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.pix === undefined ? 'non' : 'oui'};${conseiller.cv === undefined ? 'non' : 'oui'}\n`);
           resolve();
         }));
       });

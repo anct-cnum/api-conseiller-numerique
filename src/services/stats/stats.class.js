@@ -243,8 +243,8 @@ exports.Stats = class Stats extends Service {
           territoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
           dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
           dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
-          nomOrdre: Joi.string().error(new Error('Le nom de l\'ordre est invalide')),
-          ordre: Joi.number().error(new Error('L\'ordre est invalide')),
+          nomOrdre: Joi.string().required().error(new Error('Le nom de l\'ordre est invalide')),
+          ordre: Joi.number().required().error(new Error('L\'ordre est invalide')),
         }).validate(req.query);
 
         if (schema.error) {
@@ -259,22 +259,17 @@ exports.Stats = class Stats extends Service {
 
         //Construction des statistiques
         let items = {};
+        let promises = [];
+        let statsTerritoires = [];
+        let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
 
         if (territoire === 'departement') {
-          let promises = [];
-          let statsTerritoires = [];
 
-          if (nomOrdre) {
-            const ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
-            statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
-            .sort(ordreColonne)
-            .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
-            .limit(options.paginate.default).toArray();
-          } else {
-            statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
-            .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
-            .limit(options.paginate.default).toArray();
-          }
+          statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
+          .sort(ordreColonne)
+          .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
+          .limit(options.paginate.default).toArray();
+
 
           statsTerritoires.forEach(ligneStats => {
 
@@ -301,7 +296,7 @@ exports.Stats = class Stats extends Service {
                     // eslint-disable-next-line
                     cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
                   }
-                  ligneStats.personnesAccompagnees = cumulTerritoire;
+                  ligneStats.personnesAccompagnees += cumulTerritoire;
                   resolve();
                 }));
               });
@@ -309,14 +304,209 @@ exports.Stats = class Stats extends Service {
           });
 
           await Promise.all(promises);
-
-          items.data = statsTerritoires;
           items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
-          items.limit = options.paginate.default;
-          items.skip = page;
         }
 
+        if (territoire === 'region') {
+          statsTerritoires = await db.collection('stats_Territoires').aggregate(
+            { $match: { date: dateFin } },
+            { $group: {
+              _id: {
+                codeRegion: '$codeRegion',
+                nomRegion: '$nomRegion',
+              },
+              nombreConseillersCoselec: { $sum: '$nombreConseillersCoselec' },
+              cnfsActives: { $sum: '$cnfsActives' },
+              cnfsInactives: { $sum: '$cnfsInactives' },
+              conseillerIds: { $push: '$conseillerIds' }
+            } },
+            { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
+            { $project: {
+              _id: 0, codeRegion: 1, nomRegion: 1, nombreConseillersCoselec: 1, cnfsActives: 1, cnfsInactives: 1,
+              conseillerIds: { $reduce: {
+                input: '$conseillerIds',
+                initialValue: [],
+                in: { $concatArrays: ['$$value', '$$this'] }
+              } }
+            } },
+            { $sort: ordreColonne },
+            { $skip: page > 0 ? ((page - 1) * options.paginate.default) : 0 },
+            { $limit: options.paginate.default },
+
+          ).toArray();
+
+          statsTerritoires.forEach(ligneStats => {
+            ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec) ?
+              Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
+
+            ligneStats.personnesAccompagnees = 0;
+            let cumulTerritoire = 0;
+
+            if (ligneStats.conseillerIds.length > 0) {
+              ligneStats.conseillerIds.forEach(conseillerId => {
+                let query = {
+                  'conseiller.$id': new ObjectID(conseillerId),
+                  'createdAt': {
+                    $gte: dateDebutQuery,
+                    $lt: dateFinQuery,
+                  }
+                };
+                promises.push(new Promise(async resolve => {
+                  let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
+
+                  if (statsAccompagnements.length > 0) {
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
+                    // eslint-disable-next-line
+                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+                  }
+                  ligneStats.personnesAccompagnees += cumulTerritoire;
+                  resolve();
+                }));
+              });
+            }
+          });
+          await Promise.all(promises);
+
+          const statsTotal = await db.collection('stats_Territoires').aggregate(
+            { $match: { date: dateFin } },
+            { $group: { _id: { codeRegion: '$codeRegion' } } },
+            { $project: { _id: 0 } }
+          ).toArray();
+
+          items.total = statsTotal.length;
+        }
+
+        items.data = statsTerritoires;
+        items.limit = options.paginate.default;
+        items.skip = page;
+
         res.send({ items: items });
+      });
+    });
+
+    app.post('/stats/territoire/cra', async (req, res) => {
+      app.get('mongoClient').then(async db => {
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
+        }
+        //Verification role admin_coop
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!user?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        //Composition de la partie query en formattant la date
+        let dateDebut = new Date(req.body?.dateDebut);
+        dateDebut.setUTCHours(0, 0, 0, 0);
+        let dateFin = new Date(req.body?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
+        const conseillerIds = req.body?.conseillerIds;
+        let ids = [];
+        conseillerIds.forEach(id => {
+          ids.push(new ObjectID(id));
+        });
+        let query = {
+          'createdAt': {
+            '$gte': dateDebut,
+            '$lt': dateFin,
+          },
+          'conseiller.$id': { $in: ids },
+        };
+
+        //Construction des statistiques
+        let stats = {};
+
+        //Nombre total d'accompagnements
+        stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
+
+        //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
+        let statsActivites = await statsCras.getStatsActivites(db, query);
+        stats.nbAteliers = statsActivites?.find(activite => activite._id === 'collectif')?.count ?? 0;
+        stats.nbTotalParticipant = statsActivites?.find(activite => activite._id === 'collectif')?.nbParticipants ?? 0;
+        stats.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
+        stats.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
+
+        //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
+        let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
+        stats.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
+        stats.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
+        stats.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+
+        //Total accompagnés
+        stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
+
+        //Taux accompagnement
+        let totalParticipants = stats.nbTotalParticipant + stats.nbAccompagnementPerso + stats.nbDemandePonctuel;
+        stats.tauxTotalUsagersAccompagnes = totalParticipants > 0 ? ~~(stats.nbUsagersBeneficiantSuivi / totalParticipants * 100) : 0;
+
+        //Thèmes (total de chaque catégorie)
+        stats.statsThemes = await statsCras.getStatsThemes(db, query);
+
+        //Canaux (total de chaque catégorie)
+        stats.statsLieux = await statsCras.getStatsCanaux(db, query);
+
+        //Duree (total de chaque catégorie)
+        stats.statsDurees = await statsCras.getStatsDurees(db, query);
+
+        //Catégorie d'âges (total de chaque catégorie en %)
+        stats.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
+
+        //Statut des usagers (total de chaque catégorie en %)
+        stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
+
+        //Evolutions du nb de cras
+        if (ids.length === 1) {
+          stats.statsEvolutions = await statsCras.getStatsEvolutions(db, ids[0]);
+        } else {
+          let aggregateEvol = [];
+          const dateFinEvo = new Date();
+          let dateDebutEvo = new Date(dateFinEvo.setMonth(dateFinEvo.getMonth() - 4));
+
+          aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
+            { $match: { 'conseiller.$id': { $in: ids } } },
+            { $unwind: '$' + dateFinEvo.getFullYear() },
+            { $group: { '_id': '$' + dateFinEvo.getFullYear() + '.mois',
+              'totalCras': { $sum: '$' + dateFinEvo.getFullYear() + '.totalCras' } },
+            },
+            {
+              $addFields: { 'mois': '$_id', 'annee': dateFinEvo.getFullYear() }
+            },
+            { $project: { mois: '$_id' } }
+          ).toArray();
+
+          stats.statsEvolutions = JSON.parse('{"' + dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+
+          // Si année glissante on récupère les données de l'année n-1
+          if (dateDebutEvo.getFullYear() !== dateFinEvo.getFullYear()) {
+
+            const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
+              { $match: { 'conseiller.$id': { $in: ids } } },
+              { $unwind: '$' + dateDebutEvo.getFullYear() },
+              { $group: { '_id': '$' + dateDebutEvo.getFullYear() + '.mois',
+                'totalCras': { $sum: '$' + dateDebutEvo.getFullYear() + '.totalCras' } },
+              },
+              {
+                $addFields: { 'mois': '$_id', 'annee': dateDebutEvo.getFullYear() }
+              },
+              { $project: { mois: '$_id' } }
+            ).toArray();
+
+            stats.statsEvolutions = JSON.parse('{"' +
+            dateDebutEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
+            dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+          }
+        }
+
+        stats.statsEvolutions = stats.statsEvolutions ?? {};
+        res.send(stats);
       });
     });
   }
