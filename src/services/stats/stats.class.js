@@ -310,11 +310,10 @@ exports.Stats = class Stats extends Service {
         if (territoire === 'region') {
           statsTerritoires = await db.collection('stats_Territoires').aggregate(
             { $match: { date: dateFin } },
-            { $unwind: { path: '$conseillerIds', preserveNullAndEmptyArrays: true } },
             { $group: {
               _id: {
                 codeRegion: '$codeRegion',
-                nomRegion: '$nomRegion'
+                nomRegion: '$nomRegion',
               },
               nombreConseillersCoselec: { $sum: '$nombreConseillersCoselec' },
               cnfsActives: { $sum: '$cnfsActives' },
@@ -322,10 +321,18 @@ exports.Stats = class Stats extends Service {
               conseillerIds: { $push: '$conseillerIds' }
             } },
             { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
+            { $project: {
+              _id: 0, codeRegion: 1, nomRegion: 1, nombreConseillersCoselec: 1, cnfsActives: 1, cnfsInactives: 1,
+              conseillerIds: { $reduce: {
+                input: '$conseillerIds',
+                initialValue: [],
+                in: { $concatArrays: ['$$value', '$$this'] }
+              } }
+            } },
             { $sort: ordreColonne },
             { $skip: page > 0 ? ((page - 1) * options.paginate.default) : 0 },
             { $limit: options.paginate.default },
-            { $project: { _id: 0 } },
+
           ).toArray();
 
           statsTerritoires.forEach(ligneStats => {
