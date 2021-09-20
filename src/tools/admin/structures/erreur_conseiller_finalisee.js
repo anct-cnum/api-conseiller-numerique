@@ -19,7 +19,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     return;
   }
 
-  const conseiller = await db.collection('conseillers').findOne({ idPG: idConseiller });
+  const conseiller = await db.collection('conseillers').findOne({ idPG: idConseiller, statut: 'RECRUTEE' });
 
   if (!conseiller) {
     exit('conseiller inconnu dans MongoDB');
@@ -33,8 +33,14 @@ execute(__filename, async ({ db, logger, exit }) => {
   }, { multi: true });
 
   await db.collection('conseillers').updateOne({ '_id': conseiller._id }, {
+    $set: {
+      disponible: true,
+      estRecrute: false,
+    },
     $unset: {
       statut: 1,
+      datePrisePoste: 1,
+      dateFinFormation: 1,
       structureId: 1,
       idStructure: 1,
       mattermost: 1,
