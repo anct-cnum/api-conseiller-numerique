@@ -13,7 +13,7 @@ execute(__filename, async ({ logger, db, exit }) => {
 
   let emailConseiller = program.email;
   if (!emailConseiller) {
-    exit('Veuillez entrez un email');
+    exit('Veuillez entrer un email avec la commande --email');
     return;
   }
   const {
@@ -37,7 +37,6 @@ execute(__filename, async ({ logger, db, exit }) => {
     estDemandeurEmploi,
     estEnEmploi,
     estEnFormation
-
   } = await db.collection('conseillers').findOne({ email: emailConseiller });
 
   logger.info(`Generating CSV file...`);
