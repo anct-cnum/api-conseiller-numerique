@@ -312,7 +312,7 @@ exports.Structures = class Structures extends Service {
       const structure = await db.collection('structures').findOne({ _id: new ObjectID(req.body.structureId) });
       if (!structure) {
         return res.status(404).send(new NotFound('Structure not found', {
-          structureId: req.body.structureId
+          structureId
         }).toJSON());
       }
 
@@ -324,16 +324,16 @@ exports.Structures = class Structures extends Service {
             WHERE id = $1`,
           [id, email]);
           await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
-          await db.collection('users').updateOne({ 'name': structure.contact.email, 'entity._id': new ObjectID(structureId) }, { $set: { name: email } });
+          await db.collection('users').updateOne({ 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId) }, { $set: { name: email } });
           await db.collection('misesEnRelation').updateMany(
-            { 'structure._id': new ObjectID(structureId) },
-            { $set: { 'structureObj.structure': email }
+            { 'structure.$id': new ObjectID(structureId) },
+            { $set: { 'structureObj.contact.email': email }
             });
           res.send({ emailUpdated: true });
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
-          res.status(500).send(new GeneralError(`Echec du changement d\'email de la structure ${structure.nom}`));
+          res.status(500).send(new GeneralError(`Echec du changement d'email de la structure ${structure.nom}`));
         }
       };
       await updateStructure(structure.idPG, email);
