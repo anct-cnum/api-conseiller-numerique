@@ -60,13 +60,13 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             errors++;
             reject();
           } else {
-            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId }, {
+            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
               $set: {
                 statut: 'finalisee',
               }
             });
 
-            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': email, 'structureObj.idPG': { $ne: structureId } }, {
+            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': email, 'statut': { $ne: 'finalisee' } }, {
               $set: {
                 statut: 'finalisee_non_disponible',
               }
