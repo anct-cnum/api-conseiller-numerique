@@ -2,7 +2,6 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
 const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
-const { ObjectId } = require('mongodb');
 
 module.exports = {
   before: {
@@ -137,15 +136,12 @@ module.exports = {
             let result = [];
             context.result.data.filter(async conseiller => {
               const p = new Promise(async resolve => {
-                console.log(conseiller.structureId);
                 const structure = await db.collection('structures').findOne({
                   '_id': conseiller.structureId
                 });
                 if (structure) {
-                  console.log(structure?.nom);
                   conseiller.nomStructure = structure?.nom;
                 }
-
                 result.push(conseiller);
                 resolve();
               });
