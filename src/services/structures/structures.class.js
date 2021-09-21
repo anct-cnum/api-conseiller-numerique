@@ -294,6 +294,51 @@ exports.Structures = class Structures extends Service {
       }
     });
 
+    app.patch('/structures/updateStructureEmail', async (req, res) => {
+      const { structureId, email } = req.body;
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+
+      const structure = await db.collection('structures').findOne({ _id: new ObjectID(req.body.structureId) });
+      if (!structure) {
+        return res.status(404).send(new NotFound('Structure not found', {
+          structureId: req.body.structureId
+        }).toJSON());
+      }
+
+      const updateStructure = async (id, email) => {
+        try {
+          await pool.query(`
+            UPDATE djapp_hostorganization
+            SET contact_email = $2
+            WHERE id = $1`,
+          [id, email]);
+          await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
+          await db.collection('users').updateOne({ 'name': structure.contact.email, 'entity._id': new ObjectID(structureId) }, { $set: { name: email } });
+          await db.collection('misesEnRelation').updateMany(
+            { 'structure._id': new ObjectID(structureId) },
+            { $set: { 'structureObj.structure': email }
+            });
+          res.send({ emailUpdated: true });
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError(`Echec du changement d\'email de la structure ${structure.nom}`));
+        }
+      };
+      await updateStructure(structure.idPG, email);
+    });
+
     app.post('/structures/updateStructureSiret', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
