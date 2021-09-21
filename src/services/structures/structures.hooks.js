@@ -13,13 +13,13 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller'],
+        roles: ['admin', 'admin_coop', 'structure', 'prefet', 'conseiller'],
         field: 'roles',
       })
     ],
     find: [
       checkPermissions({
-        roles: ['admin', 'prefet'],
+        roles: ['admin', 'admin_coop', 'prefet'],
         field: 'roles',
       }),
       async context => {
