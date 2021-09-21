@@ -54,22 +54,13 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
             errors++;
             reject();
+          } else if (miseEnRelation === null) {
+            logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
+            Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
+            errors++;
+            reject();
           } else {
-            await db.collection('conseillers').updateOne({ _id: miseEnRelation.conseillerObj._id }, {
-              $set: {
-                statut: 'RECRUTE',
-                disponible: false,
-                estRecrute: true,
-                datePrisePoste: moment(conseiller['Date de départ en formation'], 'MM/DD/YY').toDate(),
-                dateFinFormation: moment(conseiller['Date de fin de formation'], 'MM/DD/YY').toDate(),
-                structureId: structure._id
-              }
-            });
-
-            await db.collection('misesEnRelation').updateOne({
-              'conseiller.$id': miseEnRelation.conseillerObj._id,
-              'structureObj.idPG': structureId,
-              'statut': 'recrutee' }, {
+            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
               $set: {
                 statut: 'finalisee',
               }
@@ -111,7 +102,13 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
                 }
               });
             }
-            await db.collection('conseillers').updateOne({ _id: conseillerDoc._id }, { $set: {
+            await db.collection('conseillers').updateOne({ _id: miseEnRelation.conseillerObj._id }, { $set: {
+              statut: 'RECRUTE',
+              disponible: false,
+              estRecrute: true,
+              datePrisePoste: moment(conseiller['Date de départ en formation'], 'MM/DD/YY').toDate(),
+              dateFinFormation: moment(conseiller['Date de fin de formation'], 'MM/DD/YY').toDate(),
+              structureId: structure._id,
               userCreated: true
             } });
             count++;
