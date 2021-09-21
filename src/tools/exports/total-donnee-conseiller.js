@@ -48,7 +48,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   });
 
   // eslint-disable-next-line max-len
-  file.write('nom; prenom; sexe; Date de naissance; email; telephone; Disponible; Cv renseigné; code Commune; nom Commune; code Departement; code Postal; code région; date d\'inscription; Date de disponibilité; distance max; date de confirmation de l\'email\n');
+  file.write('nom; prenom; sexe; Date de naissance; email; telephone; Disponible; Cv renseigné; code Commune; nom Commune; code Departement; code Postal; code région; date d\'inscription; Date de disponibilité; distance max; date de confirmation de l\'email; Demandeur D\'emploi; En Emploi; En formation\n');
   // eslint-disable-next-line max-len
   file.write(`${nom ?? 'Non renseigné'};${prenom ?? 'Non renseigné'};${sexe ?? 'Non renseigné'};${dayjs(dateDeNaissance).format('DD/MM/YYYY')}; ${email};${telephone ?? 'Non renseigné'};${disponible === true ? 'OUI' : 'NON'}; ${cv === true ? 'OUI' : 'NON'};${codeCommune ?? 'Non renseigné'};${nomCommune ?? 'Non renseigné'}; ${codeDepartement ?? 'Non renseigné'};${codePostal ?? 'Non renseigné'}; ${codeRegion ?? 'Non renseigné'};${dayjs(createdAt).format('DD/MM/YYYY')};${dayjs(dateDisponibilite).format('DD/MM/YYYY')};${distanceMax};${dayjs(emailConfirmedAt).format('DD/MM/YYYY')};${estDemandeurEmploi === true ? 'OUI' : 'NON'};${estEnEmploi === true ? 'OUI' : 'NON'}; ${estEnFormation === true ? 'OUI' : 'NON'}`);
 
