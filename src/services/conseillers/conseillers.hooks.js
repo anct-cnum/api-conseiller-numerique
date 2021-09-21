@@ -2,6 +2,7 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
 const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
+const { ObjectId } = require('mongodb');
 
 module.exports = {
   before: {
@@ -14,6 +15,11 @@ module.exports = {
     ],
     find: [
       context => {
+        if (context.params.query.$skip) {
+          const paginate = context.app.get('paginate');
+          const page = context.params.query.$skip;
+          context.params.query.$skip = page > 0 ? ((page - 1) * paginate.default) : 0;
+        }
         if (context.params.query.datePrisePoste?.$gt) {
           context.params.query.datePrisePoste.$gt = parseStringToDate(context.params.query.datePrisePoste.$gt);
         }
@@ -24,9 +30,8 @@ module.exports = {
           context.params.query.userCreated = context.params.query.userCreated === 'true';
         }
         if (context.params.query.certifie) {
-          context.params.query.certifie = context.params.query.certifie === 'true';
+          context.params.query.certifie = context.params.query.certifie === 'false' ? null : true;
         }
-
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
         }
@@ -125,25 +130,29 @@ module.exports = {
       }
 
       if (context.params?.user?.roles.includes('admin_coop')) {
+
         const p = new Promise(resolve => {
           context.app.get('mongoClient').then(async db => {
             let promises = [];
             let result = [];
             context.result.data.filter(async conseiller => {
               const p = new Promise(async resolve => {
+                console.log(conseiller.structureId);
                 const structure = await db.collection('structures').findOne({
-                  'structure.$id': conseiller.structureId
+                  '_id': conseiller.structureId
                 });
                 if (structure) {
+                  console.log(structure?.nom);
                   conseiller.nomStructure = structure?.nom;
                 }
+
                 result.push(conseiller);
-                context.result.data = result;
                 resolve();
               });
               promises.push(p);
             });
             await Promise.all(promises);
+            context.result.data = result;
             resolve();
           });
         });
