@@ -294,6 +294,55 @@ exports.Structures = class Structures extends Service {
       }
     });
 
+    app.patch('/structures/:id/email', async (req, res) => {
+      const { email } = req.body;
+      const structureId = req.params.id;
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminId
+        }).toJSON());
+        return;
+      }
+
+      const structure = await db.collection('structures').findOne({ _id: new ObjectID(structureId) });
+      if (!structure) {
+        return res.status(404).send(new NotFound('Structure not found', {
+          structureId
+        }).toJSON());
+      }
+
+      const updateStructure = async (id, email) => {
+        try {
+          await pool.query(`
+          UPDATE djapp_hostorganization
+          SET contact_email = $2
+          WHERE id = $1`,
+          [id, email]);
+          await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
+          await db.collection('users').updateOne(
+            { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': { $in: ['structure'] } },
+            { $set: { name: email }
+            });
+          await db.collection('misesEnRelation').updateMany(
+            { 'structure.$id': new ObjectID(structureId) },
+            { $set: { 'structureObj.contact.email': email }
+            });
+          res.send({ emailUpdated: true });
+        } catch (error) {
+          logger.error(error.message);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError(`Echec du changement d'email de la structure ${structure.nom}`));
+        }
+      };
+      await updateStructure(structure.idPG, email);
+    });
+
     app.post('/structures/updateStructureSiret', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
