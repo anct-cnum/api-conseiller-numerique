@@ -330,7 +330,7 @@ exports.Structures = class Structures extends Service {
             { 'structure.$id': new ObjectID(structureId) },
             { $set: { 'structureObj.contact.email': email }
             });
-          res.send({ emailUpdated: true });
+          res.send({ emailUpdated: true, id: structureId });
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
