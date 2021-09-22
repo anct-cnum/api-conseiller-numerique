@@ -294,8 +294,9 @@ exports.Structures = class Structures extends Service {
       }
     });
 
-    app.patch('/structures/updateStructureEmail', async (req, res) => {
-      const { structureId, email } = req.body;
+    app.patch('/structures/:id/email', async (req, res) => {
+      const { email } = req.body;
+      const structureId = req.params.id;
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
@@ -309,7 +310,7 @@ exports.Structures = class Structures extends Service {
         return;
       }
 
-      const structure = await db.collection('structures').findOne({ _id: new ObjectID(req.body.structureId) });
+      const structure = await db.collection('structures').findOne({ _id: new ObjectID(structureId) });
       if (!structure) {
         return res.status(404).send(new NotFound('Structure not found', {
           structureId
@@ -319,9 +320,9 @@ exports.Structures = class Structures extends Service {
       const updateStructure = async (id, email) => {
         try {
           await pool.query(`
-            UPDATE djapp_hostorganization
-            SET contact_email = $2
-            WHERE id = $1`,
+          UPDATE djapp_hostorganization
+          SET contact_email = $2
+          WHERE id = $1`,
           [id, email]);
           await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
           await db.collection('users').updateOne({ 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId) }, { $set: { name: email } });
