@@ -326,7 +326,7 @@ exports.Structures = class Structures extends Service {
           [id, email]);
           await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
           await db.collection('users').updateOne(
-            { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': 'structure' },
+            { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': { $in: ['structure'] } },
             { $set: { name: email }
             });
           await db.collection('misesEnRelation').updateMany(
