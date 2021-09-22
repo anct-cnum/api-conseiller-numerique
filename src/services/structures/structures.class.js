@@ -305,7 +305,7 @@ exports.Structures = class Structures extends Service {
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
         res.status(403).send(new Forbidden('User not authorized', {
-          userId: adminUser
+          userId: adminId
         }).toJSON());
         return;
       }
@@ -325,14 +325,17 @@ exports.Structures = class Structures extends Service {
           WHERE id = $1`,
           [id, email]);
           await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
-          await db.collection('users').updateOne({ 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId) }, { $set: { name: email } });
+          await db.collection('users').updateOne(
+            { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': 'structure' },
+            { $set: { name: email }
+            });
           await db.collection('misesEnRelation').updateMany(
             { 'structure.$id': new ObjectID(structureId) },
             { $set: { 'structureObj.contact.email': email }
             });
-          res.send({ emailUpdated: true, id: structureId });
+          res.send({ emailUpdated: true });
         } catch (error) {
-          logger.error(error);
+          logger.error(error.message);
           app.get('sentry').captureException(error);
           res.status(500).send(new GeneralError(`Echec du changement d'email de la structure ${structure.nom}`));
         }
