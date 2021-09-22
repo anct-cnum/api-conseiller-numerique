@@ -134,10 +134,10 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     promisesConseillers.push(new Promise(async resolve => {
       try {
         const { codeDepartement, codeCom } = await db.collection('structures').findOne({ _id: conseiller.structureId });
-        //eslint-disable-next-line max-len
-        let index = codeCom !== null ? lignes.findIndex(dep => dep.numeroDepartement === codeCom) : lignes.findIndex(dep => dep.numeroDepartement === codeDepartement);
-        if (index !== -1) {
-          ++lignes[index].nombreConseillersEnPoste;
+        if (lignes.findIndex(dep => dep.numeroDepartement === codeCom) !== -1) {
+          ++lignes[lignes.findIndex(dep => dep.numeroDepartement === codeCom)].nombreConseillersEnPoste;
+        } else if (lignes.findIndex(dep => dep.numeroDepartement === codeDepartement) !== -1) {
+          ++lignes[lignes.findIndex(dep => dep.numeroDepartement === codeDepartement)].nombreConseillersEnPoste;
         } else if (codeCom === '978') {
           addTomStMartin(1, lignes, 'nombreConseillersEnPoste');
         } else {
