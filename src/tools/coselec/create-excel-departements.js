@@ -310,12 +310,14 @@ execute(__filename, async ({ db, exit }) => {
 
       // Classement des structures dans l'ordre suivant :
       // AVIS POSITIF - AVIS NEGATIF - EXAMEN COMPLEMENTAIRE - DOUBLON - NOUVELLES STRUCTURES
-      const ordre = ['POSITIF', 'NÉGATIF', 'EXAMEN COMPLÉMENTAIRE', 'DOUBLON', ''];
+      const ordre = ['POSITIF', 'NÉGATIF', 'DOUBLON', 'EXAMEN COMPLÉMENTAIRE', ''];
 
       structuresEnrichies.sort((a, b) => {
-        const aAP = a.prefet && a.prefet.length > 0 ? a.prefet[a.prefet.length - 1].avisPrefet : '';
-        const bAP = b.prefet && b.prefet.length > 0 ? b.prefet[b.prefet.length - 1].avisPrefet : '';
-        return ordre.indexOf(aAP) - ordre.indexOf(bAP);
+        const aAC = a.coselecPrecedent && a.coselecPrecedent.avisCoselec !== null && a.coselecPrecedent.avisCoselec !== '' ?
+          a.coselecPrecedent.avisCoselec : '';
+        const bAC = b.coselecPrecedent && b.coselecPrecedent.avisCoselec !== null && b.coselecPrecedent.avisCoselec !== '' ?
+          b.coselecPrecedent.avisCoselec : '';
+        return ordre.indexOf(aAC) - ordre.indexOf(bAC);
       });
 
       return structuresEnrichies;
@@ -466,8 +468,7 @@ execute(__filename, async ({ db, exit }) => {
     });
 
     ws.cell(10, 1, 10, 9, true)
-    .string(`Le fichier est à retourner à conseiller-numerique@anct.gouv.fr, copie votre ` +
-    `${referents.get(conf.departementNumero).sexe === 'f' ? 'référente' : 'référent'} ${referents.get(conf.departementNumero).email}`)
+    .string(`Le fichier est à retourner à conseiller-numerique@anct.gouv.fr`)
     .style(styleConf)
     .style({
       font: {
@@ -616,9 +617,21 @@ execute(__filename, async ({ db, exit }) => {
 
     // Add all structures
     structures.forEach(function(s, i) {
+      const styleBackgroundColor = s.coselecPrecedent && s.coselecPrecedent.avisCoselec !== null && s.coselecPrecedent.avisCoselec !== '' &&
+        ['POSITIF', 'NÉGATIF', 'DOUBLON'].includes(s.coselecPrecedent.avisCoselec) ?
+        {} : {
+          fill: {
+            type: 'pattern',
+            patternType: 'solid',
+            bgColor: '#FFFF99',
+            fgColor: '#FFFF99'
+          }
+        };
+
       ws.cell(i + start + 1, 1)
       .string(String(s.id))
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 2)
       .string(s.siret || '')
@@ -628,7 +641,8 @@ execute(__filename, async ({ db, exit }) => {
           //color: '#FF0000',
           bold: isDoublonSiretEtEmail(s.siret, s.contact_email) || isDoublonSiret(s.siret)
         }
-      });
+      })
+      .style(styleBackgroundColor);
 
       //ws.row(i + start + 1).setHeight(30);
 
@@ -640,15 +654,18 @@ execute(__filename, async ({ db, exit }) => {
           alignment: {
             wrapText: true,
           }
-        });
+        })
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 4)
       .string(s.zip_code)
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 5)
       .string(s.geo_name)
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 6)
       .string(s.contact_email)
@@ -664,11 +681,13 @@ execute(__filename, async ({ db, exit }) => {
           //color: '#FF0000',
           bold: isDoublonSiretEtEmail(s.siret, s.contact_email)
         }
-      });
+      })
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 7)
       .string(s.estLabelliseFranceServices ?? '')
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.addDataValidation({
         type: 'list',
@@ -683,7 +702,8 @@ execute(__filename, async ({ db, exit }) => {
       // ZRR
       ws.cell(i + start + 1, 8)
       .string('')
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.addDataValidation({
         type: 'list',
@@ -698,7 +718,8 @@ execute(__filename, async ({ db, exit }) => {
       // QPV
       ws.cell(i + start + 1, 9)
       .string('')
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.addDataValidation({
         type: 'list',
@@ -712,16 +733,19 @@ execute(__filename, async ({ db, exit }) => {
 
       ws.cell(i + start + 1, 10)
       .string('')
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 11)
       .string('')
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 12)
       .number(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].nombreConseillersPrefet : 0)
       .style({ numberFormat: '0' })
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.addDataValidation({
         type: 'whole',
@@ -734,8 +758,9 @@ execute(__filename, async ({ db, exit }) => {
       });
 
       ws.cell(i + start + 1, 13)
-      .string(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].avisPrefet : '')
-      .style(styleConf);
+      .string(s.prefet && s.prefet.length > 0 ? s.prefet[s.prefet.length - 1].avisPrefet ?? '' : '')
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.addDataValidation({
         type: 'list',
@@ -755,18 +780,21 @@ execute(__filename, async ({ db, exit }) => {
           alignment: {
             wrapText: true,
           }
-        });
+        })
+      .style(styleBackgroundColor);
 
       // Coselec
 
       ws.cell(i + start + 1, 15)
       .number(s.coselecPrecedent ? s.coselecPrecedent.nombreConseillersCoselec : 0)
       .style({ numberFormat: '0' })
-      .style(styleConf);
+      .style(styleConf)
+      .style(styleBackgroundColor);
 
       ws.cell(i + start + 1, 16)
-      .string(s.coselecPrecedent ? s.coselecPrecedent.avisCoselec : '')
-      .style(styleConf);
+      .string(s.coselecPrecedent ? s.coselecPrecedent.avisCoselec ?? '' : '')
+      .style(styleConf)
+      .style(styleBackgroundColor);
     });
   };
 
