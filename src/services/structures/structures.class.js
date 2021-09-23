@@ -111,16 +111,23 @@ exports.Structures = class Structures extends Service {
       ]).toArray();
 
       /* ajout des candidats dont le recrutement est finalisé dans détails structure*/
-      const misesEnRelation = await db.collection('misesEnRelation').find({ 'statut': 'finalisee', 'structure.$id': structureId }).toArray();
-      const candidats = misesEnRelation.map(item => {
-        item = `${item.conseillerObj.nom} ${item.conseillerObj.prenom}`;
-        return item;
+      const misesEnRelationFinalise = await db.collection('misesEnRelation').find({ 'statut': 'finalisee', 'structure.$id': structureId }).toArray();
+      const candidatsFinalise = misesEnRelationFinalise.map(item => {
+        return item.conseillerObj;
       });
 
+      /* ajout des candidats dont le recrutement est validé dans détails structure*/
+      const misesEnRelationValide = await db.collection('misesEnRelation').find({ 'statut': 'recrutee', 'structure.$id': structureId }).toArray();
+      const candidatsValide = misesEnRelationValide.map(item => {
+        return item.conseillerObj;
+      });
       res.send(stats.map(item => {
         item.statut = item._id;
+        if (item.statut === 'recrutee') {
+          item.candidats = candidatsValide;
+        }
         if (item.statut === 'finalisee') {
-          item.candidats = candidats;
+          item.candidats = candidatsFinalise;
         }
         delete item._id;
         return item;
