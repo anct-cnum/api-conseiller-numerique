@@ -29,6 +29,10 @@ const coselecs = {
   'COSELEC 15': '07/07/2021',
   'COSELEC 16': '15/07/2021',
   'COSELEC 17': '28/07/2021',
+  'COSELEC 18': '25/08/2021',
+  'COSELEC 19': '15/09/2021',
+  'COSELEC 20': '06/10/2021',
+  'COSELEC 21': '13/10/2021',
 };
 
 execute(__filename, async ({ logger, db, Sentry }) => {
