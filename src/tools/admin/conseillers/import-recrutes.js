@@ -1,6 +1,6 @@
 const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
-const moment = require('moment');
+const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
 
 program
@@ -31,6 +31,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
+          const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+          const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
           const exist = await db.collection('conseillers').countDocuments({ email });
           const structureId = parseInt(conseiller['ID structure']);
@@ -106,8 +108,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               statut: 'RECRUTE',
               disponible: false,
               estRecrute: true,
-              datePrisePoste: moment(conseiller['Date de départ en formation'], 'MM/DD/YY').toDate(),
-              dateFinFormation: moment(conseiller['Date de fin de formation'], 'MM/DD/YY').toDate(),
+              datePrisePoste: dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
+              dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate(),
               structureId: structure._id,
               userCreated: true
             } });
