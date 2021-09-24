@@ -1,6 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound, Conflict, GeneralError, NotAuthenticated, Forbidden, BadRequest } = require('@feathersjs/errors');
-const { ObjectId, ObjectID } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const decode = require('jwt-decode');
 const aws = require('aws-sdk');
@@ -489,7 +489,7 @@ exports.Conseillers = class Conseillers extends Service {
       const id = req.params.id;
       const conseiller = await this.find({
         query: {
-          _id: new ObjectID(id),
+          _id: new ObjectId(id),
           $limit: 1,
         }
       });
@@ -500,7 +500,7 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-      //Pour vérifier que il n'est pas était validé ou recruté dans une quelconque structure
+      //Pour vérifier que il n'a pas été validé ou recruté dans une quelconque structure
       const verifStatut = await db.collection('misesEnRelation').find(
         { 'conseiller.$id': _id,
           'statut': { $in: ['finalisee', 'recrutee'] }
@@ -514,11 +514,11 @@ exports.Conseillers = class Conseillers extends Service {
       // Pour etre sure qu'il n'a pas d'espace COOP
       const verifCompteUser = await db.collection('users').find(
         { 'entity.$id': _id,
-          'roles': { $elemMatch: { $eq: ['conseiller'] }
-          } }).toArray();
+          'roles': { $eq: ['conseiller'] }
+        }).toArray();
 
       if (verifCompteUser.length >= 1) {
-        res.status(409).send(new Conflict(`Conseiller à un compte Espace coop`, {
+        res.status(409).send(new Conflict(`Conseiller a un compte Espace coop`, {
           id
         }).toJSON());
         return;
@@ -544,7 +544,7 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(error);
       }
 
-      res.send({ suppressionSuccess: true });
+      res.send({ deleteSuccess: true });
     });
   }
 };
