@@ -1,6 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound, Conflict, GeneralError, NotAuthenticated, Forbidden, BadRequest } = require('@feathersjs/errors');
-const { ObjectId } = require('mongodb');
+const { ObjectId, ObjectID } = require('mongodb');
 const logger = require('../../logger');
 const decode = require('jwt-decode');
 const aws = require('aws-sdk');
@@ -489,11 +489,11 @@ exports.Conseillers = class Conseillers extends Service {
       const id = req.params.id;
       const conseiller = await this.find({
         query: {
-          _id: id,
+          _id: new ObjectID(id),
           $limit: 1,
         }
       });
-
+      const { _id, idPG } = conseiller.data[0];
       if (conseiller.total === 0) {
         res.status(404).send(new NotFound('Conseiller non trouvé', {
           id
@@ -502,7 +502,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       //Pour vérifier que il n'est pas était validé ou recruté dans une quelconque structure
       const verifStatut = await db.collection('misesEnRelation').find(
-        { 'conseiller.$id': conseiller._id,
+        { 'conseiller.$id': _id,
           'statut': { $in: ['finalisee', 'recrutee'] }
         }).toArray();
       if (verifStatut.length !== 0) {
@@ -512,12 +512,12 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       // Pour etre sure qu'il n'a pas d'espace COOP
-      const verifCompteUser = await db.collection('users').countDocuments(
-        { 'entity.$id': conseiller._id },
-        { 'roles': { $in: ['conseiller'] }
-        });
+      const verifCompteUser = await db.collection('users').find(
+        { 'entity.$id': _id,
+          'roles': { $elemMatch: { $eq: ['conseiller'] }
+          } }).toArray();
 
-      if (verifCompteUser !== 0) {
+      if (verifCompteUser.length >= 1) {
         res.status(409).send(new Conflict(`Conseiller à un compte Espace coop`, {
           id
         }).toJSON());
@@ -525,19 +525,19 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await pool.query(`
-        DELETE FROM djapp_matching WHERE host_id = $1`,
-        [conseiller.idPG]);
+        DELETE FROM djapp_matching WHERE coach_id = $1`,
+        [idPG]);
         await pool.query(`
         DELETE FROM djapp_coach WHERE id = $1`,
-        [conseiller.idPG]);
+        [idPG]);
       } catch (error) {
-        logger.info(`Erreur DB for delete PG Conseiller : ${error.message}`);
+        logger.info(`Erreur DB for delete matching PG Conseiller : ${error.message}`);
         app.get('sentry').captureException(error);
       }
       try {
-        await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': conseiller._id });
-        await db.collection('users').deleteOne({ 'entity.$id': conseiller._id });
-        await db.collection('conseillers').deleteOne({ _id: conseiller._id });
+        await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': _id });
+        await db.collection('users').deleteOne({ 'entity.$id': _id });
+        await db.collection('conseillers').deleteOne({ _id: _id });
 
       } catch (error) {
         logger.info(`Erreur DB for delete Mongo Conseiller : ${error.message}`);
