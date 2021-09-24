@@ -435,7 +435,7 @@ exports.Users = class Users extends Service {
     });
 
     app.post('/users/checkForgottenPasswordEmail', async (req, res) => {
-      const username = req.body.username;
+      const username = req.body.username.trim();
       const users = await this.find({
         query: {
           name: username,
@@ -499,7 +499,7 @@ exports.Users = class Users extends Service {
     });
 
     app.post('/users/sendForgottenPasswordEmail', async (req, res) => {
-      const username = req.body.username;
+      const username = req.body.username.trim();
       const users = await this.find({
         query: {
           name: username,
