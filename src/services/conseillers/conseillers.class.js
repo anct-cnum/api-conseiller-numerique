@@ -11,6 +11,9 @@ const puppeteer = require('puppeteer');
 const dayjs = require('dayjs');
 const Joi = require('joi');
 
+const { Pool } = require('pg');
+const pool = new Pool();
+
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
     super(options);
@@ -466,6 +469,82 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       res.send({ nomStructure: miseEnRelation.structureObj.nom });
+    });
+
+    app.delete('/conseillers/:id/candidat', async (req, res) => {
+      const accessToken = req.feathers?.authentication?.accessToken;
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      let userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      if (!user?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
+
+      const id = req.params.id;
+      const conseiller = await this.find({
+        query: {
+          _id: id,
+          $limit: 1,
+        }
+      });
+
+      if (conseiller.total === 0) {
+        res.status(404).send(new NotFound('Conseiller non trouvé', {
+          id
+        }).toJSON());
+        return;
+      }
+      //Pour vérifier que il n'est pas était validé ou recruté dans une quelconque structure
+      const verifStatut = await db.collection('misesEnRelation').find(
+        { 'conseiller.$id': conseiller._id,
+          'statut': { $in: ['finalisee', 'recrutee'] }
+        }).toArray();
+      if (verifStatut.length !== 0) {
+        res.status(409).send(new Conflict(`Conseiller à un statut particulier chez ${verifStatut.length} stuctures`, {
+          id
+        }).toJSON());
+        return;
+      }
+      // Pour etre sure qu'il n'a pas d'espace COOP
+      const verifCompteUser = await db.collection('users').countDocuments(
+        { 'entity.$id': conseiller._id },
+        { 'roles': { $in: ['conseiller'] }
+        });
+
+      if (verifCompteUser !== 0) {
+        res.status(409).send(new Conflict(`Conseiller à un compte Espace coop`, {
+          id
+        }).toJSON());
+        return;
+      }
+      try {
+        await pool.query(`
+        DELETE FROM djapp_matching WHERE host_id = $1`,
+        [conseiller.idPG]);
+        await pool.query(`
+        DELETE FROM djapp_coach WHERE id = $1`,
+        [conseiller.idPG]);
+      } catch (error) {
+        logger.info(`Erreur DB for delete PG Conseiller : ${error.message}`);
+        app.get('sentry').captureException(error);
+      }
+      try {
+        await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': conseiller._id });
+        await db.collection('users').deleteOne({ 'entity.$id': conseiller._id });
+        await db.collection('conseillers').deleteOne({ _id: conseiller._id });
+
+      } catch (error) {
+        logger.info(`Erreur DB for delete Mongo Conseiller : ${error.message}`);
+        app.get('sentry').captureException(error);
+      }
+
+      res.send({ suppressionSuccess: true });
     });
   }
 };
