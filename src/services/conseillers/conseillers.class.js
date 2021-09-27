@@ -427,7 +427,6 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.get('/conseillers/:id/employeur', async (req, res) => {
-
       const accessToken = req.feathers?.authentication?.accessToken;
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -522,6 +521,26 @@ exports.Conseillers = class Conseillers extends Service {
           id
         }).toJSON());
         return;
+      }
+      // Pour achiver la suppression
+      try {
+        const conseillerSupprimer = conseiller.data[0];
+        delete conseillerSupprimer['email'];
+        delete conseillerSupprimer['telephone'];
+        delete conseillerSupprimer['nom'];
+        delete conseillerSupprimer['prenom'];
+        const objAnonyme = {
+          deletedAt: new Date(),
+          actionUser: 'admin',
+          motif: req.body.motif,
+          conseiller: conseillerSupprimer
+        };
+
+        await db.collection('candidatsSupprimes').insertOne(objAnonyme);
+
+      } catch (error) {
+        logger.info(`Erreur DB candidatsSupprimes : ${error.message}`);
+        app.get('sentry').captureException(error);
       }
       try {
         await pool.query(`
