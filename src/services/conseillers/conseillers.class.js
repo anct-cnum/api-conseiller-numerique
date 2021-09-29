@@ -542,7 +542,8 @@ exports.Conseillers = class Conseillers extends Service {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
         archiveConseillersSupprimes.push(new Promise(async resolve => {
           try {
-            const { email, telephone, nom , prenom, ...conseillerSupprimer } = profil;
+            // eslint-disable-next-line no-unused-vars
+            const { email, telephone, nom, prenom, ...conseillerSupprimer } = profil;
             const objAnonyme = {
               deletedAt: new Date(),
               motif: req.body.motif,
