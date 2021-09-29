@@ -12,7 +12,6 @@ const dayjs = require('dayjs');
 const Joi = require('joi');
 
 const { Pool } = require('pg');
-const { POINT_CONVERSION_COMPRESSED } = require('constants');
 const pool = new Pool();
 
 exports.Conseillers = class Conseillers extends Service {
@@ -551,13 +550,17 @@ exports.Conseillers = class Conseillers extends Service {
             delete conseillerSupprimer['prenom'];
             const objAnonyme = {
               deletedAt: new Date(),
-              actionUser: {
-                role: req.body.actionUser,
-                idAdmin: user._id
-              },
               motif: req.body.motif,
               conseiller: conseillerSupprimer
             };
+            if (req.body.actionUser === 'admin') {
+              objAnonyme.actionUser = {
+                role: 'admin',
+                idAdmin: user._id
+              };
+            } else {
+              objAnonyme.actionUser = req.body.actionUser;
+            }
             await db.collection('conseillersSupprimes').insertOne(objAnonyme);
           } catch (error) {
             logger.info(`Erreur DB candidatsSupprimes : ${error.message}`);
@@ -595,7 +598,6 @@ exports.Conseillers = class Conseillers extends Service {
         }));
       });
       await Promise.all(suppressionTotal);
-      console.log('REUSSIE');
       res.send({ deleteSuccess: true });
     });
   }
