@@ -502,7 +502,7 @@ exports.Conseillers = class Conseillers extends Service {
       let verifAutorisationSupprime = [];
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
         verifAutorisationSupprime.push(new Promise(async resolve => {
-          //Pour vérifier que il n'a pas été validé ou recruté dans une quelconque structure
+          //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
           const verifStatut = await db.collection('misesEnRelation').find(
             { 'conseiller.$id': profil._id,
               'statut': { $in: ['finalisee', 'recrutee'] }
@@ -515,20 +515,19 @@ exports.Conseillers = class Conseillers extends Service {
             const statut = verifStatutFinalisee.statut === 'finalisee' ? 'recrutée' : 'validée';
             const structure = await db.collection('structures').findOne({ _id: verifStatutFinalisee.structure.oid });
             const messageDoublon = profil._id === id ? `est ${statut} par` : `a un doublon qui est ${statut}`;
-            const messageSiret = !structure?.siret ? '' : `, SIRET : ${structure?.siret}`;
-            // eslint-disable-next-line max-len
-            res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}${messageSiret}`).toJSON());
+            const messageSiret = structure?.siret ?? `non renseigné`;
+            res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}, SIRET: ${messageSiret}`).toJSON());
             return;
           }
           //Pour etre sure qu'il n'a pas d'espace COOP
-          const verifCompteUser = await db.collection('users').find(
+          const verifCompteUser = await db.collection('users').countDocuments(
             { 'entity.$id': profil._id,
               'roles': { $eq: ['conseiller'] }
-            }).toArray();
+            });
 
-          if (verifCompteUser.length >= 1) {
+          if (verifCompteUser >= 1) {
             const messageDoublonCoop = profil._id === id ? `` : `a un doublon qui`;
-            res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} à un compte COOP d'activer`, {
+            res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activer`, {
               id
             }).toJSON());
             return;
@@ -543,11 +542,7 @@ exports.Conseillers = class Conseillers extends Service {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
         archiveConseillersSupprimes.push(new Promise(async resolve => {
           try {
-            const conseillerSupprimer = profil;
-            delete conseillerSupprimer['email'];
-            delete conseillerSupprimer['telephone'];
-            delete conseillerSupprimer['nom'];
-            delete conseillerSupprimer['prenom'];
+            const { email, telephone, nom , prenom, ...conseillerSupprimer } = profil;
             const objAnonyme = {
               deletedAt: new Date(),
               motif: req.body.motif,
