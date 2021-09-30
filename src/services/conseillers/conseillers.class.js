@@ -11,9 +11,6 @@ const puppeteer = require('puppeteer');
 const dayjs = require('dayjs');
 const Joi = require('joi');
 
-const { Pool } = require('pg');
-const pool = new Pool();
-
 const {
   verificationRoleAdmin,
   verificationCandidaturesRecrutee,
