@@ -76,7 +76,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
-            const conseillerDoc = await db.collection('conseillers').findOne({ email });
+            const conseillerDoc = await db.collection('conseillers').findOne({ _id: miseEnRelation.conseillerObj._id });
             if (!conseillerDoc.userCreated) {
               await feathers.service('users').create({
                 name: email,
