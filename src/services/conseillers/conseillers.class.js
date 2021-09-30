@@ -473,8 +473,7 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
-      verificationRoleAdmin(app, decode, NotAuthenticated, Forbidden, req, res);
-
+      await verificationRoleAdmin(db, decode, req, res);
       const id = req.params.id;
       const conseiller = await this.find({
         query: {
@@ -490,46 +489,8 @@ exports.Conseillers = class Conseillers extends Service {
       }
       const { email } = conseiller.data[0];
       let promises = [];
-      verificationCandidaturesRecrutee(email, id, Conflict, app, promises, res);
       //Partie pour vérifier qu'on peut supprimer le profil sans problème
-      // let promises = [];
-      // await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-      //   promises.push(new Promise(async resolve => {
-      //     //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
-      //     const misesEnRelations = await db.collection('misesEnRelation').find(
-      //       { 'conseiller.$id': profil._id,
-      //         'statut': { $in: ['finalisee', 'recrutee'] }
-      //       }).toArray();
-      //     if (misesEnRelations.length !== 0) {
-      //       const misesEnRelationsFinalisees = await db.collection('misesEnRelation').findOne(
-      //         { 'conseiller.$id': profil._id,
-      //           'statut': { $in: ['finalisee', 'recrutee'] }
-      //         });
-      //       const statut = misesEnRelationsFinalisees.statut === 'finalisee' ? 'recrutée' : 'validée';
-      //       const structure = await db.collection('structures').findOne({ _id: misesEnRelationsFinalisees.structure.oid });
-      //       const messageDoublon = profil._id === id ? `est ${statut} par` : `a un doublon qui est ${statut}`;
-      //       const messageSiret = structure?.siret ?? `non renseigné`;
-      //       res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}, SIRET: ${messageSiret}`).toJSON());
-      //       return;
-      //     }
-      //     //Pour etre sure qu'il n'a pas d'espace COOP
-      //     const usersCount = await db.collection('users').countDocuments(
-      //       { 'entity.$id': profil._id,
-      //         'roles': { $eq: ['conseiller'] }
-      //       });
-
-      //     if (usersCount >= 1) {
-      //       const messageDoublonCoop = profil._id === id ? `` : `a un doublon qui`;
-      //       res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activer`, {
-      //         id
-      //       }).toJSON());
-      //       return;
-      //     }
-      //     resolve();
-      //   }));
-      // });
-      // await Promise.all(promises);
-
+      await verificationCandidaturesRecrutee(email, id, app, promises, res);
       // Pour achiver la suppression
       promises = [];
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
@@ -551,7 +512,7 @@ exports.Conseillers = class Conseillers extends Service {
             } else {
               objAnonyme.actionUser = req.body.actionUser;
             }
-            await db.collection('conseillersSupprimes').insertOne(objAnonyme);
+            // await db.collection('conseillersSupprimes').insertOne(objAnonyme);
           } catch (error) {
             logger.info(error);
             app.get('sentry').captureException(error);

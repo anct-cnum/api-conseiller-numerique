@@ -2,43 +2,34 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
-// const { NotFound, Conflict, GeneralError, NotAuthenticated, Forbidden, BadRequest } = require('@feathersjs/errors');
+const { Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 
-const test = {
-  verificationRoleAdmin,
-  verificationCandidaturesRecrutee
-
-};
-function verificationRoleAdmin(app, decode, NotAuthenticated, Forbidden, req, res) {
+const verificationRoleAdmin = async (db, decode, req, res) => {
   const accessToken = req.feathers?.authentication?.accessToken;
   if (req.feathers?.authentication === undefined) {
     res.status(401).send(new NotAuthenticated('User not authenticated'));
     return;
   }
   let userId = decode(accessToken).sub;
-  console.log('userId:', userId);
-  app.get('mongoClient').then(async db => {
-    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-    if (!user?.roles.includes('admin')) {
-      res.status(403).send(new Forbidden('User not authorized', {
-        userId: userId
-      }).toJSON());
-      return;
-    }
-  });
-}
-async function verificationCandidaturesRecrutee(email, id, app, Conflict, promises, res) {
-  app.get('mongoClient').then(async db => {
-    await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-      promises.push(new Promise(async resolve => {
-        //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
-        try {
+  const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+  if (!user?.roles.includes('admins')) {
+    res.status(403).send(new Forbidden('User not authorized', {
+      userId: userId
+    }).toJSON());
+    return;
+  }
+};
+const verificationCandidaturesRecrutee = async (email, id, app, promises, res) => {
+  try {
+    await app.get('mongoClient').then(async db => {
+      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+        promises.push(new Promise(async resolve => {
+          //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
           const misesEnRelations = await db.collection('misesEnRelation').find(
             { 'conseiller.$id': profil._id,
               'statut': { $in: ['finalisee', 'recrutee'] }
             }).toArray();
           if (misesEnRelations.length !== 0) {
-            console.log('ERROR STATUT');
             const misesEnRelationsFinalisees = await db.collection('misesEnRelation').findOne(
               { 'conseiller.$id': profil._id,
                 'statut': { $in: ['finalisee', 'recrutee'] }
@@ -63,14 +54,19 @@ async function verificationCandidaturesRecrutee(email, id, app, Conflict, promis
             }).toJSON());
             return;
           }
-        } catch (error) {
-          logger.info(error);
-          // app.get('sentry').captureException(error);
-        }
-        resolve();
-      }));
+          resolve();
+        }));
+      });
+      await Promise.allSettled(promises);
     });
-    await Promise.all(promises);
-  });
-}
-module.exports = test;
+  } catch (error) {
+    logger.error(error);
+    // app.get('sentry').captureException(error);
+  }
+
+};
+module.exports = {
+  verificationRoleAdmin,
+  verificationCandidaturesRecrutee
+
+};
