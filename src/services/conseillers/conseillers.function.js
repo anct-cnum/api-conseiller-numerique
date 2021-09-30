@@ -4,8 +4,8 @@ const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const { Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 
-const verificationRoleAdmin = async (db, decode, promises, req, res) => {
-  promises.push(new Promise(async resolve => {
+const verificationRoleAdmin = async (userAuthentifier, db, decode, promisesUser, req, res) => {
+  promisesUser.push(new Promise(async resolve => {
     const accessToken = req.feathers?.authentication?.accessToken;
     if (req.feathers?.authentication === undefined) {
       res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -13,7 +13,8 @@ const verificationRoleAdmin = async (db, decode, promises, req, res) => {
     }
     let userId = decode(accessToken).sub;
     const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-    if (!user?.roles.includes('admins')) {
+    userAuthentifier.push(user);
+    if (!user?.roles.includes('admin')) {
       res.status(403).send(new Forbidden('User not authorized', {
         userId: userId
       }).toJSON());
@@ -21,7 +22,7 @@ const verificationRoleAdmin = async (db, decode, promises, req, res) => {
     }
     resolve();
   }));
-  await Promise.all(promises);
+  await Promise.all(promisesUser);
 };
 const verificationCandidaturesRecrutee = async (email, id, app, promises, res) => {
   try {
@@ -66,12 +67,88 @@ const verificationCandidaturesRecrutee = async (email, id, app, promises, res) =
     });
   } catch (error) {
     logger.error(error);
-    // app.get('sentry').captureException(error);
+    app.get('sentry').captureException(error);
   }
 
 };
+
+const archiverLaSuppression = async (email, user, app, promises, req) => {
+  try {
+    promises = [];
+    await app.get('mongoClient').then(async db => {
+      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+        promises.push(new Promise(async resolve => {
+          try {
+            // eslint-disable-next-line no-unused-vars
+            const { email, telephone, nom, prenom, ...conseiller } = profil;
+            const objAnonyme = {
+              deletedAt: new Date(),
+              motif: req.body.motif,
+              conseiller: conseiller
+            };
+            if (req.body.actionUser === 'admin') {
+              objAnonyme.actionUser = {
+                role: 'admin',
+                userId: user._id
+              };
+            } else {
+              objAnonyme.actionUser = req.body.actionUser;
+            }
+            await db.collection('conseillersSupprimes').insertOne(objAnonyme);
+          } catch (error) {
+            logger.info(error);
+            app.get('sentry').captureException(error);
+          }
+          resolve();
+        }));
+      });
+      await Promise.all(promises);
+    });
+  } catch (error) {
+    logger.error(error);
+    app.get('sentry').captureException(error);
+  }
+};
+
+const suppressionTotalCandidat = async (email, app, promises) => {
+  try {
+    promises = [];
+    await app.get('mongoClient').then(async db => {
+      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+        promises.push(new Promise(async resolve => {
+          try {
+            await pool.query(`
+        DELETE FROM djapp_matching WHERE coach_id = $1`,
+            [profil.idPG]);
+            await pool.query(`
+        DELETE FROM djapp_coach WHERE id = $1`,
+            [profil.idPG]);
+          } catch (error) {
+            logger.info(error);
+            app.get('sentry').captureException(error);
+          }
+          try {
+            await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': profil._id });
+            await db.collection('users').deleteOne({ 'entity.$id': profil._id });
+            await db.collection('conseillers').deleteOne({ _id: profil._id });
+
+          } catch (error) {
+            logger.info(error);
+            app.get('sentry').captureException(error);
+          }
+          resolve();
+        }));
+      });
+      await Promise.all(promises);
+    });
+  } catch (error) {
+    logger.error(error);
+    app.get('sentry').captureException(error);
+  }
+};
 module.exports = {
   verificationRoleAdmin,
-  verificationCandidaturesRecrutee
-
+  verificationCandidaturesRecrutee,
+  archiverLaSuppression,
+  suppressionTotalCandidat
 };

@@ -14,7 +14,11 @@ const Joi = require('joi');
 const { Pool } = require('pg');
 const pool = new Pool();
 
-const { verificationRoleAdmin, verificationCandidaturesRecrutee } = require('./conseillers.function');
+const {
+  verificationRoleAdmin,
+  verificationCandidaturesRecrutee,
+  archiverLaSuppression,
+  suppressionTotalCandidat } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -473,8 +477,10 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
-      let promises = [];
-      await verificationRoleAdmin(db, decode, promises, req, res);
+      let promisesUser = [];
+      let userAuthentifier = [];
+      await verificationRoleAdmin(userAuthentifier, db, decode, promisesUser, req, res);
+      const user = userAuthentifier[0];
       const id = req.params.id;
       const conseiller = await this.find({
         query: {
@@ -489,66 +495,10 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       const { email } = conseiller.data[0];
-      //Partie pour vérifier qu'on peut supprimer le profil sans problème
+      let promises = [];
       await verificationCandidaturesRecrutee(email, id, app, promises, res);
-      // Pour achiver la suppression
-      promises = [];
-      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        console.log('ARCHIVE');
-        promises.push(new Promise(async resolve => {
-          try {
-            // eslint-disable-next-line no-unused-vars
-            const { email, telephone, nom, prenom, ...conseiller } = profil;
-            const objAnonyme = {
-              deletedAt: new Date(),
-              motif: req.body.motif,
-              conseiller: conseiller
-            };
-            if (req.body.actionUser === 'admin') {
-              objAnonyme.actionUser = {
-                role: 'admin',
-                // userId: user._id
-              };
-            } else {
-              objAnonyme.actionUser = req.body.actionUser;
-            }
-            // await db.collection('conseillersSupprimes').insertOne(objAnonyme);
-          } catch (error) {
-            logger.info(error);
-            app.get('sentry').captureException(error);
-          }
-          resolve();
-        }));
-      });
-      await Promise.all(promises);
-
-      // promises = [];
-      // await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-      //   promises.push(new Promise(async resolve => {
-      //     try {
-      //       await pool.query(`
-      //   DELETE FROM djapp_matching WHERE coach_id = $1`,
-      //       [profil.idPG]);
-      //       await pool.query(`
-      //   DELETE FROM djapp_coach WHERE id = $1`,
-      //       [profil.idPG]);
-      //     } catch (error) {
-      //       logger.info(error);
-      //       app.get('sentry').captureException(error);
-      //     }
-      //     try {
-      //       await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': profil._id });
-      //       await db.collection('users').deleteOne({ 'entity.$id': profil._id });
-      //       await db.collection('conseillers').deleteOne({ _id: profil._id });
-
-      //     } catch (error) {
-      //       logger.info(error);
-      //       app.get('sentry').captureException(error);
-      //     }
-      //     resolve();
-      //   }));
-      // });
-      // await Promise.all(promises);
+      await archiverLaSuppression(email, user, app, promises, req);
+      await suppressionTotalCandidat(email, app, promises);
       res.send({ deleteSuccess: true });
     });
   }
