@@ -14,6 +14,8 @@ const Joi = require('joi');
 const { Pool } = require('pg');
 const pool = new Pool();
 
+const { verificationRoleAdmin, verificationCandidaturesRecrutee } = require('./conseillers.function');
+
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
     super(options);
@@ -470,20 +472,9 @@ exports.Conseillers = class Conseillers extends Service {
       res.send({ nomStructure: miseEnRelation.structureObj.nom });
     });
 
-    app.delete('/conseillers/:id/candidat', async (req, res) => {
-      const accessToken = req.feathers?.authentication?.accessToken;
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
-      let userId = decode(accessToken).sub;
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!user?.roles.includes('admin')) {
-        res.status(403).send(new Forbidden('User not authorized', {
-          userId: userId
-        }).toJSON());
-        return;
-      }
+    app.delete('/conseillers/:id/candidature', async (req, res) => {
+      verificationRoleAdmin(app, decode, NotAuthenticated, Forbidden, req, res);
+
       const id = req.params.id;
       const conseiller = await this.find({
         query: {
@@ -498,48 +489,51 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       const { email } = conseiller.data[0];
-      // Partie pour vérifier qu'on peut supprimer le profil sans problème
       let promises = [];
-      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promises.push(new Promise(async resolve => {
-          //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
-          const misesEnRelations = await db.collection('misesEnRelation').find(
-            { 'conseiller.$id': profil._id,
-              'statut': { $in: ['finalisee', 'recrutee'] }
-            }).toArray();
-          if (misesEnRelations.length !== 0) {
-            const misesEnRelationsFinalisees = await db.collection('misesEnRelation').findOne(
-              { 'conseiller.$id': profil._id,
-                'statut': { $in: ['finalisee', 'recrutee'] }
-              });
-            const statut = misesEnRelationsFinalisees.statut === 'finalisee' ? 'recrutée' : 'validée';
-            const structure = await db.collection('structures').findOne({ _id: misesEnRelationsFinalisees.structure.oid });
-            const messageDoublon = profil._id === id ? `est ${statut} par` : `a un doublon qui est ${statut}`;
-            const messageSiret = structure?.siret ?? `non renseigné`;
-            res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}, SIRET: ${messageSiret}`).toJSON());
-            return;
-          }
-          //Pour etre sure qu'il n'a pas d'espace COOP
-          const usersCount = await db.collection('users').countDocuments(
-            { 'entity.$id': profil._id,
-              'roles': { $eq: ['conseiller'] }
-            });
+      verificationCandidaturesRecrutee(email, id, Conflict, app, promises, res);
+      //Partie pour vérifier qu'on peut supprimer le profil sans problème
+      // let promises = [];
+      // await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+      //   promises.push(new Promise(async resolve => {
+      //     //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
+      //     const misesEnRelations = await db.collection('misesEnRelation').find(
+      //       { 'conseiller.$id': profil._id,
+      //         'statut': { $in: ['finalisee', 'recrutee'] }
+      //       }).toArray();
+      //     if (misesEnRelations.length !== 0) {
+      //       const misesEnRelationsFinalisees = await db.collection('misesEnRelation').findOne(
+      //         { 'conseiller.$id': profil._id,
+      //           'statut': { $in: ['finalisee', 'recrutee'] }
+      //         });
+      //       const statut = misesEnRelationsFinalisees.statut === 'finalisee' ? 'recrutée' : 'validée';
+      //       const structure = await db.collection('structures').findOne({ _id: misesEnRelationsFinalisees.structure.oid });
+      //       const messageDoublon = profil._id === id ? `est ${statut} par` : `a un doublon qui est ${statut}`;
+      //       const messageSiret = structure?.siret ?? `non renseigné`;
+      //       res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}, SIRET: ${messageSiret}`).toJSON());
+      //       return;
+      //     }
+      //     //Pour etre sure qu'il n'a pas d'espace COOP
+      //     const usersCount = await db.collection('users').countDocuments(
+      //       { 'entity.$id': profil._id,
+      //         'roles': { $eq: ['conseiller'] }
+      //       });
 
-          if (usersCount >= 1) {
-            const messageDoublonCoop = profil._id === id ? `` : `a un doublon qui`;
-            res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activer`, {
-              id
-            }).toJSON());
-            return;
-          }
-          resolve();
-        }));
-      });
-      await Promise.all(promises);
+      //     if (usersCount >= 1) {
+      //       const messageDoublonCoop = profil._id === id ? `` : `a un doublon qui`;
+      //       res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activer`, {
+      //         id
+      //       }).toJSON());
+      //       return;
+      //     }
+      //     resolve();
+      //   }));
+      // });
+      // await Promise.all(promises);
 
       // Pour achiver la suppression
       promises = [];
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+        console.log('ARCHIVE');
         promises.push(new Promise(async resolve => {
           try {
             // eslint-disable-next-line no-unused-vars
@@ -552,7 +546,7 @@ exports.Conseillers = class Conseillers extends Service {
             if (req.body.actionUser === 'admin') {
               objAnonyme.actionUser = {
                 role: 'admin',
-                userId: user._id
+                // userId: user._id
               };
             } else {
               objAnonyme.actionUser = req.body.actionUser;
@@ -567,33 +561,33 @@ exports.Conseillers = class Conseillers extends Service {
       });
       await Promise.all(promises);
 
-      promises = [];
-      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promises.push(new Promise(async resolve => {
-          try {
-            await pool.query(`
-        DELETE FROM djapp_matching WHERE coach_id = $1`,
-            [profil.idPG]);
-            await pool.query(`
-        DELETE FROM djapp_coach WHERE id = $1`,
-            [profil.idPG]);
-          } catch (error) {
-            logger.info(error);
-            app.get('sentry').captureException(error);
-          }
-          try {
-            await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': profil._id });
-            await db.collection('users').deleteOne({ 'entity.$id': profil._id });
-            await db.collection('conseillers').deleteOne({ _id: profil._id });
+      // promises = [];
+      // await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+      //   promises.push(new Promise(async resolve => {
+      //     try {
+      //       await pool.query(`
+      //   DELETE FROM djapp_matching WHERE coach_id = $1`,
+      //       [profil.idPG]);
+      //       await pool.query(`
+      //   DELETE FROM djapp_coach WHERE id = $1`,
+      //       [profil.idPG]);
+      //     } catch (error) {
+      //       logger.info(error);
+      //       app.get('sentry').captureException(error);
+      //     }
+      //     try {
+      //       await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': profil._id });
+      //       await db.collection('users').deleteOne({ 'entity.$id': profil._id });
+      //       await db.collection('conseillers').deleteOne({ _id: profil._id });
 
-          } catch (error) {
-            logger.info(error);
-            app.get('sentry').captureException(error);
-          }
-          resolve();
-        }));
-      });
-      await Promise.all(promises);
+      //     } catch (error) {
+      //       logger.info(error);
+      //       app.get('sentry').captureException(error);
+      //     }
+      //     resolve();
+      //   }));
+      // });
+      // await Promise.all(promises);
       res.send({ deleteSuccess: true });
     });
   }
