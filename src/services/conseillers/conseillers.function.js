@@ -4,23 +4,28 @@ const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const { Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 
-const verificationRoleAdmin = async (db, decode, req, res) => {
-  const accessToken = req.feathers?.authentication?.accessToken;
-  if (req.feathers?.authentication === undefined) {
-    res.status(401).send(new NotAuthenticated('User not authenticated'));
-    return;
-  }
-  let userId = decode(accessToken).sub;
-  const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-  if (!user?.roles.includes('admins')) {
-    res.status(403).send(new Forbidden('User not authorized', {
-      userId: userId
-    }).toJSON());
-    return;
-  }
+const verificationRoleAdmin = async (db, decode, promises, req, res) => {
+  promises.push(new Promise(async resolve => {
+    const accessToken = req.feathers?.authentication?.accessToken;
+    if (req.feathers?.authentication === undefined) {
+      res.status(401).send(new NotAuthenticated('User not authenticated'));
+      return;
+    }
+    let userId = decode(accessToken).sub;
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user?.roles.includes('admins')) {
+      res.status(403).send(new Forbidden('User not authorized', {
+        userId: userId
+      }).toJSON());
+      return;
+    }
+    resolve();
+  }));
+  await Promise.all(promises);
 };
 const verificationCandidaturesRecrutee = async (email, id, app, promises, res) => {
   try {
+    promises = [];
     await app.get('mongoClient').then(async db => {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
         promises.push(new Promise(async resolve => {

@@ -473,7 +473,8 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
-      await verificationRoleAdmin(db, decode, req, res);
+      let promises = [];
+      await verificationRoleAdmin(db, decode, promises, req, res);
       const id = req.params.id;
       const conseiller = await this.find({
         query: {
@@ -488,7 +489,6 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       const { email } = conseiller.data[0];
-      let promises = [];
       //Partie pour vérifier qu'on peut supprimer le profil sans problème
       await verificationCandidaturesRecrutee(email, id, app, promises, res);
       // Pour achiver la suppression
