@@ -499,33 +499,33 @@ exports.Conseillers = class Conseillers extends Service {
       }
       const { email } = conseiller.data[0];
       // Partie pour vérifier qu'on peut supprimer le profil sans problème
-      let verifAutorisationSupprime = [];
+      let promises = [];
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        verifAutorisationSupprime.push(new Promise(async resolve => {
+        promises.push(new Promise(async resolve => {
           //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
-          const verifStatut = await db.collection('misesEnRelation').find(
+          const misesEnRelations = await db.collection('misesEnRelation').find(
             { 'conseiller.$id': profil._id,
               'statut': { $in: ['finalisee', 'recrutee'] }
             }).toArray();
-          if (verifStatut.length !== 0) {
-            const verifStatutFinalisee = await db.collection('misesEnRelation').findOne(
+          if (misesEnRelations.length !== 0) {
+            const misesEnRelationsFinalisees = await db.collection('misesEnRelation').findOne(
               { 'conseiller.$id': profil._id,
                 'statut': { $in: ['finalisee', 'recrutee'] }
               });
-            const statut = verifStatutFinalisee.statut === 'finalisee' ? 'recrutée' : 'validée';
-            const structure = await db.collection('structures').findOne({ _id: verifStatutFinalisee.structure.oid });
+            const statut = misesEnRelationsFinalisees.statut === 'finalisee' ? 'recrutée' : 'validée';
+            const structure = await db.collection('structures').findOne({ _id: misesEnRelationsFinalisees.structure.oid });
             const messageDoublon = profil._id === id ? `est ${statut} par` : `a un doublon qui est ${statut}`;
             const messageSiret = structure?.siret ?? `non renseigné`;
             res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}, SIRET: ${messageSiret}`).toJSON());
             return;
           }
           //Pour etre sure qu'il n'a pas d'espace COOP
-          const verifCompteUser = await db.collection('users').countDocuments(
+          const usersCount = await db.collection('users').countDocuments(
             { 'entity.$id': profil._id,
               'roles': { $eq: ['conseiller'] }
             });
 
-          if (verifCompteUser >= 1) {
+          if (usersCount >= 1) {
             const messageDoublonCoop = profil._id === id ? `` : `a un doublon qui`;
             res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activer`, {
               id
@@ -535,41 +535,41 @@ exports.Conseillers = class Conseillers extends Service {
           resolve();
         }));
       });
-      await Promise.all(verifAutorisationSupprime);
+      await Promise.all(promises);
 
       // Pour achiver la suppression
-      let archiveConseillersSupprimes = [];
+      promises = [];
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        archiveConseillersSupprimes.push(new Promise(async resolve => {
+        promises.push(new Promise(async resolve => {
           try {
             // eslint-disable-next-line no-unused-vars
-            const { email, telephone, nom, prenom, ...conseillerSupprimer } = profil;
+            const { email, telephone, nom, prenom, ...conseiller } = profil;
             const objAnonyme = {
               deletedAt: new Date(),
               motif: req.body.motif,
-              conseiller: conseillerSupprimer
+              conseiller: conseiller
             };
             if (req.body.actionUser === 'admin') {
               objAnonyme.actionUser = {
                 role: 'admin',
-                idAdmin: user._id
+                userId: user._id
               };
             } else {
               objAnonyme.actionUser = req.body.actionUser;
             }
             await db.collection('conseillersSupprimes').insertOne(objAnonyme);
           } catch (error) {
-            logger.info(`Erreur DB candidatsSupprimes : ${error.message}`);
+            logger.info(error);
             app.get('sentry').captureException(error);
           }
           resolve();
         }));
       });
-      await Promise.all(archiveConseillersSupprimes);
+      await Promise.all(promises);
 
-      let suppressionTotal = [];
+      promises = [];
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        suppressionTotal.push(new Promise(async resolve => {
+        promises.push(new Promise(async resolve => {
           try {
             await pool.query(`
         DELETE FROM djapp_matching WHERE coach_id = $1`,
@@ -578,7 +578,7 @@ exports.Conseillers = class Conseillers extends Service {
         DELETE FROM djapp_coach WHERE id = $1`,
             [profil.idPG]);
           } catch (error) {
-            logger.info(`Erreur DB for delete matching PG Conseiller : ${error.message}`);
+            logger.info(error);
             app.get('sentry').captureException(error);
           }
           try {
@@ -587,13 +587,13 @@ exports.Conseillers = class Conseillers extends Service {
             await db.collection('conseillers').deleteOne({ _id: profil._id });
 
           } catch (error) {
-            logger.info(`Erreur DB for delete Mongo Conseiller : ${error.message}`);
+            logger.info(error);
             app.get('sentry').captureException(error);
           }
           resolve();
         }));
       });
-      await Promise.all(suppressionTotal);
+      await Promise.all(promises);
       res.send({ deleteSuccess: true });
     });
   }
