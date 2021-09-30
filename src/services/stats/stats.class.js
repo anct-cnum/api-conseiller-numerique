@@ -178,6 +178,8 @@ exports.Stats = class Stats extends Service {
         //Construction des statistiques
         let stats = {};
 
+        //Total cras
+        stats.nbCras = await db.collection('cras').estimatedDocumentCount();
         //Total accompagnement
         let nbAccompagnements = await db.collection('cras').aggregate(
           [
