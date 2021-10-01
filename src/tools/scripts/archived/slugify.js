@@ -40,7 +40,7 @@ execute(__filename, async ({ logger, exit }) => {
     readCSV(program.csv).then(async ressources => {
       ressources.forEach(ressource => {
         promises.push(new Promise(async resolve => {
-          file.write(`${slugify(ressource.nom)}\n`);
+          file.write(`${(ressource.nom)}\n`);
           resolve();
         }));
       });
@@ -53,5 +53,5 @@ execute(__filename, async ({ logger, exit }) => {
   file.close();
 
   logger.info('Csv généré dans api-conseiller-numerique/data/exports');
-
+  exit();
 });
