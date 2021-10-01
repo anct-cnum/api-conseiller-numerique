@@ -40,7 +40,7 @@ execute(__filename, async ({ logger, exit }) => {
     readCSV(program.csv).then(async ressources => {
       ressources.forEach(ressource => {
         promises.push(new Promise(async resolve => {
-          file.write(`${(ressource.nom)}\n`);
+          file.write(`${slugify(ressource.nom)}\n`);
           resolve();
         }));
       });
