@@ -4,8 +4,9 @@ const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const { Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 
-const verificationRoleAdmin = async (userAuthentifier, db, decode, promisesUser, req, res) => {
-  promisesUser.push(new Promise(async resolve => {
+const verificationRoleAdmin = async (userAuthentifier, db, decode, req, res) => {
+  let promise;
+  promise = new Promise(async resolve => {
     const accessToken = req.feathers?.authentication?.accessToken;
     if (req.feathers?.authentication === undefined) {
       res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -21,15 +22,15 @@ const verificationRoleAdmin = async (userAuthentifier, db, decode, promisesUser,
       return;
     }
     resolve();
-  }));
-  await Promise.all(promisesUser);
+  });
+  await promise;
 };
-const verificationCandidaturesRecrutee = async (email, id, app, promises, res) => {
+const verificationCandidaturesRecrutee = async (email, id, app, res) => {
   try {
-    promises = [];
+    let promise;
     await app.get('mongoClient').then(async db => {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promises.push(new Promise(async resolve => {
+        promise = new Promise(async resolve => {
           //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
           const misesEnRelations = await db.collection('misesEnRelation').find(
             { 'conseiller.$id': profil._id,
@@ -61,9 +62,9 @@ const verificationCandidaturesRecrutee = async (email, id, app, promises, res) =
             return;
           }
           resolve();
-        }));
+        });
       });
-      await Promise.allSettled(promises);
+      await promise;
     });
   } catch (error) {
     logger.error(error);
@@ -72,12 +73,12 @@ const verificationCandidaturesRecrutee = async (email, id, app, promises, res) =
 
 };
 
-const archiverLaSuppression = async (email, user, app, promises, req) => {
+const archiverLaSuppression = async (email, user, app, req) => {
   try {
-    promises = [];
+    let promise;
     await app.get('mongoClient').then(async db => {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promises.push(new Promise(async resolve => {
+        promise = new Promise(async resolve => {
           try {
             // eslint-disable-next-line no-unused-vars
             const { email, telephone, nom, prenom, ...conseiller } = profil;
@@ -100,9 +101,9 @@ const archiverLaSuppression = async (email, user, app, promises, req) => {
             app.get('sentry').captureException(error);
           }
           resolve();
-        }));
+        });
       });
-      await Promise.all(promises);
+      await promise;
     });
   } catch (error) {
     logger.error(error);
@@ -110,12 +111,12 @@ const archiverLaSuppression = async (email, user, app, promises, req) => {
   }
 };
 
-const suppressionTotalCandidat = async (email, app, promises) => {
+const suppressionTotalCandidat = async (email, app) => {
   try {
-    promises = [];
+    let promise;
     await app.get('mongoClient').then(async db => {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promises.push(new Promise(async resolve => {
+        promise = new Promise(async resolve => {
           try {
             await pool.query(`
         DELETE FROM djapp_matching WHERE coach_id = $1`,
@@ -137,9 +138,9 @@ const suppressionTotalCandidat = async (email, app, promises) => {
             app.get('sentry').captureException(error);
           }
           resolve();
-        }));
+        });
       });
-      await Promise.all(promises);
+      await promise;
     });
   } catch (error) {
     logger.error(error);
