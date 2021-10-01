@@ -15,7 +15,7 @@ exports.Ressources = class Ressources extends Service {
         return;
       }
       app.get('mongoClient').then(async db => {
-        const tags = await db.collection('ressources_tags').find().toArray();
+        const tags = await db.collection('ressourcesTags').find().toArray();
         res.send({ tags: tags });
       });
     });
