@@ -492,7 +492,9 @@ exports.Conseillers = class Conseillers extends Service {
       }
       const { email } = conseiller.data[0];
       await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
-        return archiverLaSuppression(email, user, app, req);
+        const actionUser = req.body.actionUser;
+        const motif = req.body.motif;
+        return archiverLaSuppression(email, user, app, motif, actionUser);
       }).then(() => {
         return suppressionTotalCandidat(email, app);
       }).then(() => {

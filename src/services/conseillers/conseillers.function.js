@@ -74,7 +74,7 @@ const verificationCandidaturesRecrutee = async (email, id, app, res) => {
 
 };
 
-const archiverLaSuppression = async (email, user, app, req) => {
+const archiverLaSuppression = async (email, user, app, motif, actionUser) => {
   try {
     let promise;
     await app.get('mongoClient').then(async db => {
@@ -85,16 +85,16 @@ const archiverLaSuppression = async (email, user, app, req) => {
             const { email, telephone, nom, prenom, ...conseiller } = profil;
             const objAnonyme = {
               deletedAt: new Date(),
-              motif: req.body.motif,
+              motif: motif,
               conseiller: conseiller
             };
-            if (req.body.actionUser === 'admin') {
+            if (actionUser === 'admin') {
               objAnonyme.actionUser = {
                 role: 'admin',
                 userId: user._id
               };
             } else {
-              objAnonyme.actionUser = req.body.actionUser;
+              objAnonyme.actionUser = actionUser;
             }
             await db.collection('conseillersSupprimes').insertOne(objAnonyme);
           } catch (error) {
