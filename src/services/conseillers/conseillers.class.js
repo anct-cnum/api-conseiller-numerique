@@ -474,9 +474,8 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
-      let promisesUser = [];
       let userAuthentifier = [];
-      await verificationRoleAdmin(userAuthentifier, db, decode, promisesUser, req, res);
+      await verificationRoleAdmin(userAuthentifier, db, decode, req, res);
       const user = userAuthentifier[0];
       const id = req.params.id;
       const conseiller = await this.find({
@@ -492,11 +491,17 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       const { email } = conseiller.data[0];
-      let promises = [];
-      await verificationCandidaturesRecrutee(email, id, app, promises, res);
-      await archiverLaSuppression(email, user, app, promises, req);
-      await suppressionTotalCandidat(email, app, promises);
-      res.send({ deleteSuccess: true });
+      await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
+        return archiverLaSuppression(email, user, app, req);
+      }).then(() => {
+        return suppressionTotalCandidat(email, app);
+      }).then(() => {
+        res.send({ deleteSuccess: true });
+      }).catch(error => {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression de la candidature, veuillez réessayer.').toJSON());
+      });
     });
   }
 };

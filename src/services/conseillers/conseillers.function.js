@@ -43,7 +43,8 @@ const verificationCandidaturesRecrutee = async (email, id, app, res) => {
               });
             const statut = misesEnRelationsFinalisees.statut === 'finalisee' ? 'recrutée' : 'validée';
             const structure = await db.collection('structures').findOne({ _id: misesEnRelationsFinalisees.structure.oid });
-            const messageDoublon = profil._id === id ? `est ${statut} par` : `a un doublon qui est ${statut}`;
+            const idConvertString = JSON.stringify(profil._id);
+            const messageDoublon = idConvertString === `"${id}"` ? `est ${statut} par` : `a un doublon qui est ${statut}`;
             const messageSiret = structure?.siret ?? `non renseigné`;
             res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}, SIRET: ${messageSiret}`).toJSON());
             return;
