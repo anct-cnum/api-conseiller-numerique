@@ -27,10 +27,10 @@ const verificationRoleAdmin = async (userAuthentifier, db, decode, req, res) => 
 };
 const verificationCandidaturesRecrutee = async (email, id, app, res) => {
   try {
-    let promise;
+    let promises = [];
     await app.get('mongoClient').then(async db => {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promise = new Promise(async resolve => {
+        promises.push(new Promise(async resolve => {
           //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
           const misesEnRelations = await db.collection('misesEnRelation').find(
             { 'conseiller.$id': profil._id,
@@ -56,16 +56,17 @@ const verificationCandidaturesRecrutee = async (email, id, app, res) => {
             });
 
           if (usersCount >= 1) {
-            const messageDoublonCoop = profil._id === id ? `` : `a un doublon qui`;
+            const idConvertString = JSON.stringify(profil._id);
+            const messageDoublonCoop = idConvertString === `"${id}"` ? `` : `a un doublon qui`;
             res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activer`, {
               id
             }).toJSON());
             return;
           }
           resolve();
-        });
+        }));
       });
-      await promise;
+      await Promise.all(promises);
     });
   } catch (error) {
     logger.error(error);
@@ -76,10 +77,10 @@ const verificationCandidaturesRecrutee = async (email, id, app, res) => {
 
 const archiverLaSuppression = async (email, user, app, motif, actionUser) => {
   try {
-    let promise;
+    let promises = [];
     await app.get('mongoClient').then(async db => {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promise = new Promise(async resolve => {
+        promises.push(new Promise(async resolve => {
           try {
             // eslint-disable-next-line no-unused-vars
             const { email, telephone, nom, prenom, ...conseiller } = profil;
@@ -102,9 +103,9 @@ const archiverLaSuppression = async (email, user, app, motif, actionUser) => {
             app.get('sentry').captureException(error);
           }
           resolve();
-        });
+        }));
       });
-      await promise;
+      await Promise.all(promises);
     });
   } catch (error) {
     logger.error(error);
@@ -114,10 +115,10 @@ const archiverLaSuppression = async (email, user, app, motif, actionUser) => {
 
 const suppressionTotalCandidat = async (email, app) => {
   try {
-    let promise;
+    let promises = [];
     await app.get('mongoClient').then(async db => {
       await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
-        promise = new Promise(async resolve => {
+        promises.push(new Promise(async resolve => {
           try {
             await pool.query(`
         DELETE FROM djapp_matching WHERE coach_id = $1`,
@@ -139,9 +140,9 @@ const suppressionTotalCandidat = async (email, app) => {
             app.get('sentry').captureException(error);
           }
           resolve();
-        });
+        }));
       });
-      await promise;
+      await Promise.all(promises);
     });
   } catch (error) {
     logger.error(error);
