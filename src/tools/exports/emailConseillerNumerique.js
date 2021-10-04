@@ -2,6 +2,7 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
+const moment = require('moment');
 
 const { execute } = require('../utils');
 
@@ -18,13 +19,13 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  file.write('Nom; Prenom; Email conseiller-numerique.fr; Structure associée; SIRET\n');
+  file.write('Nom; Prenom; Email conseiller-numerique.fr; Code postal CNFS; Date activation espace;  Structure associée; SIRET\n');
   conseillers.forEach(conseiller => {
     promises.push(new Promise(async resolve => {
       const infoConseiller = await db.collection('conseillers').findOne({ _id: conseiller?.entity?.oid });
       const structure = await db.collection('structures').findOne({ _id: infoConseiller?.structureId });
       // eslint-disable-next-line max-len
-      file.write(`${infoConseiller?.nom ?? 'Non renseigné'};${infoConseiller?.prenom ?? 'Non renseigné'};${conseiller?.name ?? 'Non renseigné'};${structure?.nom ?? 'Non renseigné'};${structure?.siret ?? 'Non renseigné'}\n`);
+      file.write(`${infoConseiller?.nom ?? 'Non renseigné'};${infoConseiller?.prenom ?? 'Non renseigné'};${conseiller?.name ?? 'Non renseigné'};${infoConseiller?.codePostal ?? 'Non renseigné'};${conseiller?.createdAt ? moment(conseiller.createdAt).format('DD/MM/YYYY') : 'Non renseigné'};${structure?.nom ?? 'Non renseigné'};${structure?.siret ?? 'Non renseigné'}\n`);
       resolve();
     }));
   });
