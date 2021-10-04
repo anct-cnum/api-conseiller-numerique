@@ -9,7 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const { program } = require('commander');
 
-const { execute } = require('../../utils');
+const { execute } = require('../utils');
 
 program.option('-c, --csv <path>', 'CSV file path');
 program.parse(process.argv);
@@ -31,7 +31,7 @@ execute(__filename, async ({ logger, exit }) => {
 
   // CSV exporté
   let promises = [];
-  let csvFile = path.join(__dirname, '../../../../data/exports', 'slugify_sur_ressourcerie.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'slugify_sur_ressourcerie.csv');
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
