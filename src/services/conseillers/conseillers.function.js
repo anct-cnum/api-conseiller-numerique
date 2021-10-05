@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const { Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 
-const verificationRoleAdmin = async (userAuthentifier, db, decode, req, res) => {
+const verificationRoleUser = async (userAuthentifier, db, decode, req, res, roles) => {
   let promise;
   promise = new Promise(async resolve => {
     const accessToken = req.feathers?.authentication?.accessToken;
@@ -15,7 +15,7 @@ const verificationRoleAdmin = async (userAuthentifier, db, decode, req, res) => 
     let userId = decode(accessToken).sub;
     const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     userAuthentifier.push(user);
-    if (!user?.roles.includes('admin')) {
+    if (roles.filter(role => user?.roles.includes(role)).length === 0) {
       res.status(403).send(new Forbidden('User not authorized', {
         userId: userId
       }).toJSON());
@@ -150,7 +150,7 @@ const suppressionTotalCandidat = async (email, app) => {
   }
 };
 module.exports = {
-  verificationRoleAdmin,
+  verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
   suppressionTotalCandidat

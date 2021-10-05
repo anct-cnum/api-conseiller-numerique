@@ -12,7 +12,7 @@ const dayjs = require('dayjs');
 const Joi = require('joi');
 
 const {
-  verificationRoleAdmin,
+  verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
   suppressionTotalCandidat } = require('./conseillers.function');
@@ -475,7 +475,8 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
       let userAuthentifier = [];
-      await verificationRoleAdmin(userAuthentifier, db, decode, req, res);
+      const roles = ['admin'];
+      await verificationRoleUser(userAuthentifier, db, decode, req, res, roles);
       const user = userAuthentifier[0];
       const id = req.params.id;
       const conseiller = await this.find({
