@@ -2,7 +2,7 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
-const moment = require('moment');
+const dayjs = require('dayjs');
 
 const { execute } = require('../utils');
 
@@ -25,7 +25,7 @@ execute(__filename, async ({ logger, db }) => {
       const infoConseiller = await db.collection('conseillers').findOne({ _id: conseiller?.entity?.oid });
       const structure = await db.collection('structures').findOne({ _id: infoConseiller?.structureId });
       // eslint-disable-next-line max-len
-      file.write(`${infoConseiller?.nom ?? 'Non renseigné'};${infoConseiller?.prenom ?? 'Non renseigné'};${conseiller?.name ?? 'Non renseigné'};${infoConseiller?.codePostal ?? 'Non renseigné'};${conseiller?.createdAt ? moment(conseiller.createdAt).format('DD/MM/YYYY') : 'Non renseigné'};${structure?.nom ?? 'Non renseigné'};${structure?.siret ?? 'Non renseigné'}\n`);
+      file.write(`${infoConseiller?.nom ?? 'Non renseigné'};${infoConseiller?.prenom ?? 'Non renseigné'};${conseiller?.name ?? 'Non renseigné'};${infoConseiller?.codePostal ?? 'Non renseigné'};${conseiller?.createdAt ? dayjs(conseiller.createdAt).format('DD/MM/YYYY') : 'Non renseigné'};${structure?.nom ?? 'Non renseigné'};${structure?.siret ?? 'Non renseigné'}\n`);
       resolve();
     }));
   });
