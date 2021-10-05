@@ -269,16 +269,13 @@ exports.Stats = class Stats extends Service {
 
           statsTerritoires.forEach(ligneStats => {
             if (ligneStats.conseillerIds.length > 0) {
-              promises.push(new Promise(async resolve => {
-                let countAccompagnees = await db.collection('cras').aggregate(
-                  { $match: { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
-                    '$gte': dateDebutQuery,
-                    '$lte': dateFinQuery,
-                  } } },
-                  { $group: { _id: null, count: { $sum: { $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] } } } },
-                  { $project: { 'valeur': '$count' } }
-                ).toArray();
+              let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+                '$gte': dateDebutQuery,
+                '$lte': dateFinQuery,
+              } };
 
+              promises.push(new Promise(async resolve => {
+                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
                 ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
                 resolve();
               }));
@@ -324,16 +321,13 @@ exports.Stats = class Stats extends Service {
 
             ligneStats.personnesAccompagnees = 0;
             if (ligneStats.conseillerIds.length > 0) {
-              promises.push(new Promise(async resolve => {
-                let countAccompagnees = await db.collection('cras').aggregate(
-                  { $match: { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
-                    '$gte': dateDebutQuery,
-                    '$lte': dateFinQuery,
-                  } } },
-                  { $group: { _id: null, count: { $sum: { $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] } } } },
-                  { $project: { 'valeur': '$count' } }
-                ).toArray();
+              let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+                '$gte': dateDebutQuery,
+                '$lte': dateFinQuery,
+              } };
 
+              promises.push(new Promise(async resolve => {
+                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
                 ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
                 resolve();
               }));

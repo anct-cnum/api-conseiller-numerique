@@ -8,4 +8,5 @@ module.exports = {
   ...require('./ages'),
   ...require('./statuts'),
   ...require('./evolutions'),
+  ...require('./personnesAccompagnees'),
 };
