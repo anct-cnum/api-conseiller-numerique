@@ -31,6 +31,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     results.push({
       'numeroDepartement': '978',
       'departement': toms.get('971').tom_name,
+      'region': toms.get('971').tom_name,
       [nomColonne]: data ?? 0
     });
   };
@@ -57,6 +58,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       lignes.push({
         'numeroDepartement': String(departement.num_dep),
         'departement': departement.dep_name,
+        'region': departement.region_name,
         'nombrePostesValides': posteParDepartement[departement.num_dep]
       });
     }
@@ -79,6 +81,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': conseiller._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombreConseillers': conseiller.count
           });
         }
@@ -108,6 +111,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': conseiller._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombreConseillers': conseiller.count
           });
         }
@@ -144,6 +148,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': codeDepartement,
             'departement': departements.find(dep => String(dep.num_dep) === String(codeDepartement))?.dep_name,
+            'region': departements.find(dep => String(dep.num_dep) === String(codeDepartement))?.region_name,
             'nombreConseillersEnPoste': 1
           });
         }
@@ -172,6 +177,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': candidat._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombreCandidats': candidat.count
           });
         }
@@ -203,6 +209,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': structure._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombre': structure.count
           });
         }
