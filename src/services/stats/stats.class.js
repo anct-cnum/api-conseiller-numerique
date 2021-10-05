@@ -182,17 +182,12 @@ exports.Stats = class Stats extends Service {
         stats.nbCras = await db.collection('cras').estimatedDocumentCount();
         //Total accompagnement
         let nbAccompagnements = await db.collection('cras').aggregate(
-          [
-            { $unwind: '$cra.accompagnement' },
-            { $group: { _id: '$cra.accompagnement', count: { $sum: {
-              $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1]
-            } } } },
-          ]
+          { $group:
+            { _id: null, count: { $sum: { $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] } } }
+          },
+          { $project: { 'valeur': '$count' } }
         ).toArray();
-        stats.totalAccompagnements = 0;
-        stats.totalAccompagnements += nbAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-        stats.totalAccompagnements += nbAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-        stats.totalAccompagnements += nbAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+        stats.totalAccompagnements = nbAccompagnements[0].count;
 
         //Conseillers enregistrés
         stats.conseillersEnregistres = await db.collection('users').countDocuments({
@@ -261,9 +256,9 @@ exports.Stats = class Stats extends Service {
 
         //Construction des statistiques
         let items = {};
-        let promises = [];
         let statsTerritoires = [];
         let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
+        let promises = [];
 
         if (territoire === 'departement') {
 
@@ -272,39 +267,22 @@ exports.Stats = class Stats extends Service {
           .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
           .limit(options.paginate.default).toArray();
 
-
           statsTerritoires.forEach(ligneStats => {
-
-            ligneStats.personnesAccompagnees = 0;
-            let cumulTerritoire = 0;
-
             if (ligneStats.conseillerIds.length > 0) {
-              ligneStats.conseillerIds.forEach(conseillerId => {
-                let query = {
-                  'conseiller.$id': new ObjectID(conseillerId),
-                  'createdAt': {
-                    $gte: dateDebutQuery,
-                    $lt: dateFinQuery,
-                  }
-                };
+              let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+                '$gte': dateDebutQuery,
+                '$lte': dateFinQuery,
+              } };
 
-                promises.push(new Promise(async resolve => {
-                  let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
-                  if (statsAccompagnements.length > 0) {
-                    // eslint-disable-next-line
-                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-                    // eslint-disable-next-line
-                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-                    // eslint-disable-next-line
-                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
-                  }
-                  ligneStats.personnesAccompagnees += cumulTerritoire;
-                  resolve();
-                }));
-              });
+              promises.push(new Promise(async resolve => {
+                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+                ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+                resolve();
+              }));
+            } else {
+              ligneStats.personnesAccompagnees = 0;
             }
           });
-
           await Promise.all(promises);
           items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
         }
@@ -342,32 +320,19 @@ exports.Stats = class Stats extends Service {
               Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
             ligneStats.personnesAccompagnees = 0;
-            let cumulTerritoire = 0;
-
             if (ligneStats.conseillerIds.length > 0) {
-              ligneStats.conseillerIds.forEach(conseillerId => {
-                let query = {
-                  'conseiller.$id': new ObjectID(conseillerId),
-                  'createdAt': {
-                    $gte: dateDebutQuery,
-                    $lt: dateFinQuery,
-                  }
-                };
-                promises.push(new Promise(async resolve => {
-                  let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
+              let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+                '$gte': dateDebutQuery,
+                '$lte': dateFinQuery,
+              } };
 
-                  if (statsAccompagnements.length > 0) {
-                    // eslint-disable-next-line
-                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-                    // eslint-disable-next-line
-                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-                    // eslint-disable-next-line
-                    cumulTerritoire += statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
-                  }
-                  ligneStats.personnesAccompagnees += cumulTerritoire;
-                  resolve();
-                }));
-              });
+              promises.push(new Promise(async resolve => {
+                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+                ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+                resolve();
+              }));
+            } else {
+              ligneStats.personnesAccompagnees = 0;
             }
           });
           await Promise.all(promises);
