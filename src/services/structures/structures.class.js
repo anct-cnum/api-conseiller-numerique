@@ -340,9 +340,9 @@ exports.Structures = class Structures extends Service {
                     ancienEmail: structure?.contact?.email,
                     nouveauEmail: email
                   },
-                    changement: 'email',
-                    date: new Date(),
-                    idAdmin: adminUser?._id
+                  changement: 'email',
+                  date: new Date(),
+                  idAdmin: adminUser?._id
                 }
               } });
           await db.collection('users').updateOne(
@@ -398,10 +398,10 @@ exports.Structures = class Structures extends Service {
                   ancienSiret: structure?.siret === '' ? 'non renseigné' : structure?.siret,
                   nouveauSiret: req.body.siret
                 },
-                  changement: 'siret',
-                  date: new Date(),
-                  idAdmin: adminUser?._id
-                
+                changement: 'siret',
+                date: new Date(),
+                idAdmin: adminUser?._id
+
               }
             } });
           res.send({ siretUpdated: true });
