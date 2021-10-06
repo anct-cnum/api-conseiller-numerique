@@ -15,7 +15,8 @@ const {
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
-  suppressionTotalCandidat } = require('./conseillers.function');
+  suppressionTotalCandidat,
+  suppressionCv } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -218,7 +219,7 @@ exports.Conseillers = class Conseillers extends Service {
       const ep = new aws.Endpoint(awsConfig.endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
-      //Suprresion de l'ancien CV si présent dans S3 et dans MongoDb
+      //Suppression de l'ancien CV si présent dans S3 et dans MongoDb
       if (conseiller.cv?.file) {
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
@@ -491,13 +492,18 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-      const { email } = conseiller.data[0];
+      const { email, cv } = conseiller.data[0];
       await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
         const actionUser = req.body.actionUser;
         const motif = req.body.motif;
         return archiverLaSuppression(email, user, app, motif, actionUser);
       }).then(() => {
         return suppressionTotalCandidat(email, app);
+      }).then(() => {
+        if (cv?.file) {
+          return suppressionCv(cv, app, res);
+        }
+        return;
       }).then(() => {
         res.send({ deleteSuccess: true });
       }).catch(error => {
