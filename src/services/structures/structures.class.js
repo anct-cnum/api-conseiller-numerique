@@ -331,7 +331,17 @@ exports.Structures = class Structures extends Service {
           SET contact_email = $2
           WHERE id = $1`,
           [id, email]);
-          await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
+          await db.collection('structures').updateOne(
+            { _id: new ObjectID(structureId) },
+            { $set: { 'contact.email': email },
+              $push: {
+                historiqueChangeInfo: {
+                  ancienEmail: structure?.contact?.email,
+                  nouveauEmail: email,
+                  dateChange: new Date(),
+                  idAdmin: adminUser?._id
+                }
+              } });
           await db.collection('users').updateOne(
             { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': { $in: ['structure'] } },
             { $set: { name: email }
@@ -378,7 +388,15 @@ exports.Structures = class Structures extends Service {
             SET siret = $2
             WHERE id = $1`,
           [id, siret]);
-          await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret } });
+          await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret },
+            $push: {
+              historiqueChangeInfo: {
+                ancienSiret: structure?.siret === '' ? 'non renseigné' : structure?.siret,
+                nouveauSiret: req.body.siret,
+                dateChange: new Date(),
+                idAdmin: adminUser?._id
+              }
+            } });
           res.send({ siretUpdated: true });
         } catch (error) {
           logger.error(error);
@@ -386,10 +404,7 @@ exports.Structures = class Structures extends Service {
           res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
         }
       };
-
       await updateStructure(structure.idPG, req.body.siret);
-
-
     });
 
     app.get('/structures/getAvancementRecrutement', async (req, res) => {
