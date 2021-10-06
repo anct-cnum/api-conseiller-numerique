@@ -11,6 +11,12 @@ const puppeteer = require('puppeteer');
 const dayjs = require('dayjs');
 const Joi = require('joi');
 
+const {
+  verificationRoleUser,
+  verificationCandidaturesRecrutee,
+  archiverLaSuppression,
+  suppressionTotalCandidat } = require('./conseillers.function');
+
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
     super(options);
@@ -424,7 +430,6 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.get('/conseillers/:id/employeur', async (req, res) => {
-
       const accessToken = req.feathers?.authentication?.accessToken;
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -466,6 +471,40 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       res.send({ nomStructure: miseEnRelation.structureObj.nom });
+    });
+
+    app.delete('/conseillers/:id/candidature', async (req, res) => {
+      let userAuthentifier = [];
+      const roles = ['admin'];
+      await verificationRoleUser(userAuthentifier, db, decode, req, res, roles);
+      const user = userAuthentifier[0];
+      const id = req.params.id;
+      const conseiller = await this.find({
+        query: {
+          _id: new ObjectId(id),
+          $limit: 1,
+        }
+      });
+      if (conseiller.total === 0) {
+        res.status(404).send(new NotFound('Conseiller non trouvé', {
+          id
+        }).toJSON());
+        return;
+      }
+      const { email } = conseiller.data[0];
+      await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
+        const actionUser = req.body.actionUser;
+        const motif = req.body.motif;
+        return archiverLaSuppression(email, user, app, motif, actionUser);
+      }).then(() => {
+        return suppressionTotalCandidat(email, app);
+      }).then(() => {
+        res.send({ deleteSuccess: true });
+      }).catch(error => {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression de la candidature, veuillez réessayer.').toJSON());
+      });
     });
   }
 };
