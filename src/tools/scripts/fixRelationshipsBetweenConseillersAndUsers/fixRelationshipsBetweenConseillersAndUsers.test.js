@@ -7,6 +7,7 @@ const {
   splitOnRecruteStatut,
   inspectUsersAssociatedWithConseillers,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
+  inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
 } = require('./fixRelationshipsBetweenConseillersAndUsers.utils');
 
@@ -333,17 +334,9 @@ describe('fix relationships between conseillers and users', () => {
 
       expect(usersAssociatedWithAConseillerWithoutConseillerRole).toEqual([bobDoeUser]);
     });
-
-    it('should inspect mises en relations associated with conseillers and get empty array when all status are finalisee', () => {
-      const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: johnDoeConseiller}];
-
-      const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
-
-      expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus).toEqual([]);
-    });
   });
 
-  describe('inspect mises en relations associated with conseillers on structure id', () => {
+  describe('inspect mises en relations associated with conseillers on structure id without duplicates', () => {
     it('should inspect mises en relations associated with conseillers and get empty array when all conseillers are associated with a mise en relation', () => {
       const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller}];
 
@@ -380,6 +373,14 @@ describe('fix relationships between conseillers and users', () => {
       expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus).toEqual([]);
     });
 
+    it('should inspect mises en relations associated with conseillers and get empty array when all status are finalisee', () => {
+      const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: johnDoeConseiller}];
+
+      const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus).toEqual([]);
+    });
+
     it('should inspect mises en relations associated with conseillers and get mises en relations without finalisee status in array', () => {
       const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller}];
 
@@ -406,6 +407,370 @@ describe('fix relationships between conseillers and users', () => {
       expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus).toEqual([
         miseEnRelationJohnDoeStructureNouvelle,
         miseEnRelationJohnDoeStructureRecrutee
+      ]);
+    });
+  });
+
+  describe('inspect mises en relations associated with conseillers on structure id with duplicates', () => {
+    it('should get empty array when there is no conseiller with multiple mises en relations', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithMultipleMisesEnRelations} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithMultipleMisesEnRelations).toEqual([]);
+    });
+
+    it('should get the conseiller and duplicates with multiple mises en relations', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible, miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithMultipleMisesEnRelations} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithMultipleMisesEnRelations).toEqual([
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible, miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ]);
+    });
+
+    it('should get an empty array when there is no conseiller and duplicates both associated with a mise en relation with statut finalisee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee).toEqual([]);
+    });
+
+    it('should get conseiller and duplicates when conseiller and duplicates both associated with a mise en relation with statut finalisee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee).toEqual([
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ]);
+    });
+
+    it('should get an empty array when there is no conseiller and duplicates both associated with a mise en relation with statut recrutee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee).toEqual([]);
+    });
+
+    it('should get conseiller and duplicates when conseiller and duplicates both associated with a mise en relation with statut recrutee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee).toEqual([
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ]);
+    });
+
+    it('should get an empty array when there is no conseiller associated to a mise en relation with statut finalisee and duplicate associated with a mise en relation with statut recrutee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee).toEqual([]);
+    });
+
+    it('should get conseiller and duplicate when conseiller is associated to a mise en relation with statut finalisee and a duplicate is associated with a mise en relation with statut recrutee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee).toEqual([
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ]);
+    });
+
+    it('should get an empty array when there is no conseiller associated to a mise en relation with statut finalisee and a duplicate associated to a mise en relation with statut recrutee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee).toEqual([]);
+    });
+
+    it('should get conseiller associated to a mise en relation with statut finalisee and a duplicate not associated to a mise en relation with statut recrutee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee).toEqual([
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ]);
+    });
+
+    it('should get an empty array when there is no conseiller associated to a mise en relation with statut recrutee and a duplicate associated to a mise en relation with statut finalisee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee).toEqual([]);
+    });
+
+    it('should get conseiller associated to a mise en relation with statut recrutee and a duplicate not associated to a mise en relation with statut finalisee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee).toEqual([
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ]);
+    });
+
+    it('should get an empty array when there is a conseiller associated with a mise en relation with statut finalisee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithoutStatutFinaliseeOrStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithoutStatutFinaliseeOrStatutRecrutee).toEqual([]);
+    });
+
+    it('should get an empty array when there is a conseiller associated with a mise en relation with statut recrutee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithoutStatutFinaliseeOrStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithoutStatutFinaliseeOrStatutRecrutee).toEqual([]);
+    });
+
+    it('should get conseillers associated to mise en relations without statut recrutee or statut finalisee', () => {
+      const conseillersWithMatchingMiseEnRelations = [
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseiller
+          }
+        ]
+      ];
+
+      const {conseillersWithoutStatutFinaliseeOrStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+
+      expect(conseillersWithoutStatutFinaliseeOrStatutRecrutee).toEqual([
+        [
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle],
+            conseiller: johnDoeConseillerDuplicate
+          },
+          {
+            misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible],
+            conseiller: johnDoeConseiller
+          }
+        ]
       ]);
     });
   });

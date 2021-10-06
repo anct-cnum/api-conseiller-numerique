@@ -90,7 +90,9 @@ const hasNoAssociatedMiseEnRelation = misesEnRelations => misesEnRelations.lengt
 
 const hasMoreThanOneAssociatedMiseEnRelation = misesEnRelations => misesEnRelations.length > 1;
 
-const hasFinaliseeStatut = misesEnRelation => misesEnRelation.statut === MisesEnRelationStatut.Finalisee;
+const hasStatutFinalisee = misesEnRelation => misesEnRelation.statut === MisesEnRelationStatut.Finalisee;
+
+const hasStatutRecrutee = misesEnRelation => misesEnRelation.statut === MisesEnRelationStatut.Recrutee;
 
 const inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates = conseillersWithMatchingMiseEnRelations => conseillersWithMatchingMiseEnRelations.reduce((result, conseillerWithMatchingMiseEnRelations) => {
   const {misesEnRelations, conseiller} = conseillerWithMatchingMiseEnRelations;
@@ -107,7 +109,7 @@ const inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplic
 
   const miseEnRelation = misesEnRelations[0];
 
-  !hasFinaliseeStatut(miseEnRelation) && result.misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus.push(miseEnRelation);
+  !hasStatutFinalisee(miseEnRelation) && result.misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus.push(miseEnRelation);
 
   return result;
 }, {
@@ -128,12 +130,66 @@ const inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId = consei
   misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: []
 });
 
+const hasConseillersWithMultipleMisesEnRelations = (conseillersWithMatchingMiseEnRelations) =>
+  conseillersWithMatchingMiseEnRelations.filter(conseillerWithMatchingMiseEnRelations =>
+    conseillerWithMatchingMiseEnRelations.misesEnRelations.length > 1).length > 0;
+
+const countStatutsFinalisee = conseillersWithMatchingMiseEnRelations =>
+  conseillersWithMatchingMiseEnRelations.reduce((result, conseillerWithMatchingMiseEnRelations) =>
+    result + (conseillerWithMatchingMiseEnRelations.misesEnRelations.length > 0 && hasStatutFinalisee(conseillerWithMatchingMiseEnRelations.misesEnRelations[0]) ? 1 : 0), 0);
+
+const countStatutsRecrutee = conseillersWithMatchingMiseEnRelations =>
+  conseillersWithMatchingMiseEnRelations.reduce((result, conseillerWithMatchingMiseEnRelations) =>
+    result + (conseillerWithMatchingMiseEnRelations.misesEnRelations.length > 0 && hasStatutRecrutee(conseillerWithMatchingMiseEnRelations.misesEnRelations[0]) ? 1 : 0), 0);
+
+const hasMultipleStatutFinalisee = conseillersWithMatchingMiseEnRelations =>
+  countStatutsFinalisee(conseillersWithMatchingMiseEnRelations) > 1;
+
+const hasMultipleStatutRecrutee = conseillersWithMatchingMiseEnRelations =>
+  countStatutsRecrutee(conseillersWithMatchingMiseEnRelations) > 1;
+
+const hasStatutFinaliseeAndStatutRecrutee = conseillersWithMatchingMiseEnRelations =>
+  countStatutsRecrutee(conseillersWithMatchingMiseEnRelations) === 1 && countStatutsFinalisee(conseillersWithMatchingMiseEnRelations) === 1;
+
+const hasStatutFinaliseeAndNoStatutRecrute = conseillersWithMatchingMiseEnRelations =>
+  countStatutsRecrutee(conseillersWithMatchingMiseEnRelations) === 0 && countStatutsFinalisee(conseillersWithMatchingMiseEnRelations) === 1;
+
+const hasStatutRecruteAndNoStatutFinalisee = conseillersWithMatchingMiseEnRelations =>
+  countStatutsRecrutee(conseillersWithMatchingMiseEnRelations) === 1 && countStatutsFinalisee(conseillersWithMatchingMiseEnRelations) === 0;
+
+const hasNoStatutFinaliseeOrStatutRecrutee = conseillersWithMatchingMiseEnRelations =>
+  countStatutsRecrutee(conseillersWithMatchingMiseEnRelations) === 0 && countStatutsFinalisee(conseillersWithMatchingMiseEnRelations) === 0;
+
+const inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates = (conseillersAdDuplicatesWithMatchingMiseEnRelations) => {
+  return conseillersAdDuplicatesWithMatchingMiseEnRelations.reduce((result, conseillersWithMatchingMiseEnRelations) => {
+    hasConseillersWithMultipleMisesEnRelations(conseillersWithMatchingMiseEnRelations) && result.conseillersWithMultipleMisesEnRelations.push(conseillersWithMatchingMiseEnRelations);
+    hasMultipleStatutFinalisee(conseillersWithMatchingMiseEnRelations) && result.conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee.push(conseillersWithMatchingMiseEnRelations);
+    hasMultipleStatutRecrutee(conseillersWithMatchingMiseEnRelations) && result.conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee.push(conseillersWithMatchingMiseEnRelations);
+    hasStatutFinaliseeAndStatutRecrutee(conseillersWithMatchingMiseEnRelations) && result.conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.push(conseillersWithMatchingMiseEnRelations);
+    hasStatutFinaliseeAndNoStatutRecrute(conseillersWithMatchingMiseEnRelations) && result.conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.push(conseillersWithMatchingMiseEnRelations);
+    hasStatutRecruteAndNoStatutFinalisee(conseillersWithMatchingMiseEnRelations) && result.conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.push(conseillersWithMatchingMiseEnRelations);
+    hasNoStatutFinaliseeOrStatutRecrutee(conseillersWithMatchingMiseEnRelations) && result.conseillersWithoutStatutFinaliseeOrStatutRecrutee.push(conseillersWithMatchingMiseEnRelations);
+
+    return result;
+  }, {
+    conseillersWithMultipleMisesEnRelations: [],
+    conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee: [],
+    conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee: [],
+    conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee: [],
+    conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee: [],
+    conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee: [],
+    conseillersWithoutStatutFinaliseeOrStatutRecrutee: []
+  })
+};
+
 module.exports = {
   MisesEnRelationStatut,
   ConseillerStatut,
   toSimpleMiseEnRelation,
+  isRecrute,
   splitOnRecruteStatut,
   inspectUsersAssociatedWithConseillers,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
+  inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
 };

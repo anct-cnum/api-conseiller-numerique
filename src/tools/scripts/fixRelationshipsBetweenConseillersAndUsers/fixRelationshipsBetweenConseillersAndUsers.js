@@ -4,9 +4,11 @@
 const { execute } = require('../../utils');
 const {
   toSimpleMiseEnRelation,
+  isRecrute,
   splitOnRecruteStatut,
   inspectUsersAssociatedWithConseillers,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
+  inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId
 } = require("./fixRelationshipsBetweenConseillersAndUsers.utils");
 const {ObjectId} = require("mongodb");
@@ -75,11 +77,28 @@ const getConseillersWithMatchingMiseEnRelationsOnStructureIdOneConseiller = asyn
   })
 ));
 
+const getConseillersWithMatchingMiseEnRelationsOnStructureIdMultipleConseillers = async (db, recruteStatutWithDuplicates) => await Promise.all(recruteStatutWithDuplicates.map(
+  async conseillerIdsByEmail => {
+    const structureId = conseillerIdsByEmail.conseillers.find(isRecrute).structureId;
+
+    return await Promise.all(conseillerIdsByEmail.conseillers.map(
+      async (conseiller) => ({
+        misesEnRelations: await getMisesEnRelationsMatchingConseillerIdAndStructureId(db, conseiller.id, structureId),
+        conseiller
+      })
+    ))
+  }
+));
+
 const getConseillersWithMatchingMiseEnRelationsExceptStructureId = async (db, recruteStatutWithoutDuplicates) => await Promise.all(recruteStatutWithoutDuplicates.map(
-  async conseillerIdsByEmail => ({
-    misesEnRelations: await getMisesEnRelationsMatchingConseillerIdExceptStructureId(db, conseillerIdsByEmail.conseillers[0].id, conseillerIdsByEmail.conseillers[0].structureId),
-    conseiller: conseillerIdsByEmail.conseillers[0]
-  })
+  async conseillerIdsByEmail => {
+    const conseiller = conseillerIdsByEmail.conseillers.find(isRecrute);
+
+    return {
+      misesEnRelations: await getMisesEnRelationsMatchingConseillerIdExceptStructureId(db, conseiller.id, conseiller.structureId),
+      conseiller
+    }
+  }
 ));
 
 execute(__filename, async ({ db, logger, exit }) => {
@@ -97,8 +116,14 @@ execute(__filename, async ({ db, logger, exit }) => {
   const conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(
     await getConseillersWithMatchingMiseEnRelationsOnStructureIdOneConseiller(db, recruteStatutWithoutDuplicates));
 
-  const conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResult = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(
+  const conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(
     await getConseillersWithMatchingMiseEnRelationsExceptStructureId(db, recruteStatutWithoutDuplicates));
+
+  const conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(
+    await getConseillersWithMatchingMiseEnRelationsOnStructureIdMultipleConseillers(db, recruteStatutWithDuplicates));
+
+  const conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(
+    await getConseillersWithMatchingMiseEnRelationsExceptStructureId(db, recruteStatutWithDuplicates));
 
   printReport(
     logger,
@@ -111,7 +136,9 @@ execute(__filename, async ({ db, logger, exit }) => {
     },
     usersAssociatedWithConseillersInspectionResult,
     conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
-    conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResult
+    conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
+    conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates,
+    conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult
   );
 
   exit();
@@ -123,7 +150,9 @@ const printReport = (
   conseillersSplitOnRecruteStatut,
   usersAssociatedWithConseillersInspectionResult,
   conseillersWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
-  conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResult) => {
+  conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
+  conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates,
+  conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult) => {
   const {
     noRecruteStatut,
     manyRecruteStatut,
@@ -163,13 +192,41 @@ const printReport = (
     misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus
   } = conseillersWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
 
-  const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus} = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResult;
+  const {
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates
+  } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates;
 
   console.log('Données sur les mises en relation en lien avec des conseillers qui ont le statut RECRUTE **sans doublons**');
   console.log('');
   console.log('- Nombre de conseillers qui ne sont pas associés à une mise en relation :', conseillersWithoutAssociatedMiseEnRelation.length);
   console.log('- Nombre de conseillers qui sont associés à plusieurs mises en relations :', conseillersAssociatedToMoreThanOneMiseEnRelation.length);
   console.log('- Nombre de mises en relations qui n\'ont pas le statut finalisee :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus.length);
-  console.log('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus.length);
+  console.log('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates.length);
+  console.log('');
+
+  const {
+    conseillersWithMultipleMisesEnRelations,
+    conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee,
+    conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee,
+    conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
+    conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
+    conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee,
+    conseillersWithoutStatutFinaliseeOrStatutRecrutee
+  } = conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
+
+  const {
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates
+  } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates;
+
+  console.log('Données sur les mises en relation en lien avec des conseillers qui ont le statut RECRUTE **avec doublons**');
+  console.log('');
+  console.log('- Nombre de conseillers associés plusieurs fois à la même mise en relation :', conseillersWithMultipleMisesEnRelations.length);
+  console.log('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee avec un doublon associé à une mise en relation qui a également le statut finalisee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee.length);
+  console.log('- Nombre de conseillers associés à une mise en relation qui a le statut recrutee avec un doublon associé à une mise en relation qui a également le statut recrutee', conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee.length);
+  console.log('- Nombre de conseillers associés à une mise en relation qui a le un statut finalisee avec un doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
+  console.log('- Nombre de conseillers associés à une mise en relation qui a le un statut finalisee et aucun doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
+  console.log('- Nombre de conseillers associés à une mise en relation qui a le un statut recrutee et aucun doublon associé à une mise en relation qui a le statut finalisee :', conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.length);
+  console.log('- Nombre de conseillers et doublons associés a des mises en relations qui n\'ont ni le statut finalisee ni le statut recrutee :', conseillersWithoutStatutFinaliseeOrStatutRecrutee.length);
+  console.log('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates.length);
   console.log('');
 }
