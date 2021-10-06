@@ -151,7 +151,7 @@ const suppressionTotalCandidat = async (email, app) => {
   }
 };
 
-const awsSuppressionCv = async (cv, app, res) => {
+const suppressionCv = async (cv, app, res) => {
   let promise;
   promise = new Promise(async resolve => {
     try {
@@ -183,5 +183,5 @@ module.exports = {
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
   suppressionTotalCandidat,
-  awsSuppressionCv
+  suppressionCv
 };

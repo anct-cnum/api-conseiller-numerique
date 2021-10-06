@@ -16,7 +16,7 @@ const {
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
   suppressionTotalCandidat,
-  awsSuppressionCv } = require('./conseillers.function');
+  suppressionCv } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -501,7 +501,7 @@ exports.Conseillers = class Conseillers extends Service {
         return suppressionTotalCandidat(email, app);
       }).then(() => {
         if (cv?.file) {
-          return awsSuppressionCv(cv, app, res);
+          return suppressionCv(cv, app, res);
         } else {
           return;
         }
