@@ -335,11 +335,14 @@ exports.Structures = class Structures extends Service {
             { _id: new ObjectID(structureId) },
             { $set: { 'contact.email': email },
               $push: {
-                historiqueChangeInfo: {
-                  ancienEmail: structure?.contact?.email,
-                  nouveauEmail: email,
-                  dateChange: new Date(),
-                  idAdmin: adminUser?._id
+                historique: {
+                  data: {
+                    ancienEmail: structure?.contact?.email,
+                    nouveauEmail: email,
+                    changement: 'email',
+                    date: new Date(),
+                    idAdmin: adminUser?._id
+                  }
                 }
               } });
           await db.collection('users').updateOne(
@@ -390,11 +393,14 @@ exports.Structures = class Structures extends Service {
           [id, siret]);
           await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret },
             $push: {
-              historiqueChangeInfo: {
-                ancienSiret: structure?.siret === '' ? 'non renseigné' : structure?.siret,
-                nouveauSiret: req.body.siret,
-                dateChange: new Date(),
-                idAdmin: adminUser?._id
+              historique: {
+                data: {
+                  ancienSiret: structure?.siret === '' ? 'non renseigné' : structure?.siret,
+                  nouveauSiret: req.body.siret,
+                  changement: 'siret',
+                  date: new Date(),
+                  idAdmin: adminUser?._id
+                }
               }
             } });
           res.send({ siretUpdated: true });
