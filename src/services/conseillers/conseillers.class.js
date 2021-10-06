@@ -219,7 +219,7 @@ exports.Conseillers = class Conseillers extends Service {
       const ep = new aws.Endpoint(awsConfig.endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
-      //Suprresion de l'ancien CV si présent dans S3 et dans MongoDb
+      //Suppression de l'ancien CV si présent dans S3 et dans MongoDb
       if (conseiller.cv?.file) {
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
@@ -502,9 +502,8 @@ exports.Conseillers = class Conseillers extends Service {
       }).then(() => {
         if (cv?.file) {
           return suppressionCv(cv, app, res);
-        } else {
-          return;
         }
+        return;
       }).then(() => {
         res.send({ deleteSuccess: true });
       }).catch(error => {

@@ -161,7 +161,7 @@ const suppressionCv = async (cv, app, res) => {
       const ep = new aws.Endpoint(awsConfig.endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
-      //Suprresion de l'ancien CV si présent dans S3 et dans MongoDb
+      //Suppression du fichier CV
       let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: cv?.file };
       s3.deleteObject(paramsDelete, function(error) {
         if (error) {
