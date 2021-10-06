@@ -2,7 +2,8 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
-const { Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
+const { Conflict, NotAuthenticated, Forbidden, GeneralError } = require('@feathersjs/errors');
+const aws = require('aws-sdk');
 
 const verificationRoleUser = async (userAuthentifier, db, decode, req, res, roles) => {
   let promise;
@@ -149,9 +150,38 @@ const suppressionTotalCandidat = async (email, app) => {
     app.get('sentry').captureException(error);
   }
 };
+
+const awsSuppressionCv = async (cv, app, res) => {
+  let promise;
+  promise = new Promise(async resolve => {
+    try {
+      //initialisation AWS
+      const awsConfig = app.get('aws');
+      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
+      const ep = new aws.Endpoint(awsConfig.endpoint);
+      const s3 = new aws.S3({ endpoint: ep });
+
+      //Suprresion de l'ancien CV si présent dans S3 et dans MongoDb
+      let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: cv?.file };
+      s3.deleteObject(paramsDelete, function(error) {
+        if (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
+        }
+      });
+      resolve();
+    } catch (error) {
+      logger.info(error);
+      app.get('sentry').captureException(error);
+    }
+  });
+  await promise;
+};
 module.exports = {
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
-  suppressionTotalCandidat
+  suppressionTotalCandidat,
+  awsSuppressionCv
 };

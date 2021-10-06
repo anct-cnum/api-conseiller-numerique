@@ -15,7 +15,8 @@ const {
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
-  suppressionTotalCandidat } = require('./conseillers.function');
+  suppressionTotalCandidat,
+  awsSuppressionCv } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -491,13 +492,19 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-      const { email } = conseiller.data[0];
+      const { email, cv } = conseiller.data[0];
       await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
         const actionUser = req.body.actionUser;
         const motif = req.body.motif;
         return archiverLaSuppression(email, user, app, motif, actionUser);
       }).then(() => {
         return suppressionTotalCandidat(email, app);
+      }).then(() => {
+        if (cv?.file) {
+          return awsSuppressionCv(cv, app, res);
+        } else {
+          return;
+        }
       }).then(() => {
         res.send({ deleteSuccess: true });
       }).catch(error => {
