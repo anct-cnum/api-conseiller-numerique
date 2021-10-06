@@ -51,7 +51,6 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'statut': 1 }),
       db.collection('conseillers').createIndex({ 'userCreated': 1 }),
       db.collection('conseillers').createIndex({ 'userCreationError': 1 }),
-      db.collection('conseillers').createIndex({ 'email': 1 }),
     ]);
   },
   cras: db => {
