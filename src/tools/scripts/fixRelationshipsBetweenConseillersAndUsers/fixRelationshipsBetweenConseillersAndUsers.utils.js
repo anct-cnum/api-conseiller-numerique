@@ -182,6 +182,39 @@ const inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicate
   })
 };
 
+const hasConseillerRecruteAValidDateFinFormation = conseiller => conseiller.dateFinFormation != null;
+const hasConseillerRecruteAValidDatePrisePoste = conseiller => conseiller.datePrisePoste != null;
+const hasConseillerRecruteAValidUserCreated = conseiller => conseiller.userCreated === true;
+const hasConseillerRecruteAValidStructureId = conseiller => conseiller.structureId != null;
+const hasConseillerRecruteAValidEstRecrute = conseiller => conseiller.estRecrute === true;
+const hasConseillerRecruteAValidDisponible = conseiller => conseiller.disponible === false;
+const hasConseillerRecruteAValidMattermost = conseiller => conseiller.mattermost?.error !== true;
+const hasConseillerRecruteAValidEmailCn = conseiller => conseiller.emailCNError !== true;
+
+const inspectConseillersRecruteProperties = recruteStatutWithoutDuplicates => recruteStatutWithoutDuplicates.reduce((result, conseillersByEmail) => {
+  const conseiller = conseillersByEmail.conseillers.find(isRecrute);
+
+  !hasConseillerRecruteAValidDateFinFormation(conseiller) && result.conseillersWithInvalidDateFinFormation.push(conseiller);
+  !hasConseillerRecruteAValidDatePrisePoste(conseiller) && result.conseillersWithInvalidDatePrisePoste.push(conseiller);
+  !hasConseillerRecruteAValidUserCreated(conseiller) && result.conseillersWithInvalidUserCreated.push(conseiller);
+  !hasConseillerRecruteAValidStructureId(conseiller) && result.conseillersWithInvalidStructureId.push(conseiller);
+  !hasConseillerRecruteAValidEstRecrute(conseiller) && result.conseillersWithInvalidEstRecrute.push(conseiller);
+  !hasConseillerRecruteAValidDisponible(conseiller) && result.conseillersWithInvalidDisponible.push(conseiller);
+  !hasConseillerRecruteAValidMattermost(conseiller) && result.conseillersWithMattermostError.push(conseiller);
+  !hasConseillerRecruteAValidEmailCn(conseiller) && result.conseillersWithEmailCNError.push(conseiller);
+
+  return result;
+}, {
+  conseillersWithInvalidDateFinFormation: [],
+  conseillersWithInvalidDatePrisePoste: [],
+  conseillersWithInvalidUserCreated: [],
+  conseillersWithInvalidStructureId: [],
+  conseillersWithInvalidEstRecrute: [],
+  conseillersWithInvalidDisponible: [],
+  conseillersWithMattermostError: [],
+  conseillersWithEmailCNError: []
+});
+
 module.exports = {
   MisesEnRelationStatut,
   ConseillerStatut,
@@ -192,4 +225,5 @@ module.exports = {
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
+  inspectConseillersRecruteProperties
 };

@@ -9,6 +9,7 @@ const {
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
+  inspectConseillersRecruteProperties
 } = require('./fixRelationshipsBetweenConseillersAndUsers.utils');
 
 const miseEnRelationJohnDoeStructureFinalisee= {
@@ -106,12 +107,6 @@ const bobDoeConseiller = {
   prenom: 'boby',
   nom: 'doe',
   email: 'bob.doe@email.com',
-  estRecrute: undefined,
-  statut: undefined,
-  structureId: undefined,
-  mattermost: undefined,
-  emailCN: undefined,
-  emailCNError: undefined,
 };
 const oscarDoeConseiller = {
   _id: 'b596d13ee91d97a85a5c8ae4',
@@ -148,6 +143,17 @@ const aliceDoeConseiller = {
     address: 'alice.doe@conseiller-numerique.fr'
   },
   emailCNError: false,
+};
+const henryDoeConseiller = {
+  _id: '1018d7c1db894a6d8a3e65eb',
+  prenom: 'henry',
+  nom: 'doe',
+  email: 'henry.doe@email.com',
+  statut: ConseillerStatut.Recrute,
+  mattermost: {
+    error: true,
+  },
+  emailCNError: true,
 };
 
 const johnDoeUser = {
@@ -772,6 +778,216 @@ describe('fix relationships between conseillers and users', () => {
           }
         ]
       ]);
+    });
+  });
+
+  describe('inspect conseiller RECRUTE properties', () => {
+    it('should get empty conseillers invalid date fin formation array when a conseiller with RECRUTE statut has a valid date de fin de formation', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidDateFinFormation} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidDateFinFormation).toEqual([]);
+    });
+
+    it('should get the conseiller in conseillers invalid date fin formation array when a conseiller with RECRUTE statut has no date de fin de formation', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidDateFinFormation} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidDateFinFormation).toEqual([henryDoeConseiller]);
+    });
+
+    it('should get empty conseillers invalid date prise poste array when a conseiller with RECRUTE statut has a valid date de prise de poste', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidDatePrisePoste} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidDatePrisePoste).toEqual([]);
+    });
+
+    it('should get the conseiller in conseillers invalid date prise poste array when a conseiller with RECRUTE statut has no date de prise de poste', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidDatePrisePoste} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidDatePrisePoste).toEqual([henryDoeConseiller]);
+    });
+
+    it('should get empty conseillers invalid user created array when a conseiller with RECRUTE statut has a valid user created property', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidUserCreated} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidUserCreated).toEqual([]);
+    });
+
+    it('should get conseiller in conseillers invalid user created array when a conseiller with RECRUTE statut has an invalid user created property', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidUserCreated} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidUserCreated).toEqual([henryDoeConseiller]);
+    });
+
+    it('should get empty conseillers invalid structure id array when a conseiller with RECRUTE statut has a valid structure id property', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidStructureId} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidStructureId).toEqual([]);
+    });
+
+    it('should get conseiller in conseillers invalid structure id array when a conseiller with RECRUTE statut has an invalid structure id property', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidStructureId} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidStructureId).toEqual([henryDoeConseiller]);
+    });
+
+    it('should get empty conseillers invalid est recrute array when a conseiller with RECRUTE statut has a valid est recrute property', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidEstRecrute} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidEstRecrute).toEqual([]);
+    });
+
+    it('should get conseiller in conseillers invalid est recrute array when a conseiller with RECRUTE statut has an invalid est recrute property', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidEstRecrute} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidEstRecrute).toEqual([henryDoeConseiller]);
+    });
+
+    it('should get empty conseillers invalid disponible array when a conseiller with RECRUTE statut has a valid disponible property', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidDisponible} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidDisponible).toEqual([]);
+    });
+
+    it('should get conseiller in conseillers invalid disponible array when a conseiller with RECRUTE statut has an invalid disponible property', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithInvalidDisponible} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithInvalidDisponible).toEqual([henryDoeConseiller]);
+    });
+
+    it('should get empty conseillers with mattermost error array when a conseiller with RECRUTE statut has no mattermost error', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithMattermostError} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithMattermostError).toEqual([]);
+    });
+
+    it('should get conseiller in conseillers with mattermost error array when a conseiller with RECRUTE statut has a mattermost error', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithMattermostError} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithMattermostError).toEqual([henryDoeConseiller]);
+    });
+
+    it('should get empty conseillers with email CN error array when a conseiller with RECRUTE statut has no email CN error', () => {
+      const conseillersByEmail = [
+        {
+          _id: johnDoeConseiller.email,
+          conseillers: [johnDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithEmailCNError} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithEmailCNError).toEqual([]);
+    });
+
+    it('should get conseiller in conseillers with email CN error array when a conseiller with RECRUTE statut has an email CN error', () => {
+      const conseillersByEmail = [
+        {
+          _id: henryDoeConseiller.email,
+          conseillers: [henryDoeConseiller]
+        }
+      ];
+
+      const {conseillersWithEmailCNError} = inspectConseillersRecruteProperties(conseillersByEmail);
+
+      expect(conseillersWithEmailCNError).toEqual([henryDoeConseiller]);
     });
   });
 });

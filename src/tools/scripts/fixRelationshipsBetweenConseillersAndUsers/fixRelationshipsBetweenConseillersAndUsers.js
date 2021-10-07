@@ -9,7 +9,8 @@ const {
   inspectUsersAssociatedWithConseillers,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
-  inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId
+  inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
+  inspectConseillersRecruteProperties
 } = require("./fixRelationshipsBetweenConseillersAndUsers.utils");
 const {ObjectId} = require("mongodb");
 
@@ -119,14 +120,17 @@ execute(__filename, async ({ db, logger, exit }) => {
   const conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(
     await getConseillersWithMatchingMiseEnRelationsExceptStructureId(db, recruteStatutWithoutDuplicates));
 
+  const conseillersRecruteWithoutDuplicatesPropertiesInspectionResult = inspectConseillersRecruteProperties(recruteStatutWithoutDuplicates);
+
   const conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(
     await getConseillersWithMatchingMiseEnRelationsOnStructureIdMultipleConseillers(db, recruteStatutWithDuplicates));
 
   const conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(
     await getConseillersWithMatchingMiseEnRelationsExceptStructureId(db, recruteStatutWithDuplicates));
 
+  const conseillersRecruteWithDuplicatesPropertiesInspectionResult = inspectConseillersRecruteProperties(recruteStatutWithDuplicates);
+
   printReport(
-    logger,
     conseillersIdsByEmail,
     {
       noRecruteStatut,
@@ -135,24 +139,30 @@ execute(__filename, async ({ db, logger, exit }) => {
       recruteStatutWithDuplicates,
     },
     usersAssociatedWithConseillersInspectionResult,
+    conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
     conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
     conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
+    conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
     conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates,
-    conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult
+    conseillersRecruteWithDuplicatesPropertiesInspectionResult
   );
 
   exit();
 });
 
+const logIfAny = (message, quantity) => quantity > 0 && console.log(message, quantity);
+
 const printReport = (
-  logger,
   conseillersIdsByEmail,
   conseillersSplitOnRecruteStatut,
   usersAssociatedWithConseillersInspectionResult,
+  conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
   conseillersWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
   conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
+  conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
   conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates,
-  conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult) => {
+  conseillersRecruteWithDuplicatesPropertiesInspectionResult
+  ) => {
   const {
     noRecruteStatut,
     manyRecruteStatut,
@@ -162,11 +172,11 @@ const printReport = (
 
   console.log('Données sur le nombre de conseillers (extrait de la base de prod le 29/09)');
   console.log('');
-  console.log('- Nombre total de conseillers :', conseillersIdsByEmail.length);
-  console.log('- Nombre de conseillers qui n\'ont pas le statut RECRUTE :', noRecruteStatut.length);
-  console.log('- Nombre de conseillers qui ont le statut RECRUTE sans doublons :', recruteStatutWithoutDuplicates.length);
-  console.log('- Nombre de conseillers qui ont le statut RECRUTE avec des doublons :', recruteStatutWithDuplicates.length);
-  console.log('- Nombre de conseillers qui ont le statut RECRUTE sur plusieurs de leurs doublons :', manyRecruteStatut.length);
+  logIfAny('- Nombre total de conseillers :', conseillersIdsByEmail.length);
+  logIfAny('- Nombre de conseillers qui n\'ont pas le statut RECRUTE :', noRecruteStatut.length);
+  logIfAny('- Nombre de conseillers qui ont le statut RECRUTE sans doublons :', recruteStatutWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers qui ont le statut RECRUTE avec des doublons :', recruteStatutWithDuplicates.length);
+  logIfAny('- Nombre de conseillers qui ont le statut RECRUTE sur plusieurs de leurs doublons :', manyRecruteStatut.length);
   console.log('');
 
   const {
@@ -179,11 +189,34 @@ const printReport = (
 
   console.log('Données sur les utilisateurs en lien avec des conseillers qui ont le statut RECRUTE **sans doublons**');
   console.log('');
-  console.log('- Nombre de conseillers qui ne sont pas associés à un utilisateur :', conseillersWithoutAssociatedUser.length);
-  console.log('- Nombre de conseillers qui sont associés à plusieurs utilisateurs :', conseillersAssociatedToMoreThanOneUser.length);
-  console.log('- Nombre d\'utilisateurs dont le prénom nom ne correspond pas au prénom nom du conseiller associé :', usersWithFullNameToFix.length);
-  console.log('- Nombre d\'utilisateurs qui sont associés à un conseiller, mais qui n\'ont pas de mail @conseiller-numerique.fr :', usersWithoutConseillerNumeriqueEmail.length);
-  console.log('- Nombre d\'utilisateurs qui sont associés à un conseiller mais qui n\'ont pas le rôle conseiller :', usersAssociatedWithAConseillerWithoutConseillerRole.length);
+  logIfAny('- Nombre de conseillers qui ne sont pas associés à un utilisateur :', conseillersWithoutAssociatedUser.length);
+  logIfAny('- Nombre de conseillers qui sont associés à plusieurs utilisateurs :', conseillersAssociatedToMoreThanOneUser.length);
+  logIfAny('- Nombre d\'utilisateurs dont le prénom nom ne correspond pas au prénom nom du conseiller associé :', usersWithFullNameToFix.length);
+  logIfAny('- Nombre d\'utilisateurs qui sont associés à un conseiller, mais qui n\'ont pas de mail @conseiller-numerique.fr :', usersWithoutConseillerNumeriqueEmail.length);
+  logIfAny('- Nombre d\'utilisateurs qui sont associés à un conseiller mais qui n\'ont pas le rôle conseiller :', usersAssociatedWithAConseillerWithoutConseillerRole.length);
+  console.log('');
+
+  const {
+    conseillersWithInvalidDateFinFormation: conseillersWithInvalidDateFinFormationWithoutDuplicates,
+    conseillersWithInvalidDatePrisePoste: conseillersWithInvalidDatePrisePosteWithoutDuplicates,
+    conseillersWithInvalidUserCreated: conseillersWithInvalidUserCreatedWithoutDuplicates,
+    conseillersWithInvalidStructureId: conseillersWithInvalidStructureIdWithoutDuplicates,
+    conseillersWithInvalidEstRecrute: conseillersWithInvalidEstRecruteWithoutDuplicates,
+    conseillersWithInvalidDisponible: conseillersWithInvalidDisponibleWithoutDuplicates,
+    conseillersWithMattermostError: conseillersWithMattermostErrorWithoutDuplicates,
+    conseillersWithEmailCNError: conseillersWithEmailCNErrorWithoutDuplicates
+  } = conseillersRecruteWithoutDuplicatesPropertiesInspectionResult;
+
+  console.log('Données sur les conseillers qui ont le statut RECRUTE **sans doublons**');
+  console.log('');
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de date de fin de formation :', conseillersWithInvalidDateFinFormationWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de date de prise de poste :', conseillersWithInvalidDatePrisePosteWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas UserCreated à true :', conseillersWithInvalidUserCreatedWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de structure id :', conseillersWithInvalidStructureIdWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de estRecrute à true :', conseillersWithInvalidEstRecruteWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de disponible à false :', conseillersWithInvalidDisponibleWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui ont un compte mattermost en erreur :', conseillersWithMattermostErrorWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui ont un email CN en erreur :', conseillersWithEmailCNErrorWithoutDuplicates.length);
   console.log('');
 
   const {
@@ -198,10 +231,33 @@ const printReport = (
 
   console.log('Données sur les mises en relation en lien avec des conseillers qui ont le statut RECRUTE **sans doublons**');
   console.log('');
-  console.log('- Nombre de conseillers qui ne sont pas associés à une mise en relation :', conseillersWithoutAssociatedMiseEnRelation.length);
-  console.log('- Nombre de conseillers qui sont associés à plusieurs mises en relations :', conseillersAssociatedToMoreThanOneMiseEnRelation.length);
-  console.log('- Nombre de mises en relations qui n\'ont pas le statut finalisee :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus.length);
-  console.log('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates.length);
+  logIfAny('- Nombre de conseillers qui ne sont pas associés à une mise en relation :', conseillersWithoutAssociatedMiseEnRelation.length);
+  logIfAny('- Nombre de conseillers qui sont associés à plusieurs mises en relations :', conseillersAssociatedToMoreThanOneMiseEnRelation.length);
+  logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus.length);
+  logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates.length);
+  console.log('');
+
+  const {
+    conseillersWithInvalidDateFinFormation: conseillersWithInvalidDateFinFormationWithDuplicates,
+    conseillersWithInvalidDatePrisePoste: conseillersWithInvalidDatePrisePosteWithDuplicates,
+    conseillersWithInvalidUserCreated: conseillersWithInvalidUserCreatedWithDuplicates,
+    conseillersWithInvalidStructureId: conseillersWithInvalidStructureIdWithDuplicates,
+    conseillersWithInvalidEstRecrute: conseillersWithInvalidEstRecruteWithDuplicates,
+    conseillersWithInvalidDisponible: conseillersWithInvalidDisponibleWithDuplicates,
+    conseillersWithMattermostError: conseillersWithMattermostErrorWithDuplicates,
+    conseillersWithEmailCNError: conseillersWithEmailCNErrorWithDuplicates
+  } = conseillersRecruteWithDuplicatesPropertiesInspectionResult;
+
+  console.log('Données sur les conseillers qui ont le statut RECRUTE **avec doublons**');
+  console.log('');
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de date de fin de formation :', conseillersWithInvalidDateFinFormationWithDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de date de prise de poste :', conseillersWithInvalidDatePrisePosteWithDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas UserCreated à true :', conseillersWithInvalidUserCreatedWithDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de structure id :', conseillersWithInvalidStructureIdWithDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de estRecrute à true :', conseillersWithInvalidEstRecruteWithDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de disponible à false :', conseillersWithInvalidDisponibleWithDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui ont un compte mattermost en erreur :', conseillersWithMattermostErrorWithDuplicates.length);
+  logIfAny('- Nombre de conseillers recrutés qui ont un email CN en erreur :', conseillersWithEmailCNErrorWithDuplicates.length);
   console.log('');
 
   const {
@@ -220,13 +276,13 @@ const printReport = (
 
   console.log('Données sur les mises en relation en lien avec des conseillers qui ont le statut RECRUTE **avec doublons**');
   console.log('');
-  console.log('- Nombre de conseillers associés plusieurs fois à la même mise en relation :', conseillersWithMultipleMisesEnRelations.length);
-  console.log('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee avec un doublon associé à une mise en relation qui a également le statut finalisee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee.length);
-  console.log('- Nombre de conseillers associés à une mise en relation qui a le statut recrutee avec un doublon associé à une mise en relation qui a également le statut recrutee', conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee.length);
-  console.log('- Nombre de conseillers associés à une mise en relation qui a le un statut finalisee avec un doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
-  console.log('- Nombre de conseillers associés à une mise en relation qui a le un statut finalisee et aucun doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
-  console.log('- Nombre de conseillers associés à une mise en relation qui a le un statut recrutee et aucun doublon associé à une mise en relation qui a le statut finalisee :', conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.length);
-  console.log('- Nombre de conseillers et doublons associés a des mises en relations qui n\'ont ni le statut finalisee ni le statut recrutee :', conseillersWithoutStatutFinaliseeOrStatutRecrutee.length);
-  console.log('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates.length);
+  logIfAny('- Nombre de conseillers associés plusieurs fois à la même mise en relation :', conseillersWithMultipleMisesEnRelations.length);
+  logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee avec un doublon associé à une mise en relation qui a également le statut finalisee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee.length);
+  logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut recrutee avec un doublon associé à une mise en relation qui a également le statut recrutee', conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee.length);
+  logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee avec un doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
+  logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee et aucun doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
+  logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut recrutee et aucun doublon associé à une mise en relation qui a le statut finalisee :', conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.length);
+  logIfAny('- Nombre de conseillers et doublons associés a des mises en relations qui n\'ont ni le statut finalisee ni le statut recrutee :', conseillersWithoutStatutFinaliseeOrStatutRecrutee.length);
+  logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates.length);
   console.log('');
 }
