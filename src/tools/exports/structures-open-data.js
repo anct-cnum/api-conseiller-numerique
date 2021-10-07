@@ -29,6 +29,10 @@ const coselecs = {
   'COSELEC 15': '07/07/2021',
   'COSELEC 16': '15/07/2021',
   'COSELEC 17': '28/07/2021',
+  'COSELEC 18': '25/08/2021',
+  'COSELEC 19': '15/09/2021',
+  'COSELEC 20': '06/10/2021',
+  'COSELEC 21': '13/10/2021',
 };
 
 execute(__filename, async ({ logger, db, Sentry }) => {
@@ -96,18 +100,25 @@ execute(__filename, async ({ logger, db, Sentry }) => {
            *
            * + Une formation :
            *   4805€ en moyenne
+           *
+           * + Tenue/equipement
+           *    297.228€
+           *
+           * + Certification
+           *    326,6€
+           *
            */
 
         let investissement = 0;
-
+        const coutCnfs = 4805 + 297.228 + 326.6;
         if (structure.type === 'PRIVATE') {
-          investissement = (32000 + 4805) * coselec.nombreConseillersCoselec;
+          investissement = (32000 + coutCnfs) * coselec.nombreConseillersCoselec;
         } else if (structure.codeDepartement === '971' || structure.codeDepartement === '972' || structure.codeDepartement === '973') {
-          investissement = (70000 + 4805) * coselec.nombreConseillersCoselec;
+          investissement = (70000 + coutCnfs) * coselec.nombreConseillersCoselec;
         } else if (structure.codeDepartement === '974' || structure.codeDepartement === '976') {
-          investissement = (67500 + 4805) * coselec.nombreConseillersCoselec;
+          investissement = (67500 + coutCnfs) * coselec.nombreConseillersCoselec;
         } else {
-          investissement = (50000 + 4805) * coselec.nombreConseillersCoselec;
+          investissement = (50000 + coutCnfs) * coselec.nombreConseillersCoselec;
         }
 
         // Nom département, région ou TOM

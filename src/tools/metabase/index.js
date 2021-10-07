@@ -14,6 +14,28 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const key = moment(new Date()).format('DD/MM/YYYY');
   const date = new Date().setUTCHours(0, 0, 0, 0);
   const departements = require('../../../data/imports/departements-region.json');
+  const tomsJSON = require('../coselec/tom.json');
+  const toms = new Map();
+  for (const value of tomsJSON) {
+    toms.set(String(value.num_tom), value);
+  }
+
+  const determineTom = (codePostal, codeCommune) => {
+    // Cas Saint Martin (978)
+    if (codePostal === '97150') {
+      return codeCommune.substring(0, 3);
+    }
+  };
+
+  const addTomStMartin = (data, results, nomColonne) => {
+    results.push({
+      'numeroDepartement': '978',
+      'departement': toms.get('971').tom_name,
+      'region': toms.get('971').tom_name,
+      [nomColonne]: data ?? 0
+    });
+  };
+
   let lignes = [];
 
   /* Nombre de postes validés par département */
@@ -22,7 +44,8 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   structures.forEach(structure => {
     let coselecPositif = utilsStructure.getCoselec(structure);
     if (coselecPositif) {
-      const departement = String(structure.codeDepartement);
+      // eslint-disable-next-line max-len
+      const departement = String(structure.codeDepartement) !== '00' ? String(structure.codeDepartement) : determineTom(structure.codePostal, structure.codeCommune);
       if (posteParDepartement[departement]) {
         posteParDepartement[departement] += coselecPositif.nombreConseillersCoselec;
       } else {
@@ -35,10 +58,12 @@ execute(__filename, async ({ logger, db, Sentry }) => {
       lignes.push({
         'numeroDepartement': String(departement.num_dep),
         'departement': departement.dep_name,
+        'region': departement.region_name,
         'nombrePostesValides': posteParDepartement[departement.num_dep]
       });
     }
   });
+  addTomStMartin(posteParDepartement['978'], lignes, 'nombrePostesValides');
   const postesValidesDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
   /* Nombre de conseillers recrutés par département */
@@ -56,12 +81,19 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': conseiller._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombreConseillers': conseiller.count
           });
         }
       });
     });
   }
+  //Cas Tom Saint Martin
+  const listConseillersRecrutesStMartin = await db.collection('misesEnRelation').countDocuments({
+    'statut': { $eq: 'recrutee' },
+    'structureObj.codePostal': '97150'
+  });
+  addTomStMartin(listConseillersRecrutesStMartin, lignes, 'nombreConseillers');
   const conseillersRecrutesDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
   /* Nombre de conseillers finalisés par département */
@@ -79,13 +111,56 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': conseiller._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombreConseillers': conseiller.count
           });
         }
       });
     });
   }
+  //Cas Tom Saint Martin
+  const listConseillersFinalisesStMartin = await db.collection('misesEnRelation').countDocuments({
+    'statut': { $eq: 'finalisee' },
+    'structureObj.codePostal': '97150'
+  });
+  addTomStMartin(listConseillersFinalisesStMartin, lignes, 'nombreConseillers');
   const conseillersFinalisesDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
+
+  //Nombre de conseillers en poste par département
+  const conseillersEnPoste = await db.collection('conseillers').find({
+    statut: { $eq: 'RECRUTE' },
+    structureId: { $ne: null },
+    dateFinFormation: { $lt: new Date() }
+  }).toArray();
+  let promisesConseillers = [];
+  lignes = [];
+  conseillersEnPoste?.forEach(conseiller => {
+    promisesConseillers.push(new Promise(async resolve => {
+      try {
+        const { codeDepartement, codeCom } = await db.collection('structures').findOne({ _id: conseiller.structureId });
+        if (lignes.findIndex(dep => dep.numeroDepartement === codeCom) !== -1) {
+          ++lignes[lignes.findIndex(dep => dep.numeroDepartement === codeCom)].nombreConseillersEnPoste;
+        } else if (lignes.findIndex(dep => dep.numeroDepartement === codeDepartement) !== -1) {
+          ++lignes[lignes.findIndex(dep => dep.numeroDepartement === codeDepartement)].nombreConseillersEnPoste;
+        } else if (codeCom === '978') {
+          addTomStMartin(1, lignes, 'nombreConseillersEnPoste');
+        } else {
+          lignes.push({
+            'numeroDepartement': codeDepartement,
+            'departement': departements.find(dep => String(dep.num_dep) === String(codeDepartement))?.dep_name,
+            'region': departements.find(dep => String(dep.num_dep) === String(codeDepartement))?.region_name,
+            'nombreConseillersEnPoste': 1
+          });
+        }
+      } catch (error) {
+        Sentry.captureException(error);
+        logger.error(error.message);
+      }
+      resolve();
+    }));
+  });
+  await Promise.all(promisesConseillers);
+  const conseillersEnPosteDepartement = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
   /* Nombre de mises en relation de candidats par département */
   const queryNombreCandidats = [
@@ -102,12 +177,20 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': candidat._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombreCandidats': candidat.count
           });
         }
       });
     });
   }
+  //Cas Tom Saint Martin
+  const listCandidatsStMartin = await db.collection('misesEnRelation').countDocuments({
+    'conseillerObj.disponible': true,
+    'statut': { $nin: ['finalisee_non_disponible', 'recrutee', 'finalisee'] },
+    'structureObj.codePostal': '97150'
+  });
+  addTomStMartin(listCandidatsStMartin, lignes, 'nombreCandidats');
   const candidats = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
 
@@ -126,17 +209,23 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           lignes.push({
             'numeroDepartement': structure._id,
             'departement': departement.dep_name,
+            'region': departement.region_name,
             'nombre': structure.count
           });
         }
       });
     });
   }
+  //Cas Tom Saint Martin
+  const nombreStructuresStMartin = await db.collection('structures').countDocuments({ statut: 'CREEE', codePostal: '97150' });
+  addTomStMartin(nombreStructuresStMartin, lignes, 'nombre');
   const structuresCandidates = ({ 'key': key, 'date': new Date(date), 'data': lignes });
 
   /* Liste des structures validées Coselec avec détails financement, nb de postes validés... */
   let promises = [];
   const structuresValideesCoselec = await db.collection('structures').find({ statut: 'VALIDATION_COSELEC', userCreated: true }).toArray();
+  //Vidage de la liste avant recréation (abandons...)
+  await db.collection('stats_StructuresValidees').deleteMany({});
   structuresValideesCoselec.forEach(structure => {
     promises.push(new Promise(async resolve => {
       try {
@@ -159,15 +248,17 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
           (structure?.insee?.etablissement?.adresse?.localite ?? '');
 
+        //Coût par cnfs (formation + tenue/equipement + certification)
+        const coutCnfs = 4805 + 297.228 + 326.6;
         let investissement = 0;
         if (structure.type === 'PRIVATE') {
-          investissement = (32000 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (32000 + coutCnfs) * coselec?.nombreConseillersCoselec;
         } else if (structure.codeDepartement === '971' || structure.codeDepartement === '972' || structure.codeDepartement === '973') {
-          investissement = (70000 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (70000 + coutCnfs) * coselec?.nombreConseillersCoselec;
         } else if (structure.codeDepartement === '974' || structure.codeDepartement === '976') {
-          investissement = (67500 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (67500 + coutCnfs) * coselec?.nombreConseillersCoselec;
         } else {
-          investissement = (50000 + 4805) * coselec?.nombreConseillersCoselec;
+          investissement = (50000 + coutCnfs) * coselec?.nombreConseillersCoselec;
         }
 
         // Nom département
@@ -180,6 +271,10 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         if (deps.has(structure.codeDepartement)) {
           structureDepartement = deps.get(structure.codeDepartement).dep_name;
           structureRegion = deps.get(structure.codeDepartement).region_name;
+        } else if (structure.codePostal === '97150') {
+          //Cas Saint Martin
+          structureDepartement = toms.get(structure.codePostal.substring(0, 3)).tom_name;
+          structureRegion = toms.get(structure.codePostal.substring(0, 3)).tom_name;
         }
 
         // Nombre de conseillers 'recrutee' et 'finalisee'
@@ -196,7 +291,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           nomStructure: structure.insee?.entreprise?.raison_sociale ?? structure.nom,
           communeInsee: structure.insee?.etablissement?.commune_implantation?.value ?? '',
           codeCommuneInsee: structure.insee?.etablissement?.adresse?.code_insee_localite ?? '',
-          codeDepartement: structure.codeDepartement,
+          codeDepartement: structure.codeDepartement !== '00' ? structure.codeDepartement : determineTom(structure.codePostal, structure.codeCommune),
           departement: structureDepartement,
           region: structureRegion,
           nombreConseillersValidesCoselec: coselec?.nombreConseillersCoselec,
@@ -211,6 +306,9 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           LabelFranceServices: label,
           nbConseillersRecrutees: nbConseillers?.find(stat => stat._id === 'recrutee')?.count ?? 0,
           nbConseillersFinalisees: nbConseillers?.find(stat => stat._id === 'finalisee')?.count ?? 0,
+          estGrandReseau: structure.reseau ? 'oui' : 'non',
+          nomGrandReseau: structure.reseau ?? '',
+          categorieJuridique: structure.insee?.entreprise?.forme_juridique ?? ''
         }) };
         const options = { upsert: true };
         await db.collection('stats_StructuresValidees').updateOne(queryUpd, update, options);
@@ -228,6 +326,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     db.collection('stats_PostesValidesDepartement').insertOne(postesValidesDepartement);
     db.collection('stats_ConseillersRecrutesDepartement').insertOne(conseillersRecrutesDepartement);
     db.collection('stats_ConseillersFinalisesDepartement').insertOne(conseillersFinalisesDepartement);
+    db.collection('stats_ConseillersEnPosteDepartement').insertOne(conseillersEnPosteDepartement);
     db.collection('stats_Candidats').insertOne(candidats);
     db.collection('stats_StructuresCandidates').insertOne(structuresCandidates);
   } catch (error) {

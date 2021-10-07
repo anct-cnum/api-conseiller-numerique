@@ -10,6 +10,7 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const decode = require('jwt-decode');
 const { Pool } = require('pg');
+const utils = require('../../utils/index.js');
 
 const pool = new Pool();
 
@@ -27,6 +28,7 @@ exports.Structures = class Structures extends Service {
     app.post('/structures/:id/preSelectionner/:conseillerId', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role structure
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -79,6 +81,7 @@ exports.Structures = class Structures extends Service {
     app.get('/structures/:id/misesEnRelation/stats', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -104,19 +107,27 @@ exports.Structures = class Structures extends Service {
       const stats = await db.collection('misesEnRelation').aggregate([
         { '$match': { 'structure.$id': structureId } },
         { '$group': { _id: '$statut', count: { $sum: 1 } } },
+        { '$sort': { '_id': 1 } }
       ]).toArray();
 
       /* ajout des candidats dont le recrutement est finalisé dans détails structure*/
-      const misesEnRelation = await db.collection('misesEnRelation').find({ 'statut': 'finalisee', 'structure.$id': structureId }).toArray();
-      const candidats = misesEnRelation.map(item => {
-        item = `${item.conseillerObj.nom} ${item.conseillerObj.prenom}`;
-        return item;
+      const misesEnRelationFinalise = await db.collection('misesEnRelation').find({ 'statut': 'finalisee', 'structure.$id': structureId }).toArray();
+      const candidatsFinalise = misesEnRelationFinalise.map(item => {
+        return item.conseillerObj;
       });
 
+      /* ajout des candidats dont le recrutement est validé dans détails structure*/
+      const misesEnRelationValide = await db.collection('misesEnRelation').find({ 'statut': 'recrutee', 'structure.$id': structureId }).toArray();
+      const candidatsValide = misesEnRelationValide.map(item => {
+        return item.conseillerObj;
+      });
       res.send(stats.map(item => {
         item.statut = item._id;
+        if (item.statut === 'recrutee') {
+          item.candidats = candidatsValide;
+        }
         if (item.statut === 'finalisee') {
-          item.candidats = candidats;
+          item.candidats = candidatsFinalise;
         }
         delete item._id;
         return item;
@@ -126,6 +137,7 @@ exports.Structures = class Structures extends Service {
     app.get('/structures/:id/misesEnRelation', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //verify user role
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -203,6 +215,7 @@ exports.Structures = class Structures extends Service {
     app.post('/structures/:id/relance-inscription', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let adminId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
@@ -260,6 +273,7 @@ exports.Structures = class Structures extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let adminId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
@@ -287,9 +301,59 @@ exports.Structures = class Structures extends Service {
       }
     });
 
+    app.patch('/structures/:id/email', async (req, res) => {
+      const { email } = req.body;
+      const structureId = req.params.id;
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
+      if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminId
+        }).toJSON());
+        return;
+      }
+
+      const structure = await db.collection('structures').findOne({ _id: new ObjectID(structureId) });
+      if (!structure) {
+        return res.status(404).send(new NotFound('Structure not found', {
+          structureId
+        }).toJSON());
+      }
+
+      const updateStructure = async (id, email) => {
+        try {
+          await pool.query(`
+          UPDATE djapp_hostorganization
+          SET contact_email = $2
+          WHERE id = $1`,
+          [id, email]);
+          await db.collection('structures').updateOne({ _id: new ObjectID(structureId) }, { $set: { 'contact.email': email } });
+          await db.collection('users').updateOne(
+            { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': { $in: ['structure'] } },
+            { $set: { name: email }
+            });
+          await db.collection('misesEnRelation').updateMany(
+            { 'structure.$id': new ObjectID(structureId) },
+            { $set: { 'structureObj.contact.email': email }
+            });
+          res.send({ emailUpdated: true });
+        } catch (error) {
+          logger.error(error.message);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError(`Echec du changement d'email de la structure ${structure.nom}`));
+        }
+      };
+      await updateStructure(structure.idPG, email);
+    });
+
     app.post('/structures/updateStructureSiret', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let adminId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
@@ -327,5 +391,58 @@ exports.Structures = class Structures extends Service {
 
 
     });
+
+    app.get('/structures/getAvancementRecrutement', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      //verify user role
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (user?.roles.filter(role => ['prefet'].includes(role)).length < 1) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: user
+        }).toJSON());
+        return;
+      }
+
+      let structures = [];
+      if (user?.region) {
+        structures = await db.collection('structures').find({
+          codeRegion: user?.region.toString(),
+          statut: 'VALIDATION_COSELEC',
+          userCreated: true }).toArray();
+      } else if (user?.departement) {
+        structures = await db.collection('structures').find({
+          codeDepartement: user?.departement.toString(),
+          statut: 'VALIDATION_COSELEC',
+          userCreated: true }).toArray();
+      }
+
+      let nombreCandidatsRecrutes = 0;
+      let nombreDotations = 0;
+      let promises = [];
+
+      structures.forEach(structure => {
+        const coselec = utils.getCoselec(structure);
+        if (coselec) {
+          nombreDotations += coselec.nombreConseillersCoselec;
+        }
+        promises.push(new Promise(async resolve => {
+          let candidatsRecrutes = await db.collection('misesEnRelation').countDocuments({
+            'statut': 'finalisee',
+            'structure.$id': new ObjectID(structure._id)
+          });
+          nombreCandidatsRecrutes += candidatsRecrutes;
+          resolve();
+        }));
+      });
+      await Promise.all(promises);
+      const pourcentage = nombreDotations !== 0 ? Math.round(nombreCandidatsRecrutes * 100 / nombreDotations) : 0;
+
+      return res.send({ 'candidatsRecrutes': nombreCandidatsRecrutes, 'dotations': nombreDotations, 'pourcentage': pourcentage });
+    });
+
   }
 };

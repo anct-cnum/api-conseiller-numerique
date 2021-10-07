@@ -3,7 +3,7 @@
 
 require('dotenv').config();
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   logger.info('Suppression des 2 collections Metabase obsolètes');

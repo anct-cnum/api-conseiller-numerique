@@ -81,4 +81,53 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
   }
 };
 
-module.exports = { createMailbox, updateMailboxPassword };
+const deleteMailbox = async (gandi, conseillerId, login, db, logger, Sentry) => {
+
+  try {
+    //Récuperation de l'id mailbox associé au login pour 'delete'
+    const mailbox = await axios({
+      method: 'get',
+      url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
+      headers: {
+        'Authorization': `Apikey ${gandi.token}`
+      }
+    });
+
+    //Si trouvé : suppression de la boite mail
+    if (mailbox?.data.length === 1) {
+      const resultDeleteMailbox = await axios({
+        method: 'delete',
+        url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Apikey ${gandi.token}`
+        }
+      });
+      logger.info(resultDeleteMailbox);
+      logger.info(`Suppresion boite mail Gandi du login ${login} pour le conseiller id=${conseillerId}`);
+      await db.collection('conseillers').updateOne({ _id: conseillerId },
+        { $set:
+          { 'emailCN.deleteMailboxCNError': false }
+        });
+      return true;
+    } else {
+      logger.error(`Login ${login} inexistant dans Gandi`);
+      await db.collection('conseillers').updateOne({ _id: conseillerId },
+        { $set:
+          { 'emailCN.deleteMailboxCNError': true }
+        });
+      return false;
+    }
+  } catch (e) {
+    Sentry.captureException(e);
+    logger.error(e.message);
+    await db.collection('conseillers').updateOne({ _id: conseillerId },
+      { $set:
+        { 'emailCN.deleteMailboxCNError': true }
+      });
+    return false;
+  }
+
+};
+
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox };

@@ -221,7 +221,7 @@ exports.Users = class Users extends Service {
         let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
         users.data[0].persoEmail = conseiller.email;
         res.send({ roles: users.data[0].roles,
-          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: users.data[0].nom, prenom: users.data[0].prenom });
+          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: conseiller.nom, prenom: conseiller.prenom });
       } else {
         res.send({ roles: users.data[0].roles, name: users.data[0].name });
       }
@@ -299,13 +299,13 @@ exports.Users = class Users extends Service {
 
     app.get('/users/listByIdStructure/:id', async (req, res) => {
       const idStructure = req.params.id;
-      const users = await this.find({
-        query: {
-          'entity.$id': new ObjectId(idStructure),
-        }
+      app.get('mongoClient').then(async db => {
+        const users = await db.collection('users').aggregate([
+          { '$match': { 'entity.$id': new ObjectId(idStructure) } },
+          { '$project': { name: 1, roles: 1 } }
+        ]).toArray();
+        res.send(users);
       });
-
-      res.send(users.data);
     });
 
     app.post('/users/choosePassword/:token', async (req, res) => {
@@ -332,7 +332,9 @@ exports.Users = class Users extends Service {
       if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-          const login = slugify(`${conseiller.prenom}.${conseiller.nom}`, { replacement: '.', lower: true, strict: true });
+          const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+          const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+          const login = `${prenom}.${nom}`;
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
           const email = `${login}@${gandi.domain}`;
@@ -432,8 +434,72 @@ exports.Users = class Users extends Service {
       }
     });
 
+    app.post('/users/checkForgottenPasswordEmail', async (req, res) => {
+      const username = req.body.username.trim();
+      const users = await this.find({
+        query: {
+          name: username,
+          $limit: 1,
+        }
+      });
+
+      if (users.total === 0) {
+        res.status(404).send(new NotFound('User not found', {
+          username
+        }).toJSON());
+        return;
+      }
+      const user = users.data[0];
+      let hiddenEmail = '';
+
+      //Si le user est un conseiller, on renvoie l'email obscurci
+      if (user.roles[0] === 'conseiller') {
+        const hide = t => {
+          if (t.length === 0) {
+            return '';
+          } else if (t.length === 1) {
+            return '*'; // a => *
+          } else if (t.length === 2) {
+            return t.charAt(0) + '*'; // ab => a*
+          } else {
+            return t.charAt(0) + '*'.repeat(t.length - 2) + t.charAt(t.length - 1); // abcdef => a****f
+          }
+        };
+        let conseiller = await app.service('conseillers').get(user.entity?.oid);
+        // conseiller.email : email perso du conseiller
+        const regexp = /([^@]+)@([^@]+)[.](\w+)/; // Extraction des trois morceaux du mail
+        let match = conseiller.email.match(regexp);
+        let premierePartie;
+        let domaine;
+        let extension;
+        if (match && match.length > 3) {
+          premierePartie = match[1];
+          domaine = match[2];
+          extension = match[3];
+        } else {
+          const err = new Error('Erreur mot de passe oublié, format email invalide');
+          logger.error(err.message);
+          app.get('sentry').captureException(err);
+          res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
+          return;
+        }
+        hiddenEmail = `${hide(premierePartie)}@${hide(domaine)}.${extension}`;
+      }
+
+      try {
+        res.status(200).json({
+          hiddenEmail: hiddenEmail,
+          successCheckEmail: true
+        });
+      } catch (err) {
+        logger.error(err.message);
+        app.get('sentry').captureException(err);
+        res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
+      }
+    });
+
     app.post('/users/sendForgottenPasswordEmail', async (req, res) => {
-      const username = req.body.username;
+      const username = req.body.username.trim();
       const users = await this.find({
         query: {
           name: username,

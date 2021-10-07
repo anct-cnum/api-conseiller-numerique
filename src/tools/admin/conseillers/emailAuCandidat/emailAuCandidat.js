@@ -6,7 +6,7 @@ const _ = require('lodash');
 const sendCandidatEmail = require('./tasks/sendCandidatEmail');
 const { capitalizeFirstLetter, execute } = require('../../../utils');
 
-cli.description('Send point recrutment to candidate emails')
+cli.description('Envoi de l\'email de point sur le recrutement du candidat')
 .option('--type [type]', 'resend,send (default: send))', capitalizeFirstLetter)
 .option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
 .option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)

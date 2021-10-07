@@ -8,6 +8,15 @@ const multer = require('multer');
 const fileType = require('file-type');
 const crypto = require('crypto');
 const puppeteer = require('puppeteer');
+const dayjs = require('dayjs');
+const Joi = require('joi');
+
+const {
+  verificationRoleUser,
+  verificationCandidaturesRecrutee,
+  archiverLaSuppression,
+  suppressionTotalCandidat,
+  suppressionCv } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -86,6 +95,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
 
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -110,9 +120,21 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
+      const minDate = dayjs().subtract(99, 'year');
+      const maxDate = dayjs().subtract(18, 'year');
       const sexe = req.body.sexe;
-      const dateDeNaissance = req.body.dateDeNaissance;
+      const dateDeNaissance = new Date(req.body.dateDeNaissance);
 
+      const schema = Joi.object({
+        dateDeNaissance: Joi.date().required().min(minDate).max(maxDate)
+        .error(new Error('La date de naissance est invalide')),
+        sexe: Joi.string().required().error(new Error('Le sexe est invalide')),
+      }).validate(req.body);
+
+      if (schema.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
+      }
 
       if (sexe === '' || dateDeNaissance === '') {
         res.status(400).send(new BadRequest('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
@@ -123,7 +145,7 @@ exports.Conseillers = class Conseillers extends Service {
         await this.patch(new ObjectId(user.entity.oid),
           { $set: {
             sexe: sexe,
-            dateDeNaissance: new Date(dateDeNaissance)
+            dateDeNaissance: dateDeNaissance
           } });
       } catch (error) {
         app.get('sentry').captureException(error);
@@ -138,6 +160,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       //Verification role candidat
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -196,7 +219,7 @@ exports.Conseillers = class Conseillers extends Service {
       const ep = new aws.Endpoint(awsConfig.endpoint);
       const s3 = new aws.S3({ endpoint: ep });
 
-      //Suprresion de l'ancien CV si présent dans S3 et dans MongoDb
+      //Suppression de l'ancien CV si présent dans S3 et dans MongoDb
       if (conseiller.cv?.file) {
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
@@ -262,6 +285,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/:id/cv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
 
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
@@ -318,7 +342,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.post('/conseillers/statistiquesPDF', async (req, res) => {
+    app.get('/conseillers/statistiques.pdf', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
 
@@ -326,6 +350,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -336,12 +361,22 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const dateDebut = new Date(req.body.datesStatsPDF.dateDebut).getTime();
-        const dateFin = new Date(req.body.datesStatsPDF.dateFin).getTime();
+        const dateDebut = new Date(req.query.dateDebut).getTime();
+        const dateFin = new Date(req.query.dateFin).getTime();
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
         delete user.password;
+
+        const schema = Joi.object({
+          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+        }).validate(req.query);
+
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
@@ -394,10 +429,10 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.get('/conseillers/:id/employeur', async (req, res) => {
-
       const accessToken = req.feathers?.authentication?.accessToken;
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
       }
       let userId = decode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -435,6 +470,45 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       res.send({ nomStructure: miseEnRelation.structureObj.nom });
+    });
+
+    app.delete('/conseillers/:id/candidature', async (req, res) => {
+      let userAuthentifier = [];
+      const roles = ['admin'];
+      await verificationRoleUser(userAuthentifier, db, decode, req, res, roles);
+      const user = userAuthentifier[0];
+      const id = req.params.id;
+      const conseiller = await this.find({
+        query: {
+          _id: new ObjectId(id),
+          $limit: 1,
+        }
+      });
+      if (conseiller.total === 0) {
+        res.status(404).send(new NotFound('Conseiller non trouvé', {
+          id
+        }).toJSON());
+        return;
+      }
+      const { email, cv } = conseiller.data[0];
+      await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
+        const actionUser = req.body.actionUser;
+        const motif = req.body.motif;
+        return archiverLaSuppression(email, user, app, motif, actionUser);
+      }).then(() => {
+        return suppressionTotalCandidat(email, app);
+      }).then(() => {
+        if (cv?.file) {
+          return suppressionCv(cv, app, res);
+        }
+        return;
+      }).then(() => {
+        res.send({ deleteSuccess: true });
+      }).catch(error => {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression de la candidature, veuillez réessayer.').toJSON());
+      });
     });
   }
 };

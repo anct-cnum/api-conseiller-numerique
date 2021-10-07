@@ -1,6 +1,6 @@
 const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
-const moment = require('moment');
+const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
 
 program
@@ -31,6 +31,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
+          const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+          const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
           const exist = await db.collection('conseillers').countDocuments({ email });
           const structureId = parseInt(conseiller['ID structure']);
@@ -54,25 +56,19 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
             errors++;
             reject();
+          } else if (miseEnRelation === null) {
+            logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
+            Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
+            errors++;
+            reject();
           } else {
-            await db.collection('conseillers').updateOne({ _id: miseEnRelation.conseillerObj._id }, {
-              $set: {
-                statut: 'RECRUTE',
-                disponible: false,
-                estRecrute: true,
-                datePrisePoste: moment(conseiller['Date de départ en formation'], 'MM/DD/YY').toDate(),
-                dateFinFormation: moment(conseiller['Date de fin de formation'], 'MM/DD/YY').toDate(),
-                structureId: structure._id
-              }
-            });
-
-            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId }, {
+            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
               $set: {
                 statut: 'finalisee',
               }
             });
 
-            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': email, 'structureObj.idPG': { $ne: structureId } }, {
+            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': email, 'statut': { $ne: 'finalisee' } }, {
               $set: {
                 statut: 'finalisee_non_disponible',
               }
@@ -80,7 +76,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
-            const conseillerDoc = await db.collection('conseillers').findOne({ email });
+            const conseillerDoc = await db.collection('conseillers').findOne({ _id: miseEnRelation.conseillerObj._id });
             if (!conseillerDoc.userCreated) {
               await feathers.service('users').create({
                 name: email,
@@ -108,7 +104,13 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
                 }
               });
             }
-            await db.collection('conseillers').updateOne({ _id: conseillerDoc._id }, { $set: {
+            await db.collection('conseillers').updateOne({ _id: miseEnRelation.conseillerObj._id }, { $set: {
+              statut: 'RECRUTE',
+              disponible: false,
+              estRecrute: true,
+              datePrisePoste: dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
+              dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate(),
+              structureId: structure._id,
               userCreated: true
             } });
             count++;
