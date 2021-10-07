@@ -25,6 +25,8 @@ const toSimpleMiseEnRelation = (miseEnRelation) => ({
 
 const isRecrute = conseiller => conseiller.statut === ConseillerStatut.Recrute;
 
+const isNotRecrute = conseiller => conseiller.statut == null;
+
 const countRecrute = (conseillerIdsByEmail) => conseillerIdsByEmail.conseillers.reduce((count, conseiller) => count + (isRecrute(conseiller) ? 1 : 0), 0);
 
 const hasDuplicates = conseillerIdsByEmail => conseillerIdsByEmail.conseillers.length > 1;
@@ -182,26 +184,30 @@ const inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicate
   })
 };
 
-const hasConseillerRecruteAValidDateFinFormation = conseiller => conseiller.dateFinFormation != null;
-const hasConseillerRecruteAValidDatePrisePoste = conseiller => conseiller.datePrisePoste != null;
-const hasConseillerRecruteAValidUserCreated = conseiller => conseiller.userCreated === true;
-const hasConseillerRecruteAValidStructureId = conseiller => conseiller.structureId != null;
-const hasConseillerRecruteAValidEstRecrute = conseiller => conseiller.estRecrute === true;
-const hasConseillerRecruteAValidDisponible = conseiller => conseiller.disponible === false;
-const hasConseillerRecruteAValidMattermost = conseiller => conseiller.mattermost?.error !== true;
-const hasConseillerRecruteAValidEmailCn = conseiller => conseiller.emailCNError !== true;
+const hasDateFinFormation = conseiller => conseiller.dateFinFormation != null;
+const hasDatePrisePoste = conseiller => conseiller.datePrisePoste != null;
+const isUserCreated = conseiller => conseiller.userCreated === true;
+const hasAStructureId = conseiller => conseiller.structureId != null;
+const estRecrute = conseiller => conseiller.estRecrute === true;
+const hasEstRecrute = conseiller => conseiller.estRecrute != null;
+const isDisponible = conseiller => conseiller.disponible !== false;
+const hasMattermostError = conseiller => conseiller.mattermost?.error === true;
+const hasMattermost = conseiller => conseiller.mattermost != null;
+const isEmailCnError = conseiller => conseiller.emailCNError === true;
+const hasEmailCnError = conseiller => conseiller.emailCNError != null;
+const hasEmailCn = conseiller => conseiller.emailCN != null;
 
 const inspectConseillersRecruteProperties = recruteStatutWithoutDuplicates => recruteStatutWithoutDuplicates.reduce((result, conseillersByEmail) => {
   const conseiller = conseillersByEmail.conseillers.find(isRecrute);
 
-  !hasConseillerRecruteAValidDateFinFormation(conseiller) && result.conseillersWithInvalidDateFinFormation.push(conseiller);
-  !hasConseillerRecruteAValidDatePrisePoste(conseiller) && result.conseillersWithInvalidDatePrisePoste.push(conseiller);
-  !hasConseillerRecruteAValidUserCreated(conseiller) && result.conseillersWithInvalidUserCreated.push(conseiller);
-  !hasConseillerRecruteAValidStructureId(conseiller) && result.conseillersWithInvalidStructureId.push(conseiller);
-  !hasConseillerRecruteAValidEstRecrute(conseiller) && result.conseillersWithInvalidEstRecrute.push(conseiller);
-  !hasConseillerRecruteAValidDisponible(conseiller) && result.conseillersWithInvalidDisponible.push(conseiller);
-  !hasConseillerRecruteAValidMattermost(conseiller) && result.conseillersWithMattermostError.push(conseiller);
-  !hasConseillerRecruteAValidEmailCn(conseiller) && result.conseillersWithEmailCNError.push(conseiller);
+  !hasDateFinFormation(conseiller) && result.conseillersWithInvalidDateFinFormation.push(conseiller);
+  !hasDatePrisePoste(conseiller) && result.conseillersWithInvalidDatePrisePoste.push(conseiller);
+  !isUserCreated(conseiller) && result.conseillersWithInvalidUserCreated.push(conseiller);
+  !hasAStructureId(conseiller) && result.conseillersWithInvalidStructureId.push(conseiller);
+  !estRecrute(conseiller) && result.conseillersWithInvalidEstRecrute.push(conseiller);
+  isDisponible(conseiller) && result.conseillersWithInvalidDisponible.push(conseiller);
+  hasMattermostError(conseiller) && result.conseillersWithMattermostError.push(conseiller);
+  isEmailCnError(conseiller) && result.conseillersWithEmailCNError.push(conseiller);
 
   return result;
 }, {
@@ -215,6 +221,94 @@ const inspectConseillersRecruteProperties = recruteStatutWithoutDuplicates => re
   conseillersWithEmailCNError: []
 });
 
+const isValidConseillerRecrute = conseiller =>
+  hasDateFinFormation(conseiller) &&
+  hasDatePrisePoste(conseiller) &&
+  // isUserCreated(conseiller) && // todo: enable user created control again once the conseillers have been fixed
+  hasAStructureId(conseiller) &&
+  estRecrute(conseiller) // &&
+  // !isDisponible(conseiller); // todo: enable non disponible control again once the conseillers have been fixed
+
+const isValidConseillerNonRecrute = conseiller =>
+  !hasDateFinFormation(conseiller) &&
+  !hasDatePrisePoste(conseiller) &&
+  // !isUserCreated(conseiller) && // todo: enable user created control again once the conseillers have been fixed
+  !hasAStructureId(conseiller) &&
+  !hasEstRecrute(conseiller) &&
+  // isDisponible(conseiller) && // todo: enable non disponible control again once the conseillers have been fixed
+  !hasMattermost(conseiller) &&
+  !hasEmailCn(conseiller) &&
+  !hasEmailCnError(conseiller);
+
+const allValidConseillerNonRecrute = conseillers => conseillers.filter(isValidConseillerNonRecrute).length === conseillers.length;
+
+const oneInvalidConseillerNonRecrute = invalidConseillersNonRecrutes => invalidConseillersNonRecrutes.length === 1;
+
+const fillValidRecruteAllValidDuplicates = (result, conseillerRecrute, conseillersDuplicates) => result.validRecruteAllValidDuplicates.push({
+  validConseillerRecrute: conseillerRecrute,
+  validConseillerDuplicates: conseillersDuplicates
+});
+
+const fillValidRecruteOneInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.validRecruteOneInvalidDuplicates.push({
+  validConseillerRecrute: conseillerRecrute,
+  inValidConseillerDuplicate: invalidConseillersNonRecrutes[0]
+});
+
+const fillValidRecruteManyInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.validRecruteManyInvalidDuplicates.push({
+  validConseillerRecrute: conseillerRecrute,
+  inValidConseillersDuplicates: invalidConseillersNonRecrutes
+});
+
+const fillInvalidRecruteAllValidDuplicates = (result, conseillerRecrute, conseillersDuplicates) => result.invalidRecruteAllValidDuplicates.push({
+  invalidConseillerRecrute: conseillerRecrute,
+  validConseillerDuplicates: conseillersDuplicates
+});
+
+const fillInvalidRecruteOneInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.invalidRecruteOneInvalidDuplicates.push({
+  invalidConseillerRecrute: conseillerRecrute,
+  inValidConseillerDuplicate: invalidConseillersNonRecrutes[0]
+});
+
+const fillInvalidRecruteManyInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.invalidRecruteManyInvalidDuplicates.push({
+  invalidConseillerRecrute: conseillerRecrute,
+  inValidConseillersDuplicates: invalidConseillersNonRecrutes
+});
+
+const getResultForValidConseillerRecrute = (result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes) => {
+  if (allValidConseillerNonRecrute(conseillersDuplicates)) fillValidRecruteAllValidDuplicates(result, conseillerRecrute, conseillersDuplicates);
+  else if (oneInvalidConseillerNonRecrute(invalidConseillersNonRecrutes)) fillValidRecruteOneInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
+  else fillValidRecruteManyInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
+
+  return result;
+};
+
+const getResultForInvalidConseillerRecrute = (result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes) => {
+  if (allValidConseillerNonRecrute(conseillersDuplicates)) fillInvalidRecruteAllValidDuplicates(result, conseillerRecrute, conseillersDuplicates);
+  else if (oneInvalidConseillerNonRecrute(invalidConseillersNonRecrutes)) fillInvalidRecruteOneInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
+  else fillInvalidRecruteManyInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
+
+  return result;
+};
+
+const inspectConseillersAndDuplicatesProperties = (conseillersWithMatchingMiseEnRelationsGroups) =>
+  conseillersWithMatchingMiseEnRelationsGroups.reduce((result, conseillersWithMatchingMiseEnRelations) => {
+    const conseillers = conseillersWithMatchingMiseEnRelations.map(conseillerWithMatchingMiseEnRelations => conseillerWithMatchingMiseEnRelations.conseiller);
+    const conseillerRecrute = conseillers.find(isRecrute);
+    const conseillersDuplicates = conseillers.filter(isNotRecrute);
+    const invalidConseillersNonRecrutes = conseillersDuplicates.filter(conseiller => !isValidConseillerNonRecrute(conseiller));
+
+    return isValidConseillerRecrute(conseillerRecrute) ?
+      getResultForValidConseillerRecrute(result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes) :
+      getResultForInvalidConseillerRecrute(result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes);
+  }, {
+    invalidRecruteAllValidDuplicates: [],
+    invalidRecruteOneInvalidDuplicates: [],
+    invalidRecruteManyInvalidDuplicates: [],
+    validRecruteAllValidDuplicates: [],
+    validRecruteOneInvalidDuplicates: [],
+    validRecruteManyInvalidDuplicates: []
+  });
+
 module.exports = {
   MisesEnRelationStatut,
   ConseillerStatut,
@@ -225,5 +319,6 @@ module.exports = {
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
-  inspectConseillersRecruteProperties
+  inspectConseillersRecruteProperties,
+  inspectConseillersAndDuplicatesProperties,
 };

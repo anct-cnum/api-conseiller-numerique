@@ -9,7 +9,8 @@ const {
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
-  inspectConseillersRecruteProperties
+  inspectConseillersRecruteProperties,
+  inspectConseillersAndDuplicatesProperties
 } = require('./fixRelationshipsBetweenConseillersAndUsers.utils');
 
 const miseEnRelationJohnDoeStructureFinalisee= {
@@ -85,6 +86,7 @@ const maryDoeConseiller = {
   estRecrute: true,
   statut: ConseillerStatut.Recrute,
   structureId: 'e051967bc66f6fdbac924fd7',
+  disponible: false,
   mattermost: {
     error: false,
     login: 'mary.doe',
@@ -94,13 +96,44 @@ const maryDoeConseiller = {
     address: 'mary.doe@conseiller-numerique.fr'
   },
   emailCNError: false,
+  userCreated: true,
+  datePrisePoste: new Date(),
+  dateFinFormation: new Date()
+};
+const maryDoeConseillerInvalid = {
+  _id: '15ceedaf1edc7b9a9b25e1bd',
+  prenom: 'mary',
+  nom: 'doe',
+  email: 'mary.doe@email.com',
+  estRecrute: false,
+  statut: ConseillerStatut.Recrute,
+  structureId: 'e051967bc66f6fdbac924fd7',
+  disponible: true,
+  emailCNError: false,
+  datePrisePoste: new Date(),
+  dateFinFormation: new Date()
 };
 const maryDoeConseillerDuplicate = {
   _id: 'a986da60804904c0968b3971',
   prenom: 'mary',
   nom: 'doe',
   email: 'mary.doe@email.com',
-  estRecrute: false,
+  userCreated: false,
+  disponible: true
+};
+const maryDoeConseillerInvalidDuplicate = {
+  _id: 'a986da60804904c0968b3971',
+  prenom: 'mary',
+  nom: 'doe',
+  email: 'mary.doe@email.com',
+  datePrisePoste: new Date(),
+};
+const maryDoeConseillerOtherInvalidDuplicate = {
+  _id: '7aa69eb328175bbaf1832e4b',
+  prenom: 'mary',
+  nom: 'doe',
+  email: 'mary.doe@email.com',
+  dateFinFormation: new Date()
 };
 const bobDoeConseiller = {
   _id: 'a8d0d761b65c263e17ae0d55',
@@ -154,6 +187,27 @@ const henryDoeConseiller = {
     error: true,
   },
   emailCNError: true,
+};
+const sarahDoeConseiller = {
+  _id: '7f67c2061bf10ca4738cbfd8',
+  prenom: 'sarah',
+  nom: 'doe',
+  email: 'sarah.doe@email.com',
+  estRecrute: true,
+  structureId: 'ff3e4d1fa2c58346c63b483a',
+  disponible: false,
+  mattermost: {
+    error: false,
+    login: 'sarah.doe',
+    id: '86e7f10b7f66841de171bdfbae'
+  },
+  emailCN: {
+    address: 'sarah.doe@conseiller-numerique.fr'
+  },
+  emailCNError: false,
+  userCreated: true,
+  datePrisePoste: new Date(),
+  dateFinFormation: new Date()
 };
 
 const johnDoeUser = {
@@ -988,6 +1042,118 @@ describe('fix relationships between conseillers and users', () => {
       const {conseillersWithEmailCNError} = inspectConseillersRecruteProperties(conseillersByEmail);
 
       expect(conseillersWithEmailCNError).toEqual([henryDoeConseiller]);
+    });
+  });
+
+  describe('inspect conseillers and duplicates properties in conseillers with matching mises en relations groups', () => {
+    it('should inspect conseillers and duplicates properties and get valid conseiller recrute and all valid conseiller duplicates', () => {
+      const conseillersWithMatchingMiseEnRelationsGroups = [
+        [
+          {misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: maryDoeConseiller},
+          {misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: maryDoeConseillerDuplicate}
+        ]
+      ];
+
+      const {validRecruteAllValidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+
+      expect(validRecruteAllValidDuplicates).toEqual([
+        {
+          validConseillerRecrute: maryDoeConseiller,
+          validConseillerDuplicates: [maryDoeConseillerDuplicate]
+        }
+      ]);
+    });
+
+    it('should inspect conseillers and duplicates properties and get valid conseiller recrute and one invalid conseiller duplicates', () => {
+      const conseillersWithMatchingMiseEnRelationsGroups = [
+        [
+          {misesEnRelations: [], conseiller: maryDoeConseiller},
+          {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate}
+        ]
+      ];
+
+      const {validRecruteOneInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+
+      expect(validRecruteOneInvalidDuplicates).toEqual([
+        {
+          validConseillerRecrute: maryDoeConseiller,
+          inValidConseillerDuplicate: maryDoeConseillerInvalidDuplicate
+        }
+      ]);
+    });
+
+    it('should inspect conseillers and duplicates properties and get valid conseiller recrute and many invalid conseiller duplicates', () => {
+      const conseillersWithMatchingMiseEnRelationsGroups = [
+        [
+          {misesEnRelations: [], conseiller: maryDoeConseiller},
+          {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate},
+          {misesEnRelations: [], conseiller: maryDoeConseillerOtherInvalidDuplicate}
+        ]
+      ];
+
+      const {validRecruteManyInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+
+      expect(validRecruteManyInvalidDuplicates).toEqual([
+        {
+          validConseillerRecrute: maryDoeConseiller,
+          inValidConseillersDuplicates: [maryDoeConseillerInvalidDuplicate, maryDoeConseillerOtherInvalidDuplicate]
+        }
+      ]);
+    });
+
+    it('should inspect conseillers and duplicates properties and get invalid conseiller recrute and all valid conseiller duplicates', () => {
+      const conseillersWithMatchingMiseEnRelationsGroups = [
+        [
+          {misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: maryDoeConseillerInvalid},
+          {misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: maryDoeConseillerDuplicate}
+        ]
+      ];
+
+      const {invalidRecruteAllValidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+
+      expect(invalidRecruteAllValidDuplicates).toEqual([
+        {
+          invalidConseillerRecrute: maryDoeConseillerInvalid,
+          validConseillerDuplicates: [maryDoeConseillerDuplicate]
+        }
+      ]);
+    });
+
+    it('should inspect conseillers and duplicates properties and get invalid conseiller recrute and one invalid conseiller duplicates', () => {
+      const conseillersWithMatchingMiseEnRelationsGroups = [
+        [
+          {misesEnRelations: [], conseiller: maryDoeConseillerInvalid},
+          {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate}
+        ]
+      ];
+
+      const {invalidRecruteOneInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+
+      expect(invalidRecruteOneInvalidDuplicates).toEqual([
+        {
+          invalidConseillerRecrute: maryDoeConseillerInvalid,
+          inValidConseillerDuplicate: maryDoeConseillerInvalidDuplicate
+        }
+      ]);
+    });
+
+    it('should inspect conseillers and duplicates properties and get invalid conseiller recrute and many invalid conseiller duplicates', () => {
+      const conseillersWithMatchingMiseEnRelationsGroups = [
+        [
+          {misesEnRelations: [], conseiller: maryDoeConseillerInvalid},
+          {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate},
+          {misesEnRelations: [], conseiller: maryDoeConseillerOtherInvalidDuplicate}
+        ]
+      ];
+
+      const {invalidRecruteManyInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+
+      expect(invalidRecruteManyInvalidDuplicates).toEqual([
+        {
+          invalidConseillerRecrute: maryDoeConseillerInvalid,
+          inValidConseillersDuplicates: [maryDoeConseillerInvalidDuplicate, maryDoeConseillerOtherInvalidDuplicate]
+        }
+      ]);
     });
   });
 });
