@@ -2,8 +2,65 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
-const { Conflict, NotAuthenticated, Forbidden, GeneralError } = require('@feathersjs/errors');
+const { NotFound, Conflict, NotAuthenticated, Forbidden, GeneralError } = require('@feathersjs/errors');
 const aws = require('aws-sdk');
+const decode = require('jwt-decode');
+
+const checkAuth = (req, res) => {
+  if (req.feathers?.authentication === undefined) {
+    res.status(401).send(new NotAuthenticated('User not authenticated'));
+    return;
+  }
+};
+
+const checkRoleCandidat = async (db, req, res) => {
+  //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
+  let userId = decode(req.feathers.authentication.accessToken).sub;
+  const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+  // eslint-disable-next-line max-len
+  if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString())) {
+    res.status(403).send(new Forbidden('User not authorized', {
+      userId: userId
+    }).toJSON());
+    return;
+  }
+  return user;
+};
+
+const checkConseillerExist = async (db, id, user, res) => {
+  //Verification existence du conseiller associé
+  const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(id) });
+  if (conseiller === null) {
+    res.status(404).send(new NotFound('Conseiller not found', {
+      conseillerId: user.entity.oid
+    }).toJSON());
+    return;
+  }
+  return conseiller;
+};
+
+const checkConseillerHaveCV = (conseiller, user, res) => {
+  if (!conseiller.cv?.file) {
+    res.status(404).send(new NotFound('CV not found for this conseiller', {
+      conseillerId: user.entity.oid
+    }).toJSON());
+    return;
+  }
+};
+
+const suppressionCVConseiller = (db, conseiller) => {
+  return new Promise(async resolve => {
+    await db.collection('conseillers').updateMany({ 'email': conseiller.email },
+      { $unset: {
+        cv: ''
+      } });
+    await db.collection('misesEnRelation').updateMany({ 'conseiller.email': conseiller.email },
+      { $unset: {
+        'conseillerObj.cv': ''
+      } });
+    resolve();
+  });
+};
 
 const verificationRoleUser = async (userAuthentifier, db, decode, req, res, roles) => {
   let promise;
@@ -34,12 +91,14 @@ const verificationCandidaturesRecrutee = async (email, id, app, res) => {
         promises.push(new Promise(async resolve => {
           //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
           const misesEnRelations = await db.collection('misesEnRelation').find(
-            { 'conseiller.$id': profil._id,
+            {
+              'conseiller.$id': profil._id,
               'statut': { $in: ['finalisee', 'recrutee'] }
             }).toArray();
           if (misesEnRelations.length !== 0) {
             const misesEnRelationsFinalisees = await db.collection('misesEnRelation').findOne(
-              { 'conseiller.$id': profil._id,
+              {
+                'conseiller.$id': profil._id,
                 'statut': { $in: ['finalisee', 'recrutee'] }
               });
             const statut = misesEnRelationsFinalisees.statut === 'finalisee' ? 'recrutée' : 'validée';
@@ -52,7 +111,8 @@ const verificationCandidaturesRecrutee = async (email, id, app, res) => {
           }
           // Pour etre sure qu'il n'a pas d'espace COOP
           const usersCount = await db.collection('users').countDocuments(
-            { 'entity.$id': profil._id,
+            {
+              'entity.$id': profil._id,
               'roles': { $eq: ['conseiller'] }
             });
 
@@ -179,6 +239,11 @@ const suppressionCv = async (cv, app, res) => {
   await promise;
 };
 module.exports = {
+  checkAuth,
+  checkRoleCandidat,
+  checkConseillerExist,
+  checkConseillerHaveCV,
+  suppressionCVConseiller,
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
