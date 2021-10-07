@@ -209,7 +209,7 @@ exports.Conseillers = class Conseillers extends Service {
         });
 
         try {
-          await db.collection('conseillers').updateOne({ email: conseiller.email },
+          await db.collection('conseillers').updateMany({ email: conseiller.email },
             { $unset: {
               cv: ''
             } });
