@@ -67,32 +67,21 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
     });
     logger.info(resultJoinTeam);
 
-    const resultJoinChannel = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/channels/${resultChannel.data.id}/members`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      data: {
-        'user_id': resultCreation.data.id
-      }
+    [resultChannel.data.id, mattermost.themeChannelId, mattermost.resourcesChannelId].forEach(async canalId => {
+      const resultJoinChannel = await axios({
+        method: 'post',
+        url: `${mattermost.endPoint}/api/v4/channels/${canalId}/members`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        data: {
+          'user_id': resultCreation.data.id
+        }
+      });
+      logger.info(resultJoinChannel);
     });
-    logger.info(resultJoinChannel);
-
-    const resultJoinThemeChannel = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/channels/${mattermost.themeChannelId}/members`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      data: {
-        'user_id': resultCreation.data.id
-      }
-    });
-    logger.info(resultJoinThemeChannel);
-
+    
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
     return true;
   } catch (e) {
