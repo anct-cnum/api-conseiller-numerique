@@ -232,11 +232,11 @@ exports.Conseillers = class Conseillers extends Service {
         });
 
         try {
-          await db.collection('conseillers').updateOne({ '_id': conseiller._id },
+          await db.collection('conseillers').updateMany({ email: conseiller.email },
             { $unset: {
               cv: ''
             } });
-          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+          await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
             { $unset: {
               'conseillerObj.cv': ''
             } });
@@ -257,26 +257,24 @@ exports.Conseillers = class Conseillers extends Service {
         } else {
           //Insertion du cv dans MongoDb
           try {
-            db.collection('conseillers').updateOne({ '_id': conseiller._id },
+            const cv = {
+              file: nameCVFile,
+              extension: detectingFormat.ext,
+              date: new Date()
+            };
+
+            db.collection('conseillers').updateMany({ email: conseiller.email },
               { $set: {
-                cv: {
-                  file: nameCVFile,
-                  extension: detectingFormat.ext,
-                  date: new Date()
-                }
+                cv: cv
               } });
-            db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+            db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
               { $set: {
-                'conseillerObj.cv': {
-                  file: nameCVFile,
-                  extension: detectingFormat.ext,
-                  date: new Date()
-                }
+                'conseillerObj.cv': cv
               } });
           } catch (error) {
             app.get('sentry').captureException(error);
             logger.error(error);
-            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDb a échoué').toJSON());
+            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDB a échoué').toJSON());
           }
 
           res.send({ isUploaded: true });
