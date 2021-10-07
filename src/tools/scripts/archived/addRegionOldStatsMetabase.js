@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
-const departements = require('../../../data/imports/departements-region.json');
+const departements = require('../../../../data/imports/departements-region.json');
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 const { program } = require('commander');
 
 program
