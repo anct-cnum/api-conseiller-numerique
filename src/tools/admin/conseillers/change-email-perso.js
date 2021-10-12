@@ -7,20 +7,20 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
   program.option('-e, --email <email>', 'email: nouvelle adresse mail');
   program.option('-i, --id <id>', 'id: id PG du conseiller');
-  program.option('-t, --typo <typo>', `typo: candidat ou un conseiller`);
+  program.option('-t, --type <type>', `type: candidat ou un conseiller`);
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   let id = ~~program.id;
   let email = program.email;
-  let typo = program.typo;
+  let type = program.type;
 
   if (id === 0 || !email) {
     exit('Paramètres invalides. Veuillez préciser un id et le nouveau email à changer');
     return;
   }
-  if (!['candidat', 'conseiller'].includes(typo)) {
-    exit('Paramètres invalides. Veuillez un type : candidat ou conseiller');
+  if (!['candidat', 'conseiller'].includes(type)) {
+    exit('Paramètres invalides. Veuillez préciser un type: candidat ou conseiller');
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
@@ -31,8 +31,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
 
-  if (roles[0] !== typo) {
-    exit(`Le conseiller id=${id} n'est pas de type ${typo} mais ${roles[0]}`);
+  if (roles[0] !== type) {
+    exit(`Le conseiller id=${id} n'est pas de type ${type} mais ${roles[0]}`);
     return;
   }
   try {
@@ -51,7 +51,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       { 'conseiller.$id': conseiller._id },
       { $set: { 'conseillerObj.email': email }
       });
-    if (typo === 'candidat') {
+    if (type === 'candidat') {
       await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { name: email } });
     }
 
