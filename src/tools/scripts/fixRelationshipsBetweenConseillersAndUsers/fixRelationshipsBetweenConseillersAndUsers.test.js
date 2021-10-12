@@ -12,7 +12,8 @@ const {
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
   inspectConseillersRecruteProperties,
   inspectConseillersAndDuplicatesProperties,
-  resetConseiller
+  resetConseiller,
+  extractConseillerRecruteProperties
 } = require('./fixRelationshipsBetweenConseillersAndUsers.utils');
 
 const miseEnRelationJohnDoeStructureFinalisee= {
@@ -67,7 +68,6 @@ const johnDoeConseillerReset = {
   prenom: 'john',
   nom: 'doe',
   email: 'john.doe@email.com',
-  estRecrute: false,
   disponible: true,
   structureId: 'cbfa2ca4bd2def7058af2d4a',
   userCreated: true
@@ -1321,11 +1321,36 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
     ]);
   });
 
-  describe('reset conseiller', () => {
+  describe('conseiller recrute properties', () => {
     it('should reset conseiller', () => {
       const newConseiller = resetConseiller(johnDoeConseiller);
 
       expect(newConseiller).toEqual(johnDoeConseillerReset)
+    });
+
+    it('should not get conseiller recrute properties', () => {
+      const conseillerRecruteProperties = extractConseillerRecruteProperties({
+        statut: ConseillerStatut.Recrute
+      });
+
+      console.log(conseillerRecruteProperties);
+
+      expect(conseillerRecruteProperties).toEqual({
+        statut: ConseillerStatut.Recrute
+      });
+    });
+
+    it('should get conseiller recrute properties', () => {
+      const conseillerRecruteProperties = extractConseillerRecruteProperties(johnDoeConseiller);
+
+      expect(conseillerRecruteProperties).toEqual({
+        statut: johnDoeConseiller.statut,
+        mattermost: johnDoeConseiller.mattermost,
+        emailCN: johnDoeConseiller.emailCN,
+        emailCNError: johnDoeConseiller.emailCNError,
+        datePrisePoste: johnDoeConseiller.datePrisePoste,
+        dateFinFormation: johnDoeConseiller.dateFinFormation
+      });
     });
   });
 });

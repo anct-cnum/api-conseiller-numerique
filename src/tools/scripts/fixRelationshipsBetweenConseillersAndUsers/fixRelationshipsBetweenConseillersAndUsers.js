@@ -4,6 +4,7 @@
 const { execute } = require('../../utils');
 const {
   MisesEnRelationStatut,
+  ConseillerStatut,
   UserRole,
   toSimpleMiseEnRelation,
   isRecrute,
@@ -14,7 +15,9 @@ const {
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
   inspectConseillersRecruteProperties,
-  inspectConseillersAndDuplicatesProperties, resetConseiller, ConseillerStatut
+  inspectConseillersAndDuplicatesProperties,
+  resetConseiller,
+  extractConseillerRecruteProperties
 } = require("./fixRelationshipsBetweenConseillersAndUsers.utils");
 const {ObjectId} = require("mongodb");
 const {program} = require("commander");
@@ -65,12 +68,12 @@ const getMisesEnRelationsMatchingConseillerIdExceptStructureId = async (db, cons
   .toArray();
 
 
-const getUserMatchingConseillerId = async (db, conseillersId) => await db.collection('users')
+const getUsersMatchingConseillerId = async (db, conseillersId) => await db.collection('users')
   .find({'entity.$id': ObjectId(conseillersId)})
   .toArray();
 
 const getConseillerWithMatchingUser = async (db, conseiller) => ({
-  users: await getUserMatchingConseillerId(db, conseiller.id),
+  users: await getUsersMatchingConseillerId(db, conseiller.id),
   conseiller
 });
 
@@ -173,7 +176,11 @@ execute(__filename, async ({ db, logger, exit }) => {
     usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
     conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
     conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
-    conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates);
+    conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
+    conseillersRecruteWithDuplicatesPropertiesInspectionResult,
+    conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
+    conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
+    conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee);
 
   printReport(
     conseillersIdsByEmail,
@@ -218,11 +225,24 @@ const setAllMisesEnRelationsToNouvelle = async (db, conseillerId) => await db.co
   $set: {statut: MisesEnRelationStatut.Nouvelle}
 });
 
+const setAllMisesEnRelationsToFinaliseeNonDisponible = async (db, conseillerId) => await db.collection('misesEnRelation').updateMany({
+  'conseiller.$id': new ObjectId(conseillerId)
+}, {
+  $set: {statut: MisesEnRelationStatut.FinaliseeNonDisponible}
+});
+
 const setMiseEnRelationToFinaliseeNonDisponible = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateOne({
   'conseiller.$id': new ObjectId(conseillerId),
   'structure.$id': new ObjectId(structureId),
 }, {
   $set: {statut: MisesEnRelationStatut.FinaliseeNonDisponible}
+});
+
+const setMiseEnRelationToFinalisee = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateOne({
+  'conseiller.$id': new ObjectId(conseillerId),
+  'structure.$id': new ObjectId(structureId),
+}, {
+  $set: {statut: MisesEnRelationStatut.Finalisee}
 });
 
 const updateConseillerInMisesEnRelations = async (db, conseillerId) => {
@@ -244,7 +264,6 @@ const fixConseillersWithoutAssociatedUser = async (db, conseillersWithoutAssocia
     await setAllMisesEnRelationsToNouvelle(db, conseiller.id);
     await replaceConseiller(db, conseiller.id, conseillerObj);
     await updateConseillerInMisesEnRelations(db, conseiller.id);
-    // todo: get users to set in import script
   }));
 
 const setRolesToConseillerOnly = async (db, user) => await db.collection('users').updateOne({_id: user._id}, {
@@ -256,14 +275,19 @@ const setRolesToConseillerOnly = async (db, user) => await db.collection('users'
 const fixUsersAssociatedWithAConseillerWithoutConseillerRole = async (db, usersAssociatedWithAConseillerWithoutConseillerRole) =>
   await Promise.all(usersAssociatedWithAConseillerWithoutConseillerRole.map(async user => await setRolesToConseillerOnly(db, user)));
 
-const setUserFullName = async (db, user, prenom, nom) =>
-  await db.collection('users').updateOne({_id: new ObjectId(user._id)}, {
+const setUserFullName = async (db, userId, prenom, nom) =>
+  await db.collection('users').updateOne({_id: new ObjectId(userId)}, {
     $set: {prenom, nom}
+  });
+
+const linkUserToConseiller = async (db, userId, conseillerId) =>
+  await db.collection('users').updateOne({_id: new ObjectId(userId)}, {
+    $set: {'entity.$id': new ObjectId(conseillerId)}
   });
 
 const fixUsersFullNameWithConseillerFullName = async (db, usersWithFullNameToFix) =>
   await Promise.all(usersWithFullNameToFix.map(async ({user, conseiller}) =>
-    await setUserFullName(db, user, conseiller.prenom, conseiller.nom)
+    await setUserFullName(db, user._id, conseiller.prenom, conseiller.nom)
   ));
 
 const setConseillerDisponibleToFalse = async (db, conseillerId) =>
@@ -271,7 +295,7 @@ const setConseillerDisponibleToFalse = async (db, conseillerId) =>
     $set: {disponible: false}
   });
 
-const fixConseillersWithInvalidDisponibleWithoutDuplicates = async (db, conseillers) =>
+const fixConseillersWithInvalidDisponible = async (db, conseillers) =>
   await Promise.all(conseillers.map(async conseiller => {
     await setConseillerDisponibleToFalse(db, conseiller.id);
     await updateConseillerInMisesEnRelations(db, conseiller.id);
@@ -283,9 +307,9 @@ const setConseillerUserCreatedToTrue = async (db, conseillerId) =>
     $set: {userCreated: true}
   });
 
-const fixConseillersWithInvalidUserCreatedWithoutDuplicates = async (db, conseillers) =>
+const fixConseillersWithInvalidUserCreated = async (db, conseillers) =>
   await Promise.all(conseillers
-    .filter(async conseiller => (await getUserMatchingConseillerId(db, conseiller.id)).length > 0)
+    .filter(async conseiller => (await getUsersMatchingConseillerId(db, conseiller.id)).length > 0)
     .map(async conseiller => {
       await setConseillerUserCreatedToTrue(db, conseiller.id);
       await updateConseillerInMisesEnRelations(db, conseiller.id);
@@ -294,10 +318,9 @@ const fixConseillersWithInvalidUserCreatedWithoutDuplicates = async (db, conseil
 const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus = async (db, misesEnRelations) =>
   await Promise.all(misesEnRelations.map(async miseEnRelation => {
     const conseiller = resetConseiller(await getConseillerById(db, miseEnRelation.conseiller));
-    await setAllMisesEnRelationsToNouvelle(db, conseiller._id);
-    await replaceConseiller(db, conseiller._id, conseiller);
-    await updateConseillerInMisesEnRelations(db, conseiller._id);
-    // todo: get users to set in import script
+    await setAllMisesEnRelationsToNouvelle(db, conseiller.id);
+    await replaceConseiller(db, conseiller.id, conseiller);
+    await updateConseillerInMisesEnRelations(db, conseiller.id);
   }));
 
 const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates = async (db, misesEnRelations) =>
@@ -305,12 +328,78 @@ const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleS
     .filter(async misesEnRelation => (await getConseillerById(db, misesEnRelation.conseiller)).statut === ConseillerStatut.Recrute)
     .map(async misesEnRelation => await setMiseEnRelationToFinaliseeNonDisponible(db, misesEnRelation.conseiller, misesEnRelation.structure)));
 
+const getUsersMatchingIds = async (db, conseillerIds) =>
+  await db.collection('users').find({
+    'entity.$id': {$in: conseillerIds}
+  }).toArray();
+
+const getConseillerIdsFromConseillersWithMiseEnRelationGroup = conseillerWithMiseEnRelationsGroup =>
+  conseillerWithMiseEnRelationsGroup.map(({conseiller}) => ObjectId(conseiller.id));
+
+const hasConseillerRole = user => user.roles.includes(UserRole.Conseiller);
+
+const aggregateConseillerRecrutePropertiesFromDuplicates = conseillersDuplicates => conseillersDuplicates.reduce((result, conseiller) => ({
+  ...result,
+  ...extractConseillerRecruteProperties(conseiller)
+}), {});
+
+const resetAllConseillers = async (db, conseillers) =>
+  await Promise.all(conseillers.map(async conseiller => {
+    await replaceConseiller(db, conseiller.id, resetConseiller(await getConseillerById(db, conseiller.id)));
+    await updateConseillerInMisesEnRelations(db, conseiller.id);
+  }));
+
+const rollbackBeforeImport = async (db, conseillers, conseillerRecrute) => {
+  await Promise.all(conseillers.map(async conseiller => await setAllMisesEnRelationsToNouvelle(db, conseiller.id)));
+  await setMiseEnRelationToRecrute(db, conseillerRecrute.id, conseillerRecrute.structureId);
+  await resetAllConseillers(db, conseillers);
+};
+
+const fixMisesEnRelations = async (db, conseillerRecrute, conseillersDuplicates) => {
+  await setAllMisesEnRelationsToFinaliseeNonDisponible(db, conseillerRecrute.id)
+  await setMiseEnRelationToFinalisee(db, conseillerRecrute.id, conseillerRecrute.structureId);
+  await Promise.all(conseillersDuplicates.map(async conseillerDuplicate => await setAllMisesEnRelationsToFinaliseeNonDisponible(db, conseillerDuplicate.id)));
+};
+
+const fixConseillerRecruteAndDuplicates = async (db, conseillerRecrute, conseillersDuplicates, conseillerRecruteProperties) => {
+  await replaceConseiller(db, conseillerRecrute.id, {...await getConseillerById(db, conseillerRecrute.id), ...conseillerRecruteProperties});
+  await updateConseillerInMisesEnRelations(db, conseillerRecrute.id);
+  await resetAllConseillers(db, conseillersDuplicates);
+};
+
+const fixUser = async (db, conseillerUser, conseillerRecrute) => {
+  await setUserFullName(db, conseillerUser._id, conseillerRecrute.prenom, conseillerRecrute.nom);
+  await linkUserToConseiller(db, conseillerUser._id, conseillerRecrute.id);
+};
+
+const fixConseillersRecrutesUsersAndMiseEnRelations = async (db, conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee) =>
+  await Promise.all(conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.map(async conseillerWithMiseEnRelationsGroup => {
+    const users = await getUsersMatchingIds(db, getConseillerIdsFromConseillersWithMiseEnRelationGroup(conseillerWithMiseEnRelationsGroup));
+    const conseillerUser = users.find(hasConseillerRole);
+    const conseillerRecrute = conseillerWithMiseEnRelationsGroup.find(({conseiller}) => isRecrute(conseiller)).conseiller;
+    const conseillersDuplicates = conseillerWithMiseEnRelationsGroup.filter(({conseiller}) => !isRecrute(conseiller)).map(({conseiller}) => conseiller);
+    const conseillerRecruteProperties = aggregateConseillerRecrutePropertiesFromDuplicates(conseillersDuplicates);
+
+    if (conseillerUser == null) {
+      await rollbackBeforeImport(db, [conseillerRecrute, ...conseillersDuplicates], conseillerRecrute);
+      return;
+    }
+
+    await fixMisesEnRelations(db, conseillerRecrute, conseillersDuplicates);
+    await fixConseillerRecruteAndDuplicates(db, conseillerRecrute, conseillersDuplicates, conseillerRecruteProperties);
+    await fixUser(db, conseillerUser, conseillerRecrute);
+  }));
+
 const fix = async (
   db,
   usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
   conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
   conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
-  conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates) => {
+  conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
+  conseillersRecruteWithDuplicatesPropertiesInspectionResult,
+  conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
+  conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
+  conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee) => {
   const {
     conseillersWithoutAssociatedUser,
     usersWithFullNameToFix,
@@ -324,8 +413,8 @@ const fix = async (
     conseillersWithInvalidUserCreated: conseillersWithInvalidUserCreatedWithoutDuplicates,
     conseillersWithInvalidDisponible: conseillersWithInvalidDisponibleWithoutDuplicates
   } = conseillersRecruteWithoutDuplicatesPropertiesInspectionResult;
-  await fixConseillersWithInvalidDisponibleWithoutDuplicates(db, conseillersWithInvalidDisponibleWithoutDuplicates);
-  await fixConseillersWithInvalidUserCreatedWithoutDuplicates(db, conseillersWithInvalidUserCreatedWithoutDuplicates);
+  await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithoutDuplicates);
+  await fixConseillersWithInvalidUserCreated(db, conseillersWithInvalidUserCreatedWithoutDuplicates);
 
   const {
     misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus
@@ -336,6 +425,17 @@ const fix = async (
     misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates
   } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates;
   await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates(db,  misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates);
+
+  const {
+    conseillersWithInvalidUserCreated: conseillersWithInvalidUserCreatedWithDuplicates,
+    conseillersWithInvalidDisponible: conseillersWithInvalidDisponibleWithDuplicates
+  } = conseillersRecruteWithDuplicatesPropertiesInspectionResult;
+  await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithDuplicates);
+  await fixConseillersWithInvalidUserCreated(db, conseillersWithInvalidUserCreatedWithDuplicates);
+
+  await fixConseillersRecrutesUsersAndMiseEnRelations(db,  conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee);
+  await fixConseillersRecrutesUsersAndMiseEnRelations(db,  conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee);
+  await fixConseillersRecrutesUsersAndMiseEnRelations(db,  conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee);
 }
 
 const printReport = (

@@ -258,15 +258,15 @@ const isValidConseillerRecrute = conseiller =>
   hasDateFinFormation(conseiller) &&
   hasDatePrisePoste(conseiller) &&
   hasAStructureId(conseiller) &&
-  estRecrute(conseiller) // &&
-  // !isDisponible(conseiller); // todo: enable non disponible control again once the conseillers have been fixed
+  estRecrute(conseiller) &&
+  !isDisponible(conseiller);
 
 const isValidConseillerDuplicate = conseiller =>
   !hasDateFinFormation(conseiller) &&
   !hasDatePrisePoste(conseiller) &&
   !hasAStructureId(conseiller) &&
   !hasEstRecrute(conseiller) &&
-  // isDisponible(conseiller) && // todo: enable non disponible control again once the conseillers have been fixed
+  isDisponible(conseiller) &&
   !hasMattermost(conseiller) &&
   !hasEmailCn(conseiller) &&
   !hasEmailCnError(conseiller);
@@ -335,6 +335,7 @@ const resetConseiller = (conseiller) => {
     datePrisePoste,
     emailCN,
     emailCNError,
+    estRecrute,
     mattermost,
     statut,
     ...newConseiller
@@ -342,10 +343,18 @@ const resetConseiller = (conseiller) => {
 
   return {
     ...newConseiller,
-    disponible: true,
-    estRecrute: false
+    disponible: true
   };
 }
+
+const extractConseillerRecruteProperties = (conseiller) => ({
+	...conseiller.dateFinFormation !== undefined && {dateFinFormation: conseiller.dateFinFormation},
+	...conseiller.datePrisePoste !== undefined && {datePrisePoste: conseiller.datePrisePoste},
+	...conseiller.emailCN !== undefined && {emailCN: conseiller.emailCN},
+	...conseiller.emailCNError !== undefined && {emailCNError: conseiller.emailCNError},
+	...conseiller.mattermost !== undefined && {mattermost: conseiller.mattermost},
+	...conseiller.statut !== undefined && {statut: conseiller.statut}
+});
 
 module.exports = {
   MisesEnRelationStatut,
@@ -361,5 +370,6 @@ module.exports = {
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
   inspectConseillersRecruteProperties,
   inspectConseillersAndDuplicatesProperties,
-  resetConseiller
+  resetConseiller,
+	extractConseillerRecruteProperties
 };
