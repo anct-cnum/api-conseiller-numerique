@@ -1,10 +1,12 @@
 const { Service } = require('feathers-mongodb');
 const decode = require('jwt-decode');
-const { Forbidden, NotAuthenticated, BadRequest } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, BadRequest, GeneralError } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
 const dayjs = require('dayjs');
+const logger = require('../../logger');
+const puppeteer = require('puppeteer');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -157,6 +159,85 @@ exports.Stats = class Stats extends Service {
 
         res.send(stats);
       });
+    });
+
+    app.get('/stats/admincoop/statistiques.pdf', async (req, res) => {
+      app.get('mongoClient').then(async db => {
+
+        const accessToken = req.feathers?.authentication?.accessToken;
+
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
+        }
+        let userId = decode(accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!user?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+        const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
+        const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
+        const type = req.query.type;
+        const idType = req.query.idType;
+
+        const schema = Joi.object({
+          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+          type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
+          idType: Joi.required().error(new Error('L\'id du territoire invalide')),
+        }).validate(req.query);
+
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
+
+        let finUrl = type + '/' + idType + '/' + dateDebut + '/' + dateFin;
+
+        /** Ouverture d'un navigateur en headless afin de générer le PDF **/
+        try {
+          const browser = await puppeteer.launch();
+
+          browser.on('targetchanged', async target => {
+            const targetPage = await target.page();
+            const client = await targetPage.target().createCDPSession();
+            await client.send('Runtime.evaluate', {
+              expression: `localStorage.setItem('user', '{"accessToken":"${accessToken}",` +
+              `"authentication":{` +
+                `"strategy":"local",` +
+                `"accessToken":"${accessToken}"},` +
+              `"user":${JSON.stringify(user)}}')`
+            });
+          });
+
+          const page = await browser.newPage();
+          await Promise.all([
+            page.goto(app.get('espace_coop_hostname') + '/statistiques/' + finUrl, { waitUntil: 'networkidle0' }),
+          ]);
+          await page.waitForTimeout(500);
+
+          let pdf;
+          await Promise.all([
+            page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none }' }),
+            pdf = page.pdf({ format: 'A4', printBackground: true })
+          ]);
+
+          await browser.close();
+
+          res.contentType('application/pdf');
+          pdf.then(buffer => res.send(buffer));
+          return;
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+          return;
+        }
+      });
+
     });
 
     app.get('/stats/admincoop/dashboard', async (req, res) => {
@@ -355,6 +436,7 @@ exports.Stats = class Stats extends Service {
     });
 
     app.post('/stats/territoire/cra', async (req, res) => {
+
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -375,105 +457,157 @@ exports.Stats = class Stats extends Service {
         dateDebut.setUTCHours(0, 0, 0, 0);
         let dateFin = new Date(req.body?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
-        const conseillerIds = req.body?.conseillerIds;
-        let ids = [];
-        conseillerIds.forEach(id => {
-          ids.push(new ObjectID(id));
-        });
-        let query = {
-          'createdAt': {
-            '$gte': dateDebut,
-            '$lt': dateFin,
-          },
-          'conseiller.$id': { $in: ids },
-        };
+        const territoire = req.body?.territoire;
 
         //Construction des statistiques
         let stats = {};
 
-        //Nombre total d'accompagnements
-        stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
+        if (territoire) {
+          const conseillerIds = territoire?.conseillerIds;
+          let ids = [];
 
-        //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
-        let statsActivites = await statsCras.getStatsActivites(db, query);
-        stats.nbAteliers = statsActivites?.find(activite => activite._id === 'collectif')?.count ?? 0;
-        stats.nbTotalParticipant = statsActivites?.find(activite => activite._id === 'collectif')?.nbParticipants ?? 0;
-        stats.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
-        stats.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
-
-        //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
-        let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
-        stats.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-        stats.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-        stats.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
-
-        //Total accompagnés
-        stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
-
-        //Taux accompagnement
-        let totalParticipants = stats.nbTotalParticipant + stats.nbAccompagnementPerso + stats.nbDemandePonctuel;
-        stats.tauxTotalUsagersAccompagnes = totalParticipants > 0 ? ~~(stats.nbUsagersBeneficiantSuivi / totalParticipants * 100) : 0;
-
-        //Thèmes (total de chaque catégorie)
-        stats.statsThemes = await statsCras.getStatsThemes(db, query);
-
-        //Canaux (total de chaque catégorie)
-        stats.statsLieux = await statsCras.getStatsCanaux(db, query);
-
-        //Duree (total de chaque catégorie)
-        stats.statsDurees = await statsCras.getStatsDurees(db, query);
-
-        //Catégorie d'âges (total de chaque catégorie en %)
-        stats.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
-
-        //Statut des usagers (total de chaque catégorie en %)
-        stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
-
-        //Evolutions du nb de cras
-        if (ids.length === 1) {
-          stats.statsEvolutions = await statsCras.getStatsEvolutions(db, ids[0]);
-        } else {
-          let aggregateEvol = [];
-          const dateFinEvo = new Date();
-          let dateDebutEvo = new Date(dateFinEvo.setMonth(dateFinEvo.getMonth() - 4));
-
-          aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
-            { $match: { 'conseiller.$id': { $in: ids } } },
-            { $unwind: '$' + dateFinEvo.getFullYear() },
-            { $group: { '_id': '$' + dateFinEvo.getFullYear() + '.mois',
-              'totalCras': { $sum: '$' + dateFinEvo.getFullYear() + '.totalCras' } },
+          conseillerIds.forEach(id => {
+            ids.push(new ObjectID(id));
+          });
+          let query = {
+            'createdAt': {
+              '$gte': dateDebut,
+              '$lt': dateFin,
             },
-            {
-              $addFields: { 'mois': '$_id', 'annee': dateFinEvo.getFullYear() }
-            },
-            { $project: { mois: '$_id' } }
-          ).toArray();
+            'conseiller.$id': { $in: ids },
+          };
 
-          stats.statsEvolutions = JSON.parse('{"' + dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+          //Nombre total d'accompagnements
+          stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
 
-          // Si année glissante on récupère les données de l'année n-1
-          if (dateDebutEvo.getFullYear() !== dateFinEvo.getFullYear()) {
+          //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
+          let statsActivites = await statsCras.getStatsActivites(db, query);
+          stats.nbAteliers = statsActivites?.find(activite => activite._id === 'collectif')?.count ?? 0;
+          stats.nbTotalParticipant = statsActivites?.find(activite => activite._id === 'collectif')?.nbParticipants ?? 0;
+          stats.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
+          stats.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
 
-            const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
+          //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
+          let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
+          stats.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
+          stats.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
+          stats.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+
+          //Total accompagnés
+          stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
+
+          //Taux accompagnement
+          let totalParticipants = stats.nbTotalParticipant + stats.nbAccompagnementPerso + stats.nbDemandePonctuel;
+          stats.tauxTotalUsagersAccompagnes = totalParticipants > 0 ? ~~(stats.nbUsagersBeneficiantSuivi / totalParticipants * 100) : 0;
+
+          //Thèmes (total de chaque catégorie)
+          stats.statsThemes = await statsCras.getStatsThemes(db, query);
+
+          //Canaux (total de chaque catégorie)
+          stats.statsLieux = await statsCras.getStatsCanaux(db, query);
+
+          //Duree (total de chaque catégorie)
+          stats.statsDurees = await statsCras.getStatsDurees(db, query);
+
+          //Catégorie d'âges (total de chaque catégorie en %)
+          stats.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
+
+          //Statut des usagers (total de chaque catégorie en %)
+          stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
+
+          //Evolutions du nb de cras
+          if (ids.length === 1) {
+            stats.statsEvolutions = await statsCras.getStatsEvolutions(db, ids[0]);
+          } else {
+            let aggregateEvol = [];
+            const dateFinEvo = new Date();
+            let dateDebutEvo = new Date(dateFinEvo.setMonth(dateFinEvo.getMonth() - 4));
+
+            aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
               { $match: { 'conseiller.$id': { $in: ids } } },
-              { $unwind: '$' + dateDebutEvo.getFullYear() },
-              { $group: { '_id': '$' + dateDebutEvo.getFullYear() + '.mois',
-                'totalCras': { $sum: '$' + dateDebutEvo.getFullYear() + '.totalCras' } },
+              { $unwind: '$' + dateFinEvo.getFullYear() },
+              { $group: { '_id': '$' + dateFinEvo.getFullYear() + '.mois',
+                'totalCras': { $sum: '$' + dateFinEvo.getFullYear() + '.totalCras' } },
               },
               {
-                $addFields: { 'mois': '$_id', 'annee': dateDebutEvo.getFullYear() }
+                $addFields: { 'mois': '$_id', 'annee': dateFinEvo.getFullYear() }
               },
               { $project: { mois: '$_id' } }
             ).toArray();
 
-            stats.statsEvolutions = JSON.parse('{"' +
-            dateDebutEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
-            dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+            stats.statsEvolutions = JSON.parse('{"' + dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+
+            // Si année glissante on récupère les données de l'année n-1
+            if (dateDebutEvo.getFullYear() !== dateFinEvo.getFullYear()) {
+
+              const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
+                { $match: { 'conseiller.$id': { $in: ids } } },
+                { $unwind: '$' + dateDebutEvo.getFullYear() },
+                { $group: { '_id': '$' + dateDebutEvo.getFullYear() + '.mois',
+                  'totalCras': { $sum: '$' + dateDebutEvo.getFullYear() + '.totalCras' } },
+                },
+                {
+                  $addFields: { 'mois': '$_id', 'annee': dateDebutEvo.getFullYear() }
+                },
+                { $project: { mois: '$_id' } }
+              ).toArray();
+
+              stats.statsEvolutions = JSON.parse('{"' +
+              dateDebutEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
+              dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+            }
           }
+
+          stats.statsEvolutions = stats.statsEvolutions ?? {};
+        }
+        res.send(stats);
+      });
+    });
+
+    app.get('/stats/admincoop/territoire', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      app.get('mongoClient').then(async db => {
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!adminUser?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
         }
 
-        stats.statsEvolutions = stats.statsEvolutions ?? {};
-        res.send(stats);
+        const schema = Joi.object({
+          typeTerritoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
+          idTerritoire: Joi.string().required().error(new Error('L\'id du territoire est invalide')),
+          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+        }).validate(req.query);
+
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
+
+        const { typeTerritoire, idTerritoire } = req.query;
+        const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
+
+        try {
+          let territoire = {};
+          if (typeTerritoire === 'departement') {
+            territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, 'codeDepartement': idTerritoire });
+          } else if (typeTerritoire === 'region') {
+            territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, 'codeRegion': idTerritoire });
+          }
+          res.send(territoire);
+          return;
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
       });
     });
   }

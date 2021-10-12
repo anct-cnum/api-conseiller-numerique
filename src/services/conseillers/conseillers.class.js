@@ -349,7 +349,7 @@ exports.Conseillers = class Conseillers extends Service {
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        if (!user?.roles.includes('conseiller')) {
+        if (!user?.roles.includes('conseiller') && !user?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -392,7 +392,7 @@ exports.Conseillers = class Conseillers extends Service {
           const page = await browser.newPage();
 
           await Promise.all([
-            page.goto(app.get('espace_coop_hostname') + '/statistiques', { waitUntil: 'networkidle0' }),
+            page.goto(app.get('espace_coop_hostname') + '/statistiques/', { waitUntil: 'networkidle0' }),
           ]);
 
           await page.focus('#datePickerDebutPDF');
