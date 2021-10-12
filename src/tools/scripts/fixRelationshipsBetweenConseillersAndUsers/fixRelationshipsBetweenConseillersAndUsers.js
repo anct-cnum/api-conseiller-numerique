@@ -3,17 +3,21 @@
 
 const { execute } = require('../../utils');
 const {
+  MisesEnRelationStatut,
+  UserRole,
   toSimpleMiseEnRelation,
   isRecrute,
   splitOnRecruteStatut,
-  inspectUsersAssociatedWithConseillers,
+  inspectUsersAssociatedWithConseillersWithoutDuplicates,
+  inspectUsersAssociatedWithConseillersWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
   inspectConseillersRecruteProperties,
-  inspectConseillersAndDuplicatesProperties
+  inspectConseillersAndDuplicatesProperties, resetConseiller, ConseillerStatut
 } = require("./fixRelationshipsBetweenConseillersAndUsers.utils");
 const {ObjectId} = require("mongodb");
+const {program} = require("commander");
 
 const getConseillersIdsByEmail = async db =>  await db.collection('conseillers').aggregate(
   [
@@ -65,12 +69,22 @@ const getUserMatchingConseillerId = async (db, conseillersId) => await db.collec
   .find({'entity.$id': ObjectId(conseillersId)})
   .toArray();
 
-const getConseillersWithMatchingUsers = async (db, conseillersIdsByEmail) => await Promise.all(conseillersIdsByEmail.map(
-  async (conseillerIdsByEmail) => ({
-    users: await getUserMatchingConseillerId(db, conseillerIdsByEmail.conseillers[0].id),
-    conseiller: conseillerIdsByEmail.conseillers[0]
-  })
-));
+const getConseillerWithMatchingUser = async (db, conseiller) => ({
+  users: await getUserMatchingConseillerId(db, conseiller.id),
+  conseiller
+});
+
+const getConseillersWithMatchingUsersWithoutDuplicates = async (db, conseillersIdsByEmail) =>
+  await Promise.all(conseillersIdsByEmail.map(async (conseillerIdsByEmail) =>
+    await getConseillerWithMatchingUser(db, conseillerIdsByEmail.conseillers[0])
+  ));
+
+const getConseillersWithMatchingUsersWithDuplicates = async (db, conseillersWithMisesEnRelationsGroups) =>
+  await Promise.all(conseillersWithMisesEnRelationsGroups.map(async conseillersWithMisesEnRelationsGroup =>
+    await Promise.all(conseillersWithMisesEnRelationsGroup.map(async conseillersWithMisesEnRelations =>
+      await getConseillerWithMatchingUser(db, conseillersWithMisesEnRelations.conseiller)
+    ))
+  ));
 
 const getConseillersWithMatchingMiseEnRelationsOnStructureIdOneConseiller = async (db, recruteStatutWithoutDuplicates) => await Promise.all(recruteStatutWithoutDuplicates.map(
   async conseillerIdsByEmail => ({
@@ -103,6 +117,10 @@ const getConseillersWithMatchingMiseEnRelationsExceptStructureId = async (db, re
   }
 ));
 
+program.option('-f, --fix', 'automatically fix detected inconsistencies when it is possible');
+program.helpOption('-e', 'HELP command');
+program.parse(process.argv);
+
 execute(__filename, async ({ db, logger, exit }) => {
   const conseillersIdsByEmail = await getConseillersIdsByEmail(db);
 
@@ -113,7 +131,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     recruteStatutWithDuplicates,
   } = splitOnRecruteStatut(conseillersIdsByEmail);
 
-  const usersAssociatedWithConseillersInspectionResult = inspectUsersAssociatedWithConseillers(await getConseillersWithMatchingUsers(db, recruteStatutWithoutDuplicates));
+  const usersAssociatedWithConseillersWithoutDuplicatesInspectionResult = inspectUsersAssociatedWithConseillersWithoutDuplicates(await getConseillersWithMatchingUsersWithoutDuplicates(db, recruteStatutWithoutDuplicates));
 
   const conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(
     await getConseillersWithMatchingMiseEnRelationsOnStructureIdOneConseiller(db, recruteStatutWithoutDuplicates));
@@ -136,10 +154,26 @@ execute(__filename, async ({ db, logger, exit }) => {
   const conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee = inspectConseillersAndDuplicatesProperties(conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee);
   const conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee = inspectConseillersAndDuplicatesProperties(conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee);
 
+  const usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecruteeInspectionResult = inspectUsersAssociatedWithConseillersWithDuplicates(
+    await getConseillersWithMatchingUsersWithDuplicates(db, conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee));
+
+  const usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecruteeInspectionResult = inspectUsersAssociatedWithConseillersWithDuplicates(
+    await getConseillersWithMatchingUsersWithDuplicates(db, conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee));
+
+  const usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult = inspectUsersAssociatedWithConseillersWithDuplicates(
+    await getConseillersWithMatchingUsersWithDuplicates(db, conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee));
+
   const conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(
     await getConseillersWithMatchingMiseEnRelationsExceptStructureId(db, recruteStatutWithDuplicates));
 
   const conseillersRecruteWithDuplicatesPropertiesInspectionResult = inspectConseillersRecruteProperties(recruteStatutWithDuplicates);
+
+  program.fix && await fix(
+    db,
+    usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
+    conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
+    conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
+    conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates);
 
   printReport(
     conseillersIdsByEmail,
@@ -149,7 +183,7 @@ execute(__filename, async ({ db, logger, exit }) => {
       recruteStatutWithoutDuplicates,
       recruteStatutWithDuplicates,
     },
-    usersAssociatedWithConseillersInspectionResult,
+    usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
     conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
     conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
     conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
@@ -158,7 +192,10 @@ execute(__filename, async ({ db, logger, exit }) => {
     conseillersRecruteWithDuplicatesPropertiesInspectionResult,
     conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
     conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
-    conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee
+    conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee,
+    usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecruteeInspectionResult,
+    usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecruteeInspectionResult,
+    usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult
   );
 
   exit();
@@ -166,10 +203,145 @@ execute(__filename, async ({ db, logger, exit }) => {
 
 const logIfAny = (message, quantity) => quantity > 0 && console.log(message, quantity);
 
+const getConseillerById = async (db, id) => await db.collection('conseillers').findOne({_id: new ObjectId(id)});
+
+const setMiseEnRelationToRecrute = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateOne({
+  'conseiller.$id': new ObjectId(conseillerId),
+  'structure.$id': new ObjectId(structureId),
+}, {
+  $set: {statut: MisesEnRelationStatut.Recrutee}
+});
+
+const setAllMisesEnRelationsToNouvelle = async (db, conseillerId) => await db.collection('misesEnRelation').updateMany({
+  'conseiller.$id': new ObjectId(conseillerId)
+}, {
+  $set: {statut: MisesEnRelationStatut.Nouvelle}
+});
+
+const setMiseEnRelationToFinaliseeNonDisponible = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateOne({
+  'conseiller.$id': new ObjectId(conseillerId),
+  'structure.$id': new ObjectId(structureId),
+}, {
+  $set: {statut: MisesEnRelationStatut.FinaliseeNonDisponible}
+});
+
+const updateConseillerInMisesEnRelations = async (db, conseillerId) => {
+  db.collection('misesEnRelation').updateMany({
+    'conseiller.$id': new ObjectId(conseillerId)
+  }, {
+    $set: {conseillerObj: await getConseillerById(db, conseillerId)}
+  });
+}
+
+const replaceConseiller = async (db, conseillerId, conseillerObj) => await db.collection('conseillers').replaceOne({
+  _id: new ObjectId(conseillerId)
+}, conseillerObj);
+
+const fixConseillersWithoutAssociatedUser = async (db, conseillersWithoutAssociatedUser) =>
+  await Promise.all(conseillersWithoutAssociatedUser.map(async conseiller => {
+    const conseillerObj = resetConseiller(await getConseillerById(db, conseiller.id));
+    await setMiseEnRelationToRecrute(db, conseiller.id, conseiller.structureId, conseillerObj);
+    await setAllMisesEnRelationsToNouvelle(db, conseiller.id);
+    await replaceConseiller(db, conseiller.id, conseillerObj);
+    await updateConseillerInMisesEnRelations(db, conseiller.id);
+    // todo: get users to set in import script
+  }));
+
+const setRolesToConseillerOnly = async (db, user) => await db.collection('users').updateOne({_id: user._id}, {
+  $set: {
+    roles: [UserRole.Conseiller]
+  }
+});
+
+const fixUsersAssociatedWithAConseillerWithoutConseillerRole = async (db, usersAssociatedWithAConseillerWithoutConseillerRole) =>
+  await Promise.all(usersAssociatedWithAConseillerWithoutConseillerRole.map(async user => await setRolesToConseillerOnly(db, user)));
+
+const setUserFullName = async (db, user, prenom, nom) =>
+  await db.collection('users').updateOne({_id: new ObjectId(user._id)}, {
+    $set: {prenom, nom}
+  });
+
+const fixUsersFullNameWithConseillerFullName = async (db, usersWithFullNameToFix) =>
+  await Promise.all(usersWithFullNameToFix.map(async ({user, conseiller}) =>
+    await setUserFullName(db, user, conseiller.prenom, conseiller.nom)
+  ));
+
+const setConseillerDisponibleToFalse = async (db, conseillerId) =>
+  await db.collection('conseillers').updateOne({_id: new ObjectId(conseillerId)}, {
+    $set: {disponible: false}
+  });
+
+const fixConseillersWithInvalidDisponibleWithoutDuplicates = async (db, conseillers) =>
+  await Promise.all(conseillers.map(async conseiller => {
+    await setConseillerDisponibleToFalse(db, conseiller.id);
+    await updateConseillerInMisesEnRelations(db, conseiller.id);
+  }));
+
+
+const setConseillerUserCreatedToTrue = async (db, conseillerId) =>
+  await db.collection('conseillers').updateOne({_id: new ObjectId(conseillerId)}, {
+    $set: {userCreated: true}
+  });
+
+const fixConseillersWithInvalidUserCreatedWithoutDuplicates = async (db, conseillers) =>
+  await Promise.all(conseillers
+    .filter(async conseiller => (await getUserMatchingConseillerId(db, conseiller.id)).length > 0)
+    .map(async conseiller => {
+      await setConseillerUserCreatedToTrue(db, conseiller.id);
+      await updateConseillerInMisesEnRelations(db, conseiller.id);
+    }));
+
+const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus = async (db, misesEnRelations) =>
+  await Promise.all(misesEnRelations.map(async miseEnRelation => {
+    const conseiller = resetConseiller(await getConseillerById(db, miseEnRelation.conseiller));
+    await setAllMisesEnRelationsToNouvelle(db, conseiller._id);
+    await replaceConseiller(db, conseiller._id, conseiller);
+    await updateConseillerInMisesEnRelations(db, conseiller._id);
+    // todo: get users to set in import script
+  }));
+
+const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates = async (db, misesEnRelations) =>
+  await Promise.all(misesEnRelations
+    .filter(async misesEnRelation => (await getConseillerById(db, misesEnRelation.conseiller)).statut === ConseillerStatut.Recrute)
+    .map(async misesEnRelation => await setMiseEnRelationToFinaliseeNonDisponible(db, misesEnRelation.conseiller, misesEnRelation.structure)));
+
+const fix = async (
+  db,
+  usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
+  conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
+  conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
+  conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates) => {
+  const {
+    conseillersWithoutAssociatedUser,
+    usersWithFullNameToFix,
+    usersAssociatedWithAConseillerWithoutConseillerRole
+  } = usersAssociatedWithConseillersWithoutDuplicatesInspectionResult;
+  await fixConseillersWithoutAssociatedUser(db, conseillersWithoutAssociatedUser);
+  await fixUsersAssociatedWithAConseillerWithoutConseillerRole(db, usersAssociatedWithAConseillerWithoutConseillerRole);
+  await fixUsersFullNameWithConseillerFullName(db, usersWithFullNameToFix);
+
+  const {
+    conseillersWithInvalidUserCreated: conseillersWithInvalidUserCreatedWithoutDuplicates,
+    conseillersWithInvalidDisponible: conseillersWithInvalidDisponibleWithoutDuplicates
+  } = conseillersRecruteWithoutDuplicatesPropertiesInspectionResult;
+  await fixConseillersWithInvalidDisponibleWithoutDuplicates(db, conseillersWithInvalidDisponibleWithoutDuplicates);
+  await fixConseillersWithInvalidUserCreatedWithoutDuplicates(db, conseillersWithInvalidUserCreatedWithoutDuplicates);
+
+  const {
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus
+  } = conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
+  await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus(db, misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus);
+
+  const {
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates
+  } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates;
+  await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates(db,  misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates);
+}
+
 const printReport = (
   conseillersIdsByEmail,
   conseillersSplitOnRecruteStatut,
-  usersAssociatedWithConseillersInspectionResult,
+  usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
   conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
   conseillersWithMatchingMiseEnRelationsOnStructureIdInspectionResult,
   conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates,
@@ -178,7 +350,10 @@ const printReport = (
   conseillersRecruteWithDuplicatesPropertiesInspectionResult,
   conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
   conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
-  conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee
+  conseillersAndDuplicatesPropertiesInspectionResultForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee,
+  usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecruteeInspectionResult,
+  usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecruteeInspectionResult,
+  usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult
   ) => {
   const {
     noRecruteStatut,
@@ -243,7 +418,7 @@ const printReport = (
     usersWithFullNameToFix,
     usersWithoutConseillerNumeriqueEmail,
     usersAssociatedWithAConseillerWithoutConseillerRole
-  } = usersAssociatedWithConseillersInspectionResult;
+  } = usersAssociatedWithConseillersWithoutDuplicatesInspectionResult;
 
   console.log('Données sur les utilisateurs en lien avec des conseillers qui ont le statut RECRUTE **sans doublons**');
   console.log('');
@@ -268,14 +443,47 @@ const printReport = (
     misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates
   } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates;
 
+  const {
+    conseillersRecrutesAssociatedToMoreThanOneUser: conseillersRecrutesAssociatedToMoreThanOneUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
+    conseillersRecrutesWithAConseillerUser: conseillersRecrutesWithAConseillerUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
+    conseillersDuplicatesWithAConseillerUser: conseillersDuplicatesWithAConseillerUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
+    noConseillerUser: noConseillerUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee
+  } = usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecruteeInspectionResult;
+
+  const {
+    conseillersRecrutesAssociatedToMoreThanOneUser: conseillersRecrutesAssociatedToMoreThanOneUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
+    conseillersRecrutesWithAConseillerUser: conseillersRecrutesWithAConseillerUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
+    conseillersDuplicatesWithAConseillerUser: conseillersDuplicatesWithAConseillerUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
+    noConseillerUser: noConseillerUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee
+  } = usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecruteeInspectionResult;
+
+  const {
+    conseillersRecrutesAssociatedToMoreThanOneUser: conseillersRecrutesAssociatedToMoreThanOneUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult,
+    conseillersRecrutesWithAConseillerUser: conseillersRecrutesWithAConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult,
+    conseillersDuplicatesWithAConseillerUser: conseillersDuplicatesWithAConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult,
+    noConseillerUser: noConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult
+  } = usersAssociatedWithConseillersWithDuplicatesForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult;
+
   console.log('Données sur les mises en relation en lien avec des conseillers qui ont le statut RECRUTE **avec doublons**');
   console.log('');
   logIfAny('- Nombre de conseillers associés plusieurs fois à la même mise en relation :', conseillersWithMultipleMisesEnRelations.length);
   logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee avec un doublon associé à une mise en relation qui a également le statut finalisee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee.length);
   logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut recrutee avec un doublon associé à une mise en relation qui a également le statut recrutee', conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee.length);
   logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee avec un doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
+  logIfAny('  - dont un conseiller recruté est associé avec plusieurs utilisateurs qui ont le rôle conseiller :', conseillersRecrutesAssociatedToMoreThanOneUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
+  logIfAny('  - dont un conseiller recruté est associé avec un utilisateur qui a le rôle conseiller :', conseillersRecrutesWithAConseillerUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
+  logIfAny('  - dont un conseiller doublon est associé avec au moins un utilisateur qui a le rôle conseiller :', conseillersDuplicatesWithAConseillerUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
+  logIfAny('  - dont aucun conseiller recruté ou doublon n\'est associé avec un utilisateur qui a le rôle conseiller :', noConseillerUserForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
   logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut finalisee et aucun doublon associé à une mise en relation qui a le statut recrutee :', conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
+  logIfAny('  - dont un conseiller recruté est associé avec plusieurs utilisateurs qui ont le rôle conseiller :', conseillersRecrutesAssociatedToMoreThanOneUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
+  logIfAny('  - dont un conseiller recruté est associé avec un utilisateur qui a le rôle conseiller :', conseillersRecrutesWithAConseillerUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
+  logIfAny('  - dont un conseiller doublon est associé avec au moins un utilisateur qui a le rôle conseiller :', conseillersDuplicatesWithAConseillerUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
+  logIfAny('  - dont aucun conseiller recruté ou doublon n\'est associé avec un utilisateur qui a le rôle conseiller :', noConseillerUserForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee.length);
   logIfAny('- Nombre de conseillers associés à une mise en relation qui a le statut recrutee et aucun doublon associé à une mise en relation qui a le statut finalisee :', conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.length);
+  logIfAny('  - dont un conseiller recruté est associé avec plusieurs utilisateurs qui ont le rôle conseiller :', conseillersRecrutesAssociatedToMoreThanOneUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult.length);
+  logIfAny('  - dont un conseiller recruté est associé avec un utilisateur qui a le rôle conseiller :', conseillersRecrutesWithAConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult.length);
+  logIfAny('  - dont un conseiller doublon est associé avec au moins un utilisateur qui a le rôle conseiller :', conseillersDuplicatesWithAConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult.length);
+  logIfAny('  - dont aucun conseiller recruté ou doublon n\'est associé avec un utilisateur qui a le rôle conseiller :', noConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult.length);
   logIfAny('- Nombre de conseillers et doublons associés a des mises en relations qui n\'ont ni le statut finalisee ni le statut recrutee :', conseillersWithoutStatutFinaliseeOrStatutRecrutee.length);
   logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates.length);
   console.log('');

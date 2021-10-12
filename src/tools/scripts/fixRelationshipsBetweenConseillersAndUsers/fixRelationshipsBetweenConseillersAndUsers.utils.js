@@ -16,6 +16,11 @@ const ConseillerStatut = {
   Rupture: 'RUPTURE',
 };
 
+const UserRole = {
+  Candidat: 'candidat',
+  Conseiller: 'conseiller',
+};
+
 const toSimpleMiseEnRelation = (miseEnRelation) => ({
   _id: miseEnRelation._id.toString(),
   conseiller : miseEnRelation.conseiller.oid.toString(),
@@ -58,9 +63,9 @@ const isSameFullNameBetweenUserAndConseiller = (user, conseiller) => `${user.pre
 
 const isConseillerNumeriqueEmail = user => user.name.endsWith('@conseiller-numerique.fr');
 
-const hasConseillerRole = user => user.roles.includes('conseiller');
+const hasConseillerRole = user => user?.roles.includes(UserRole.Conseiller);
 
-const inspectUsersAssociatedWithConseillers = conseillersWithMatchingUsers => conseillersWithMatchingUsers.reduce((result, conseillerWithMatchingUsers) => {
+const inspectUsersAssociatedWithConseillersWithoutDuplicates = conseillersWithMatchingUsers => conseillersWithMatchingUsers.reduce((result, conseillerWithMatchingUsers) => {
   const {users, conseiller} = conseillerWithMatchingUsers;
 
   if (hasNoAssociatedUser(users)) {
@@ -87,6 +92,34 @@ const inspectUsersAssociatedWithConseillers = conseillersWithMatchingUsers => co
   usersWithoutConseillerNumeriqueEmail: [],
   usersAssociatedWithAConseillerWithoutConseillerRole: []
 });
+
+const getDuplicatesWithConseillerRole = conseillersWithMatchingUsers => conseillersWithMatchingUsers
+  .filter(conseillerWithUser => !isRecrute(conseillerWithUser.conseiller) && conseillerWithUser.users.some(hasConseillerRole))
+  .map(conseillerWithUser => conseillerWithUser.conseiller);
+
+const inspectUsersAssociatedWithConseillersWithDuplicates = (conseillersWithMatchingUsersGroups) =>
+  conseillersWithMatchingUsersGroups.reduce((result, conseillersWithMatchingUsers) => {
+    const {users: usersRecrutes, conseiller: conseillerRecrute} = conseillersWithMatchingUsers.find(conseillerWithUser => isRecrute(conseillerWithUser.conseiller));
+    const duplicateWithConseillerRole = getDuplicatesWithConseillerRole(conseillersWithMatchingUsers);
+
+    if (hasMoreThanOneAssociatedUser(usersRecrutes)) {
+      result.conseillersRecrutesAssociatedToMoreThanOneUser.push(conseillerRecrute);
+      return result;
+    }
+
+    if (hasNoAssociatedUser(usersRecrutes)) result.conseillersWithoutAnyConseillerUser.push(conseillerRecrute);
+    if (hasConseillerRole(usersRecrutes[0])) result.conseillersRecrutesWithAConseillerUser.push(conseillerRecrute);
+    if (duplicateWithConseillerRole.length > 0) result.conseillersDuplicatesWithAConseillerUser.push(duplicateWithConseillerRole);
+    if (duplicateWithConseillerRole.length === 0 && !hasConseillerRole(usersRecrutes[0])) result.noConseillerUser.push(conseillerRecrute);
+
+    return result;
+  }, {
+    conseillersRecrutesAssociatedToMoreThanOneUser: [],
+    conseillersWithoutAnyConseillerUser: [],
+    conseillersRecrutesWithAConseillerUser: [],
+    conseillersDuplicatesWithAConseillerUser: [],
+    noConseillerUser: [],
+  });
 
 const hasNoAssociatedMiseEnRelation = misesEnRelations => misesEnRelations.length === 0;
 
@@ -224,15 +257,13 @@ const inspectConseillersRecruteProperties = recruteStatutWithoutDuplicates => re
 const isValidConseillerRecrute = conseiller =>
   hasDateFinFormation(conseiller) &&
   hasDatePrisePoste(conseiller) &&
-  // isUserCreated(conseiller) && // todo: enable user created control again once the conseillers have been fixed
   hasAStructureId(conseiller) &&
   estRecrute(conseiller) // &&
   // !isDisponible(conseiller); // todo: enable non disponible control again once the conseillers have been fixed
 
-const isValidConseillerNonRecrute = conseiller =>
+const isValidConseillerDuplicate = conseiller =>
   !hasDateFinFormation(conseiller) &&
   !hasDatePrisePoste(conseiller) &&
-  // !isUserCreated(conseiller) && // todo: enable user created control again once the conseillers have been fixed
   !hasAStructureId(conseiller) &&
   !hasEstRecrute(conseiller) &&
   // isDisponible(conseiller) && // todo: enable non disponible control again once the conseillers have been fixed
@@ -240,52 +271,40 @@ const isValidConseillerNonRecrute = conseiller =>
   !hasEmailCn(conseiller) &&
   !hasEmailCnError(conseiller);
 
-const allValidConseillerNonRecrute = conseillers => conseillers.filter(isValidConseillerNonRecrute).length === conseillers.length;
+const allValidConseillerNonRecrute = conseillers => conseillers.filter(isValidConseillerDuplicate).length === conseillers.length;
 
 const oneInvalidConseillerNonRecrute = invalidConseillersNonRecrutes => invalidConseillersNonRecrutes.length === 1;
 
-const fillValidRecruteAllValidDuplicates = (result, conseillerRecrute, conseillersDuplicates) => result.validRecruteAllValidDuplicates.push({
-  validConseillerRecrute: conseillerRecrute,
-  validConseillerDuplicates: conseillersDuplicates
-});
+const fillValidRecruteAllValidDuplicates = (result, conseillerRecrute, validConseillersDuplicates) =>
+  result.validRecruteAllValidDuplicates.push({conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates: []});
 
-const fillValidRecruteOneInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.validRecruteOneInvalidDuplicates.push({
-  validConseillerRecrute: conseillerRecrute,
-  inValidConseillerDuplicate: invalidConseillersNonRecrutes[0]
-});
+const fillValidRecruteOneInvalidDuplicates = (result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates) =>
+  result.validRecruteOneInvalidDuplicates.push({conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates});
 
-const fillValidRecruteManyInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.validRecruteManyInvalidDuplicates.push({
-  validConseillerRecrute: conseillerRecrute,
-  inValidConseillersDuplicates: invalidConseillersNonRecrutes
-});
+const fillValidRecruteManyInvalidDuplicates = (result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates) =>
+  result.validRecruteManyInvalidDuplicates.push({conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates});
 
-const fillInvalidRecruteAllValidDuplicates = (result, conseillerRecrute, conseillersDuplicates) => result.invalidRecruteAllValidDuplicates.push({
-  invalidConseillerRecrute: conseillerRecrute,
-  validConseillerDuplicates: conseillersDuplicates
-});
+const fillInvalidRecruteAllValidDuplicates = (result, conseillerRecrute, validConseillersDuplicates) =>
+  result.invalidRecruteAllValidDuplicates.push({conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates: []});
 
-const fillInvalidRecruteOneInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.invalidRecruteOneInvalidDuplicates.push({
-  invalidConseillerRecrute: conseillerRecrute,
-  inValidConseillerDuplicate: invalidConseillersNonRecrutes[0]
-});
+const fillInvalidRecruteOneInvalidDuplicates = (result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates) =>
+  result.invalidRecruteOneInvalidDuplicates.push({conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates});
 
-const fillInvalidRecruteManyInvalidDuplicates = (result, conseillerRecrute, invalidConseillersNonRecrutes) => result.invalidRecruteManyInvalidDuplicates.push({
-  invalidConseillerRecrute: conseillerRecrute,
-  inValidConseillersDuplicates: invalidConseillersNonRecrutes
-});
+const fillInvalidRecruteManyInvalidDuplicates = (result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates) =>
+  result.invalidRecruteManyInvalidDuplicates.push({conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates});
 
-const getResultForValidConseillerRecrute = (result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes) => {
-  if (allValidConseillerNonRecrute(conseillersDuplicates)) fillValidRecruteAllValidDuplicates(result, conseillerRecrute, conseillersDuplicates);
-  else if (oneInvalidConseillerNonRecrute(invalidConseillersNonRecrutes)) fillValidRecruteOneInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
-  else fillValidRecruteManyInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
+const getResultForValidConseillerRecrute = (result, conseillerRecrute, conseillersDuplicates, validConseillersDuplicates, invalidConseillersDuplicates) => {
+  if (allValidConseillerNonRecrute(conseillersDuplicates)) fillValidRecruteAllValidDuplicates(result, conseillerRecrute, validConseillersDuplicates);
+  else if (oneInvalidConseillerNonRecrute(invalidConseillersDuplicates)) fillValidRecruteOneInvalidDuplicates(result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates);
+  else fillValidRecruteManyInvalidDuplicates(result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates);
 
   return result;
 };
 
-const getResultForInvalidConseillerRecrute = (result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes) => {
-  if (allValidConseillerNonRecrute(conseillersDuplicates)) fillInvalidRecruteAllValidDuplicates(result, conseillerRecrute, conseillersDuplicates);
-  else if (oneInvalidConseillerNonRecrute(invalidConseillersNonRecrutes)) fillInvalidRecruteOneInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
-  else fillInvalidRecruteManyInvalidDuplicates(result, conseillerRecrute, invalidConseillersNonRecrutes);
+const getResultForInvalidConseillerRecrute = (result, conseillerRecrute, conseillersDuplicates, validConseillersDuplicates, invalidConseillersDuplicates) => {
+  if (allValidConseillerNonRecrute(conseillersDuplicates)) fillInvalidRecruteAllValidDuplicates(result, conseillerRecrute, validConseillersDuplicates);
+  else if (oneInvalidConseillerNonRecrute(invalidConseillersDuplicates)) fillInvalidRecruteOneInvalidDuplicates(result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates);
+  else fillInvalidRecruteManyInvalidDuplicates(result, conseillerRecrute, validConseillersDuplicates, invalidConseillersDuplicates);
 
   return result;
 };
@@ -295,11 +314,12 @@ const inspectConseillersAndDuplicatesProperties = (conseillersWithMatchingMiseEn
     const conseillers = conseillersWithMatchingMiseEnRelations.map(conseillerWithMatchingMiseEnRelations => conseillerWithMatchingMiseEnRelations.conseiller);
     const conseillerRecrute = conseillers.find(isRecrute);
     const conseillersDuplicates = conseillers.filter(isNotRecrute);
-    const invalidConseillersNonRecrutes = conseillersDuplicates.filter(conseiller => !isValidConseillerNonRecrute(conseiller));
+    const invalidConseillersDuplicates = conseillersDuplicates.filter(conseiller => !isValidConseillerDuplicate(conseiller));
+    const validConseillersDuplicates = conseillersDuplicates.filter(conseiller => isValidConseillerDuplicate(conseiller));
 
     return isValidConseillerRecrute(conseillerRecrute) ?
-      getResultForValidConseillerRecrute(result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes) :
-      getResultForInvalidConseillerRecrute(result, conseillerRecrute, conseillersDuplicates, invalidConseillersNonRecrutes);
+      getResultForValidConseillerRecrute(result, conseillerRecrute, conseillersDuplicates, validConseillersDuplicates, invalidConseillersDuplicates) :
+      getResultForInvalidConseillerRecrute(result, conseillerRecrute, conseillersDuplicates, validConseillersDuplicates, invalidConseillersDuplicates);
   }, {
     invalidRecruteAllValidDuplicates: [],
     invalidRecruteOneInvalidDuplicates: [],
@@ -309,16 +329,37 @@ const inspectConseillersAndDuplicatesProperties = (conseillersWithMatchingMiseEn
     validRecruteManyInvalidDuplicates: []
   });
 
+const resetConseiller = (conseiller) => {
+  const {
+    dateFinFormation,
+    datePrisePoste,
+    emailCN,
+    emailCNError,
+    mattermost,
+    statut,
+    ...newConseiller
+  } = conseiller
+
+  return {
+    ...newConseiller,
+    disponible: true,
+    estRecrute: false
+  };
+}
+
 module.exports = {
   MisesEnRelationStatut,
   ConseillerStatut,
+  UserRole,
   toSimpleMiseEnRelation,
   isRecrute,
   splitOnRecruteStatut,
-  inspectUsersAssociatedWithConseillers,
+  inspectUsersAssociatedWithConseillersWithoutDuplicates,
+  inspectUsersAssociatedWithConseillersWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates,
   inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId,
   inspectConseillersRecruteProperties,
   inspectConseillersAndDuplicatesProperties,
+  resetConseiller
 };
