@@ -7,7 +7,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
   program.option('-e, --email <email>', 'email: nouvelle adresse mail');
   program.option('-i, --id <id>', 'id: id PG du conseiller');
-  program.option('-t, --type <type>', `type: candidat ou un conseiller`);
+  program.option('-t, --type <type>', `type: candidat ou conseiller`);
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
