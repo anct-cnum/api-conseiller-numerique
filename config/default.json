@@ -79,7 +79,8 @@
     "login": "login",
     "password": "password",
     "teamId": "teamId",
-    "themeChannelId": "themeChannelId"
+    "themeChannelId": "themeChannelId",
+    "resourcesChannelId": "resourcesChannelId"
   },
   "aws": {
     "endpoint": "AWS_ENDPOINT",

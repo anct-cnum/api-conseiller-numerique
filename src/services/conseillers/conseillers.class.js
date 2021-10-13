@@ -12,11 +12,16 @@ const dayjs = require('dayjs');
 const Joi = require('joi');
 
 const {
+  checkAuth,
+  checkRoleCandidat,
+  checkConseillerExist,
+  checkConseillerHaveCV,
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
   suppressionTotalCandidat,
-  suppressionCv } = require('./conseillers.function');
+  suppressionCv,
+  suppressionCVConseiller } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -157,11 +162,8 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.post('/conseillers/cv', upload.single('file'), async (req, res) => {
+      checkAuth(req, res);
 
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
       //Verification role candidat
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -232,14 +234,7 @@ exports.Conseillers = class Conseillers extends Service {
         });
 
         try {
-          await db.collection('conseillers').updateOne({ '_id': conseiller._id },
-            { $unset: {
-              cv: ''
-            } });
-          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
-            { $unset: {
-              'conseillerObj.cv': ''
-            } });
+          await suppressionCVConseiller(db, conseiller);
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
@@ -257,26 +252,24 @@ exports.Conseillers = class Conseillers extends Service {
         } else {
           //Insertion du cv dans MongoDb
           try {
-            db.collection('conseillers').updateOne({ '_id': conseiller._id },
+            const cv = {
+              file: nameCVFile,
+              extension: detectingFormat.ext,
+              date: new Date()
+            };
+
+            db.collection('conseillers').updateMany({ email: conseiller.email },
               { $set: {
-                cv: {
-                  file: nameCVFile,
-                  extension: detectingFormat.ext,
-                  date: new Date()
-                }
+                cv: cv
               } });
-            db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+            db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
               { $set: {
-                'conseillerObj.cv': {
-                  file: nameCVFile,
-                  extension: detectingFormat.ext,
-                  date: new Date()
-                }
+                'conseillerObj.cv': cv
               } });
           } catch (error) {
             app.get('sentry').captureException(error);
             logger.error(error);
-            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDb a échoué').toJSON());
+            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDB a échoué').toJSON());
           }
 
           res.send({ isUploaded: true });
@@ -284,11 +277,24 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
+    app.delete('/conseillers/:id/cv', async (req, res) => {
+      checkAuth(req, res);
+      const user = checkRoleCandidat(db, req, res);
+      const conseiller = await checkConseillerExist(db, req.params.id, user, res);
+      checkConseillerHaveCV(conseiller, user, res);
+      suppressionCv(conseiller.cv, app, res).then(() => {
+        return suppressionCVConseiller(db, conseiller);
+      }).then(() => {
+        res.send({ deleteSuccess: true });
+      }).catch(error => {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression du CV').toJSON());
+      });
+    });
+
     app.get('/conseillers/:id/cv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+      checkAuth(req, res);
 
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
       let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -431,11 +437,10 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.get('/conseillers/:id/employeur', async (req, res) => {
+      checkAuth(req, res);
+
       const accessToken = req.feathers?.authentication?.accessToken;
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+
       let userId = decode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!user?.roles.includes('admin')) {
