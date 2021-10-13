@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 
+/* eslint-disable max-len */
+/* eslint-disable no-undef */
+
 const {
   MisesEnRelationStatut,
   ConseillerStatut,
@@ -13,33 +16,34 @@ const {
   inspectConseillersRecruteProperties,
   inspectConseillersAndDuplicatesProperties,
   resetConseiller,
-  extractConseillerRecruteProperties
+  aggregateConseillerRecrutePropertiesFromDuplicates,
+  getConseillerIdsFromConseillersWithMiseEnRelationGroup, toSimpleMiseEnRelation
 } = require('./fixRelationshipsBetweenConseillersAndUsers.utils');
 
-const miseEnRelationJohnDoeStructureFinalisee= {
-  _id : '7e1118b8a88220baa7e5533b',
-  conseiller : 'f653637acd03bc52be4412f5',
-  structure : 'cbfa2ca4bd2def7058af2d4a',
-  statut : MisesEnRelationStatut.Finalisee
-}
+const miseEnRelationJohnDoeStructureFinalisee = {
+  _id: '7e1118b8a88220baa7e5533b',
+  conseiller: 'f653637acd03bc52be4412f5',
+  structure: 'cbfa2ca4bd2def7058af2d4a',
+  statut: MisesEnRelationStatut.Finalisee
+};
 const miseEnRelationJohnDoeStructureRecrutee = {
-  _id : 'a24ebcf41f79af289de2f14f',
-  conseiller : 'f653637acd03bc52be4412f5',
-  structure : '830484683810cc12ebaaadb13',
-  statut : MisesEnRelationStatut.Recrutee
-}
+  _id: 'a24ebcf41f79af289de2f14f',
+  conseiller: 'f653637acd03bc52be4412f5',
+  structure: '830484683810cc12ebaaadb13',
+  statut: MisesEnRelationStatut.Recrutee
+};
 const miseEnRelationJohnDoeStructureNouvelle = {
-  _id : 'c1ad70df659cd83013256547',
-  conseiller : 'f653637acd03bc52be4412f5',
-  structure : 'efa42834f8d0c915d8eb70d5',
-  statut : MisesEnRelationStatut.Nouvelle
-}
+  _id: 'c1ad70df659cd83013256547',
+  conseiller: 'f653637acd03bc52be4412f5',
+  structure: 'efa42834f8d0c915d8eb70d5',
+  statut: MisesEnRelationStatut.Nouvelle
+};
 const miseEnRelationJohnDoeStructureFinaliseeNonDisponible = {
-  _id : '09ab50a9232bb39241a9fa8e',
-  conseiller : 'b596d13ee91d97a85a5c8ae4',
-  structure : '14c596e420149b83b3fac421',
-  statut : MisesEnRelationStatut.FinaliseeNonDisponible
-}
+  _id: '09ab50a9232bb39241a9fa8e',
+  conseiller: 'b596d13ee91d97a85a5c8ae4',
+  structure: '14c596e420149b83b3fac421',
+  statut: MisesEnRelationStatut.FinaliseeNonDisponible
+};
 
 const johnDoeConseiller = {
   _id: 'f653637acd03bc52be4412f5',
@@ -245,81 +249,112 @@ const conseillersIdsByEmail = [
   {
     _id: johnDoeConseiller.email,
     conseillers: [
-      {id: johnDoeConseiller._id, statut: johnDoeConseiller.statut},
-      {id: johnDoeConseillerDuplicateWithRecruteStatut._id, statut: johnDoeConseillerDuplicateWithRecruteStatut.statut}
+      { id: johnDoeConseiller._id, statut: johnDoeConseiller.statut },
+      { id: johnDoeConseillerDuplicateWithRecruteStatut._id, statut: johnDoeConseillerDuplicateWithRecruteStatut.statut }
     ]
   },
   {
     _id: maryDoeConseiller.email,
     conseillers: [
-      {id: maryDoeConseiller._id, statut: maryDoeConseiller.statut},
-      {id: maryDoeConseillerDuplicate._id, statut: maryDoeConseillerDuplicate.statut}
+      { id: maryDoeConseiller._id, statut: maryDoeConseiller.statut },
+      { id: maryDoeConseillerDuplicate._id, statut: maryDoeConseillerDuplicate.statut }
     ]
   },
   {
     _id: bobDoeConseiller.email,
-    conseillers: [{id: bobDoeConseiller._id, statut: bobDoeConseiller.statut}]
+    conseillers: [{ id: bobDoeConseiller._id, statut: bobDoeConseiller.statut }]
   },
   {
     _id: oscarDoeConseiller.email,
-    conseillers: [{id: oscarDoeConseiller._id, statut: oscarDoeConseiller.statut}]
+    conseillers: [{ id: oscarDoeConseiller._id, statut: oscarDoeConseiller.statut }]
   },
   {
     _id: aliceDoeConseiller.email,
-    conseillers: [{id: aliceDoeConseiller._id, statut: aliceDoeConseiller.statut}]
+    conseillers: [{ id: aliceDoeConseiller._id, statut: aliceDoeConseiller.statut }]
   }
 ];
 
+describe('data transformation', () => {
+  it('should transform a mise en relation to a simple mise en relation', () => {
+    const miseEnRelation = {
+      _id: miseEnRelationJohnDoeStructureFinalisee._id,
+      conseiller: {
+        _bsontype: 'DBRef',
+        namespace: 'conseiller',
+        oid: miseEnRelationJohnDoeStructureFinalisee.conseiller,
+        db: 'test'
+      },
+      structure: {
+        _bsontype: 'DBRef',
+        namespace: 'structures',
+        oid: miseEnRelationJohnDoeStructureFinalisee.structure,
+        db: 'test'
+      },
+      conseillerCreatedAt: new Date(),
+      conseillerObj: {},
+      createdAt: new Date(),
+      distance: 3551,
+      statut: miseEnRelationJohnDoeStructureFinalisee.statut,
+      structureObj: {},
+      dateRecrutement: null
+    };
+
+    const simpleMiseEnRelation = toSimpleMiseEnRelation(miseEnRelation);
+
+    expect(simpleMiseEnRelation).toEqual(miseEnRelationJohnDoeStructureFinalisee);
+  });
+});
+
 describe('split conseillers on recrute statut', () => {
   it('should get conseillers without RECRUTE status', () => {
-    const {noRecruteStatut} = splitOnRecruteStatut(conseillersIdsByEmail);
+    const { noRecruteStatut } = splitOnRecruteStatut(conseillersIdsByEmail);
 
     expect(noRecruteStatut).toEqual([
       {
         _id: bobDoeConseiller.email,
-        conseillers: [{id: bobDoeConseiller._id, statut: bobDoeConseiller.statut,}]
+        conseillers: [{ id: bobDoeConseiller._id, statut: bobDoeConseiller.statut }]
       },
       {
         _id: oscarDoeConseiller.email,
-        conseillers: [{id: oscarDoeConseiller._id, statut: oscarDoeConseiller.statut,}]
+        conseillers: [{ id: oscarDoeConseiller._id, statut: oscarDoeConseiller.statut }]
       }
     ]);
   });
 
   it('should get conseiller with RECRUTE status, without duplicates', () => {
-    const {recruteStatutWithoutDuplicates} = splitOnRecruteStatut(conseillersIdsByEmail);
+    const { recruteStatutWithoutDuplicates } = splitOnRecruteStatut(conseillersIdsByEmail);
 
     expect(recruteStatutWithoutDuplicates).toEqual([
       {
         _id: aliceDoeConseiller.email,
-        conseillers: [{id: aliceDoeConseiller._id, statut: aliceDoeConseiller.statut}]
+        conseillers: [{ id: aliceDoeConseiller._id, statut: aliceDoeConseiller.statut }]
       }
     ]);
   });
 
   it('should get conseiller with RECRUTE status, with duplicates', () => {
-    const {recruteStatutWithDuplicates} = splitOnRecruteStatut(conseillersIdsByEmail);
+    const { recruteStatutWithDuplicates } = splitOnRecruteStatut(conseillersIdsByEmail);
 
     expect(recruteStatutWithDuplicates).toEqual([
       {
         _id: maryDoeConseiller.email,
         conseillers: [
-          {id: maryDoeConseiller._id, statut: maryDoeConseiller.statut},
-          {id: maryDoeConseillerDuplicate._id, statut: maryDoeConseillerDuplicate.statut}
+          { id: maryDoeConseiller._id, statut: maryDoeConseiller.statut },
+          { id: maryDoeConseillerDuplicate._id, statut: maryDoeConseillerDuplicate.statut }
         ]
       }
     ]);
   });
 
   it('should get conseiller with many RECRUTE status', () => {
-    const {manyRecruteStatut} = splitOnRecruteStatut(conseillersIdsByEmail);
+    const { manyRecruteStatut } = splitOnRecruteStatut(conseillersIdsByEmail);
 
     expect(manyRecruteStatut).toEqual([
       {
         _id: johnDoeConseiller.email,
         conseillers: [
-          {id: johnDoeConseiller._id, statut: johnDoeConseiller.statut},
-          {id: johnDoeConseillerDuplicateWithRecruteStatut._id, statut: johnDoeConseillerDuplicateWithRecruteStatut.statut}
+          { id: johnDoeConseiller._id, statut: johnDoeConseiller.statut },
+          { id: johnDoeConseillerDuplicateWithRecruteStatut._id, statut: johnDoeConseillerDuplicateWithRecruteStatut.statut }
         ]
       }
     ]);
@@ -328,7 +363,7 @@ describe('split conseillers on recrute statut', () => {
 
 describe('inspect users associated with conseillers without duplicates', () => {
   it('should inspect users associated with conseillers and get empty array when all conseillers are associated with a user', () => {
-    const conseillersWithMatchingUsers = [{users: [johnDoeUser], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [johnDoeUser], conseiller: johnDoeConseiller }];
 
     const {
       conseillersWithoutAssociatedUser,
@@ -340,65 +375,65 @@ describe('inspect users associated with conseillers without duplicates', () => {
   });
 
   it('should inspect users associated with conseillers and get the conseillers that are not associated with any user', () => {
-    const conseillersWithMatchingUsers = [{users: [], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [], conseiller: johnDoeConseiller }];
 
-    const {conseillersWithoutAssociatedUser} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { conseillersWithoutAssociatedUser } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
     expect(conseillersWithoutAssociatedUser).toEqual([johnDoeConseiller]);
   });
 
   it('should inspect users associated with conseillers and get the conseillers that are associated with more than one user', () => {
-    const conseillersWithMatchingUsers = [{users: [johnDoeUser, johnDoeUserDuplicate], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [johnDoeUser, johnDoeUserDuplicate], conseiller: johnDoeConseiller }];
 
-    const {conseillersAssociatedToMoreThanOneUser} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { conseillersAssociatedToMoreThanOneUser } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
     expect(conseillersAssociatedToMoreThanOneUser).toEqual([johnDoeConseiller]);
   });
 
   it('should inspect users associated with conseillers and get empty array when all users full name matches conseiller full name', () => {
-    const conseillersWithMatchingUsers = [{users: [johnDoeUser], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [johnDoeUser], conseiller: johnDoeConseiller }];
 
-    const {usersWithFullNameToFix} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { usersWithFullNameToFix } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
     expect(usersWithFullNameToFix).toEqual([]);
   });
 
   it('should inspect users associated with conseillers and get user in array when a user full name do not matches conseiller full name', () => {
-    const conseillersWithMatchingUsers = [{users: [bobDoeUser], conseiller: bobDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [bobDoeUser], conseiller: bobDoeConseiller }];
 
-    const {usersWithFullNameToFix} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { usersWithFullNameToFix } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
-    expect(usersWithFullNameToFix).toEqual([{user: bobDoeUser, conseiller: bobDoeConseiller}]);
+    expect(usersWithFullNameToFix).toEqual([{ user: bobDoeUser, conseiller: bobDoeConseiller }]);
   });
 
   it('should inspect users associated with conseillers and get empty array when all users have a @conseiller-numerique.fr email', () => {
-    const conseillersWithMatchingUsers = [{users: [johnDoeUser], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [johnDoeUser], conseiller: johnDoeConseiller }];
 
-    const {usersWithoutConseillerNumeriqueEmail} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { usersWithoutConseillerNumeriqueEmail } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
     expect(usersWithoutConseillerNumeriqueEmail).toEqual([]);
   });
 
   it('should inspect users associated with conseillers and get user in array when a user email is not a @conseiller-numerique.fr email', () => {
-    const conseillersWithMatchingUsers = [{users: [bobDoeUser], conseiller: bobDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [bobDoeUser], conseiller: bobDoeConseiller }];
 
-    const {usersWithoutConseillerNumeriqueEmail} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { usersWithoutConseillerNumeriqueEmail } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
     expect(usersWithoutConseillerNumeriqueEmail).toEqual([bobDoeUser]);
   });
 
   it('should inspect users associated with conseillers and get empty array when all users have conseiller role', () => {
-    const conseillersWithMatchingUsers = [{users: [johnDoeUser], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [johnDoeUser], conseiller: johnDoeConseiller }];
 
-    const {usersAssociatedWithAConseillerWithoutConseillerRole} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { usersAssociatedWithAConseillerWithoutConseillerRole } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
     expect(usersAssociatedWithAConseillerWithoutConseillerRole).toEqual([]);
   });
 
   it('should inspect users associated with conseillers and get users that do not have conseiller role', () => {
-    const conseillersWithMatchingUsers = [{users: [bobDoeUser], conseiller: bobDoeConseiller}];
+    const conseillersWithMatchingUsers = [{ users: [bobDoeUser], conseiller: bobDoeConseiller }];
 
-    const {usersAssociatedWithAConseillerWithoutConseillerRole} = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
+    const { usersAssociatedWithAConseillerWithoutConseillerRole } = inspectUsersAssociatedWithConseillersWithoutDuplicates(conseillersWithMatchingUsers);
 
     expect(usersAssociatedWithAConseillerWithoutConseillerRole).toEqual([bobDoeUser]);
   });
@@ -408,12 +443,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers and get empty array when conseiller recrute or one of its duplicates is associated with a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [johnDoeUser], conseiller: johnDoeConseiller},
-        {users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUser], conseiller: johnDoeConseiller },
+        { users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersWithoutAnyConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersWithoutAnyConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersWithoutAnyConseillerUser).toEqual([]);
   });
@@ -421,12 +456,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers and get conseiller in array when neither a conseiller recrute nor one of his duplicates is associated with a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [], conseiller: johnDoeConseiller},
-        {users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate}
+        { users: [], conseiller: johnDoeConseiller },
+        { users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersWithoutAnyConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersWithoutAnyConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersWithoutAnyConseillerUser).toEqual([johnDoeConseiller]);
   });
@@ -434,12 +469,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers recrutes and get empty array when all conseillers recrutes are associated with one user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [johnDoeUser], conseiller: johnDoeConseiller},
-        {users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUser], conseiller: johnDoeConseiller },
+        { users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersRecrutesAssociatedToMoreThanOneUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersRecrutesAssociatedToMoreThanOneUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersRecrutesAssociatedToMoreThanOneUser).toEqual([]);
   });
@@ -447,12 +482,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers recrutes and get the conseillers recrutes that are associated with more than one user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [johnDoeUser, johnDoeUserDuplicate], conseiller: johnDoeConseiller},
-        {users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUser, johnDoeUserDuplicate], conseiller: johnDoeConseiller },
+        { users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersRecrutesAssociatedToMoreThanOneUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersRecrutesAssociatedToMoreThanOneUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersRecrutesAssociatedToMoreThanOneUser).toEqual([johnDoeConseiller]);
   });
@@ -460,12 +495,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers recrutes and get empty array when there is not any conseiller recrute that is associated to a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [johnDoeUserCandidat], conseiller: johnDoeConseiller},
-        {users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUserCandidat], conseiller: johnDoeConseiller },
+        { users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersRecrutesWithAConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersRecrutesWithAConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersRecrutesWithAConseillerUser).toEqual([]);
   });
@@ -473,12 +508,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers recrutes and get the conseillers recrutes that are associated to a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [johnDoeUser], conseiller: johnDoeConseiller},
-        {users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUser], conseiller: johnDoeConseiller },
+        { users: [johnDoeUserDuplicate], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersRecrutesWithAConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersRecrutesWithAConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersRecrutesWithAConseillerUser).toEqual([johnDoeConseiller]);
   });
@@ -486,12 +521,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers duplicates and get empty array when there is not any conseiller duplicate that is associated to a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [johnDoeUser], conseiller: johnDoeConseiller},
-        {users: [], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUser], conseiller: johnDoeConseiller },
+        { users: [], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersDuplicatesWithAConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersDuplicatesWithAConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersDuplicatesWithAConseillerUser).toEqual([]);
   });
@@ -499,12 +534,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers duplicates and get conseiller duplicate when there is a conseiller duplicate that is associated to a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [], conseiller: johnDoeConseiller},
-        {users: [johnDoeUser], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUserCandidat], conseiller: johnDoeConseiller },
+        { users: [johnDoeUser], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {conseillersDuplicatesWithAConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { conseillersDuplicatesWithAConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(conseillersDuplicatesWithAConseillerUser).toEqual([
       [johnDoeConseillerDuplicate]
@@ -514,12 +549,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers duplicates and get empty array when there is no conseiller recrute that is associated to a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [johnDoeUser], conseiller: johnDoeConseiller},
-        {users: [], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUser], conseiller: johnDoeConseiller },
+        { users: [], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {noConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { noConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(noConseillerUser).toEqual([]);
   });
@@ -527,12 +562,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers duplicates and get empty array when there is no conseiller duplicate that is associated to a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [], conseiller: johnDoeConseiller},
-        {users: [johnDoeUser], conseiller: johnDoeConseillerDuplicate}
+        { users: [], conseiller: johnDoeConseiller },
+        { users: [johnDoeUser], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {noConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { noConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(noConseillerUser).toEqual([]);
   });
@@ -540,12 +575,12 @@ describe('inspect users associated with conseillers with duplicates', () => {
   it('should inspect users associated with conseillers duplicates and get conseiller recrute when there is no conseiller recrute or conseiller duplicate that is associated to a conseiller user', () => {
     const conseillersWithMatchingUsersWithDuplicates = [
       [
-        {users: [], conseiller: johnDoeConseiller},
-        {users: [], conseiller: johnDoeConseillerDuplicate}
+        { users: [johnDoeUserCandidat], conseiller: johnDoeConseiller },
+        { users: [johnDoeUserCandidat], conseiller: johnDoeConseillerDuplicate }
       ]
     ];
 
-    const {noConseillerUser} = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
+    const { noConseillerUser } = inspectUsersAssociatedWithConseillersWithDuplicates(conseillersWithMatchingUsersWithDuplicates);
 
     expect(noConseillerUser).toEqual([johnDoeConseiller]);
   });
@@ -553,7 +588,7 @@ describe('inspect users associated with conseillers with duplicates', () => {
 
 describe('inspect mises en relations associated with conseillers on structure id without duplicates', () => {
   it('should inspect mises en relations associated with conseillers and get empty array when all conseillers are associated with a mise en relation', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller }];
 
     const {
       conseillersWithoutAssociatedMiseEnRelation,
@@ -565,41 +600,41 @@ describe('inspect mises en relations associated with conseillers on structure id
   });
 
   it('should inspect mises en relations associated with conseillers and get the conseillers that are not associated with any mise en relation', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [], conseiller: johnDoeConseiller }];
 
-    const {conseillersWithoutAssociatedMiseEnRelation} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithoutAssociatedMiseEnRelation } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithoutAssociatedMiseEnRelation).toEqual([johnDoeConseiller]);
   });
 
   it('should inspect mises en relations associated with conseillers and get the conseillers that are associated with more than one mise en relation', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee, miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee, miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller }];
 
-    const {conseillersAssociatedToMoreThanOneMiseEnRelation} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersAssociatedToMoreThanOneMiseEnRelation } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersAssociatedToMoreThanOneMiseEnRelation).toEqual([johnDoeConseiller]);
   });
 
   it('should inspect mises en relations associated with conseillers and get empty array when no mises en relations without finalisee status in array', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: johnDoeConseiller }];
 
-    const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus).toEqual([]);
   });
 
   it('should inspect mises en relations associated with conseillers and get empty array when all status are finalisee', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: johnDoeConseiller }];
 
-    const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus).toEqual([]);
   });
 
   it('should inspect mises en relations associated with conseillers and get mises en relations without finalisee status in array', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller }];
 
-    const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus).toEqual([miseEnRelationJohnDoeStructureNouvelle]);
   });
@@ -607,17 +642,17 @@ describe('inspect mises en relations associated with conseillers on structure id
 
 describe('inspect mises en relations associated with conseillers except structure id', () => {
   it('should inspect mises en relations associated with conseillers and get mises en relations without finalisee_non_disponible status in array', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: johnDoeConseiller }];
 
-    const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus} = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(conseillersWithMatchingMiseEnRelations);
+    const { misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus } = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(conseillersWithMatchingMiseEnRelations);
 
     expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus).toEqual([]);
   });
 
   it('should inspect mises en relations associated with conseillers and get all mises en relations with non finalisee_non_disponible status in array', () => {
-    const conseillersWithMatchingMiseEnRelations = [{misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle, miseEnRelationJohnDoeStructureRecrutee, miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: johnDoeConseiller}];
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle, miseEnRelationJohnDoeStructureRecrutee, miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: johnDoeConseiller }];
 
-    const {misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus} = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(conseillersWithMatchingMiseEnRelations);
+    const { misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus } = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(conseillersWithMatchingMiseEnRelations);
 
     expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus).toEqual([
       miseEnRelationJohnDoeStructureNouvelle,
@@ -641,7 +676,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithMultipleMisesEnRelations} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithMultipleMisesEnRelations } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithMultipleMisesEnRelations).toEqual([]);
   });
@@ -660,7 +695,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithMultipleMisesEnRelations} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithMultipleMisesEnRelations } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithMultipleMisesEnRelations).toEqual([
       [
@@ -690,7 +725,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee).toEqual([]);
   });
@@ -709,7 +744,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutFinalisee).toEqual([
       [
@@ -739,7 +774,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee).toEqual([]);
   });
@@ -758,7 +793,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutRecruteeAndDuplicatesWithStatutRecrutee).toEqual([
       [
@@ -788,7 +823,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee).toEqual([]);
   });
@@ -807,7 +842,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee).toEqual([
       [
@@ -837,7 +872,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee).toEqual([]);
   });
@@ -856,7 +891,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee).toEqual([
       [
@@ -886,7 +921,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee).toEqual([]);
   });
@@ -905,7 +940,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee).toEqual([
       [
@@ -935,7 +970,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithoutStatutFinaliseeOrStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithoutStatutFinaliseeOrStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithoutStatutFinaliseeOrStatutRecrutee).toEqual([]);
   });
@@ -954,7 +989,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithoutStatutFinaliseeOrStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithoutStatutFinaliseeOrStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithoutStatutFinaliseeOrStatutRecrutee).toEqual([]);
   });
@@ -973,7 +1008,7 @@ describe('inspect mises en relations associated with conseillers on structure id
       ]
     ];
 
-    const {conseillersWithoutStatutFinaliseeOrStatutRecrutee} = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
+    const { conseillersWithoutStatutFinaliseeOrStatutRecrutee } = inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithDuplicates(conseillersWithMatchingMiseEnRelations);
 
     expect(conseillersWithoutStatutFinaliseeOrStatutRecrutee).toEqual([
       [
@@ -999,7 +1034,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidDateFinFormation} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidDateFinFormation } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidDateFinFormation).toEqual([]);
   });
@@ -1012,7 +1047,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidDateFinFormation} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidDateFinFormation } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidDateFinFormation).toEqual([henryDoeConseiller]);
   });
@@ -1025,7 +1060,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidDatePrisePoste} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidDatePrisePoste } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidDatePrisePoste).toEqual([]);
   });
@@ -1038,7 +1073,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidDatePrisePoste} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidDatePrisePoste } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidDatePrisePoste).toEqual([henryDoeConseiller]);
   });
@@ -1051,7 +1086,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidUserCreated} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidUserCreated } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidUserCreated).toEqual([]);
   });
@@ -1064,7 +1099,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidUserCreated} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidUserCreated } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidUserCreated).toEqual([henryDoeConseiller]);
   });
@@ -1077,7 +1112,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidStructureId} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidStructureId } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidStructureId).toEqual([]);
   });
@@ -1090,7 +1125,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidStructureId} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidStructureId } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidStructureId).toEqual([henryDoeConseiller]);
   });
@@ -1103,7 +1138,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidEstRecrute} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidEstRecrute } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidEstRecrute).toEqual([]);
   });
@@ -1116,7 +1151,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidEstRecrute} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidEstRecrute } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidEstRecrute).toEqual([henryDoeConseiller]);
   });
@@ -1129,7 +1164,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidDisponible} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidDisponible } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidDisponible).toEqual([]);
   });
@@ -1142,7 +1177,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithInvalidDisponible} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithInvalidDisponible } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithInvalidDisponible).toEqual([henryDoeConseiller]);
   });
@@ -1155,7 +1190,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithMattermostError} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithMattermostError } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithMattermostError).toEqual([]);
   });
@@ -1168,7 +1203,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithMattermostError} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithMattermostError } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithMattermostError).toEqual([henryDoeConseiller]);
   });
@@ -1181,7 +1216,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithEmailCNError} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithEmailCNError } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithEmailCNError).toEqual([]);
   });
@@ -1194,7 +1229,7 @@ describe('inspect conseiller RECRUTE properties', () => {
       }
     ];
 
-    const {conseillersWithEmailCNError} = inspectConseillersRecruteProperties(conseillersByEmail);
+    const { conseillersWithEmailCNError } = inspectConseillersRecruteProperties(conseillersByEmail);
 
     expect(conseillersWithEmailCNError).toEqual([henryDoeConseiller]);
   });
@@ -1204,12 +1239,12 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
   it('should inspect conseillers and duplicates properties and get valid conseiller recrute and all valid conseiller duplicates', () => {
     const conseillersWithMatchingMiseEnRelationsGroups = [
       [
-        {misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: maryDoeConseiller},
-        {misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: maryDoeConseillerDuplicate}
+        { misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: maryDoeConseiller },
+        { misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: maryDoeConseillerDuplicate }
       ]
     ];
 
-    const {validRecruteAllValidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+    const { validRecruteAllValidDuplicates } = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
 
     expect(validRecruteAllValidDuplicates).toEqual([
       {
@@ -1223,13 +1258,13 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
   it('should inspect conseillers and duplicates properties and get valid conseiller recrute and one invalid conseiller duplicates', () => {
     const conseillersWithMatchingMiseEnRelationsGroups = [
       [
-        {misesEnRelations: [], conseiller: maryDoeConseiller},
-        {misesEnRelations: [], conseiller: maryDoeConseillerDuplicate},
-        {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate}
+        { misesEnRelations: [], conseiller: maryDoeConseiller },
+        { misesEnRelations: [], conseiller: maryDoeConseillerDuplicate },
+        { misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate }
       ]
     ];
 
-    const {validRecruteOneInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+    const { validRecruteOneInvalidDuplicates } = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
 
     expect(validRecruteOneInvalidDuplicates).toEqual([
       {
@@ -1243,14 +1278,14 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
   it('should inspect conseillers and duplicates properties and get valid conseiller recrute and many invalid conseiller duplicates', () => {
     const conseillersWithMatchingMiseEnRelationsGroups = [
       [
-        {misesEnRelations: [], conseiller: maryDoeConseiller},
-        {misesEnRelations: [], conseiller: maryDoeConseillerDuplicate},
-        {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate},
-        {misesEnRelations: [], conseiller: maryDoeConseillerOtherInvalidDuplicate}
+        { misesEnRelations: [], conseiller: maryDoeConseiller },
+        { misesEnRelations: [], conseiller: maryDoeConseillerDuplicate },
+        { misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate },
+        { misesEnRelations: [], conseiller: maryDoeConseillerOtherInvalidDuplicate }
       ]
     ];
 
-    const {validRecruteManyInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+    const { validRecruteManyInvalidDuplicates } = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
 
     expect(validRecruteManyInvalidDuplicates).toEqual([
       {
@@ -1264,12 +1299,12 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
   it('should inspect conseillers and duplicates properties and get invalid conseiller recrute and all valid conseiller duplicates', () => {
     const conseillersWithMatchingMiseEnRelationsGroups = [
       [
-        {misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: maryDoeConseillerInvalid},
-        {misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: maryDoeConseillerDuplicate}
+        { misesEnRelations: [miseEnRelationJohnDoeStructureFinalisee], conseiller: maryDoeConseillerInvalid },
+        { misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: maryDoeConseillerDuplicate }
       ]
     ];
 
-    const {invalidRecruteAllValidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+    const { invalidRecruteAllValidDuplicates } = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
 
     expect(invalidRecruteAllValidDuplicates).toEqual([
       {
@@ -1283,13 +1318,13 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
   it('should inspect conseillers and duplicates properties and get invalid conseiller recrute and one invalid conseiller duplicates', () => {
     const conseillersWithMatchingMiseEnRelationsGroups = [
       [
-        {misesEnRelations: [], conseiller: maryDoeConseillerInvalid},
-        {misesEnRelations: [], conseiller: maryDoeConseillerDuplicate},
-        {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate}
+        { misesEnRelations: [], conseiller: maryDoeConseillerInvalid },
+        { misesEnRelations: [], conseiller: maryDoeConseillerDuplicate },
+        { misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate }
       ]
     ];
 
-    const {invalidRecruteOneInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+    const { invalidRecruteOneInvalidDuplicates } = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
 
     expect(invalidRecruteOneInvalidDuplicates).toEqual([
       {
@@ -1303,14 +1338,14 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
   it('should inspect conseillers and duplicates properties and get invalid conseiller recrute and many invalid conseiller duplicates', () => {
     const conseillersWithMatchingMiseEnRelationsGroups = [
       [
-        {misesEnRelations: [], conseiller: maryDoeConseillerInvalid},
-        {misesEnRelations: [], conseiller: maryDoeConseillerDuplicate},
-        {misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate},
-        {misesEnRelations: [], conseiller: maryDoeConseillerOtherInvalidDuplicate}
+        { misesEnRelations: [], conseiller: maryDoeConseillerInvalid },
+        { misesEnRelations: [], conseiller: maryDoeConseillerDuplicate },
+        { misesEnRelations: [], conseiller: maryDoeConseillerInvalidDuplicate },
+        { misesEnRelations: [], conseiller: maryDoeConseillerOtherInvalidDuplicate }
       ]
     ];
 
-    const {invalidRecruteManyInvalidDuplicates} = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
+    const { invalidRecruteManyInvalidDuplicates } = inspectConseillersAndDuplicatesProperties(conseillersWithMatchingMiseEnRelationsGroups);
 
     expect(invalidRecruteManyInvalidDuplicates).toEqual([
       {
@@ -1320,37 +1355,55 @@ describe('inspect conseillers and duplicates properties in conseillers with matc
       }
     ]);
   });
+});
 
-  describe('conseiller recrute properties', () => {
-    it('should reset conseiller', () => {
-      const newConseiller = resetConseiller(johnDoeConseiller);
+describe('update conseiller properties', () => {
+  it('should reset conseiller', () => {
+    const newConseiller = resetConseiller(johnDoeConseiller);
 
-      expect(newConseiller).toEqual(johnDoeConseillerReset)
+    expect(newConseiller).toEqual(johnDoeConseillerReset);
+  });
+
+  it('should not get conseiller recrute properties', () => {
+    const conseillerRecruteProperties = aggregateConseillerRecrutePropertiesFromDuplicates([
+      { statut: ConseillerStatut.Recrute },
+      {},
+    ]);
+
+    expect(conseillerRecruteProperties).toEqual({
+      statut: ConseillerStatut.Recrute
     });
+  });
 
-    it('should not get conseiller recrute properties', () => {
-      const conseillerRecruteProperties = extractConseillerRecruteProperties({
-        statut: ConseillerStatut.Recrute
-      });
+  it('should get conseiller recrute properties', () => {
+    const conseillerRecruteProperties = aggregateConseillerRecrutePropertiesFromDuplicates([
+      johnDoeConseiller,
+      { statut: ConseillerStatut.Rupture }
+    ]);
 
-      console.log(conseillerRecruteProperties);
-
-      expect(conseillerRecruteProperties).toEqual({
-        statut: ConseillerStatut.Recrute
-      });
+    expect(conseillerRecruteProperties).toEqual({
+      statut: ConseillerStatut.Rupture,
+      mattermost: johnDoeConseiller.mattermost,
+      emailCN: johnDoeConseiller.emailCN,
+      emailCNError: johnDoeConseiller.emailCNError,
+      datePrisePoste: johnDoeConseiller.datePrisePoste,
+      dateFinFormation: johnDoeConseiller.dateFinFormation
     });
+  });
+});
 
-    it('should get conseiller recrute properties', () => {
-      const conseillerRecruteProperties = extractConseillerRecruteProperties(johnDoeConseiller);
+describe('extract conseiller data from groups containing conseillers with matching mises en relations', () => {
+  it('should get conseiller ids from conseillers with mise en relation group', () => {
+    const conseillersWithMatchingMiseEnRelations = [
+      { misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle], conseiller: johnDoeConseiller },
+      { misesEnRelations: [miseEnRelationJohnDoeStructureRecrutee], conseiller: johnDoeConseillerDuplicate }
+    ];
 
-      expect(conseillerRecruteProperties).toEqual({
-        statut: johnDoeConseiller.statut,
-        mattermost: johnDoeConseiller.mattermost,
-        emailCN: johnDoeConseiller.emailCN,
-        emailCNError: johnDoeConseiller.emailCNError,
-        datePrisePoste: johnDoeConseiller.datePrisePoste,
-        dateFinFormation: johnDoeConseiller.dateFinFormation
-      });
-    });
+    const conseillerIds = getConseillerIdsFromConseillersWithMiseEnRelationGroup(conseillersWithMatchingMiseEnRelations);
+
+    expect(conseillerIds).toEqual([
+      johnDoeConseiller._id,
+      johnDoeConseillerDuplicate._id,
+    ]);
   });
 });
