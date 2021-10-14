@@ -344,7 +344,7 @@ exports.Stats = class Stats extends Service {
         let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
         let promises = [];
 
-        if (territoire === 'departement') {
+        if (territoire === 'codeDepartement') {
 
           statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
           .sort(ordreColonne)
@@ -371,7 +371,7 @@ exports.Stats = class Stats extends Service {
           items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
         }
 
-        if (territoire === 'region') {
+        if (territoire === 'codeRegion') {
           statsTerritoires = await db.collection('stats_Territoires').aggregate(
             { $match: { date: dateFin } },
             { $group: {
@@ -494,9 +494,10 @@ exports.Stats = class Stats extends Service {
           //Total accompagnés
           stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
 
+          let totalParticipants = await statsCras.getStatsTotalParticipants(stats);
+
           //Taux accompagnement
-          let totalParticipants = stats.nbTotalParticipant + stats.nbAccompagnementPerso + stats.nbDemandePonctuel;
-          stats.tauxTotalUsagersAccompagnes = totalParticipants > 0 ? ~~(stats.nbUsagersBeneficiantSuivi / totalParticipants * 100) : 0;
+          stats.tauxTotalUsagersAccompagnes = await statsCras.getStatsTauxAccompagnements(stats, totalParticipants);
 
           //Thèmes (total de chaque catégorie)
           stats.statsThemes = await statsCras.getStatsThemes(db, query);
@@ -596,13 +597,7 @@ exports.Stats = class Stats extends Service {
         const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
 
         try {
-          let territoire = {};
-          if (typeTerritoire === 'departement') {
-            territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, 'codeDepartement': idTerritoire });
-          } else if (typeTerritoire === 'region') {
-            territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, 'codeRegion': idTerritoire });
-          }
-
+          let territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, [typeTerritoire]: idTerritoire });
           res.send(territoire);
           return;
         } catch (error) {

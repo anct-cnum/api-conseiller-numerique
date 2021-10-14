@@ -9,4 +9,6 @@ module.exports = {
   ...require('./statuts'),
   ...require('./evolutions'),
   ...require('./personnesAccompagnees'),
+  ...require('./totalParticipants'),
+  ...require('./tauxAccompagnements'),
 };
