@@ -4,7 +4,7 @@ const hooks = require('./ressources.hooks');
 
 module.exports = function(app) {
   const options = {
-    paginate: { default: 10, max: 100 }
+    paginate: app.get('paginate_resourcerie'),
   };
 
   // Initialize our service with any options it requires

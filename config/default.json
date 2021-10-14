@@ -11,6 +11,10 @@
     "default": 20,
     "max": 100
   },
+  "paginate_resourcerie": {
+    "default": 100,
+    "max": 100
+  },
   "authentication": {
     "entity": "user",
     "service": "users",
