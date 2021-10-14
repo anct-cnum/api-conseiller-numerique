@@ -29,6 +29,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       let count = 0;
       let ok = 0;
       let errors = 0;
+      let alreadyOk = 0;
       if (total === 0) {
         logger.info(`[CONSEILLERS COOP] Aucun conseiller présent dans le fichier fourni`);
       }
@@ -36,20 +37,23 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
           //Dates dans le fichier au format DD/MM/YYYY
-          const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+          // eslint-disable-next-line max-len
+          const dateFinFormation = conseiller['Date de fin de formation'] !== '#N/D' ? conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1') : null;
           const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const conseillerCoop = await db.collection('conseillers').findOne({ email, statut: 'RECRUTE', estRecrute: true });
           if (conseillerCoop === null) {
             logger.warn(`Aucun conseiller recruté avec l'email '${email}' n'a été trouvé`);
             errors++;
             reject();
+          } else if (dayjs(conseillerCoop.datePrisePoste).format('YYYY') !== '1970' && dayjs(conseillerCoop.dateFinFormation).format('YYYY') !== '1970') {
+            alreadyOk++;
+            reject();
           } else {
             //Mise à jour du conseiller
             await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
               $set: {
                 datePrisePoste: dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
-                dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate()
-
+                dateFinFormation: dateFinFormation !== null ? dayjs(dateFinFormation, 'YYYY-MM-DD').toDate() : null
               }
             });
             //Mise à jour des mises en relation associées
@@ -58,7 +62,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               {
                 $set: {
                   'conseillerObj.datePrisePoste': dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
-                  'conseillerObj.dateFinFormation': dayjs(dateFinFormation, 'YYYY-MM-DD').toDate()
+                  'conseillerObj.dateFinFormation': dateFinFormation !== null ? dayjs(dateFinFormation, 'YYYY-MM-DD').toDate() : null
                 }
               }
             );
@@ -67,7 +71,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           count++;
           if (total === count) {
             logger.info(`[CONSEILLERS COOP] Des conseillers ont été mis à jour :  ` +
-                `${ok} mis à jour / ${errors} erreurs`);
+                `${ok} mis à jour / ${errors} erreurs / ${alreadyOk} déjà OK`);
             exit();
           }
         });

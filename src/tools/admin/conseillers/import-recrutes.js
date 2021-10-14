@@ -31,7 +31,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
-          const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+          // eslint-disable-next-line max-len
+          const dateFinFormation = conseiller['Date de fin de formation'] !== '#N/D' ? conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1') : null;
           const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
           const exist = await db.collection('conseillers').countDocuments({ email });
@@ -59,6 +60,10 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
           } else if (miseEnRelation === null) {
             logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
+            errors++;
+            reject();
+          } else if (dayjs(datePrisePoste).format('YYYY') === '1970' || dayjs(dateFinFormation).format('YYYY') === '1970') {
+            logger.error(`Format date invalide : attendu dd/mm/yyyy pour les dates de formation dans le fichier csv pour : '${email}'`);
             errors++;
             reject();
           } else {
@@ -109,7 +114,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               disponible: false,
               estRecrute: true,
               datePrisePoste: dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
-              dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate(),
+              dateFinFormation: dateFinFormation !== null ? dayjs(dateFinFormation, 'YYYY-MM-DD').toDate() : null,
               structureId: structure._id,
               userCreated: true
             } });
