@@ -130,7 +130,10 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   const conseillersEnPoste = await db.collection('conseillers').find({
     statut: { $eq: 'RECRUTE' },
     structureId: { $ne: null },
-    dateFinFormation: { $lt: new Date() }
+    $and: [
+      { dateFinFormation: { $ne: null } },
+      { dateFinFormation: { $lt: new Date() } }
+    ]
   }).toArray();
   let promisesConseillers = [];
   lignes = [];
