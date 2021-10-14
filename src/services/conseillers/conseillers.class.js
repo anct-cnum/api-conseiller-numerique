@@ -392,7 +392,7 @@ exports.Conseillers = class Conseillers extends Service {
           const page = await browser.newPage();
 
           await Promise.all([
-            page.goto(app.get('espace_coop_hostname') + '/statistiques/', { waitUntil: 'networkidle0' }),
+            page.goto(app.get('espace_coop_hostname') + '/statistiques', { waitUntil: 'networkidle0' }),
           ]);
 
           await page.focus('#datePickerDebutPDF');

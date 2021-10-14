@@ -178,6 +178,7 @@ exports.Stats = class Stats extends Service {
           }).toJSON());
           return;
         }
+
         const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
         const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
         const type = req.query.type;
@@ -200,7 +201,6 @@ exports.Stats = class Stats extends Service {
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
           const browser = await puppeteer.launch();
-
           browser.on('targetchanged', async target => {
             const targetPage = await target.page();
             const client = await targetPage.target().createCDPSession();
@@ -214,9 +214,11 @@ exports.Stats = class Stats extends Service {
           });
 
           const page = await browser.newPage();
+
           await Promise.all([
             page.goto(app.get('espace_coop_hostname') + '/statistiques/' + finUrl, { waitUntil: 'networkidle0' }),
           ]);
+
           await page.waitForTimeout(500);
 
           let pdf;
@@ -229,6 +231,7 @@ exports.Stats = class Stats extends Service {
 
           res.contentType('application/pdf');
           pdf.then(buffer => res.send(buffer));
+
           return;
         } catch (error) {
           app.get('sentry').captureException(error);
@@ -435,7 +438,7 @@ exports.Stats = class Stats extends Service {
       });
     });
 
-    app.post('/stats/territoire/cra', async (req, res) => {
+    app.get('/stats/territoire/cra', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
@@ -453,22 +456,17 @@ exports.Stats = class Stats extends Service {
         }
 
         //Composition de la partie query en formattant la date
-        let dateDebut = new Date(req.body?.dateDebut);
+        let dateDebut = new Date(req.query?.dateDebut);
         dateDebut.setUTCHours(0, 0, 0, 0);
-        let dateFin = new Date(req.body?.dateFin);
+        let dateFin = new Date(req.query?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
-        const territoire = req.body?.territoire;
-
+        const conseillerIds = JSON.parse(req.query?.conseillerIds);
         //Construction des statistiques
         let stats = {};
 
-        if (territoire) {
-          const conseillerIds = territoire?.conseillerIds;
+        if (conseillerIds) {
           let ids = [];
-
-          conseillerIds.forEach(id => {
-            ids.push(new ObjectID(id));
-          });
+          ids = conseillerIds.map(id => new ObjectID(id));
           let query = {
             'createdAt': {
               '$gte': dateDebut,
@@ -521,45 +519,49 @@ exports.Stats = class Stats extends Service {
           } else {
             let aggregateEvol = [];
             const dateFinEvo = new Date();
-            let dateDebutEvo = new Date(dateFinEvo.setMonth(dateFinEvo.getMonth() - 4));
+            let dateDebutEvo = new Date(dayjs(new Date()).subtract(4, 'month'));
+
+            const dateDebutEvoYear = dateDebutEvo.getFullYear();
+            const dateFinEvoYear = dateFinEvo.getFullYear();
 
             aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
               { $match: { 'conseiller.$id': { $in: ids } } },
-              { $unwind: '$' + dateFinEvo.getFullYear() },
-              { $group: { '_id': '$' + dateFinEvo.getFullYear() + '.mois',
-                'totalCras': { $sum: '$' + dateFinEvo.getFullYear() + '.totalCras' } },
+              { $unwind: '$' + dateFinEvoYear },
+              { $group: { '_id': '$' + dateFinEvoYear + '.mois',
+                'totalCras': { $sum: '$' + dateFinEvoYear + '.totalCras' } },
               },
               {
-                $addFields: { 'mois': '$_id', 'annee': dateFinEvo.getFullYear() }
+                $addFields: { 'mois': '$_id', 'annee': dateFinEvoYear }
               },
               { $project: { mois: '$_id' } }
             ).toArray();
 
-            stats.statsEvolutions = JSON.parse('{"' + dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+            stats.statsEvolutions = JSON.parse('{"' + dateFinEvoYear.toString() + '":' + JSON.stringify(aggregateEvol) + '}');
 
             // Si année glissante on récupère les données de l'année n-1
-            if (dateDebutEvo.getFullYear() !== dateFinEvo.getFullYear()) {
+            if (dateDebutEvoYear !== dateFinEvoYear) {
 
               const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
                 { $match: { 'conseiller.$id': { $in: ids } } },
-                { $unwind: '$' + dateDebutEvo.getFullYear() },
-                { $group: { '_id': '$' + dateDebutEvo.getFullYear() + '.mois',
-                  'totalCras': { $sum: '$' + dateDebutEvo.getFullYear() + '.totalCras' } },
+                { $unwind: '$' + dateDebutEvoYear },
+                { $group: { '_id': '$' + dateDebutEvoYear + '.mois',
+                  'totalCras': { $sum: '$' + dateDebutEvoYear + '.totalCras' } },
                 },
                 {
-                  $addFields: { 'mois': '$_id', 'annee': dateDebutEvo.getFullYear() }
+                  $addFields: { 'mois': '$_id', 'annee': dateDebutEvoYear }
                 },
                 { $project: { mois: '$_id' } }
               ).toArray();
 
               stats.statsEvolutions = JSON.parse('{"' +
-              dateDebutEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
-              dateFinEvo.getFullYear().toString() + '":' + JSON.stringify(aggregateEvol) + '}');
+              dateDebutEvoYear.toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
+              dateFinEvoYear.toString() + '":' + JSON.stringify(aggregateEvol) + '}');
             }
           }
 
           stats.statsEvolutions = stats.statsEvolutions ?? {};
         }
+
         res.send(stats);
       });
     });
@@ -581,7 +583,7 @@ exports.Stats = class Stats extends Service {
 
         const schema = Joi.object({
           typeTerritoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
-          idTerritoire: Joi.string().required().error(new Error('L\'id du territoire est invalide')),
+          idTerritoire: Joi.string().min(2).max(3).required().error(new Error('L\'id du territoire est invalide')),
           dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
         }).validate(req.query);
 
@@ -600,6 +602,7 @@ exports.Stats = class Stats extends Service {
           } else if (typeTerritoire === 'region') {
             territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, 'codeRegion': idTerritoire });
           }
+
           res.send(territoire);
           return;
         } catch (error) {
