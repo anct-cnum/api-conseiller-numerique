@@ -57,7 +57,6 @@ exports.Users = class Users extends Service {
             const emails = createEmails(db, mailer);
             let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
             await message.send(user);
-            res.send(user);
           } catch (error) {
             context.app.get('sentry').captureException(error);
             logger.error(error);
@@ -79,6 +78,7 @@ exports.Users = class Users extends Service {
         logger.error(error);
         app.get('sentry').captureException(error);
       }
+      res.send({ success: true });
     });
 
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {
