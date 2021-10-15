@@ -6,7 +6,6 @@
 const { execute } = require('../../utils');
 const {
   MisesEnRelationStatut,
-  ConseillerStatut,
   UserRole,
   toSimpleMiseEnRelation,
   isRecrute,
@@ -82,8 +81,8 @@ const getConseillerWithMatchingUser = async (db, conseiller) => ({
   conseiller
 });
 
-const getConseillersWithMatchingUsersWithoutDuplicates = async (db, conseillersIdsByEmail) =>
-  await Promise.all(conseillersIdsByEmail.map(async ({ conseillers }) =>
+const getConseillersWithMatchingUsersWithoutDuplicates = async (db, conseillersByEmail) =>
+  await Promise.all(conseillersByEmail.map(async ({ conseillers }) =>
     await getConseillerWithMatchingUser(db, conseillers[0])
   ));
 
@@ -123,15 +122,15 @@ const getConseillersWithMatchingMiseEnRelationsExceptStructureId = async (db, re
 
 const getConseillerById = async (db, id) => await db.collection('conseillers').findOne({ _id: new ObjectId(id) });
 
-const setMiseEnRelationToRecrute = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateOne({
-  'conseiller.$id': new ObjectId(conseillerId),
-  'structure.$id': new ObjectId(structureId),
-}, {
-  $set: { statut: MisesEnRelationStatut.Recrutee }
-});
-
 const setAllMisesEnRelationsToNouvelle = async (db, conseillerId) => await db.collection('misesEnRelation').updateMany({
   'conseiller.$id': new ObjectId(conseillerId)
+}, {
+  $set: { statut: MisesEnRelationStatut.Nouvelle }
+});
+
+const setAllMisesEnRelationsToNouvelleExceptStructureId = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateMany({
+  'conseiller.$id': new ObjectId(conseillerId),
+  'structure.$id': { $ne: new ObjectId(structureId) }
 }, {
   $set: { statut: MisesEnRelationStatut.Nouvelle }
 });
@@ -212,6 +211,7 @@ const getConseillerRecruteInfo = (conseiller, structure) => ({
   email: conseiller.email,
   prenom: conseiller.prenom,
   nom: conseiller.nom,
+  dateDebutFormation: conseiller.datePrisePoste,
   dateFinFormation: conseiller.dateFinFormation,
   nomCommune: conseiller.nomCommune,
   departement: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.dep_name ?? conseiller.codeDepartement,
@@ -228,8 +228,7 @@ const getStructureById = async (db, structureId) => await db.collection('structu
 const fixConseillersWithoutAssociatedUser = async (db, conseillers) =>
   await Promise.all(conseillers.map(async conseiller => {
     const conseillerObj = resetConseiller(await getConseillerById(db, conseiller._id));
-    await setAllMisesEnRelationsToNouvelle(db, conseiller._id);
-    await setMiseEnRelationToRecrute(db, conseiller._id, conseiller.structureId);
+    await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId);
     await replaceConseiller(db, conseiller._id, conseillerObj);
     await updateConseillerInMisesEnRelations(db, conseiller._id);
 
@@ -253,8 +252,7 @@ const resetAllConseillers = async (db, conseillers) =>
   }));
 
 const rollbackBeforeImport = async (db, conseillers, conseillerRecrute) => {
-  await Promise.all(conseillers.map(async conseiller => await setAllMisesEnRelationsToNouvelle(db, conseiller._id)));
-  await setMiseEnRelationToRecrute(db, conseillerRecrute._id, conseillerRecrute.structureId);
+  await Promise.all(conseillers.map(async conseiller => await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId)));
   await resetAllConseillers(db, conseillers);
 
   return getConseillerRecruteInfo(
@@ -262,10 +260,9 @@ const rollbackBeforeImport = async (db, conseillers, conseillerRecrute) => {
     await getStructureById(db, conseillerRecrute.structureId));
 };
 
-const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates = async (db, misesEnRelations) =>
-  await Promise.all(misesEnRelations
-  .filter(async misesEnRelation => (await getConseillerById(db, misesEnRelation.conseiller)).statut === ConseillerStatut.Recrute)
-  .map(async misesEnRelation => await setMiseEnRelationToFinaliseeNonDisponible(db, misesEnRelation.conseiller, misesEnRelation.structure)));
+const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates = async (db, misesEnRelations) => {
+  await Promise.all(misesEnRelations.map(async misesEnRelation => await setMiseEnRelationToFinaliseeNonDisponible(db, misesEnRelation.conseiller, misesEnRelation.structure)));
+};
 
 const getUsersMatchingIds = async (db, conseillerIds) =>
   await db.collection('users').find({
@@ -309,8 +306,6 @@ const fixConseillersRecrutesUsersAndMiseEnRelations = async (db, conseillersWith
     await fixConseillerRecruteAndDuplicates(db, conseillerRecrute, conseillersDuplicates, conseillerRecruteProperties);
     await fixUser(db, conseillerUser, conseillerRecrute);
   }));
-
-const logIfAny = (message, quantity) => quantity > 0 && console.log(message, quantity);
 
 const fix = async (
   db,
@@ -365,8 +360,10 @@ const fix = async (
   ].filter(conseillerInfo => conseillerInfo !== undefined);
 };
 
+const logIfAny = (message, quantity) => quantity > 0 && console.log(message, quantity);
+
 const printReport = (
-  conseillersIdsByEmail,
+  conseillersByEmail,
   conseillersSplitOnRecruteStatut,
   usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
   conseillersRecruteWithoutDuplicatesPropertiesInspectionResult,
@@ -391,7 +388,7 @@ const printReport = (
 
   console.log('Données sur le nombre de conseillers');
   console.log('');
-  logIfAny('- Nombre total de conseillers :', conseillersIdsByEmail.length);
+  logIfAny('- Nombre total de conseillers :', conseillersByEmail.length);
   logIfAny('- Nombre de conseillers qui n\'ont pas le statut RECRUTE :', noRecruteStatut.length);
   logIfAny('- Nombre de conseillers qui ont le statut RECRUTE sans doublons :', recruteStatutWithoutDuplicates.length);
   logIfAny('- Nombre de conseillers qui ont le statut RECRUTE avec des doublons :', recruteStatutWithDuplicates.length);
@@ -609,6 +606,7 @@ const conseillersToReimportFileHeaders = [
   'Code dpt',
   'Département',
   'Région',
+  'Date de départ en formation',
   'Date de fin de formation',
   'ID structure',
   'SIRET',
@@ -631,6 +629,7 @@ const writeConseillersToReimportInCSVFile = conseillersToReimport => {
       conseillerToReimport.codeDepartement,
       conseillerToReimport.departement,
       conseillerToReimport.region,
+      moment(conseillerToReimport.datePrisePoste).format('DD/MM/yyyy'),
       moment(conseillerToReimport.dateFinFormation).format('DD/MM/yyyy'),
       conseillerToReimport.structureId,
       conseillerToReimport.siret,
@@ -644,14 +643,14 @@ const writeConseillersToReimportInCSVFile = conseillersToReimport => {
 };
 
 execute(__filename, async ({ db, exit }) => {
-  const conseillersIdsByEmail = await getConseillersByEmail(db);
+  const conseillersByEmail = await getConseillersByEmail(db);
 
   const {
     noRecruteStatut,
     manyRecruteStatut,
     recruteStatutWithoutDuplicates,
     recruteStatutWithDuplicates,
-  } = splitOnRecruteStatut(conseillersIdsByEmail);
+  } = splitOnRecruteStatut(conseillersByEmail);
 
   const usersAssociatedWithConseillersWithoutDuplicatesInspectionResult = inspectUsersAssociatedWithConseillersWithoutDuplicates(
     await getConseillersWithMatchingUsersWithoutDuplicates(db, recruteStatutWithoutDuplicates));
@@ -707,7 +706,7 @@ execute(__filename, async ({ db, exit }) => {
   }
 
   printReport(
-    conseillersIdsByEmail,
+    conseillersByEmail,
     {
       noRecruteStatut,
       manyRecruteStatut,

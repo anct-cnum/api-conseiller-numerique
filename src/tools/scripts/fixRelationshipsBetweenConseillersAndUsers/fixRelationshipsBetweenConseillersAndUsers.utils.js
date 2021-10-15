@@ -201,12 +201,12 @@ const hasConseillersWithMultipleMisesEnRelations = conseillersWithMatchingMiseEn
 
 const countStatutsFinalisee = conseillersWithMatchingMiseEnRelations =>
   conseillersWithMatchingMiseEnRelations.reduce((result, conseillerWithMatchingMiseEnRelations) =>
-    result + (conseillerWithMatchingMiseEnRelations.misesEnRelations.length > 0 &&
+    result + (conseillerWithMatchingMiseEnRelations.misesEnRelations.length === 1 &&
     hasStatutFinalisee(conseillerWithMatchingMiseEnRelations.misesEnRelations[0]) ? 1 : 0), 0);
 
 const countStatutsRecrutee = conseillersWithMatchingMiseEnRelations =>
   conseillersWithMatchingMiseEnRelations.reduce((result, conseillerWithMatchingMiseEnRelations) =>
-    result + (conseillerWithMatchingMiseEnRelations.misesEnRelations.length > 0 &&
+    result + (conseillerWithMatchingMiseEnRelations.misesEnRelations.length === 1 &&
     hasStatutRecrutee(conseillerWithMatchingMiseEnRelations.misesEnRelations[0]) ? 1 : 0), 0);
 
 const hasMultipleStatutFinalisee = conseillersWithMatchingMiseEnRelations =>
