@@ -537,6 +537,41 @@ exports.Stats = class Stats extends Service {
       });
     });
 
+    app.get('stats/nationale/cra', async (req, res) => {
+      app.get('mongoClient').then(async db => {
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
+        }
+        //Verification role admin_coop
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!user?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        //Composition de la partie query en formattant la date
+        let dateDebut = new Date(req.query?.dateDebut);
+        dateDebut.setUTCHours(0, 0, 0, 0);
+        let dateFin = new Date(req.query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
+
+        //Construction des statistiques
+        let query = {
+          'createdAt': {
+            $gte: dateDebut,
+            $lt: dateFin,
+          }
+        };
+        let stats = statsCras.getToutesStats(query);
+
+        res.send(stats);
+      });
+    });
+
     app.get('/stats/admincoop/territoire', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
