@@ -28,6 +28,7 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
 const departements = require('../../../../data/imports/departements-region.json');
+const cli = require('commander');
 
 const getConseillersByEmail = async db => await db.collection('conseillers').aggregate(
   [
@@ -593,10 +594,6 @@ const printReport = (
   console.log('');
 };
 
-program.option('-f, --fix', 'automatically fix detected inconsistencies when it is possible');
-program.helpOption('-e', 'HELP command');
-program.parse(process.argv);
-
 const conseillersToReimportFileHeaders = [
   'Mail CNFS',
   'Prénom CNFS',
@@ -614,8 +611,8 @@ const conseillersToReimportFileHeaders = [
 ];
 
 const writeConseillersToReimportInCSVFile = conseillersToReimport => {
-  let csvFile = path.join(__dirname, '../../../../data/exports', 'conseillers-to-reimport.csv');
-  let file = fs.createWriteStream(csvFile, { flags: 'w' });
+  const csvFile = path.join(__dirname, '../../../../data/exports', 'conseillers-to-reimport.csv');
+  const file = fs.createWriteStream(csvFile, { flags: 'w' });
 
   file.write(`${conseillersToReimportFileHeaders.join(';')}\n`);
 
@@ -642,8 +639,26 @@ const writeConseillersToReimportInCSVFile = conseillersToReimport => {
   file.close();
 };
 
-execute(__filename, async ({ db, exit }) => {
-  const conseillersByEmail = await getConseillersByEmail(db);
+const getConseillersWithEmail = async (db, conseillerEmail) => {
+  const allConseillersByEmail = await getConseillersByEmail(db);
+
+  return program.email !== undefined ? allConseillersByEmail.filter(conseillerByEmail => conseillerByEmail._id === conseillerEmail) : allConseillersByEmail;
+};
+
+cli.description('Détecte des problèmes en base qui concernent la cohérence entre un conseiller et ses doublons, ainsi que les mises en relations et les users associés')
+.option('-em, --email <email>', 'Adresse email du conseiller à analyser ou corriger, tous les conseillers recrutés seront pris en compte si ce paramètre n\'est pas défini')
+.option('-f, --fix', 'Correction automatique des problèmes détectés quand cela est possible')
+.helpOption('-e', 'Commande d\'aide')
+.parse(process.argv);
+
+execute(__filename, async ({ db, logger, exit }) => {
+  const conseillersByEmail = await getConseillersWithEmail(db, program.email);
+
+  if (program.email !== undefined && conseillersByEmail.length === 0) {
+    logger.warn(`Aucun conseiller avec l'email ${program.email} n'a été trouvé.`);
+    exit();
+    return;
+  }
 
   const {
     noRecruteStatut,
