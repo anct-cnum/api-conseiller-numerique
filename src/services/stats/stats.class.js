@@ -537,7 +537,8 @@ exports.Stats = class Stats extends Service {
       });
     });
 
-    app.get('stats/nationale/cra', async (req, res) => {
+    app.get('/stats/nationales/cra', async (req, res) => {
+
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -559,14 +560,14 @@ exports.Stats = class Stats extends Service {
         let dateFin = new Date(req.query?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
 
-        //Construction des statistiques
         let query = {
           'createdAt': {
-            $gte: dateDebut,
-            $lt: dateFin,
+            '$gte': dateDebut,
+            '$lt': dateFin,
           }
         };
-        let stats = statsCras.getToutesStats(query);
+
+        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
 
         res.send(stats);
       });
