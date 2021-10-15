@@ -487,6 +487,7 @@ exports.Stats = class Stats extends Service {
           if (ids.length === 1) {
             stats.statsEvolutions = await statsCras.getStatsEvolutions(db, ids[0]);
           } else {
+          //Evolutions du nb de cras sur les 4 derniers mois.
             let aggregateEvol = [];
             const dateFinEvo = new Date();
             let dateDebutEvo = new Date(dayjs(new Date()).subtract(4, 'month'));
