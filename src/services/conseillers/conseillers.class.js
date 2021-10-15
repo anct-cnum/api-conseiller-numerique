@@ -7,7 +7,7 @@ const aws = require('aws-sdk');
 const multer = require('multer');
 const fileType = require('file-type');
 const crypto = require('crypto');
-const puppeteer = require('puppeteer');
+const statsPdf = require('../stats/stats.pdf');
 const dayjs = require('dayjs');
 const Joi = require('joi');
 
@@ -362,15 +362,15 @@ exports.Conseillers = class Conseillers extends Service {
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        if (!user?.roles.includes('conseiller')) {
+        if (!user?.roles.includes('conseiller') && !user?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
           return;
         }
 
-        const dateDebut = new Date(req.query.dateDebut).getTime();
-        const dateFin = new Date(req.query.dateFin).getTime();
+        const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
+        const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
@@ -386,47 +386,11 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
+        let finUrl = '/conseiller/' + user.entity.oid + '/' + dateDebut + '/' + dateFin;
+
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
-          const browser = await puppeteer.launch();
-
-          browser.on('targetchanged', async target => {
-            const targetPage = await target.page();
-            const client = await targetPage.target().createCDPSession();
-            await client.send('Runtime.evaluate', {
-              expression: `localStorage.setItem('user', '{"accessToken":"${accessToken}",` +
-              `"authentication":{` +
-                `"strategy":"local",` +
-                `"accessToken":"${accessToken}"},` +
-              `"user":${JSON.stringify(user)}}')`
-            });
-          });
-
-          const page = await browser.newPage();
-
-          await Promise.all([
-            page.goto(app.get('espace_coop_hostname') + '/statistiques', { waitUntil: 'networkidle0' }),
-          ]);
-
-          await page.focus('#datePickerDebutPDF');
-          await page.keyboard.type(dateDebut.toString());
-
-          await page.focus('#datePickerFinPDF');
-          await page.keyboard.type(dateFin.toString());
-
-          await page.click('#chargePDF');
-          await page.waitForTimeout(500);
-
-          let pdf;
-          await Promise.all([
-            page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none }' }),
-            pdf = page.pdf({ format: 'A4', printBackground: true })
-          ]);
-
-          await browser.close();
-
-          res.contentType('application/pdf');
-          pdf.then(buffer => res.send(buffer));
+          await statsPdf.generatePdf(app, res, accessToken, user, finUrl);
           return;
         } catch (error) {
           app.get('sentry').captureException(error);
