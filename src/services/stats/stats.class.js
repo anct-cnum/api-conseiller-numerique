@@ -114,48 +114,7 @@ exports.Stats = class Stats extends Service {
         };
 
         //Construction des statistiques
-        let stats = {};
-
-        //Nombre total d'accompagnements
-        stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
-
-        //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
-        let statsActivites = await statsCras.getStatsActivites(db, query);
-        stats.nbAteliers = statsActivites?.find(activite => activite._id === 'collectif')?.count ?? 0;
-        stats.nbTotalParticipant = statsActivites?.find(activite => activite._id === 'collectif')?.nbParticipants ?? 0;
-        stats.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
-        stats.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
-
-        //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
-        let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
-        stats.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-        stats.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-        stats.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
-
-        //Total accompagnés
-        stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
-
-        //Taux accompagnement
-        let totalParticipants = stats.nbTotalParticipant + stats.nbAccompagnementPerso + stats.nbDemandePonctuel;
-        stats.tauxTotalUsagersAccompagnes = totalParticipants > 0 ? ~~(stats.nbUsagersBeneficiantSuivi / totalParticipants * 100) : 0;
-
-        //Thèmes (total de chaque catégorie)
-        stats.statsThemes = await statsCras.getStatsThemes(db, query);
-
-        //Canaux (total de chaque catégorie)
-        stats.statsLieux = await statsCras.getStatsCanaux(db, query);
-
-        //Duree (total de chaque catégorie)
-        stats.statsDurees = await statsCras.getStatsDurees(db, query);
-
-        //Catégorie d'âges (total de chaque catégorie en %)
-        stats.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
-
-        //Statut des usagers (total de chaque catégorie en %)
-        stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
-
-        //Evolutions du nb de cras
-        stats.statsEvolutions = await statsCras.getStatsEvolutions(db, conseiller._id);
+        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
 
         res.send(stats);
       });
@@ -450,93 +409,7 @@ exports.Stats = class Stats extends Service {
             'conseiller.$id': { $in: ids },
           };
 
-          //Nombre total d'accompagnements
-          stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
-
-          //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
-          let statsActivites = await statsCras.getStatsActivites(db, query);
-          stats.nbAteliers = statsActivites?.find(activite => activite._id === 'collectif')?.count ?? 0;
-          stats.nbTotalParticipant = statsActivites?.find(activite => activite._id === 'collectif')?.nbParticipants ?? 0;
-          stats.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
-          stats.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
-
-          //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
-          let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
-          stats.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-          stats.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-          stats.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
-
-          //Total accompagnés
-          stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
-
-          let totalParticipants = await statsCras.getStatsTotalParticipants(stats);
-
-          //Taux accompagnement
-          stats.tauxTotalUsagersAccompagnes = await statsCras.getStatsTauxAccompagnements(stats, totalParticipants);
-
-          //Thèmes (total de chaque catégorie)
-          stats.statsThemes = await statsCras.getStatsThemes(db, query);
-
-          //Canaux (total de chaque catégorie)
-          stats.statsLieux = await statsCras.getStatsCanaux(db, query);
-
-          //Duree (total de chaque catégorie)
-          stats.statsDurees = await statsCras.getStatsDurees(db, query);
-
-          //Catégorie d'âges (total de chaque catégorie en %)
-          stats.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
-
-          //Statut des usagers (total de chaque catégorie en %)
-          stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
-
-          //Evolutions du nb de cras
-          if (ids.length === 1) {
-            stats.statsEvolutions = await statsCras.getStatsEvolutions(db, ids[0]);
-          } else {
-          //Evolutions du nb de cras sur les 4 derniers mois.
-            let aggregateEvol = [];
-            const dateFinEvo = new Date();
-            let dateDebutEvo = new Date(dayjs(new Date()).subtract(4, 'month'));
-
-            const dateDebutEvoYear = dateDebutEvo.getFullYear();
-            const dateFinEvoYear = dateFinEvo.getFullYear();
-
-            aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
-              { $match: { 'conseiller.$id': { $in: ids } } },
-              { $unwind: '$' + dateFinEvoYear },
-              { $group: { '_id': '$' + dateFinEvoYear + '.mois',
-                'totalCras': { $sum: '$' + dateFinEvoYear + '.totalCras' } },
-              },
-              {
-                $addFields: { 'mois': '$_id', 'annee': dateFinEvoYear }
-              },
-              { $project: { mois: '$_id' } }
-            ).toArray();
-
-            stats.statsEvolutions = JSON.parse('{"' + dateFinEvoYear.toString() + '":' + JSON.stringify(aggregateEvol) + '}');
-
-            // Si année glissante on récupère les données de l'année n-1
-            if (dateDebutEvoYear !== dateFinEvoYear) {
-
-              const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
-                { $match: { 'conseiller.$id': { $in: ids } } },
-                { $unwind: '$' + dateDebutEvoYear },
-                { $group: { '_id': '$' + dateDebutEvoYear + '.mois',
-                  'totalCras': { $sum: '$' + dateDebutEvoYear + '.totalCras' } },
-                },
-                {
-                  $addFields: { 'mois': '$_id', 'annee': dateDebutEvoYear }
-                },
-                { $project: { mois: '$_id' } }
-              ).toArray();
-
-              stats.statsEvolutions = JSON.parse('{"' +
-              dateDebutEvoYear.toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
-              dateFinEvoYear.toString() + '":' + JSON.stringify(aggregateEvol) + '}');
-            }
-          }
-
-          stats.statsEvolutions = stats.statsEvolutions ?? {};
+          stats = await statsCras.getStatsGlobales(db, query, statsCras);
         }
 
         res.send(stats);
