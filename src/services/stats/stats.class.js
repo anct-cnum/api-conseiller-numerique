@@ -114,48 +114,7 @@ exports.Stats = class Stats extends Service {
         };
 
         //Construction des statistiques
-        let stats = {};
-
-        //Nombre total d'accompagnements
-        stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
-
-        //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
-        let statsActivites = await statsCras.getStatsActivites(db, query);
-        stats.nbAteliers = statsActivites?.find(activite => activite._id === 'collectif')?.count ?? 0;
-        stats.nbTotalParticipant = statsActivites?.find(activite => activite._id === 'collectif')?.nbParticipants ?? 0;
-        stats.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
-        stats.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
-
-        //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
-        let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
-        stats.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-        stats.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-        stats.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
-
-        //Total accompagnés
-        stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
-
-        //Taux accompagnement
-        let totalParticipants = stats.nbTotalParticipant + stats.nbAccompagnementPerso + stats.nbDemandePonctuel;
-        stats.tauxTotalUsagersAccompagnes = totalParticipants > 0 ? ~~(stats.nbUsagersBeneficiantSuivi / totalParticipants * 100) : 0;
-
-        //Thèmes (total de chaque catégorie)
-        stats.statsThemes = await statsCras.getStatsThemes(db, query);
-
-        //Canaux (total de chaque catégorie)
-        stats.statsLieux = await statsCras.getStatsCanaux(db, query);
-
-        //Duree (total de chaque catégorie)
-        stats.statsDurees = await statsCras.getStatsDurees(db, query);
-
-        //Catégorie d'âges (total de chaque catégorie en %)
-        stats.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
-
-        //Statut des usagers (total de chaque catégorie en %)
-        stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
-
-        //Evolutions du nb de cras
-        stats.statsEvolutions = await statsCras.getStatsEvolutions(db, conseiller._id);
+        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
 
         res.send(stats);
       });
@@ -170,46 +129,52 @@ exports.Stats = class Stats extends Service {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
         }
-        let userId = decode(accessToken).sub;
-        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop')) {
-          res.status(403).send(new Forbidden('User not authorized', {
-            userId: userId
-          }).toJSON());
-          return;
-        }
 
-        const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
-        const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
-        const type = req.query.type;
-        const idType = req.query.idType;
-
-        const schema = Joi.object({
-          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
-          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
-          type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
-          idType: Joi.required().error(new Error('L\'id du territoire invalide')),
-        }).validate(req.query);
-
-        if (schema.error) {
-          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
-          return;
-        }
-
-        let finUrl = '/' + type + '/' + idType + '/' + dateDebut + '/' + dateFin;
-
-        /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
-          await statsPdf.generatePdf(app, res, accessToken, user, finUrl);
-          return;
+          let userId = decode(accessToken).sub;
+          const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+          if (!user?.roles.includes('admin_coop')) {
+            res.status(403).send(new Forbidden('User not authorized', {
+              userId: userId
+            }).toJSON());
+            return;
+          }
+          const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
+          const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
+          const type = req.query.type;
+          const idType = req.query.idType;
+
+          const schema = Joi.object({
+            dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+            dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+            type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
+            idType: Joi.required().error(new Error('L\'id du territoire invalide')),
+          }).validate(req.query);
+
+          if (schema.error) {
+            res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+            return;
+          }
+
+          let finUrl = '/' + type + '/' + idType + '/' + dateDebut + '/' + dateFin;
+
+          /** Ouverture d'un navigateur en headless afin de générer le PDF **/
+          try {
+            await statsPdf.generatePdf(app, res, accessToken, user, finUrl);
+            return;
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+            return;
+          }
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+          res.status(500).send(new GeneralError('Une erreur d\'authentification est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
           return;
         }
       });
-
     });
 
     app.get('/stats/admincoop/dashboard', async (req, res) => {
@@ -444,94 +409,45 @@ exports.Stats = class Stats extends Service {
             'conseiller.$id': { $in: ids },
           };
 
-          //Nombre total d'accompagnements
-          stats.nbAccompagnement = await db.collection('cras').countDocuments(query);
-
-          //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
-          let statsActivites = await statsCras.getStatsActivites(db, query);
-          stats.nbAteliers = statsActivites?.find(activite => activite._id === 'collectif')?.count ?? 0;
-          stats.nbTotalParticipant = statsActivites?.find(activite => activite._id === 'collectif')?.nbParticipants ?? 0;
-          stats.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
-          stats.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
-
-          //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
-          let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
-          stats.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-          stats.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-          stats.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
-
-          //Total accompagnés
-          stats.nbUsagersBeneficiantSuivi = stats.nbUsagersAccompagnementIndividuel + stats.nbUsagersAtelierCollectif + stats.nbReconduction;
-
-          let totalParticipants = await statsCras.getStatsTotalParticipants(stats);
-
-          //Taux accompagnement
-          stats.tauxTotalUsagersAccompagnes = await statsCras.getStatsTauxAccompagnements(stats, totalParticipants);
-
-          //Thèmes (total de chaque catégorie)
-          stats.statsThemes = await statsCras.getStatsThemes(db, query);
-
-          //Canaux (total de chaque catégorie)
-          stats.statsLieux = await statsCras.getStatsCanaux(db, query);
-
-          //Duree (total de chaque catégorie)
-          stats.statsDurees = await statsCras.getStatsDurees(db, query);
-
-          //Catégorie d'âges (total de chaque catégorie en %)
-          stats.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
-
-          //Statut des usagers (total de chaque catégorie en %)
-          stats.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
-
-          //Evolutions du nb de cras
-          if (ids.length === 1) {
-            stats.statsEvolutions = await statsCras.getStatsEvolutions(db, ids[0]);
-          } else {
-          //Evolutions du nb de cras sur les 4 derniers mois.
-            let aggregateEvol = [];
-            const dateFinEvo = new Date();
-            let dateDebutEvo = new Date(dayjs(new Date()).subtract(4, 'month'));
-
-            const dateDebutEvoYear = dateDebutEvo.getFullYear();
-            const dateFinEvoYear = dateFinEvo.getFullYear();
-
-            aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
-              { $match: { 'conseiller.$id': { $in: ids } } },
-              { $unwind: '$' + dateFinEvoYear },
-              { $group: { '_id': '$' + dateFinEvoYear + '.mois',
-                'totalCras': { $sum: '$' + dateFinEvoYear + '.totalCras' } },
-              },
-              {
-                $addFields: { 'mois': '$_id', 'annee': dateFinEvoYear }
-              },
-              { $project: { mois: '$_id' } }
-            ).toArray();
-
-            stats.statsEvolutions = JSON.parse('{"' + dateFinEvoYear.toString() + '":' + JSON.stringify(aggregateEvol) + '}');
-
-            // Si année glissante on récupère les données de l'année n-1
-            if (dateDebutEvoYear !== dateFinEvoYear) {
-
-              const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
-                { $match: { 'conseiller.$id': { $in: ids } } },
-                { $unwind: '$' + dateDebutEvoYear },
-                { $group: { '_id': '$' + dateDebutEvoYear + '.mois',
-                  'totalCras': { $sum: '$' + dateDebutEvoYear + '.totalCras' } },
-                },
-                {
-                  $addFields: { 'mois': '$_id', 'annee': dateDebutEvoYear }
-                },
-                { $project: { mois: '$_id' } }
-              ).toArray();
-
-              stats.statsEvolutions = JSON.parse('{"' +
-              dateDebutEvoYear.toString() + '":' + JSON.stringify(aggregateEvolLastYear) + ',"' +
-              dateFinEvoYear.toString() + '":' + JSON.stringify(aggregateEvol) + '}');
-            }
-          }
-
-          stats.statsEvolutions = stats.statsEvolutions ?? {};
+          stats = await statsCras.getStatsGlobales(db, query, statsCras);
         }
+
+        res.send(stats);
+      });
+    });
+
+    app.get('/stats/nationales/cra', async (req, res) => {
+
+      app.get('mongoClient').then(async db => {
+
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
+        }
+        //Verification role admin_coop
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!user?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        //Composition de la partie query en formattant la date
+        let dateDebut = new Date(req.query?.dateDebut);
+        dateDebut.setUTCHours(0, 0, 0, 0);
+        let dateFin = new Date(req.query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
+
+        let query = {
+          'createdAt': {
+            '$gte': dateDebut,
+            '$lt': dateFin,
+          }
+        };
+
+        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
 
         res.send(stats);
       });
