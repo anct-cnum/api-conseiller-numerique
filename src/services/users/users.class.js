@@ -26,21 +26,34 @@ exports.Users = class Users extends Service {
     const emails = createEmails(db, mailer, app);
 
     app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
-      const nouveauEmail = req.body.email.toLowerCase();
-      const { nom, prenom, telephone } = req.body;
-      const idUser = req.params.id;
-      const userConnected = await this.find({ query: { _id: idUser } });
-      const changeInfos = { nom, prenom, telephone };
-      try {
-        await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
+      app.get('mongoClient').then(async db => {
+        const nouveauEmail = req.body.email.toLowerCase();
+        const { nom, prenom, telephone, distanceMax, dateDisponibilite, codePostal, nomCommune, codeCommune, codeDepartement, codeRegion } = req.body;
+        const idUser = req.params.id;
+        const userConnected = await this.find({ query: { _id: idUser } });
+        const changeInfos = { nom, prenom, telephone, distanceMax, dateDisponibilite, codePostal, nomCommune, codeCommune, codeRegion, codeDepartement };
+        const changeInfosMisesEnRelation = {
+          'conseillerObj.nom': nom,
+          'conseillerObj.prenom': prenom,
+          'conseillerObj.telephone': telephone,
+          'conseillerObj.distanceMax': distanceMax,
+          'conseillerObj.dateDisponibilite': dateDisponibilite,
+          'conseillerObj.codePostal': codePostal,
+          'nomCommune': nomCommune,
+          'conseillerObj.codeCommune': codeCommune,
+          'conseillerObj.codeDepartement': codeDepartement,
+          'conseillerObj.codeRegion': codeRegion };
+        try {
+          await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
+          // await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userConnected?.data[0].entity?.oid }, { $set: changeInfosMisesEnRelation });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
 
-      if (nouveauEmail !== userConnected.data[0].name) {
+        if (nouveauEmail !== userConnected.data[0].name) {
 
-        app.get('mongoClient').then(async db => {
+
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
@@ -61,11 +74,10 @@ exports.Users = class Users extends Service {
             context.app.get('sentry').captureException(error);
             logger.error(error);
           }
-        });
-      }
-      try {
-        const { idPG } = await app.service('conseillers').get(userConnected?.data[0].entity?.oid);
-        await pool.query(`UPDATE djapp_coach
+        }
+        try {
+          const { idPG } = await app.service('conseillers').get(userConnected?.data[0].entity?.oid);
+          await pool.query(`UPDATE djapp_coach
             SET (
                   first_name,
                   last_name,
@@ -73,12 +85,14 @@ exports.Users = class Users extends Service {
                   =
                   ($2,$3,$4)
                 WHERE id = $1`,
-        [idPG, prenom, nom, telephone]);
-      } catch (error) {
-        logger.error(error);
-        app.get('sentry').captureException(error);
-      }
-      res.send({ success: true });
+          [idPG, prenom, nom, telephone]);
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+        }
+        res.send({ success: true });
+      });
+
     });
 
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {
