@@ -40,6 +40,7 @@ const getConseillersByEmail = async db => await db.collection('conseillers').agg
             _id: '$_id',
             prenom: '$prenom',
             nom: '$nom',
+            email: '$email',
             estRecrute: '$estRecrute',
             statut: '$statut',
             structureId: '$structureId',
@@ -156,6 +157,13 @@ const setMiseEnRelationToFinalisee = async (db, conseillerId, structureId) => aw
   $set: { statut: MisesEnRelationStatut.Finalisee }
 });
 
+const setMiseEnRelationToRecrutee = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateOne({
+  'conseiller.$id': new ObjectId(conseillerId),
+  'structure.$id': new ObjectId(structureId),
+}, {
+  $set: { statut: MisesEnRelationStatut.Recrutee }
+});
+
 const updateConseillerInMisesEnRelations = async (db, conseillerId) => await db.collection('misesEnRelation').updateMany({
   'conseiller.$id': new ObjectId(conseillerId)
 }, {
@@ -172,8 +180,19 @@ const setRolesToConseillerOnly = async (db, userId) => await db.collection('user
   }
 });
 
+const setRolesToCandidatOnly = async (db, userId) => await db.collection('users').updateOne({ _id: userId }, {
+  $set: {
+    roles: [UserRole.Candidat]
+  }
+});
+
 const fixUsersAssociatedWithAConseillerWithoutConseillerRole = async (db, usersAssociatedWithAConseillerWithoutConseillerRole) =>
-  await Promise.all(usersAssociatedWithAConseillerWithoutConseillerRole.map(async user => await setRolesToConseillerOnly(db, user._id)));
+  await Promise.all(usersAssociatedWithAConseillerWithoutConseillerRole.map(async user => {
+    const conseiller = await getConseillerById(db, user.entity.oid);
+    if (isRecrute(conseiller)) {
+      await setRolesToConseillerOnly(db, user._id);
+    }
+  }));
 
 const fixUsersFullNameWithConseillerFullName = async (db, usersWithFullNameToFix) =>
   await Promise.all(usersWithFullNameToFix.map(async ({ user, conseiller }) =>
@@ -189,13 +208,19 @@ const setConseillerUserCreatedToTrue = async (db, conseillerId) =>
     $set: { userCreated: true }
   });
 
-const fixConseillersWithInvalidUserCreated = async (db, conseillers) =>
-  await Promise.all(conseillers
-  .filter(async conseiller => (await getUsersMatchingConseillerId(db, conseiller._id)).length > 0)
-  .map(async conseiller => {
-    await setConseillerUserCreatedToTrue(db, conseiller._id);
-    await updateConseillerInMisesEnRelations(db, conseiller._id);
-  }));
+const getUsersMatchingIds = async (db, conseillerIds) =>
+  await db.collection('users').find({
+    'entity.$id': { $in: conseillerIds }
+  }).toArray();
+
+const fixConseillersWithInvalidUserCreated = async (db, conseillers) => await Promise.all(conseillers
+.map(async conseiller => {
+  if ((await getUsersMatchingConseillerId(db, conseiller._id)).length === 0) {
+    return;
+  }
+  await setConseillerUserCreatedToTrue(db, conseiller._id);
+  await updateConseillerInMisesEnRelations(db, conseiller._id);
+}));
 
 const setConseillerDisponibleToFalse = async (db, conseillerId) =>
   await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
@@ -204,6 +229,9 @@ const setConseillerDisponibleToFalse = async (db, conseillerId) =>
 
 const fixConseillersWithInvalidDisponible = async (db, conseillers) =>
   await Promise.all(conseillers.map(async conseiller => {
+    if (!isRecrute(await getConseillerById(db, conseiller._id))) {
+      return;
+    }
     await setConseillerDisponibleToFalse(db, conseiller._id);
     await updateConseillerInMisesEnRelations(db, conseiller._id);
   }));
@@ -226,22 +254,28 @@ const getConseillerRecruteInfo = (conseiller, structure) => ({
 
 const getStructureById = async (db, structureId) => await db.collection('structures').findOne({ _id: structureId });
 
-const fixConseillersWithoutAssociatedUser = async (db, conseillers) =>
-  await Promise.all(conseillers.map(async conseiller => {
-    const conseillerObj = resetConseiller(await getConseillerById(db, conseiller._id));
-    await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId);
-    await replaceConseiller(db, conseiller._id, conseillerObj);
-    await updateConseillerInMisesEnRelations(db, conseiller._id);
+const fixConseillersWithoutAssociatedUser = async (db, conseillers) => await Promise.all(conseillers.map(async conseiller => {
+  const conseillerObj = resetConseiller(await getConseillerById(db, conseiller._id));
+  await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId);
+  const misesEnRelations = await getMisesEnRelationsMatchingConseillerIdAndStructureId(db, conseiller._id, conseiller.structureId);
+  if (misesEnRelations.length > 0 && misesEnRelations[0].statut === MisesEnRelationStatut.Finalisee) {
+    await setMiseEnRelationToRecrutee(db, conseiller._id, conseiller.structureId);
+  }
+  await replaceConseiller(db, conseiller._id, { ...conseillerObj, userCreated: false });
+  await updateConseillerInMisesEnRelations(db, conseiller._id);
 
-    return getConseillerRecruteInfo(conseillerObj, await getStructureById(db, conseillerObj.structureId));
-  }));
+  return getConseillerRecruteInfo(conseillerObj, await getStructureById(db, conseillerObj.structureId));
+}));
 
 const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatusWithoutDuplicates = async (db, misesEnRelations) =>
   await Promise.all(misesEnRelations.map(async miseEnRelation => {
     const conseiller = resetConseiller(await getConseillerById(db, miseEnRelation.conseiller));
     await setAllMisesEnRelationsToNouvelle(db, conseiller._id);
+    await setMiseEnRelationToRecrutee(db, conseiller._id, conseiller.structureId);
     await replaceConseiller(db, conseiller._id, conseiller);
     await updateConseillerInMisesEnRelations(db, conseiller._id);
+    const users = await getUsersMatchingIds(db, [conseiller._id]);
+    await Promise.all(users.map(async user => await setRolesToCandidatOnly(db, user._id)));
 
     return getConseillerRecruteInfo(conseiller, await getStructureById(db, conseiller.structureId));
   }));
@@ -256,19 +290,24 @@ const rollbackBeforeImport = async (db, conseillers, conseillerRecrute) => {
   await Promise.all(conseillers.map(async conseiller => await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId)));
   await resetAllConseillers(db, conseillers);
 
+  const misesEnRelations = await getMisesEnRelationsMatchingConseillerIdAndStructureId(db, conseillerRecrute._id, conseillerRecrute.structureId);
+  if (misesEnRelations.length > 0 && misesEnRelations[0].statut === MisesEnRelationStatut.Finalisee) {
+    await setMiseEnRelationToRecrutee(db, conseillerRecrute._id, conseillerRecrute.structureId);
+  }
+
   return getConseillerRecruteInfo(
     await getConseillerById(db, conseillerRecrute._id),
     await getStructureById(db, conseillerRecrute.structureId));
 };
 
 const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates = async (db, misesEnRelations) => {
-  await Promise.all(misesEnRelations.map(async misesEnRelation => await setMiseEnRelationToFinaliseeNonDisponible(db, misesEnRelation.conseiller, misesEnRelation.structure)));
+  await Promise.all(misesEnRelations.map(async misesEnRelation => {
+    if (!isRecrute(await getConseillerById(db, misesEnRelation.conseiller))) {
+      return;
+    }
+    await setMiseEnRelationToFinaliseeNonDisponible(db, misesEnRelation.conseiller, misesEnRelation.structure);
+  }));
 };
-
-const getUsersMatchingIds = async (db, conseillerIds) =>
-  await db.collection('users').find({
-    'entity.$id': { $in: conseillerIds }
-  }).toArray();
 
 const fixMisesEnRelations = async (db, conseillerRecrute, conseillersDuplicates) => {
   await setAllMisesEnRelationsToFinaliseeNonDisponible(db, conseillerRecrute._id);
@@ -325,6 +364,12 @@ const fix = async (
     usersAssociatedWithAConseillerWithoutConseillerRole
   } = usersAssociatedWithConseillersWithoutDuplicatesInspectionResult;
   const conseillersWithoutAssociatedUserToReimportInfo = await fixConseillersWithoutAssociatedUser(db, conseillersWithoutAssociatedUser);
+
+  const {
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus
+  } = conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
+  const conseillerWithoutFinaliseeStatusToReimportInfo = await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatusWithoutDuplicates(db, misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus);
+
   await fixUsersAssociatedWithAConseillerWithoutConseillerRole(db, usersAssociatedWithAConseillerWithoutConseillerRole);
   await fixUsersFullNameWithConseillerFullName(db, usersWithFullNameToFix);
 
@@ -332,38 +377,38 @@ const fix = async (
     conseillersWithInvalidUserCreated: conseillersWithInvalidUserCreatedWithoutDuplicates,
     conseillersWithInvalidDisponible: conseillersWithInvalidDisponibleWithoutDuplicates
   } = conseillersRecruteWithoutDuplicatesPropertiesInspectionResult;
-  await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithoutDuplicates);
   await fixConseillersWithInvalidUserCreated(db, conseillersWithInvalidUserCreatedWithoutDuplicates);
+  await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithoutDuplicates);
 
   const {
     misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates
   } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates;
   await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates(db, misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates);
 
-  const {
-    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus
-  } = conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
-  const conseillerWithoutFinaliseeStatusToReimportInfo = await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatusWithoutDuplicates(db, misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus);
+  const conseillersWithDuplicatesToReimport = [
+    ...await fixConseillersRecrutesUsersAndMiseEnRelations(db, conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee),
+    ...await fixConseillersRecrutesUsersAndMiseEnRelations(db, conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee),
+    ...await fixConseillersRecrutesUsersAndMiseEnRelations(db, conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee)
+  ];
 
   const {
     conseillersWithInvalidUserCreated: conseillersWithInvalidUserCreatedWithDuplicates,
     conseillersWithInvalidDisponible: conseillersWithInvalidDisponibleWithDuplicates
   } = conseillersRecruteWithDuplicatesPropertiesInspectionResult;
-  await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithDuplicates);
   await fixConseillersWithInvalidUserCreated(db, conseillersWithInvalidUserCreatedWithDuplicates);
+  await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithDuplicates);
 
   return [
     ...conseillersWithoutAssociatedUserToReimportInfo,
     ...conseillerWithoutFinaliseeStatusToReimportInfo,
-    ...await fixConseillersRecrutesUsersAndMiseEnRelations(db, conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee),
-    ...await fixConseillersRecrutesUsersAndMiseEnRelations(db, conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee),
-    ...await fixConseillersRecrutesUsersAndMiseEnRelations(db, conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee)
+    ...conseillersWithDuplicatesToReimport
   ].filter(conseillerInfo => conseillerInfo !== undefined);
 };
 
 const logIfAny = (message, quantity) => quantity > 0 && console.log(message, quantity);
 
-const printReport = (
+const printReport = async (
+  db,
   conseillersByEmail,
   conseillersSplitOnRecruteStatut,
   usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
@@ -720,7 +765,8 @@ execute(__filename, async ({ db, logger, exit }) => {
     writeConseillersToReimportInCSVFile(conseillersToReimport);
   }
 
-  printReport(
+  await printReport(
+    db,
     conseillersByEmail,
     {
       noRecruteStatut,
