@@ -45,7 +45,8 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             logger.warn(`Aucun conseiller recruté avec l'email '${email}' n'a été trouvé`);
             errors++;
             reject();
-          } else if (dayjs(conseillerCoop.datePrisePoste).format('YYYY') !== '1970' && dayjs(conseillerCoop.dateFinFormation).format('YYYY') !== '1970') {
+          // eslint-disable-next-line max-len
+          } else if (conseillerCoop.dateFinFormation !== null && dayjs(conseillerCoop.datePrisePoste).format('YYYY') !== '1970' && dayjs(conseillerCoop.dateFinFormation).format('YYYY') !== '1970') {
             alreadyOk++;
             reject();
           } else {
