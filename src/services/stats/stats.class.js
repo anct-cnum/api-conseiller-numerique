@@ -170,46 +170,52 @@ exports.Stats = class Stats extends Service {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
         }
-        let userId = decode(accessToken).sub;
-        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop')) {
-          res.status(403).send(new Forbidden('User not authorized', {
-            userId: userId
-          }).toJSON());
-          return;
-        }
 
-        const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
-        const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
-        const type = req.query.type;
-        const idType = req.query.idType;
-
-        const schema = Joi.object({
-          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
-          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
-          type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
-          idType: Joi.required().error(new Error('L\'id du territoire invalide')),
-        }).validate(req.query);
-
-        if (schema.error) {
-          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
-          return;
-        }
-
-        let finUrl = '/' + type + '/' + idType + '/' + dateDebut + '/' + dateFin;
-
-        /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
-          await statsPdf.generatePdf(app, res, accessToken, user, finUrl);
-          return;
+          let userId = decode(accessToken).sub;
+          const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+          if (!user?.roles.includes('admin_coop')) {
+            res.status(403).send(new Forbidden('User not authorized', {
+              userId: userId
+            }).toJSON());
+            return;
+          }
+          const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
+          const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
+          const type = req.query.type;
+          const idType = req.query.idType;
+
+          const schema = Joi.object({
+            dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+            dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+            type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
+            idType: Joi.required().error(new Error('L\'id du territoire invalide')),
+          }).validate(req.query);
+
+          if (schema.error) {
+            res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+            return;
+          }
+
+          let finUrl = '/' + type + '/' + idType + '/' + dateDebut + '/' + dateFin;
+
+          /** Ouverture d'un navigateur en headless afin de générer le PDF **/
+          try {
+            await statsPdf.generatePdf(app, res, accessToken, user, finUrl);
+            return;
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+            return;
+          }
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+          res.status(500).send(new GeneralError('Une erreur d\'authentification est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
           return;
         }
       });
-
     });
 
     app.get('/stats/admincoop/dashboard', async (req, res) => {
@@ -540,6 +546,7 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/nationales/cra', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
+
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
