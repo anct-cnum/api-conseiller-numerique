@@ -6,39 +6,29 @@ const fs = require('fs');
 const { execute } = require('../utils');
 
 execute(__filename, async ({ logger, db }) => {
-  const conseillers = await db.collection('conseillers').find({ cv: { $exists: true } }).sort({ 'cv.file': 1 }).stream();
+  const conseillers = await db.collection('conseillers').find({ cv: { $exists: true } }).sort({ 'cv.file': 1 }).toArray();
 
-  const generateCsv = async cvFiles => {
-    let promises = [];
+  // Conserver uniquement la liste des CVs et sans doublon
+  let cvFiles = conseillers.map(conseiller => conseiller.cv.file);
+  cvFiles = [...new Set(cvFiles)];
 
-    logger.info(`${cvFiles.length} conseillers avec CV`);
-    logger.info(`[Début] Génération du csv liste des CVs`);
-    let csvFile = path.join(__dirname, '../../../data/exports', 'listeCVs.csv');
+  let promises = [];
 
-    let file = fs.createWriteStream(csvFile, {
-      flags: 'w'
-    });
+  logger.info(`${conseillers.length} conseillers avec CV`);
+  logger.info(`Generating CSV file...`);
+  let csvFile = path.join(__dirname, '../../../data/exports', 'listeCVs.csv');
 
-    file.write('CV\n');
-    cvFiles.forEach(cv => {
-      promises.push(new Promise(async resolve => {
-        file.write(`${cv}\n`);
-        resolve();
-      }));
-    });
-    await Promise.all(promises);
-    file.close();
-    logger.info(`[Fin] Génération du csv liste des CVs`);
-  };
-
-  // Conservation de la liste des fichiers CVs uniquement
-  let cvFiles = [];
-  conseillers.on('data', conseiller => {
-    cvFiles.push(conseiller.cv.file);
+  let file = fs.createWriteStream(csvFile, {
+    flags: 'w'
   });
 
-  conseillers.on('end', () => {
-    cvFiles = [...new Set(cvFiles)]; //sans doublon
-    generateCsv(cvFiles);
+  file.write('Liste des CVs\n');
+  cvFiles.forEach(cv => {
+    promises.push(new Promise(async resolve => {
+      file.write(`${cv}\n`);
+      resolve();
+    }));
   });
+  await Promise.all(promises);
+  file.close();
 });
