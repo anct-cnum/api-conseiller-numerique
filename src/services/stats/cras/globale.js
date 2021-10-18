@@ -89,9 +89,3 @@ const getStatsGlobales = async (db, query, statsCras) => {
 };
 
 module.exports = { getStatsGlobales };
-
-
-/*
-
-
-*/
