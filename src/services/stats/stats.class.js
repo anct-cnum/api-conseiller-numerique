@@ -143,7 +143,7 @@ exports.Stats = class Stats extends Service {
           const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
           const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
           const type = req.query.type;
-          const idType = req.query.idType;
+          const idType = req.query.idType === 'undefined' ? '' : req.query.idType + '/';
 
           const schema = Joi.object({
             dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
@@ -157,7 +157,7 @@ exports.Stats = class Stats extends Service {
             return;
           }
 
-          let finUrl = '/' + type + '/' + idType + '/' + dateDebut + '/' + dateFin;
+          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin;
           logger.info(finUrl);
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
