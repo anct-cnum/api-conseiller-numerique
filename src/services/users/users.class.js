@@ -8,6 +8,7 @@ const { createMailbox, updateMailboxPassword } = require('../../utils/mailbox');
 const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
+const Joi = require('joi');
 
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
@@ -27,9 +28,23 @@ exports.Users = class Users extends Service {
     app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
       app.get('mongoClient').then(async db => {
         const nouveauEmail = req.body.email.toLowerCase();
-        const { nom, prenom, telephone, dateDisponibilite } = req.body;
+        const { nom, prenom, telephone, dateDisponibilite, email } = req.body;
+        const body = { nom, prenom, telephone, dateDisponibilite, email };
+        const schema = Joi.object({
+          prenom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
+          nom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
+          telephone: Joi.string().required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
+          dateDisponibilite: Joi.date().error(new Error('Le format de la date est invalide')),
+          email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
+        }).validate(body);
+
+        if (schema.error) {
+          res.status(400).json(new BadRequest(schema.error));
+          return;
+        }
         const idUser = req.params.id;
         const userConnected = await this.find({ query: { _id: idUser } });
+        const id = userConnected?.data[0].entity?.oid;
         const changeInfos = { nom, prenom, telephone, dateDisponibilite };
         const changeInfosMisesEnRelation = {
           'conseillerObj.nom': nom,
@@ -37,8 +52,8 @@ exports.Users = class Users extends Service {
           'conseillerObj.telephone': telephone,
           'conseillerObj.dateDisponibilite': dateDisponibilite };
         try {
-          await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
-          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userConnected?.data[0].entity?.oid }, { $set: changeInfosMisesEnRelation });
+          await app.service('conseillers').patch(id, changeInfos);
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id }, { $set: changeInfosMisesEnRelation });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
@@ -46,7 +61,6 @@ exports.Users = class Users extends Service {
         }
 
         if (nouveauEmail !== userConnected.data[0].name) {
-
 
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
@@ -71,7 +85,7 @@ exports.Users = class Users extends Service {
           }
         }
         try {
-          const { idPG } = await app.service('conseillers').get(userConnected?.data[0].entity?.oid);
+          const { idPG } = await app.service('conseillers').get(id);
           await pool.query(`UPDATE djapp_coach
             SET (
                   first_name,
