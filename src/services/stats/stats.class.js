@@ -122,14 +122,14 @@ exports.Stats = class Stats extends Service {
 
     app.get('/stats/admincoop/statistiques.pdf', async (req, res) => {
       app.get('mongoClient').then(async db => {
-
+        logger.info('Début de la fct de génération de pdf');
         const accessToken = req.feathers?.authentication?.accessToken;
 
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
         }
-
+        logger.info('Authentification présente');
         try {
           let userId = decode(accessToken).sub;
           const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -139,6 +139,7 @@ exports.Stats = class Stats extends Service {
             }).toJSON());
             return;
           }
+          logger.info('User avec le bon rôle');
           const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
           const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
           const type = req.query.type;
@@ -157,7 +158,7 @@ exports.Stats = class Stats extends Service {
           }
 
           let finUrl = '/' + type + '/' + idType + '/' + dateDebut + '/' + dateFin;
-
+          logger.info(finUrl);
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
             await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
