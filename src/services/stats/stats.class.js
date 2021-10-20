@@ -157,7 +157,7 @@ exports.Stats = class Stats extends Service {
             return;
           }
 
-          let finUrl = `${type}/${idType}${dateDebut}/${dateFin}`;
+          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin;
           logger.info(finUrl);
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
