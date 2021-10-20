@@ -58,6 +58,7 @@ exports.Users = class Users extends Service {
           app.get('sentry').captureException(err);
           logger.error(err);
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+          return;
         }
 
         if (nouveauEmail !== userConnected.data[0].name) {
@@ -82,6 +83,7 @@ exports.Users = class Users extends Service {
             context.app.get('sentry').captureException(error);
             logger.error(error);
             res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+            return;
           }
         }
         try {
@@ -99,6 +101,7 @@ exports.Users = class Users extends Service {
           logger.error(error);
           app.get('sentry').captureException(error);
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+          return;
         }
         res.send({ success: true });
       });
