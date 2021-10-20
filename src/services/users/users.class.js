@@ -30,11 +30,14 @@ exports.Users = class Users extends Service {
         const nouveauEmail = req.body.email.toLowerCase();
         const { nom, prenom, telephone, dateDisponibilite, email } = req.body;
         const body = { nom, prenom, telephone, dateDisponibilite, email };
+        let date = new Date();
+        date.setDate(date.getDate() - 1);
         const schema = Joi.object({
           prenom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
           nom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
           telephone: Joi.string().required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
-          dateDisponibilite: Joi.date().error(new Error('Le format de la date est invalide')),
+          // eslint-disable-next-line max-len
+          dateDisponibilite: Joi.date().min(date).error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
           email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
         }).validate(body);
 
