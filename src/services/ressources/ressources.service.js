@@ -5,6 +5,7 @@ const hooks = require('./ressources.hooks');
 module.exports = function(app) {
   const options = {
     paginate: app.get('paginate_resourcerie'),
+    whitelist: ['$text', '$search'], // fields used by feathers-mongodb-fuzzy-search
   };
 
   // Initialize our service with any options it requires
