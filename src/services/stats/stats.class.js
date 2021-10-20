@@ -6,7 +6,8 @@ const statsCras = require('./cras');
 const Joi = require('joi');
 const dayjs = require('dayjs');
 const logger = require('../../logger');
-const statsPdf = require('./stats.pdf');
+//const statsPdf = require('./stats.pdf');
+const puppeteer = require('puppeteer');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -160,15 +161,53 @@ exports.Stats = class Stats extends Service {
           let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin;
           logger.info(finUrl);
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
-          try {
+          const browser = await puppeteer.launch();
+
+          browser.on('targetchanged', async target => {
+            const targetPage = await target.page();
+            const client = await targetPage.target().createCDPSession();
+            logger.info('client récupéré');
+            await client.send('Runtime.evaluate', {
+              expression: `localStorage.setItem('user', '{"accessToken":"${accessToken}",` +
+              `"authentication":{` +
+                `"strategy":"local",` +
+                `"accessToken":"${accessToken}"},` +
+              `"user":${JSON.stringify(user)}}')`
+            });
+          });
+          logger.info('Création du client');
+          logger.info('Avant const page');
+          const page = await browser.newPage();
+          logger.info(app.get('espace_coop_hostname'));
+          await Promise.all([
+            page.goto(app.get('espace_coop_hostname') + '/statistiques' + finUrl, { waitUntil: 'networkidle0' }),
+          ]);
+          logger.info('Atterissage sur la page statistiques');
+          await page.waitForTimeout(500);
+
+          let pdf;
+          await Promise.all([
+            page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none }' }),
+            pdf = page.pdf({ format: 'A4', printBackground: true })
+          ]);
+          logger.info('Génération du pdf');
+          await browser.close();
+
+          res.contentType('application/pdf');
+          pdf.then(buffer => res.send(buffer));
+          logger.info('Envoi du pdf');
+
+          /*
+         try {
             await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
+
             return;
           } catch (error) {
             app.get('sentry').captureException(error);
             logger.error(error);
             res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
             return;
-          }
+          }*/
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
