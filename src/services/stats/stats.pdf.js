@@ -17,6 +17,7 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
         `"user":${JSON.stringify(user)}}')`
       });
     });
+    logger.info('Création du client');
   } catch (error) {
     app.get('sentry').captureException(error);
     logger.error(error);
@@ -27,32 +28,20 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
     await Promise.all([
       page.goto(app.get('espace_coop_hostname') + '/statistiques' + finUrl, { waitUntil: 'networkidle0' }),
     ]);
+    logger.info('Atterissage sur la page statistiques');
     await page.waitForTimeout(500);
+
     let pdf;
-    try {
-      await Promise.all([
-        page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none }' }),
-        pdf = page.pdf({ format: 'A4', printBackground: true })
-      ]);
-    } catch (error) {
-      app.get('sentry').captureException(error);
-      logger.error(error);
-    }
+    await Promise.all([
+      page.addStyleTag({ content: '#burgerMenu { display: none} .no-print { display: none }' }),
+      pdf = page.pdf({ format: 'A4', printBackground: true })
+    ]);
+    logger.info('Génération du pdf');
+    await browser.close();
 
-    try {
-      await browser.close();
-    } catch (error) {
-      app.get('sentry').captureException(error);
-      logger.error(error);
-    }
-
-    try {
-      res.contentType('application/pdf');
-      pdf.then(buffer => res.send(buffer));
-    } catch (error) {
-      app.get('sentry').captureException(error);
-      logger.error(error);
-    }
+    res.contentType('application/pdf');
+    pdf.then(buffer => res.send(buffer));
+    logger.info('Envoi du pdf');
   } catch (error) {
     app.get('sentry').captureException(error);
     logger.error(error);
