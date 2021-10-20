@@ -160,6 +160,7 @@ exports.Stats = class Stats extends Service {
 
           let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin;
           logger.info(finUrl);
+          logger.info(app.get('espace_coop_hostname'));
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           const browser = await puppeteer.launch();
 
@@ -178,10 +179,9 @@ exports.Stats = class Stats extends Service {
           logger.info('Création du client');
           logger.info('Avant const page');
           const page = await browser.newPage();
-          logger.info(app.get('espace_coop_hostname'));
-          await Promise.all([
-            page.goto(app.get('espace_coop_hostname') + '/statistiques' + finUrl, { waitUntil: 'networkidle0' }),
-          ]);
+
+          await page.goto(app.get('espace_coop_hostname') + '/statistiques' + finUrl, { waitUntil: 'networkidle0' });
+
           logger.info('Atterissage sur la page statistiques');
           await page.waitForTimeout(500);
 
