@@ -390,13 +390,14 @@ exports.Conseillers = class Conseillers extends Service {
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
-          await statsPdf.generatePdf(app, res, accessToken, user, finUrl);
-          return;
+          await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
         }
+
+        return;
       });
     });
 

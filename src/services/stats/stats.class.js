@@ -160,7 +160,7 @@ exports.Stats = class Stats extends Service {
 
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
-            await statsPdf.generatePdf(app, res, accessToken, user, finUrl);
+            await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
             return;
           } catch (error) {
             app.get('sentry').captureException(error);
