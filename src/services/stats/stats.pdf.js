@@ -25,6 +25,7 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
 
   try {
     const page = await browser.newPage();
+    logger.info(app.get('espace_coop_hostname'));
     await Promise.all([
       page.goto(app.get('espace_coop_hostname') + '/statistiques' + finUrl, { waitUntil: 'networkidle0' }),
     ]);
