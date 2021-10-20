@@ -1,19 +1,29 @@
 const axios = require('axios');
 const slugify = require('slugify');
 
+const slugifyName = name => {
+  slugify.extend({ '-': ' ' });
+  slugify.extend({ '\'': ' ' });
+  return slugify(name, { replacement: '', lower: true });
+};
+
+const loginAPI = async ({ mattermost }) => {
+  const resultLogin = await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/users/login`,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    data: { 'login_id': mattermost.login, 'password': mattermost.password }
+  });
+
+  return resultLogin.request.res.headers.token;
+};
+
 const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
 
   try {
-    const resultLogin = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/users/login`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: { 'login_id': mattermost.login, 'password': mattermost.password }
-    });
-
-    const token = resultLogin.request.res.headers.token;
+    const token = await loginAPI(mattermost);
 
     const resultCreation = await axios({
       method: 'post',
@@ -113,18 +123,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
 const updateAccountPassword = async (mattermost, conseiller, newPassword, db, logger, Sentry) => {
 
   try {
-
-    //Connexion à l'API de Mattermost
-    const resultLogin = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/users/login`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: { 'login_id': mattermost.login, 'password': mattermost.password }
-    });
-
-    const token = resultLogin.request.res.headers.token;
+    const token = await loginAPI(mattermost);
 
     const resultUpdatePassword = await axios({
       method: 'put',
@@ -157,18 +156,7 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
 const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
   try {
-
-    //Connexion à l'API de Mattermost
-    const resultLogin = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/users/login`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: { 'login_id': mattermost.login, 'password': mattermost.password }
-    });
-
-    const token = resultLogin.request.res.headers.token;
+    const token = await loginAPI(mattermost);
 
     //Query parameter permanent pour la suppression définitive (il faut que le paramètre ServiceSettings.EnableAPIUserDeletion soit configuré à true)
     const resultDeleteAccount = await axios({
@@ -198,4 +186,25 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
 };
 
-module.exports = { createAccount, updateAccountPassword, deleteAccount };
+const createChannel = async (mattermost, token, name) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI(mattermost);
+  }
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/channels`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'team_id': mattermost.teamId,
+      'name': slugifyName(name),
+      'display_name': name,
+      'type': 'P'
+    }
+  });
+};
+
+module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel };
