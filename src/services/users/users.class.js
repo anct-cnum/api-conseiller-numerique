@@ -1,6 +1,5 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound, Conflict, BadRequest, GeneralError } = require('@feathersjs/errors');
-
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
@@ -28,27 +27,22 @@ exports.Users = class Users extends Service {
     app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
       app.get('mongoClient').then(async db => {
         const nouveauEmail = req.body.email.toLowerCase();
-        const { nom, prenom, telephone, distanceMax, dateDisponibilite, codePostal, nomCommune, codeCommune, codeDepartement, codeRegion } = req.body;
+        const { nom, prenom, telephone, dateDisponibilite } = req.body;
         const idUser = req.params.id;
         const userConnected = await this.find({ query: { _id: idUser } });
-        const changeInfos = { nom, prenom, telephone, distanceMax, dateDisponibilite, codePostal, nomCommune, codeCommune, codeRegion, codeDepartement };
+        const changeInfos = { nom, prenom, telephone, dateDisponibilite };
         const changeInfosMisesEnRelation = {
           'conseillerObj.nom': nom,
           'conseillerObj.prenom': prenom,
           'conseillerObj.telephone': telephone,
-          'conseillerObj.distanceMax': distanceMax,
-          'conseillerObj.dateDisponibilite': dateDisponibilite,
-          'conseillerObj.codePostal': codePostal,
-          'nomCommune': nomCommune,
-          'conseillerObj.codeCommune': codeCommune,
-          'conseillerObj.codeDepartement': codeDepartement,
-          'conseillerObj.codeRegion': codeRegion };
+          'conseillerObj.dateDisponibilite': dateDisponibilite };
         try {
           await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
-          // await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userConnected?.data[0].entity?.oid }, { $set: changeInfosMisesEnRelation });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userConnected?.data[0].entity?.oid }, { $set: changeInfosMisesEnRelation });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
+          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
         }
 
         if (nouveauEmail !== userConnected.data[0].name) {
@@ -73,6 +67,7 @@ exports.Users = class Users extends Service {
           } catch (error) {
             context.app.get('sentry').captureException(error);
             logger.error(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
           }
         }
         try {
@@ -89,6 +84,7 @@ exports.Users = class Users extends Service {
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
+          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
         }
         res.send({ success: true });
       });
