@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 
 const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) => {
 
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: false });
 
   try {
     browser.on('targetchanged', async target => {
