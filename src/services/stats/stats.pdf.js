@@ -9,6 +9,7 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
     browser.on('targetchanged', async target => {
       const targetPage = await target.page();
       const client = await targetPage.target().createCDPSession();
+      logger.info('client récupéré');
       await client.send('Runtime.evaluate', {
         expression: `localStorage.setItem('user', '{"accessToken":"${accessToken}",` +
         `"authentication":{` +
