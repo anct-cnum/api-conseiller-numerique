@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 
 const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) => {
 
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ pipe: true });
 
   try {
     browser.on('targetchanged', async target => {
@@ -24,6 +24,8 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   }
 
   try {
+
+    logger.info('Avant const page');
     const page = await browser.newPage();
     logger.info(app.get('espace_coop_hostname'));
     await Promise.all([
