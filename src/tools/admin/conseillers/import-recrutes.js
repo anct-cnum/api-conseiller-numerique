@@ -30,9 +30,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     readCSV(program.csv).then(async conseillers => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
+          const regexDateFormation = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
           const email = conseiller['Mail CNFS'].toLowerCase();
-          const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
-          const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
           const exist = await db.collection('conseillers').countDocuments({ email });
           const structureId = parseInt(conseiller['ID structure']);
@@ -61,7 +60,15 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             errors++;
             reject();
+          // eslint-disable-next-line max-len
+          } else if ((conseiller['Date de fin de formation'] !== '#N/D' && !regexDateFormation.test(conseiller['Date de fin de formation'])) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
+            logger.error(`Format date invalide : attendu DD/MM/YYYY pour les dates de formation dans le fichier csv pour : '${email}'`);
+            errors++;
+            reject();
           } else {
+            // eslint-disable-next-line max-len
+            const dateFinFormation = conseiller['Date de fin de formation'] !== '#N/D' ? conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1') : null;
+            const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
             await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
               $set: {
                 statut: 'finalisee',
@@ -109,7 +116,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               disponible: false,
               estRecrute: true,
               datePrisePoste: dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
-              dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate(),
+              dateFinFormation: dateFinFormation !== null ? dayjs(dateFinFormation, 'YYYY-MM-DD').toDate() : null,
               structureId: structure._id,
               userCreated: true
             } });
