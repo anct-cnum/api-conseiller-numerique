@@ -480,8 +480,38 @@ exports.Stats = class Stats extends Service {
         const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
 
         try {
-          let territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, [typeTerritoire]: idTerritoire });
-          res.send(territoire);
+          let territoire = {};
+          if (typeTerritoire === 'codeDepartement') {
+            territoire = await db.collection('stats_Territoires').findOne({ 'date': dateFin, [typeTerritoire]: idTerritoire });
+            res.send(territoire);
+          } else if (typeTerritoire === 'codeRegion') {
+
+            territoire = await db.collection('stats_Territoires').aggregate([
+              { $match: { date: dateFin, [typeTerritoire]: idTerritoire } },
+              { $group: {
+                _id: {
+                  codeRegion: '$codeRegion',
+                  nomRegion: '$nomRegion',
+                },
+                conseillerIds: { $push: '$conseillerIds' }
+              } },
+              { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
+              { $project: {
+                '_id': 0,
+                'codeRegion': 1,
+                'nomRegion': 1,
+                'conseillerIds': {
+                  $reduce: {
+                    input: '$conseillerIds',
+                    initialValue: [],
+                    in: { $concatArrays: ['$$value', '$$this'] }
+                  }
+                }
+              }
+              }
+            ]).toArray();
+            res.send(territoire[0]);
+          }
           return;
         } catch (error) {
           app.get('sentry').captureException(error);
