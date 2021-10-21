@@ -1,6 +1,6 @@
 const axios = require('axios');
 const slugify = require('slugify');
-const { findDepartement } = require('../../../utils/geo');
+const { findDepartement } = require('../utils/geo');
 
 const slugifyName = name => {
   slugify.extend({ '-': ' ' });
