@@ -144,5 +144,10 @@ module.exports = {
     return Promise.all([
       db.collection('stats_Territoires').createIndex({ 'date': 1 }),
     ]);
-  }
+  },
+  hubs: db => {
+    return Promise.all([
+      db.collection('hubs').createIndex({ 'region_name': 1 }),
+    ]);
+  },
 };

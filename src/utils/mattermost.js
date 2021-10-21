@@ -1,5 +1,8 @@
 const axios = require('axios');
 const slugify = require('slugify');
+const { findDepartement } = require('../../../utils/geo');
+
+const { joinChannel } = require('../../../utils/mattermost');
 
 const slugifyName = name => {
   slugify.extend({ '-': ' ' });
@@ -102,6 +105,17 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       }
     });
     logger.info(resultJoinThemeChannel);
+
+    const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
+    const regionName = findDepartement(structure.codeDepartement).region_name;
+
+    let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
+    if (hub === null) {
+      hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
+    }
+    if (hub !== null) {
+      joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
+    }
 
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
     return true;
@@ -207,4 +221,52 @@ const createChannel = async (mattermost, token, name) => {
   });
 };
 
-module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel };
+const joinChannel = async (mattermost, token, idChannel, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI(mattermost);
+  }
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'user_id': idUser
+    }
+  });
+};
+
+const deleteArchivedChannels = async (mattermost, token) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI(mattermost);
+  }
+
+  const channels = await axios({
+    method: 'get',
+    url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/channels/deleted`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  const promises = [];
+
+  for (const channel of channels.data) {
+    promises.push(await axios({
+      method: 'delete',
+      url: `${mattermost.endPoint}/api/v4/channels/${channel.id}?permanent=true`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    }));
+  }
+
+  return Promise.all(promises);
+};
+
+module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, deleteArchivedChannels };
