@@ -2,8 +2,6 @@ const axios = require('axios');
 const slugify = require('slugify');
 const { findDepartement } = require('../../../utils/geo');
 
-const { joinChannel } = require('../../../utils/mattermost');
-
 const slugifyName = name => {
   slugify.extend({ '-': ' ' });
   slugify.extend({ '\'': ' ' });
@@ -21,6 +19,24 @@ const loginAPI = async ({ mattermost }) => {
   });
 
   return resultLogin.request.res.headers.token;
+};
+
+const joinChannel = async (mattermost, token, idChannel, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI(mattermost);
+  }
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'user_id': idUser
+    }
+  });
 };
 
 const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
@@ -94,7 +110,6 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       });
       logger.info(resultJoinChannel);
     });
-    logger.info(resultJoinThemeChannel);
 
     const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
     const regionName = findDepartement(structure.codeDepartement).region_name;
@@ -207,24 +222,6 @@ const createChannel = async (mattermost, token, name) => {
       'name': slugifyName(name),
       'display_name': name,
       'type': 'P'
-    }
-  });
-};
-
-const joinChannel = async (mattermost, token, idChannel, idUser) => {
-  if (token === undefined || token === null) {
-    token = await loginAPI(mattermost);
-  }
-
-  return await axios({
-    method: 'post',
-    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members`,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    data: {
-      'user_id': idUser
     }
   });
 };
