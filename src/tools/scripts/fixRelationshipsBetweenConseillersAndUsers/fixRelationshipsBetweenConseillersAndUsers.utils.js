@@ -442,6 +442,8 @@ module.exports = {
   UserRole,
   toSimpleMiseEnRelation,
   isRecrute,
+  hasStatutFinalisee,
+  hasStatutRecrutee,
   splitOnRecruteStatut,
   hasConseillerRole,
   inspectUsersAssociatedWithConseillersWithoutDuplicates,
