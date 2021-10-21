@@ -3,7 +3,9 @@ const puppeteer = require('puppeteer');
 
 const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) => {
 
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+    executablePath: '/usr/host/bin/chromium-browser'
+  });
 
   try {
     browser.on('targetchanged', async target => {
