@@ -32,12 +32,14 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
         let p = new Promise(async (resolve, reject) => {
           const regexDateFormation = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
           const email = conseiller['Mail CNFS'].toLowerCase();
-          const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, estRecrute: true });
-          const exist = await db.collection('conseillers').countDocuments({ email });
+          const idPGConseiller = parseInt(conseiller['ID conseiller']);
+          const alreadyRecruted = await db.collection('conseillers').countDocuments({ email, idPG: idPGConseiller, estRecrute: true });
+          const exist = await db.collection('conseillers').countDocuments({ email, idPG: idPGConseiller });
           const structureId = parseInt(conseiller['ID structure']);
           const structure = await db.collection('structures').findOne({ idPG: structureId });
           const miseEnRelation = await db.collection('misesEnRelation').findOne({
             'conseillerObj.email': email,
+            'conseillerObj.idPG': idPGConseiller,
             'structureObj.idPG': structureId,
             'statut': 'recrutee'
           });
@@ -69,13 +71,15 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             // eslint-disable-next-line max-len
             const dateFinFormation = conseiller['Date de fin de formation'] !== '#N/D' ? conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1') : null;
             const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
-            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
+            // eslint-disable-next-line max-len
+            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.email': email, 'conseillerObj.idPG': idPGConseiller, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
               $set: {
                 statut: 'finalisee',
               }
             });
 
-            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': email, 'statut': { $ne: 'finalisee' } }, {
+            // eslint-disable-next-line max-len
+            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': email, 'conseillerObj.idPG': idPGConseiller, 'statut': { $ne: 'finalisee' } }, {
               $set: {
                 statut: 'finalisee_non_disponible',
               }
