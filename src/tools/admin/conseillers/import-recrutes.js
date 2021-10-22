@@ -43,12 +43,12 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             'statut': 'recrutee'
           });
           if (alreadyRecruted > 0) {
-            logger.warn(`Un conseiller avec l'email '${email}' (id: ${idPGConseiller}) a déjà été recruté`);
+            logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
             reject();
           } else if (exist === 0) {
-            logger.error(`Conseiller avec l'email '${email}' (id: ${idPGConseiller}) introuvable`);
-            Sentry.captureException(`Conseiller avec l'email '${email}' (id: ${idPGConseiller}) introuvable`);
+            logger.error(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
+            Sentry.captureException(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
             errors++;
             reject();
           } else if (structure === null) {
@@ -63,7 +63,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             reject();
           // eslint-disable-next-line max-len
           } else if ((conseiller['Date de fin de formation'] !== '#N/D' && !regexDateFormation.test(conseiller['Date de fin de formation'])) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
-            logger.error(`Format date invalide : attendu DD/MM/YYYY pour les dates de formation dans le fichier csv pour : '${email}' (id: ${idPGConseiller})`);
+            // eslint-disable-next-line max-len
+            logger.error(`Format date invalide : attendu DD/MM/YYYY pour les dates de formation dans le fichier csv pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
             reject();
           } else {
