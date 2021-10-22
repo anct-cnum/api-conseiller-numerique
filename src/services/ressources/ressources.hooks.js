@@ -1,10 +1,12 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
+const search = require('feathers-mongodb-fuzzy-search');
 const checkPermissions = require('feathers-permissions');
 
 module.exports = {
   before: {
     all: [],
-    find: [authenticate('jwt')],
+    find: [authenticate('jwt'),
+      search({ escape: false })],
     get: [authenticate('jwt'),
       checkPermissions({
         roles: ['conseiller', 'admin_coop'],

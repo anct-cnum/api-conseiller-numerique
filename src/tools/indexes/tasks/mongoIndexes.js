@@ -144,5 +144,15 @@ module.exports = {
     return Promise.all([
       db.collection('stats_Territoires').createIndex({ 'date': 1 }),
     ]);
+  },
+  ressources: db => {
+    return Promise.all([
+      db.collection('ressources').createIndex({
+        'categorie': 'text',
+        'description': 'text',
+        'lien': 'text',
+        'tags': 'text',
+      }, { name: 'bo-search-fulltext' }),
+    ]);
   }
 };
