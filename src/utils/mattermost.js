@@ -119,7 +119,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
     }
     if (hub !== null) {
-      joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
+      joinChannel(mattermost, token, hub.channelId, resultCreation.data.id);
     }
 
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
