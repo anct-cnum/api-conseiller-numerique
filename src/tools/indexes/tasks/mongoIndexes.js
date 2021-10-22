@@ -145,6 +145,16 @@ module.exports = {
       db.collection('stats_Territoires').createIndex({ 'date': 1 }),
     ]);
   },
+  ressources: db => {
+    return Promise.all([
+      db.collection('ressources').createIndex({
+        'categorie': 'text',
+        'description': 'text',
+        'lien': 'text',
+        'tags': 'text',
+      }, { name: 'bo-search-fulltext' }),
+    ]);
+  },
   hubs: db => {
     return Promise.all([
       db.collection('hubs').createIndex({ 'region_name': 1 }),
