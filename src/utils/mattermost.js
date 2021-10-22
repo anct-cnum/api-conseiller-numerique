@@ -23,7 +23,7 @@ const loginAPI = async ({ mattermost }) => {
 
 const joinChannel = async (mattermost, token, idChannel, idUser) => {
   if (token === undefined || token === null) {
-    token = await loginAPI(mattermost);
+    token = await loginAPI({ mattermost });
   }
 
   return await axios({
@@ -42,7 +42,7 @@ const joinChannel = async (mattermost, token, idChannel, idUser) => {
 const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
 
   try {
-    const token = await loginAPI(mattermost);
+    const token = await loginAPI({ mattermost });
 
     const resultCreation = await axios({
       method: 'post',
@@ -142,7 +142,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
 const updateAccountPassword = async (mattermost, conseiller, newPassword, db, logger, Sentry) => {
 
   try {
-    const token = await loginAPI(mattermost);
+    const token = await loginAPI({ mattermost });
 
     const resultUpdatePassword = await axios({
       method: 'put',
@@ -175,7 +175,7 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
 const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
   try {
-    const token = await loginAPI(mattermost);
+    const token = await loginAPI({ mattermost });
 
     //Query parameter permanent pour la suppression définitive (il faut que le paramètre ServiceSettings.EnableAPIUserDeletion soit configuré à true)
     const resultDeleteAccount = await axios({
@@ -207,7 +207,7 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
 const createChannel = async (mattermost, token, name) => {
   if (token === undefined || token === null) {
-    token = await loginAPI(mattermost);
+    token = await loginAPI({ mattermost });
   }
 
   return await axios({
@@ -228,7 +228,7 @@ const createChannel = async (mattermost, token, name) => {
 
 const deleteArchivedChannels = async (mattermost, token) => {
   if (token === undefined || token === null) {
-    token = await loginAPI(mattermost);
+    token = await loginAPI({ mattermost });
   }
 
   const channels = await axios({
