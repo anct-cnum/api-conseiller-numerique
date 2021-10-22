@@ -1,6 +1,5 @@
 const { Service } = require('feathers-mongodb');
 const { NotFound, Conflict, BadRequest, GeneralError } = require('@feathersjs/errors');
-
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
@@ -9,6 +8,7 @@ const { createMailbox, updateMailboxPassword } = require('../../utils/mailbox');
 const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
+const Joi = require('joi');
 
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
@@ -26,21 +26,44 @@ exports.Users = class Users extends Service {
     const emails = createEmails(db, mailer, app);
 
     app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
-      const nouveauEmail = req.body.email.toLowerCase();
-      const { nom, prenom, telephone } = req.body;
-      const idUser = req.params.id;
-      const userConnected = await this.find({ query: { _id: idUser } });
-      const changeInfos = { nom, prenom, telephone };
-      try {
-        await app.service('conseillers').patch(userConnected?.data[0].entity?.oid, changeInfos);
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
+      app.get('mongoClient').then(async db => {
+        const nouveauEmail = req.body.email.toLowerCase();
+        const { nom, prenom, telephone, dateDisponibilite, email } = req.body;
+        const body = { nom, prenom, telephone, dateDisponibilite, email };
+        const schema = Joi.object({
+          prenom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
+          nom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
+          telephone: Joi.string().required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
+          // eslint-disable-next-line max-len
+          dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
+          email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
+        }).validate(body);
 
-      if (nouveauEmail !== userConnected.data[0].name) {
+        if (schema.error) {
+          res.status(400).json(new BadRequest(schema.error));
+          return;
+        }
+        const idUser = req.params.id;
+        const userConnected = await this.find({ query: { _id: idUser } });
+        const id = userConnected?.data[0].entity?.oid;
+        const changeInfos = { nom, prenom, telephone, dateDisponibilite };
+        const changeInfosMisesEnRelation = {
+          'conseillerObj.nom': nom,
+          'conseillerObj.prenom': prenom,
+          'conseillerObj.telephone': telephone,
+          'conseillerObj.dateDisponibilite': dateDisponibilite };
+        try {
+          await app.service('conseillers').patch(id, changeInfos);
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id }, { $set: changeInfosMisesEnRelation });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+          return;
+        }
 
-        app.get('mongoClient').then(async db => {
+        if (nouveauEmail !== userConnected.data[0].name) {
+
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
@@ -60,12 +83,13 @@ exports.Users = class Users extends Service {
           } catch (error) {
             context.app.get('sentry').captureException(error);
             logger.error(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+            return;
           }
-        });
-      }
-      try {
-        const { idPG } = await app.service('conseillers').get(userConnected?.data[0].entity?.oid);
-        await pool.query(`UPDATE djapp_coach
+        }
+        try {
+          const { idPG } = await app.service('conseillers').get(id);
+          await pool.query(`UPDATE djapp_coach
             SET (
                   first_name,
                   last_name,
@@ -73,12 +97,16 @@ exports.Users = class Users extends Service {
                   =
                   ($2,$3,$4)
                 WHERE id = $1`,
-        [idPG, prenom, nom, telephone]);
-      } catch (error) {
-        logger.error(error);
-        app.get('sentry').captureException(error);
-      }
-      res.send({ success: true });
+          [idPG, prenom, nom, telephone]);
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+          return;
+        }
+        res.send({ success: true });
+      });
+
     });
 
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {

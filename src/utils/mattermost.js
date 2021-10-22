@@ -1,19 +1,48 @@
 const axios = require('axios');
 const slugify = require('slugify');
+const { findDepartement } = require('../utils/geo');
+
+const slugifyName = name => {
+  slugify.extend({ '-': ' ' });
+  slugify.extend({ '\'': ' ' });
+  return slugify(name, { replacement: '', lower: true });
+};
+
+const loginAPI = async ({ mattermost }) => {
+  const resultLogin = await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/users/login`,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    data: { 'login_id': mattermost.login, 'password': mattermost.password }
+  });
+
+  return resultLogin.request.res.headers.token;
+};
+
+const joinChannel = async (mattermost, token, idChannel, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'user_id': idUser
+    }
+  });
+};
 
 const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
 
   try {
-    const resultLogin = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/users/login`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: { 'login_id': mattermost.login, 'password': mattermost.password }
-    });
-
-    const token = resultLogin.request.res.headers.token;
+    const token = await loginAPI({ mattermost });
 
     const resultCreation = await axios({
       method: 'post',
@@ -81,7 +110,18 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       });
       logger.info(resultJoinChannel);
     });
-    
+
+    const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
+    const regionName = findDepartement(structure.codeDepartement).region_name;
+
+    let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
+    if (hub === null) {
+      hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
+    }
+    if (hub !== null) {
+      joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
+    }
+
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
     return true;
   } catch (e) {
@@ -102,18 +142,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
 const updateAccountPassword = async (mattermost, conseiller, newPassword, db, logger, Sentry) => {
 
   try {
-
-    //Connexion à l'API de Mattermost
-    const resultLogin = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/users/login`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: { 'login_id': mattermost.login, 'password': mattermost.password }
-    });
-
-    const token = resultLogin.request.res.headers.token;
+    const token = await loginAPI({ mattermost });
 
     const resultUpdatePassword = await axios({
       method: 'put',
@@ -146,18 +175,7 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
 const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
   try {
-
-    //Connexion à l'API de Mattermost
-    const resultLogin = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/users/login`,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: { 'login_id': mattermost.login, 'password': mattermost.password }
-    });
-
-    const token = resultLogin.request.res.headers.token;
+    const token = await loginAPI({ mattermost });
 
     //Query parameter permanent pour la suppression définitive (il faut que le paramètre ServiceSettings.EnableAPIUserDeletion soit configuré à true)
     const resultDeleteAccount = await axios({
@@ -187,4 +205,55 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
 };
 
-module.exports = { createAccount, updateAccountPassword, deleteAccount };
+const createChannel = async (mattermost, token, name) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/channels`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'team_id': mattermost.teamId,
+      'name': slugifyName(name),
+      'display_name': name,
+      'type': 'P'
+    }
+  });
+};
+
+const deleteArchivedChannels = async (mattermost, token) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  const channels = await axios({
+    method: 'get',
+    url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/channels/deleted`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  const promises = [];
+
+  for (const channel of channels.data) {
+    promises.push(await axios({
+      method: 'delete',
+      url: `${mattermost.endPoint}/api/v4/channels/${channel.id}?permanent=true`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    }));
+  }
+
+  return Promise.all(promises);
+};
+
+module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, deleteArchivedChannels };

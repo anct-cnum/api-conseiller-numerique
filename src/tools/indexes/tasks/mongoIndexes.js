@@ -154,5 +154,10 @@ module.exports = {
         'tags': 'text',
       }, { name: 'bo-search-fulltext' }),
     ]);
-  }
+  },
+  hubs: db => {
+    return Promise.all([
+      db.collection('hubs').createIndex({ 'region_name': 1 }),
+    ]);
+  },
 };
