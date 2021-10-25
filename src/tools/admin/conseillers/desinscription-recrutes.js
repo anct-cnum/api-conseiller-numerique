@@ -100,7 +100,7 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost, app })
             ok++;
           }
           count++;
-          // TODO appel de la fonction pour m'envoi du mail
+          // TODO appel de la fonction pour l'envoi du mail
           // try {
           //   await sendEmail(app, db, conseillerFinalisee);
           // } catch (error) {
