@@ -18,6 +18,7 @@ const readCSV = async filePath => {
     throw err;
   }
 };
+
 const { execute } = require('../../utils');
 
 execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
