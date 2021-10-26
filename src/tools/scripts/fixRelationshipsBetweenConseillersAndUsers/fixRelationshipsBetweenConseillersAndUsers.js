@@ -131,9 +131,10 @@ const setAllMisesEnRelationsToNouvelle = async (db, conseillerId) => await db.co
   $set: { statut: MisesEnRelationStatut.Nouvelle }
 });
 
-const setAllMisesEnRelationsToNouvelleExceptStructureId = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateMany({
+const setAllMisesEnRelationsFinaliseeToNouvelleExceptStructureId = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateMany({
   'conseiller.$id': new ObjectId(conseillerId),
-  'structure.$id': { $ne: new ObjectId(structureId) }
+  'structure.$id': { $ne: new ObjectId(structureId) },
+  'statut': MisesEnRelationStatut.Finalisee
 }, {
   $set: { statut: MisesEnRelationStatut.Nouvelle }
 });
@@ -175,25 +176,49 @@ const replaceConseiller = async (db, conseillerId, conseillerObj) => await db.co
   _id: new ObjectId(conseillerId)
 }, conseillerObj);
 
-const setRolesToConseillerOnly = async (db, userId) => await db.collection('users').updateOne({ _id: userId }, {
-  $set: {
-    roles: [UserRole.Conseiller]
-  }
-});
-
 const setRolesToCandidatOnly = async (db, userId) => await db.collection('users').updateOne({ _id: userId }, {
   $set: {
     roles: [UserRole.Candidat]
   }
 });
 
-const fixUsersAssociatedWithAConseillerWithoutConseillerRole = async (db, usersAssociatedWithAConseillerWithoutConseillerRole) =>
-  await Promise.all(usersAssociatedWithAConseillerWithoutConseillerRole.map(async user => {
-    const conseiller = await getConseillerById(db, user.entity.oid);
-    if (isRecrute(conseiller)) {
-      await setRolesToConseillerOnly(db, user._id);
-    }
-  }));
+const getStructureById = async (db, structureId) => await db.collection('structures').findOne({ _id: structureId });
+
+const getConseillerRecruteInfo = (conseiller, structure) => ({
+  email: conseiller.email,
+  prenom: conseiller.prenom,
+  nom: conseiller.nom,
+  dateDebutFormation: conseiller.datePrisePoste,
+  dateFinFormation: conseiller.dateFinFormation,
+  nomCommune: conseiller.nomCommune,
+  departement: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.dep_name ?? conseiller.codeDepartement,
+  region: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.region_name ?? conseiller.codeRegion,
+  codeDepartement: conseiller.codeDepartement,
+  siret: structure.insee?.entreprise.siret_siege_social,
+  structureId: structure.idPG,
+  raisonSociale: structure.insee?.entreprise.raison_sociale,
+  mailSa: structure.contact?.email,
+});
+
+const rollbackBeforeImportNoDuplicates = async (db, conseillers) => await Promise.all(conseillers.map(async conseiller => {
+  const conseillerObj = resetConseiller(await getConseillerById(db, conseiller._id));
+  await setAllMisesEnRelationsFinaliseeToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId);
+  const misesEnRelations = await getMisesEnRelationsMatchingConseillerIdAndStructureId(db, conseiller._id, conseiller.structureId);
+  if (misesEnRelations.length > 0 && misesEnRelations[0].statut === MisesEnRelationStatut.Finalisee) {
+    await setMiseEnRelationToRecrutee(db, conseiller._id, conseiller.structureId);
+  }
+  const user = await getUsersMatchingConseillerId(db, conseillerObj._id);
+  await replaceConseiller(db, conseiller._id, { ...conseillerObj, userCreated: user !== undefined });
+  await updateConseillerInMisesEnRelations(db, conseiller._id);
+
+  return getConseillerRecruteInfo(conseillerObj, await getStructureById(db, conseiller.structureId));
+}));
+
+const fixUsersAssociatedWithAConseillerWithoutConseillerRole = async (db, usersAssociatedWithAConseillerWithoutConseillerRole) => {
+  const conseillers = await Promise.all(usersAssociatedWithAConseillerWithoutConseillerRole.map(async user => await getConseillerById(db, user.entity.oid)));
+
+  return await rollbackBeforeImportNoDuplicates(db, conseillers);
+};
 
 const fixUsersFullNameWithConseillerFullName = async (db, usersWithFullNameToFix) =>
   await Promise.all(usersWithFullNameToFix.map(async ({ user, conseiller }) =>
@@ -209,19 +234,30 @@ const setConseillerUserCreatedToTrue = async (db, conseillerId) =>
     $set: { userCreated: true }
   });
 
-const getUsersMatchingIds = async (db, conseillerIds) =>
+const setConseillerUserCreatedToFalse = async (db, conseillerId) =>
+  await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
+    $set: { userCreated: false }
+  });
+
+const getUsersMatchingConseillerIds = async (db, conseillerIds) =>
   await db.collection('users').find({
     'entity.$id': { $in: conseillerIds }
   }).toArray();
 
-const fixConseillersWithInvalidUserCreated = async (db, conseillers) => await Promise.all(conseillers
-.map(async conseiller => {
-  if ((await getUsersMatchingConseillerId(db, conseiller._id)).length === 0) {
-    return;
-  }
-  await setConseillerUserCreatedToTrue(db, conseiller._id);
-  await updateConseillerInMisesEnRelations(db, conseiller._id);
-}));
+const fixConseillersWithInvalidUserCreated = async (db, conseillers) => {
+  return await Promise.all(conseillers
+  .map(async conseiller => {
+    const users = await getUsersMatchingConseillerId(db, conseiller._id);
+
+    if (users.length === 0) {
+      await setConseillerUserCreatedToFalse(db, conseiller._id);
+    } else {
+      await setConseillerUserCreatedToTrue(db, conseiller._id);
+    }
+
+    await updateConseillerInMisesEnRelations(db, conseiller._id);
+  }));
+};
 
 const setConseillerDisponibleToFalse = async (db, conseillerId) =>
   await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
@@ -251,61 +287,32 @@ const fixConseillersWithInvalidEstRecrute = async (db, conseillers) =>
     await updateConseillerInMisesEnRelations(db, conseiller._id);
   }));
 
-const getConseillerRecruteInfo = (conseiller, structure) => ({
-  email: conseiller.email,
-  prenom: conseiller.prenom,
-  nom: conseiller.nom,
-  dateDebutFormation: conseiller.datePrisePoste,
-  dateFinFormation: conseiller.dateFinFormation,
-  nomCommune: conseiller.nomCommune,
-  departement: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.dep_name ?? conseiller.codeDepartement,
-  region: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.region_name ?? conseiller.codeRegion,
-  codeDepartement: conseiller.codeDepartement,
-  siret: structure.insee?.entreprise.siret_siege_social,
-  structureId: structure.idPG,
-  raisonSociale: structure.insee?.entreprise.raison_sociale,
-  mailSa: structure.contact?.email,
-});
-
-const getStructureById = async (db, structureId) => await db.collection('structures').findOne({ _id: structureId });
-
-const fixConseillersWithoutAssociatedUser = async (db, conseillers) => await Promise.all(conseillers.map(async conseiller => {
-  const conseillerObj = resetConseiller(await getConseillerById(db, conseiller._id));
-  await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId);
-  const misesEnRelations = await getMisesEnRelationsMatchingConseillerIdAndStructureId(db, conseiller._id, conseiller.structureId);
-  if (misesEnRelations.length > 0 && misesEnRelations[0].statut === MisesEnRelationStatut.Finalisee) {
-    await setMiseEnRelationToRecrutee(db, conseiller._id, conseiller.structureId);
-  }
-  await replaceConseiller(db, conseiller._id, { ...conseillerObj, userCreated: false });
-  await updateConseillerInMisesEnRelations(db, conseiller._id);
-
-  return getConseillerRecruteInfo(conseillerObj, await getStructureById(db, conseillerObj.structureId));
-}));
-
 const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatusWithoutDuplicates = async (db, misesEnRelations) =>
   await Promise.all(misesEnRelations.map(async miseEnRelation => {
-    const conseiller = resetConseiller(await getConseillerById(db, miseEnRelation.conseiller));
+    const conseiller = await getConseillerById(db, miseEnRelation.conseiller);
+    const conseillerReset = resetConseiller(conseiller);
+
     await setAllMisesEnRelationsToNouvelle(db, conseiller._id);
     await setMiseEnRelationToRecrutee(db, conseiller._id, conseiller.structureId);
     await replaceConseiller(db, conseiller._id, conseiller);
     await updateConseillerInMisesEnRelations(db, conseiller._id);
-    const users = await getUsersMatchingIds(db, [conseiller._id]);
+    const users = await getUsersMatchingConseillerIds(db, [conseiller._id]);
     await Promise.all(users.map(async user => await setRolesToCandidatOnly(db, user._id)));
 
-    return getConseillerRecruteInfo(conseiller, await getStructureById(db, conseiller.structureId));
+    return getConseillerRecruteInfo(conseillerReset, await getStructureById(db, conseiller.structureId));
   }));
 
-const resetAllConseillers = async (db, conseillers) =>
+const resetAllConseillers = async (db, conseillers, disponible, userCreated) =>
   await Promise.all(conseillers.map(async conseiller => {
     // eslint-disable-next-line no-unused-vars
-    const { structureId, ...conseillerResetWithoutStructureId } = resetConseiller(await getConseillerById(db, conseiller._id));
-    await replaceConseiller(db, conseiller._id, conseillerResetWithoutStructureId);
+    const conseillerReset = resetConseiller(await getConseillerById(db, conseiller._id));
+    await replaceConseiller(db, conseiller._id, { ...conseillerReset, disponible, userCreated: userCreated ?? conseiller.userCreated });
     await updateConseillerInMisesEnRelations(db, conseiller._id);
   }));
 
 const rollbackBeforeImport = async (db, conseillers, conseillerRecrute) => {
-  await Promise.all(conseillers.map(async conseiller => await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId)));
-  await resetAllConseillers(db, conseillers);
+  await Promise.all(conseillers.map(async conseiller => await setAllMisesEnRelationsFinaliseeToNouvelleExceptStructureId(db, conseiller._id, conseiller.structureId)));
+  await resetAllConseillers(db, conseillers, true);
 
   const misesEnRelations = await getMisesEnRelationsMatchingConseillerIdAndStructureId(db, conseillerRecrute._id, conseillerRecrute.structureId);
   if (misesEnRelations.length > 0 && misesEnRelations[0].statut === MisesEnRelationStatut.Finalisee) {
@@ -335,7 +342,7 @@ const fixMisesEnRelations = async (db, conseillerRecruteId, conseillerRecruteStr
 const fixConseillerRecruteAndDuplicates = async (db, conseillerRecrute, conseillersDuplicates, conseillerRecruteProperties) => {
   await replaceConseiller(db, conseillerRecrute._id, { ...await getConseillerById(db, conseillerRecrute._id), ...conseillerRecruteProperties });
   await updateConseillerInMisesEnRelations(db, conseillerRecrute._id);
-  await resetAllConseillers(db, conseillersDuplicates);
+  await resetAllConseillers(db, conseillersDuplicates, false, false);
 };
 
 const fixUser = async (db, conseillerUser, conseiller) =>
@@ -360,9 +367,15 @@ const getConseillerIdAndStructureId = conseillerWithMiseEnRelationsGroup => {
   };
 };
 
+const removeCandidatUsers = async (db, userIds) =>
+  await db.collection('users').deleteOne({
+    _id: { $in: userIds },
+    roles: [UserRole.Candidat]
+  });
+
 const fixConseillersRecrutesUsersAndMiseEnRelations = async (db, conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee) =>
   await Promise.all(conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.map(async conseillerWithMiseEnRelationsGroup => {
-    const users = await getUsersMatchingIds(db, getConseillerIdsFromConseillersWithMiseEnRelationGroup(conseillerWithMiseEnRelationsGroup));
+    const users = await getUsersMatchingConseillerIds(db, getConseillerIdsFromConseillersWithMiseEnRelationGroup(conseillerWithMiseEnRelationsGroup));
     const conseillerUser = users.find(hasConseillerRole);
     const { conseillerId, structureId } = getConseillerIdAndStructureId(conseillerWithMiseEnRelationsGroup);
     const conseillerRecrute = await getConseillerById(db, conseillerId);
@@ -389,6 +402,7 @@ const fixConseillersRecrutesUsersAndMiseEnRelations = async (db, conseillersWith
     await fixUser(db, conseillerUser, conseillerRecrute);
     await fixConseillerRecruteAndDuplicates(db, conseillerRecrute, conseillersDuplicates, conseillerRecruteProperties);
     await fixMisesEnRelations(db, conseillerRecrute._id, structureId, conseillersDuplicates);
+    await removeCandidatUsers(db, users.map(user => user._id));
   }));
 
 const fix = async (
@@ -407,14 +421,14 @@ const fix = async (
     usersWithFullNameToFix,
     usersAssociatedWithAConseillerWithoutConseillerRole
   } = usersAssociatedWithConseillersWithoutDuplicatesInspectionResult;
-  const conseillersWithoutAssociatedUserToReimportInfo = await fixConseillersWithoutAssociatedUser(db, conseillersWithoutAssociatedUser);
+  const conseillersWithoutAssociatedUserToReimportInfo = await rollbackBeforeImportNoDuplicates(db, conseillersWithoutAssociatedUser);
 
   const {
     misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus
   } = conseillersWithoutDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
   const conseillerWithoutFinaliseeStatusToReimportInfo = await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatusWithoutDuplicates(db, misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus);
 
-  await fixUsersAssociatedWithAConseillerWithoutConseillerRole(db, usersAssociatedWithAConseillerWithoutConseillerRole);
+  const conseillerWithoutConseillerRole = await fixUsersAssociatedWithAConseillerWithoutConseillerRole(db, usersAssociatedWithAConseillerWithoutConseillerRole);
   await fixUsersFullNameWithConseillerFullName(db, usersWithFullNameToFix);
 
   const {
@@ -445,6 +459,7 @@ const fix = async (
   await fixConseillersWithInvalidEstRecrute(db, conseillersWithInvalidEstRecruteWithDuplicates);
 
   return [
+    ...conseillerWithoutConseillerRole,
     ...conseillersWithoutAssociatedUserToReimportInfo,
     ...conseillerWithoutFinaliseeStatusToReimportInfo,
     ...conseillersWithDuplicatesToReimport
@@ -644,7 +659,6 @@ const printReport = async (
   logIfAny('- Nombre de conseillers recrutés valides avec un doublon invalide', validRecruteOneInvalidDuplicatesForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
   logIfAny('- Nombre de conseillers recrutés valides avec plusieurs doublons invalides', validRecruteManyInvalidDuplicatesForConseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee.length);
   console.log('');
-
   const {
     invalidRecruteAllValidDuplicates: invalidRecruteAllValidDuplicatesForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
     invalidRecruteOneInvalidDuplicates: invalidRecruteOneInvalidDuplicatesForConseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,

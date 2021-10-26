@@ -328,7 +328,7 @@ const isValidConseillerDuplicate = conseiller =>
   !hasDatePrisePoste(conseiller) &&
   !hasAStructureId(conseiller) &&
   !hasEstRecrute(conseiller) &&
-  isDisponible(conseiller) &&
+  !isDisponible(conseiller) &&
   !hasMattermost(conseiller) &&
   !hasEmailCn(conseiller) &&
   !hasEmailCnError(conseiller);
@@ -409,6 +409,7 @@ const resetConseiller = conseiller => {
     estRecrute,
     mattermost,
     statut,
+    structureId,
     ...newConseiller
   } = conseiller;
   /* eslint-enable no-unused-vars */

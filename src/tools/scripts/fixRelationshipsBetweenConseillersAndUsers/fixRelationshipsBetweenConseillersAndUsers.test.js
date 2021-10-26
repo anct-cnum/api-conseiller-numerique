@@ -73,7 +73,6 @@ const johnDoeConseillerReset = {
   nom: 'doe',
   email: 'john.doe@email.com',
   disponible: true,
-  structureId: 'cbfa2ca4bd2def7058af2d4a',
   userCreated: true
 };
 const johnDoeConseillerDuplicate = {
@@ -143,7 +142,7 @@ const maryDoeConseillerDuplicate = {
   nom: 'doe',
   email: 'mary.doe@email.com',
   userCreated: false,
-  disponible: true
+  disponible: false
 };
 const maryDoeConseillerInvalidDuplicate = {
   _id: 'a986da60804904c0968b3971',
