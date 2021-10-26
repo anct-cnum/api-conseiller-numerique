@@ -3,8 +3,6 @@ const { deleteAccount } = require('../../../utils/mattermost');
 const dayjs = require('dayjs');
 const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
-const createMailer = require('../../../mailer');
-const createEmails = require('../../../emails/emails');
 
 program
 .option('-c, --csv <path>', 'CSV file path');
@@ -20,17 +18,9 @@ const readCSV = async filePath => {
     throw err;
   }
 };
-const sendEmail = async (app, db, idMisesEnRelationFinalisee) => {
-  const structure = await db.collection('structures').findOne({ _id: idMisesEnRelationFinalisee.structureObj._id });
-  let emailContactStructure = structure.contact.email;
-  let mailer = createMailer(app, emailContactStructure, idMisesEnRelationFinalisee);
-  const emails = createEmails(db, mailer);
-  let message = emails.getEmailMessageByTemplateName('conseillerRuptureStructure');
-  return await message.send(idMisesEnRelationFinalisee, emailContactStructure);
-};
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost, app }) => {
+execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
 
   logger.info('Désinscription des conseillers déjà recrutés');
   let promises = [];
@@ -47,11 +37,6 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost, app })
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['email'].toLowerCase();
           const conseillerCoop = await db.collection('conseillers').findOne({ email, statut: 'RECRUTE', estRecrute: true });
-          const idMisesEnRelationFinalisee = await db.collection('misesEnRelation').findOne(
-            { 'statut': 'finalisee',
-              'conseiller.$id': conseillerCoop._id
-            });
-
           const userCoop = await db.collection('users').findOne({
             'roles': { $in: ['conseiller'] },
             'entity.$id': conseillerCoop?._id
@@ -100,15 +85,6 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost, app })
             ok++;
           }
           count++;
-          // TODO appel de la fonction pour l'envoi du mail
-          try {
-            await sendEmail(app, db, idMisesEnRelationFinalisee);
-          } catch (error) {
-            console.log('error:', error);
-            logger.error(error.message);
-            Sentry.captureException(error);
-            return;
-          }
           if (total === count) {
             logger.info(`[DESINSCRIPTION COOP] Des conseillers ont été désinscrits :  ` +
                 `${ok} désinscrits / ${errors} erreurs`);
