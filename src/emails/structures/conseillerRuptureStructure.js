@@ -9,15 +9,12 @@ module.exports = (db, mailer) => {
   return {
     templateName,
     render,
-    send: async (conseillerFinalisee, emailContactStructure) => {
-      const structure = await db.collection('structures').findOne({ '_id': conseillerFinalisee.structureObj._id });
-      const conseiller = await db.collection('conseillers').findOne({ '_id': conseillerFinalisee.conseillerObj._id });
-
+    send: async (idMisesEnRelationFinalisee, emailContactStructure) => {
       let onSuccess = () => {
-        return db.collection('misesEnRelation').updateOne({ 'structure.$id': structure._id, 'conseiller.$id': conseiller._id }, {
+        return db.collection('misesEnRelation').updateOne({ _id: idMisesEnRelationFinalisee._id }, {
           $set: {
             mailCnfsRuptureSentDate: new Date(),
-            resendMailCnfsRupture: !!structure.mailSentDate,
+            resendMailCnfsRupture: !!idMisesEnRelationFinalisee.resendMailCnfsRupture,
           },
           $unset: {
             mailErrorCnfsRupture: '',
@@ -27,7 +24,7 @@ module.exports = (db, mailer) => {
       };
 
       let onError = async err => {
-        await db.collection('misesEnRelation').updateOne({ 'structure.$id': structure._id, 'conseiller.$id': conseiller._id }, {
+        await db.collection('misesEnRelation').updateOne({ _id: idMisesEnRelationFinalisee._id }, {
           $set: {
             mailErrorCnfsRupture: 'smtpError',
             mailErrorDetailCnfsRupture: err.message
