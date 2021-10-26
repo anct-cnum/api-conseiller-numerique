@@ -446,7 +446,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
       let userAuthentifier = [];
-      const roles = ['admin'];
+      const roles = ['admin', 'candidat'];
       await verificationRoleUser(userAuthentifier, db, decode, req, res, roles);
       const user = userAuthentifier[0];
       const id = req.params.id;
