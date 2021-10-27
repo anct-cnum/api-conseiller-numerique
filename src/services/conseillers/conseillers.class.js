@@ -462,6 +462,14 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
+
+      if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
+        res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
+          id
+        }).toJSON());
+        return;
+      }
+
       const { email, cv } = conseiller.data[0];
       await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
         const actionUser = req.body.actionUser;
