@@ -463,11 +463,13 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
-      if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
-        res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
-          id
-        }).toJSON());
-        return;
+      if (user.roles.includes('candidat')) {
+        if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
+          res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
+            id
+          }).toJSON());
+          return;
+        }
       }
 
       const { email, cv } = conseiller.data[0];
