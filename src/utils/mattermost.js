@@ -39,6 +39,25 @@ const joinChannel = async (mattermost, token, idChannel, idUser) => {
   });
 };
 
+const joinTeam = async (mattermost, token, idTeam, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/teams/${idTeam}/members`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'user_id': idUser,
+      'team_id': idTeam
+    }
+  });
+};
+
 const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
 
   try {
@@ -119,7 +138,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
     }
     if (hub !== null) {
-      joinChannel(mattermost, token, hub.channelId, resultCreation.data.id);
+      joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
     }
 
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
@@ -256,4 +275,4 @@ const deleteArchivedChannels = async (mattermost, token) => {
   return Promise.all(promises);
 };
 
-module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, deleteArchivedChannels };
+module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, joinTeam, deleteArchivedChannels };

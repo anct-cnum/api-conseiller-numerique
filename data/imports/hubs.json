@@ -1,0 +1,42 @@
+[
+    {
+        "name": "Hinaura",
+        "region_names": ["Auvergne-Rhône-Alpes"]
+    },
+    {
+        "name": "Hubik",
+        "region_names": ["Nouvelle-Aquitaine"]
+    },
+    {
+        "name": "Hub MedNum BFC",
+        "region_names": ["Bourgogne-Franche-Comté"]
+    },
+    {
+        "name": "Hub du Sud",
+        "region_names": ["Provence-Alpes-Côte d'Azur"]
+    },
+    {
+        "name": "Les Assembleurs",
+        "region_names": ["Hauts-de-France"]
+    },
+    {
+        "name": "Hub UltraNumérique",
+        "departements": ["971", "976"]
+    },
+    {
+        "name": "Hub Antilles-Guyane",
+        "departements": ["973"]
+    },
+    {
+        "name": "RhinOcc",
+        "departements": ["11", "31", "32", "65"]
+    },
+    {
+        "name": "Francil-in",
+        "region_names": ["Île-de-France"]
+    },
+    {
+        "name": "Hub Conumm",
+        "region_names": ["Pays de la Loire"]
+    }
+]
