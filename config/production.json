@@ -57,7 +57,8 @@
     "password": "MATTERMOST_PASSWORD",
     "teamId": "MATTERMOST_TEAMID",
     "themeChannelId": "MATTERMOST_THEME_CHANNEL_ID",
-    "resourcesChannelId": "MATTERMOST_RESOURCES_CHANNEL_ID"
+    "resourcesChannelId": "MATTERMOST_RESOURCES_CHANNEL_ID",
+    "hubTeamId": "MATTERMOST_HUB_TEAM_ID"
   },
   "aws": {
     "endpoint": "AWS_ENDPOINT",
