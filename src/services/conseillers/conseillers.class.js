@@ -446,7 +446,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
       let userAuthentifier = [];
-      const roles = ['admin'];
+      const roles = ['admin', 'candidat'];
       await verificationRoleUser(userAuthentifier, db, decode, req, res, roles);
       const user = userAuthentifier[0];
       const id = req.params.id;
@@ -462,6 +462,16 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
+
+      if (user.roles.includes('candidat')) {
+        if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
+          res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
+            id
+          }).toJSON());
+          return;
+        }
+      }
+
       const { email, cv } = conseiller.data[0];
       await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
         const actionUser = req.body.actionUser;
