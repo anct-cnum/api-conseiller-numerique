@@ -46,7 +46,6 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
           });
           count++;
         } catch (e) {
-          console.log(conseiller._id, hub);
           Sentry.captureException(e);
           logger.error(e);//.response.data
         }
