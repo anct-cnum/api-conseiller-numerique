@@ -4,6 +4,7 @@
 /* eslint-disable max-len */
 
 const { execute } = require('../../utils');
+const { Pool } = require('pg');
 const {
   MisesEnRelationStatut,
   UserRole,
@@ -125,8 +126,9 @@ const getConseillersWithMatchingMiseEnRelationsExceptStructureId = async (db, re
 
 const getConseillerById = async (db, id) => await db.collection('conseillers').findOne({ _id: new ObjectId(id) });
 
-const setAllMisesEnRelationsToNouvelle = async (db, conseillerId) => await db.collection('misesEnRelation').updateMany({
-  'conseiller.$id': new ObjectId(conseillerId)
+const setAllMisesEnRelationsToNouvelleExceptStructureId = async (db, conseillerId, structureId) => await db.collection('misesEnRelation').updateMany({
+  'conseiller.$id': new ObjectId(conseillerId),
+  'structure.$id': { $ne: new ObjectId(structureId) },
 }, {
   $set: { statut: MisesEnRelationStatut.Nouvelle }
 });
@@ -172,10 +174,6 @@ const updateConseillerInMisesEnRelations = async (db, conseillerId) => await db.
   $set: { conseillerObj: await getConseillerById(db, conseillerId) }
 });
 
-const replaceConseiller = async (db, conseillerId, conseillerObj) => await db.collection('conseillers').replaceOne({
-  _id: new ObjectId(conseillerId)
-}, conseillerObj);
-
 const setRolesToCandidatOnly = async (db, userId) => await db.collection('users').updateOne({ _id: userId }, {
   $set: {
     roles: [UserRole.Candidat]
@@ -183,6 +181,53 @@ const setRolesToCandidatOnly = async (db, userId) => await db.collection('users'
 });
 
 const getStructureById = async (db, structureId) => await db.collection('structures').findOne({ _id: structureId });
+
+const pool = new Pool();
+
+const updateConseillerPG = async conseiller => {
+  try {
+    await pool.query(`UPDATE djapp_coach
+    SET (
+    first_name,
+    last_name,
+    disponible)
+    =
+    ($2, $3, $4)
+    WHERE id = $1`,
+    [
+      conseiller.idPG,
+      conseiller.prenom,
+      conseiller.nom,
+      conseiller.disponible
+    ]);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const replaceConseiller = async (db, conseillerId, conseillerObj) => {
+  await updateConseillerPG(conseillerObj);
+
+  await db.collection('conseillers').replaceOne({
+    _id: new ObjectId(conseillerId)
+  }, conseillerObj);
+};
+
+const setConseillerDisponibleToFalse = async (db, conseillerId) => {
+  await updateConseillerPG({ ...(await getConseillerById(db, conseillerId)), disponible: false });
+
+  await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
+    $set: { disponible: false }
+  });
+};
+
+const setConseillerEstRecruteToTrue = async (db, conseillerId) => {
+  await updateConseillerPG({ ...(await getConseillerById(db, conseillerId)), estRecrute: true });
+
+  await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
+    $set: { estRecrute: true }
+  });
+};
 
 const getConseillerRecruteInfo = (conseiller, structure) => ({
   email: conseiller.email,
@@ -259,21 +304,12 @@ const fixConseillersWithInvalidUserCreated = async (db, conseillers) => {
   }));
 };
 
-const setConseillerDisponibleToFalse = async (db, conseillerId) =>
-  await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
-    $set: { disponible: false }
-  });
-
-const setConseillerEstRecruteToTrue = async (db, conseillerId) =>
-  await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
-    $set: { estRecrute: true }
-  });
-
 const fixConseillersWithInvalidDisponible = async (db, conseillers) =>
   await Promise.all(conseillers.map(async conseiller => {
     if (!isRecrute(await getConseillerById(db, conseiller._id))) {
       return;
     }
+
     await setConseillerDisponibleToFalse(db, conseiller._id);
     await updateConseillerInMisesEnRelations(db, conseiller._id);
   }));
@@ -291,8 +327,7 @@ const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatusWithoutD
   await Promise.all(misesEnRelations.map(async miseEnRelation => {
     const conseiller = await getConseillerById(db, miseEnRelation.conseiller);
     const conseillerReset = resetConseiller(conseiller);
-
-    await setAllMisesEnRelationsToNouvelle(db, conseiller._id);
+    await setAllMisesEnRelationsToNouvelleExceptStructureId(db, conseiller._id);
     await setMiseEnRelationToRecrutee(db, conseiller._id, conseiller.structureId);
     await replaceConseiller(db, conseiller._id, conseiller);
     await updateConseillerInMisesEnRelations(db, conseiller._id);
