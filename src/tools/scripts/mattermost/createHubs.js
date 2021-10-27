@@ -2,7 +2,7 @@
 'use strict';
 
 const { execute } = require('../../utils');
-const { loginAPI, createChannel, joinChannel, deleteArchivedChannels, joinTeam } = require('../../../utils/mattermost');
+const { loginAPI, createChannel, joinTeam } = require('../../../utils/mattermost');
 const { findDepartement } = require('../../../utils/geo');
 
 execute(__filename, async ({ app, db, logger, Sentry }) => {
