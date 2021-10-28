@@ -187,10 +187,7 @@ const pool = new Pool();
 const updateConseillerPG = async conseiller => {
   try {
     await pool.query(`UPDATE djapp_coach
-    SET (
-    first_name,
-    last_name,
-    disponible)
+    SET (disponible)
     =
     ($2, $3, $4)
     WHERE id = $1`,
