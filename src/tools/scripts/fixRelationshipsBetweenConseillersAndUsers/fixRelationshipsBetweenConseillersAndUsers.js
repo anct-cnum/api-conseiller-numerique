@@ -236,10 +236,10 @@ const getConseillerRecruteInfo = (conseiller, structure) => ({
   departement: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.dep_name ?? conseiller.codeDepartement,
   region: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.region_name ?? conseiller.codeRegion,
   codeDepartement: conseiller.codeDepartement,
-  siret: structure.insee?.entreprise.siret_siege_social,
-  structureId: structure.idPG,
-  raisonSociale: structure.insee?.entreprise.raison_sociale,
-  mailSa: structure.contact?.email,
+  siret: structure?.insee?.entreprise?.siret_siege_social,
+  structureId: structure?.idPG,
+  raisonSociale: structure?.insee?.entreprise?.raison_sociale,
+  mailSa: structure?.contact?.email,
 });
 
 const rollbackBeforeImportNoDuplicates = async (db, conseillers) => await Promise.all(conseillers.map(async conseiller => {
