@@ -1,6 +1,6 @@
 const statsCras = require("../../../stats/cras");
 
-const getStatsTerritoiresForRegion = async (db, dateFin) => await db.collection('stats_Territoires').aggregate(
+const getStatsTerritoiresForRegion = db => async dateFin => await db.collection('stats_Territoires').aggregate(
   {
     $match: {
       date: dateFin
@@ -48,20 +48,20 @@ const getStatsTerritoiresForRegion = async (db, dateFin) => await db.collection(
   }
 ).toArray();
 
-const getStatsTerritoiresForDepartement = async (db, dateFin, nomOrdre, ordre) => await db.collection('stats_Territoires')
+const getStatsTerritoiresForDepartement = db => async (dateFin, nomOrdre, ordre) => await db.collection('stats_Territoires')
 .find({
   'date': dateFin
 })
 .sort(JSON.parse('{"' + nomOrdre + '":' + ordre + '}'))
 .toArray();
 
-const geCountPersonnesAccompagnees = async (ligneStats, req, db) => await statsCras.getPersonnesAccompagnees(db, {
+const geCountPersonnesAccompagnees = db => async (dateDebut, dateFin, conseillerIds) => await statsCras.getPersonnesAccompagnees(db, {
   'conseiller.$id': {
-    $in: ligneStats.conseillerIds
+    $in: conseillerIds
   },
   'createdAt': {
-    $gte: new Date(req.query.dateDebut),
-    $lte: new Date(req.query.dateFin),
+    $gte: dateDebut,
+    $lte: dateFin,
   }
 });
 

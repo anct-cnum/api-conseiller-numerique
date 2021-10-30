@@ -3,10 +3,8 @@
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 const utils = require('../../utils/index.js');
-
 const decode = require('jwt-decode');
 const { NotFound, Forbidden, NotAuthenticated, BadRequest } = require('@feathersjs/errors');
-const statsCras = require('../stats/cras');
 const {
   validateExportTerritoireSchema,
   buildExportTerritoiresCsvFileContent
@@ -15,6 +13,11 @@ const {
   statsTerritoiresForDepartement,
   statsTerritoiresForRegion
 } = require('./export-territoires/core/export-territoires.core');
+const {
+  getStatsTerritoiresForRegion,
+  geCountPersonnesAccompagnees,
+  getStatsTerritoiresForDepartement
+} = require('./export-territoires/repository/export-territoires.repository');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -325,15 +328,25 @@ exports.DataExports = class DataExports {
         return;
       }
 
-      const { territoire, nomOrdre, ordre } = req.query;
+      const { territoire, nomOrdre, ordre, dateDebut, dateFin } = req.query;
       let statsTerritoires = [];
 
+      const statsTerritoiresForDepartementRepository = {
+        getStatsTerritoiresForDepartement: getStatsTerritoiresForDepartement(db),
+        geCountPersonnesAccompagnees: geCountPersonnesAccompagnees(db)
+      };
+
+      const statsTerritoiresForRegionRepository = {
+        getStatsTerritoiresForRegion: getStatsTerritoiresForRegion(db),
+        geCountPersonnesAccompagnees: geCountPersonnesAccompagnees(db)
+      };
+
       if (territoire === 'codeDepartement') {
-        statsTerritoires = await statsTerritoiresForDepartement(db, req, nomOrdre, ordre);
+        statsTerritoires = await statsTerritoiresForDepartement(nomOrdre, ordre, dateDebut, dateFin, statsTerritoiresForDepartementRepository);
       }
 
       if (territoire === 'codeRegion') {
-        statsTerritoires = await statsTerritoiresForRegion(db, req);
+        statsTerritoires = await statsTerritoiresForRegion(dateDebut, dateFin, statsTerritoiresForRegionRepository);
       }
 
       res.setHeader('Content-disposition', 'attachment; filename=data.csv');

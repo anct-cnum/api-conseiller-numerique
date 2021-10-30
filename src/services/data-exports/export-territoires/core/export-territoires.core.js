@@ -1,19 +1,14 @@
 const dayjs = require('dayjs');
-const {
-  getStatsTerritoiresForRegion,
-  getStatsTerritoiresForDepartement,
-  geCountPersonnesAccompagnees
-} = require('../repository/export-territoires.repository');
 
-const statsTerritoiresForDepartement = async (db, req, nomOrdre, ordre) => {
+const statsTerritoiresForDepartement = async (nomOrdre, ordre, dateDebut, dateFin, { getStatsTerritoiresForDepartement, geCountPersonnesAccompagnees }) => {
   let promises = [];
 
-  let statsTerritoires = await getStatsTerritoiresForDepartement(db, dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY'), nomOrdre, ordre);
+  let statsTerritoires = await getStatsTerritoiresForDepartement(dayjs(new Date(dateFin)).format('DD/MM/YYYY'), nomOrdre, ordre);
 
   statsTerritoires.forEach(ligneStats => {
     if (ligneStats.conseillerIds.length > 0) {
       promises.push(new Promise(async resolve => {
-        let countAccompagnees = await geCountPersonnesAccompagnees(ligneStats, req, db);
+        let countAccompagnees = await geCountPersonnesAccompagnees(new Date(dateDebut), new Date(dateFin), ligneStats.conseillerIds);
         ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
 
         resolve();
@@ -28,10 +23,9 @@ const statsTerritoiresForDepartement = async (db, req, nomOrdre, ordre) => {
   return statsTerritoires;
 };
 
-async function statsTerritoiresForRegion(db, req) {
+const statsTerritoiresForRegion = async (dateDebut, dateFin, { getStatsTerritoiresForRegion, geCountPersonnesAccompagnees }) => {
   let promises = [];
-
-  let statsTerritoires = await getStatsTerritoiresForRegion(db, dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY'));
+  let statsTerritoires = await getStatsTerritoiresForRegion(dayjs(new Date(dateFin)).format('DD/MM/YYYY'));
 
   statsTerritoires.forEach(ligneStats => {
     ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec) ? Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
@@ -39,7 +33,7 @@ async function statsTerritoiresForRegion(db, req) {
 
     if (ligneStats.conseillerIds.length > 0) {
       promises.push(new Promise(async resolve => {
-        let countAccompagnees = await geCountPersonnesAccompagnees(ligneStats, req, db);
+        let countAccompagnees = await geCountPersonnesAccompagnees(new Date(dateDebut), new Date(dateFin), ligneStats.conseillerIds);
         ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
 
         resolve();
@@ -52,7 +46,7 @@ async function statsTerritoiresForRegion(db, req) {
   await Promise.all(promises);
 
   return statsTerritoires;
-}
+};
 
 module.exports = {
   statsTerritoiresForDepartement,
