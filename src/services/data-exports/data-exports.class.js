@@ -6,8 +6,15 @@ const utils = require('../../utils/index.js');
 
 const decode = require('jwt-decode');
 const { NotFound, Forbidden, NotAuthenticated, BadRequest } = require('@feathersjs/errors');
-const Joi = require('joi');
 const statsCras = require('../stats/cras');
+const {
+  validateExportTerritoireSchema,
+  buildExportTerritoiresCsvFileContent
+} = require('./export-territoires/utils/export-territoires.utils');
+const {
+  statsTerritoiresForDepartement,
+  statsTerritoiresForRegion
+} = require('./export-territoires/core/export-territoires.core');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -300,164 +307,38 @@ exports.DataExports = class DataExports {
         return;
       }
 
-      app.get('mongoClient').then(async db => {
-        let userId = decode(req.feathers.authentication.accessToken).sub;
-        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!adminUser?.roles.includes('admin_coop')) {
-          res.status(403).send(new Forbidden('User not authorized', {
-            userId: userId
-          }).toJSON());
-          return;
-        }
+      const db = await app.get('mongoClient');
 
-        const schema = Joi.object({
-          territoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
-          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
-          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
-          nomOrdre: Joi.string().required().error(new Error('Le nom de l\'ordre est invalide')),
-          ordre: Joi.number().required().error(new Error('L\'ordre est invalide')),
-        }).validate(req.query);
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!adminUser?.roles.includes('admin_coop')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
 
-        if (schema.error) {
-          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
-          return;
-        }
+      const exportTerritoiresSchemaValidation = validateExportTerritoireSchema(req.query);
 
-        const { territoire, nomOrdre, ordre } = req.query;
-        const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
-        const dateDebutQuery = new Date(req.query.dateDebut);
-        const dateFinQuery = new Date(req.query.dateFin);
+      if (exportTerritoiresSchemaValidation.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + exportTerritoiresSchemaValidation.error).toJSON());
+        return;
+      }
 
-        let items = {};
-        let statsTerritoires = [];
-        let promises = [];
-        let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
+      const { territoire, nomOrdre, ordre } = req.query;
+      let statsTerritoires = [];
 
-        if (territoire === 'codeDepartement') {
-          // region extract stats territoires repository
-          statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
-          .sort(ordreColonne).toArray();
-          // endregion
+      if (territoire === 'codeDepartement') {
+        statsTerritoires = await statsTerritoiresForDepartement(db, req, nomOrdre, ordre);
+      }
 
-          statsTerritoires.forEach(ligneStats => {
-            if (ligneStats.conseillerIds.length > 0) {
-              let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds },
-                'createdAt': {
-                  '$gte': dateDebutQuery, '$lte': dateFinQuery,
-                } };
+      if (territoire === 'codeRegion') {
+        statsTerritoires = await statsTerritoiresForRegion(db, req);
+      }
 
-              promises.push(new Promise(async resolve => {
-                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
-                ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
-                resolve();
-              }));
-            } else {
-              ligneStats.personnesAccompagnees = 0;
-            }
-          });
-          await Promise.all(promises);
-
-          items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
-        }
-
-        if (territoire === 'codeRegion') {
-          statsTerritoires = await db.collection('stats_Territoires').aggregate(
-            { $match: { date: dateFin } },
-            {
-              $group: {
-                _id: {
-                  codeRegion: '$codeRegion',
-                  nomRegion: '$nomRegion',
-                },
-                nombreConseillersCoselec: { $sum: '$nombreConseillersCoselec' },
-                cnfsActives: { $sum: '$cnfsActives' },
-                cnfsInactives: { $sum: '$cnfsInactives' },
-                conseillerIds: { $push: '$conseillerIds' }
-              }
-            },
-            {
-              $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' }
-            },
-            {
-              $project: {
-                _id: 0, codeRegion: 1, nomRegion: 1, nombreConseillersCoselec: 1, cnfsActives: 1, cnfsInactives: 1,
-                conseillerIds: {
-                  $reduce: {
-                    input: '$conseillerIds',
-                    initialValue: [],
-                    in: { $concatArrays: ['$$value', '$$this'] }
-                  }
-                }
-              }
-            }
-          ).toArray();
-
-          statsTerritoires.forEach(ligneStats => {
-            ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec) ?
-              Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
-
-            ligneStats.personnesAccompagnees = 0;
-            if (ligneStats.conseillerIds.length > 0) {
-              let query = {
-                'conseiller.$id': {
-                  $in: ligneStats.conseillerIds
-                },
-                'createdAt': {
-                  $gte: dateDebutQuery,
-                  $lte: dateFinQuery,
-                }
-              };
-
-              promises.push(new Promise(async resolve => {
-                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
-                ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
-                resolve();
-              }));
-            } else {
-              ligneStats.personnesAccompagnees = 0;
-            }
-          });
-          await Promise.all(promises);
-
-          const statsTotal = await db.collection('stats_Territoires').aggregate(
-            { $match: { date: dateFin } },
-            { $group: { _id: { codeRegion: '$codeRegion' } } },
-            { $project: { _id: 0 } }
-          ).toArray();
-
-          items.total = statsTotal.length;
-        }
-
-        const fileHeaders = [
-          'Code',
-          'Nom',
-          'Personnes accompagnées',
-          'Dotation de conseillers',
-          'CnFS activé sur l\'espace coop',
-          'CnFS en attente d\'activation',
-          'Taux d\'activation'
-        ];
-
-        const csvCellSeparator = ';';
-        const csvLineSeparator = '\n';
-
-        const territoireCsvFileContent = [
-          fileHeaders.join(csvCellSeparator),
-          ...statsTerritoires.map(statTerritoire => [
-            (territoire === 'codeRegion' ? statTerritoire.codeRegion : statTerritoire.codeDepartement),
-            (territoire === 'codeRegion' ? statTerritoire.nomRegion : statTerritoire.nomDepartement),
-            statTerritoire.personnesAccompagnees,
-            statTerritoire.nombreConseillersCoselec,
-            statTerritoire.cnfsActives,
-            statTerritoire.cnfsInactives,
-            statTerritoire.tauxActivation
-          ].join(csvCellSeparator))
-        ].join(csvLineSeparator);
-
-        res.setHeader('Content-disposition', 'attachment; filename=data.csv');
-        res.set('Content-Type', 'text/csv');
-        res.status(200).send(territoireCsvFileContent);
-      });
+      res.setHeader('Content-disposition', 'attachment; filename=data.csv');
+      res.set('Content-Type', 'text/csv');
+      res.status(200).send(buildExportTerritoiresCsvFileContent(statsTerritoires, territoire));
     });
   }
 
