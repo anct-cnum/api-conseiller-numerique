@@ -9,15 +9,8 @@ const {
   validateExportTerritoireSchema,
   buildExportTerritoiresCsvFileContent
 } = require('./export-territoires/utils/export-territoires.utils');
-const {
-  statsTerritoiresForDepartement,
-  statsTerritoiresForRegion
-} = require('./export-territoires/core/export-territoires.core');
-const {
-  getStatsTerritoiresForRegion,
-  geCountPersonnesAccompagnees,
-  getStatsTerritoiresForDepartement
-} = require('./export-territoires/repository/export-territoires.repository');
+const { getStatsTerritoires } = require('./export-territoires/core/export-territoires.core');
+const { statsTerritoiresRepository } = require('./export-territoires/repository/export-territoires.repository');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -305,12 +298,12 @@ exports.DataExports = class DataExports {
     });
 
     app.get('/exports/territoires.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-
-      const db = await app.get('mongoClient');
 
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -322,36 +315,16 @@ exports.DataExports = class DataExports {
       }
 
       const exportTerritoiresSchemaValidation = validateExportTerritoireSchema(req.query);
-
       if (exportTerritoiresSchemaValidation.error) {
         res.status(400).send(new BadRequest('Erreur : ' + exportTerritoiresSchemaValidation.error).toJSON());
         return;
       }
 
-      const { territoire, nomOrdre, ordre, dateDebut, dateFin } = req.query;
-      let statsTerritoires = [];
-
-      const statsTerritoiresForDepartementRepository = {
-        getStatsTerritoiresForDepartement: getStatsTerritoiresForDepartement(db),
-        geCountPersonnesAccompagnees: geCountPersonnesAccompagnees(db)
-      };
-
-      const statsTerritoiresForRegionRepository = {
-        getStatsTerritoiresForRegion: getStatsTerritoiresForRegion(db),
-        geCountPersonnesAccompagnees: geCountPersonnesAccompagnees(db)
-      };
-
-      if (territoire === 'codeDepartement') {
-        statsTerritoires = await statsTerritoiresForDepartement(nomOrdre, ordre, dateDebut, dateFin, statsTerritoiresForDepartementRepository);
-      }
-
-      if (territoire === 'codeRegion') {
-        statsTerritoires = await statsTerritoiresForRegion(dateDebut, dateFin, statsTerritoiresForRegionRepository);
-      }
+      const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
 
       res.setHeader('Content-disposition', 'attachment; filename=data.csv');
       res.set('Content-Type', 'text/csv');
-      res.status(200).send(buildExportTerritoiresCsvFileContent(statsTerritoires, territoire));
+      res.status(200).send(buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire));
     });
   }
 

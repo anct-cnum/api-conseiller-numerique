@@ -8,33 +8,31 @@ const validateExportTerritoireSchema = exportTerritoiresInput => Joi.object({
   ordre: Joi.number().required().error(new Error('L\'ordre est invalide')),
 }).validate(exportTerritoiresInput);
 
-const buildExportTerritoiresCsvFileContent = (statsTerritoires, territoire) => {
-  const csvCellSeparator = ';';
-  const csvLineSeparator = '\n';
+const csvCellSeparator = ';';
+const csvLineSeparator = '\n';
+const fileHeaders = [
+  'Code',
+  'Nom',
+  'Personnes accompagnées',
+  'Dotation de conseillers',
+  'CnFS activé sur l\'espace coop',
+  'CnFS en attente d\'activation',
+  'Taux d\'activation'
+];
 
-  const fileHeaders = [
-    'Code',
-    'Nom',
-    'Personnes accompagnées',
-    'Dotation de conseillers',
-    'CnFS activé sur l\'espace coop',
-    'CnFS en attente d\'activation',
-    'Taux d\'activation'
-  ];
+const buildExportTerritoiresCsvFileContent = (statsTerritoires, territoire) => [
+  fileHeaders.join(csvCellSeparator),
+  ...statsTerritoires.map(statTerritoire => [
+    (territoire === 'codeRegion' ? statTerritoire.codeRegion : statTerritoire.codeDepartement),
+    (territoire === 'codeRegion' ? statTerritoire.nomRegion : statTerritoire.nomDepartement),
+    statTerritoire.personnesAccompagnees,
+    statTerritoire.nombreConseillersCoselec,
+    statTerritoire.cnfsActives,
+    statTerritoire.cnfsInactives,
+    statTerritoire.tauxActivation
+  ].join(csvCellSeparator))
+].join(csvLineSeparator);
 
-  return [
-    fileHeaders.join(csvCellSeparator),
-    ...statsTerritoires.map(statTerritoire => [
-      (territoire === 'codeRegion' ? statTerritoire.codeRegion : statTerritoire.codeDepartement),
-      (territoire === 'codeRegion' ? statTerritoire.nomRegion : statTerritoire.nomDepartement),
-      statTerritoire.personnesAccompagnees,
-      statTerritoire.nombreConseillersCoselec,
-      statTerritoire.cnfsActives,
-      statTerritoire.cnfsInactives,
-      statTerritoire.tauxActivation
-    ].join(csvCellSeparator))
-  ].join(csvLineSeparator);
-};
 
 module.exports = {
   validateExportTerritoireSchema,

@@ -48,7 +48,24 @@ const statsTerritoiresForRegion = async (dateDebut, dateFin, { getStatsTerritoir
   return statsTerritoires;
 };
 
+const getStatsTerritoires = async (
+  { territoire, nomOrdre, ordre, dateDebut, dateFin },
+  { getStatsTerritoiresForDepartement, getStatsTerritoiresForRegion, geCountPersonnesAccompagnees }) => {
+  if (territoire === 'codeDepartement') {
+    return await statsTerritoiresForDepartement(nomOrdre, ordre, dateDebut, dateFin, {
+      getStatsTerritoiresForDepartement,
+      geCountPersonnesAccompagnees
+    });
+  }
+
+  if (territoire === 'codeRegion') {
+    return await statsTerritoiresForRegion(dateDebut, dateFin, {
+      getStatsTerritoiresForRegion,
+      geCountPersonnesAccompagnees
+    });
+  }
+};
+
 module.exports = {
-  statsTerritoiresForDepartement,
-  statsTerritoiresForRegion
+  getStatsTerritoires
 };

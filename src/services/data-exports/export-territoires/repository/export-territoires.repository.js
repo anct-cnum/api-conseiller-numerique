@@ -65,8 +65,12 @@ const geCountPersonnesAccompagnees = db => async (dateDebut, dateFin, conseiller
   }
 });
 
+const statsTerritoiresRepository = db => ({
+  getStatsTerritoiresForDepartement: getStatsTerritoiresForDepartement(db),
+  getStatsTerritoiresForRegion: getStatsTerritoiresForRegion(db),
+  geCountPersonnesAccompagnees: geCountPersonnesAccompagnees(db)
+});
+
 module.exports = {
-  getStatsTerritoiresForRegion,
-  getStatsTerritoiresForDepartement,
-  geCountPersonnesAccompagnees
+  statsTerritoiresRepository
 };
