@@ -396,7 +396,7 @@ const getConseillerIdAndStructureId = conseillerWithMiseEnRelationsGroup => {
 };
 
 const removeCandidatUsers = async (db, userIds) =>
-  await db.collection('users').deleteOne({
+  await db.collection('users').deleteMany({
     _id: { $in: userIds },
     roles: [UserRole.Candidat]
   });
