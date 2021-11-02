@@ -256,14 +256,6 @@ exports.Users = class Users extends Service {
     });
 
     app.post('/users/inviteAccountsPrefet', async (req, res) => {
-      const token = req.body.token;
-      const expectedToken = app.get('authentication').prefet.token;
-      if (token !== expectedToken) {
-        res.status(404).send(new NotFound('Token invalid', {
-          token
-        }).toJSON());
-        return;
-      }
       req.body.emails.forEach(async email => {
         let userInfo = {
           name: email.toLowerCase(),
@@ -277,12 +269,6 @@ exports.Users = class Users extends Service {
         await app.service('users').create(userInfo);
       });
       res.send({ status: 'accounts created' });
-    });
-
-    app.get('/users/verifyPrefetToken/:token', async (req, res) => {
-      const token = req.params.token;
-      const expectedToken = app.get('authentication').prefet.token;
-      res.send({ isValid: token === expectedToken });
     });
 
     app.post('/users/inviteStructure', async (req, res) => {
