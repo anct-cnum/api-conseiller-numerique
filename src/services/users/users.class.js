@@ -330,7 +330,7 @@ exports.Users = class Users extends Service {
       app.get('mongoClient').then(async db => {
         const users = await db.collection('users').aggregate([
           { '$match': { 'entity.$id': new ObjectId(idStructure) } },
-          { '$project': { name: 1, roles: 1 } }
+          { '$project': { name: 1, roles: 1, passwordCreated: 1 } }
         ]).toArray();
         res.send(users);
       });
