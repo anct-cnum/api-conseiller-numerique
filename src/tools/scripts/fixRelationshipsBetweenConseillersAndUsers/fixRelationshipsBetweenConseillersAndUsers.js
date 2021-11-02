@@ -566,8 +566,6 @@ const printReport = async (
   logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de structure id :', conseillersWithInvalidStructureIdWithoutDuplicates.length);
   logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de estRecrute à true :', conseillersWithInvalidEstRecruteWithoutDuplicates.length);
   logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de disponible à false :', conseillersWithInvalidDisponibleWithoutDuplicates.length);
-  logIfAny('- Nombre de conseillers recrutés qui ont un compte mattermost en erreur :', conseillersWithMattermostErrorWithoutDuplicates.length);
-  logIfAny('- Nombre de conseillers recrutés qui ont un email CN en erreur :', conseillersWithEmailCNErrorWithoutDuplicates.length);
   console.log('');
 
   const {
@@ -665,8 +663,6 @@ const printReport = async (
   logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de structure id :', conseillersWithInvalidStructureIdWithDuplicates.length);
   logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de estRecrute à true :', conseillersWithInvalidEstRecruteWithDuplicates.length);
   logIfAny('- Nombre de conseillers recrutés qui n\'ont pas de disponible à false :', conseillersWithInvalidDisponibleWithDuplicates.length);
-  logIfAny('- Nombre de conseillers recrutés qui ont un compte mattermost en erreur :', conseillersWithMattermostErrorWithDuplicates.length);
-  logIfAny('- Nombre de conseillers recrutés qui ont un email CN en erreur :', conseillersWithEmailCNErrorWithDuplicates.length);
   console.log('');
 
   const {
@@ -723,6 +719,15 @@ const printReport = async (
   logIfAny('- Nombre de conseillers recrutés valides avec tous les doublons valides', validRecruteAllValidDuplicatesForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.length);
   logIfAny('- Nombre de conseillers recrutés valides avec un doublon invalide', validRecruteOneInvalidDuplicatesForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.length);
   logIfAny('- Nombre de conseillers recrutés valides avec plusieurs doublons invalides', validRecruteManyInvalidDuplicatesForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee.length);
+  console.log('');
+
+  const conseillersWithMattermostError = [...conseillersWithMattermostErrorWithoutDuplicates, ...conseillersWithMattermostErrorWithDuplicates];
+  const conseillersWithEmailCNError = [...conseillersWithEmailCNErrorWithoutDuplicates, ...conseillersWithEmailCNErrorWithDuplicates];
+
+  console.log('Données sur les conseillers qui ont des problèmes avec leur email ou mattermost');
+  console.log('');
+  logIfAny('- Nombre de conseillers recrutés qui ont un compte mattermost en erreur :', conseillersWithMattermostError.length);
+  logIfAny('- Nombre de conseillers recrutés qui ont un email CN en erreur :', conseillersWithEmailCNError.length);
   console.log('');
 };
 
