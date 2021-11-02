@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 const dayjs = require('dayjs');
-const aws = require('aws-sdk');
 
 const { execute } = require('../utils');
 const { suppressionCVConseiller, suppressionCv } = require('../../services/conseillers/conseillers.function');
