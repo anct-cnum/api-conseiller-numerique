@@ -187,14 +187,10 @@ const pool = new Pool();
 const updateConseillerPG = async conseiller => {
   try {
     await pool.query(`UPDATE djapp_coach
-    SET (disponible)
-    =
-    ($2, $3, $4)
+    SET disponible = $2
     WHERE id = $1`,
     [
       conseiller.idPG,
-      conseiller.prenom,
-      conseiller.nom,
       conseiller.disponible
     ]);
   } catch (error) {
