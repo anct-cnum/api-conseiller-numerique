@@ -31,6 +31,6 @@ execute(__filename, async ({ logger, db, app }) => {
     });
   }
 
-  logger.info('Suppression effectuée sur ' + cvSupprimes + ' CVs.');
   await Promise.all(promises);
+  logger.info('Suppression effectuée sur ' + cvSupprimes + ' CVs.');
 });
