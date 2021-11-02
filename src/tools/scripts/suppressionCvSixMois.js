@@ -7,27 +7,30 @@ const { suppressionCVConseiller, suppressionCv } = require('../../services/conse
 
 execute(__filename, async ({ logger, db, app }) => {
 
-  const date = new Date(dayjs(new Date()).subtract(6, 'month'));
+  const DATE = new Date(dayjs(new Date()).subtract(6, 'month'));
   let cvSupprimes = 0;
 
-  const conseillers = await db.collection('conseillers').find({ 'cv.date': { $lte: date } }).toArray();
+  const conseillers = await db.collection('conseillers').find({ 'cv.date': { $lte: DATE } }).toArray();
   let promises = [];
 
+  const onError = async error => {
+    logger.error(error);
+    app.get('sentry').captureException(error);
+  };
+
   logger.info('Suppression des CVs de plus de 6 mois...');
+
   if (conseillers.length > 0) {
     conseillers.forEach(conseiller => {
       promises.push(new Promise(async resolve => {
-        try {
-          await suppressionCv(conseiller.cv, app, null, true);
-          await suppressionCVConseiller(db, conseiller);
-        } catch (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
-        }
-
+        await suppressionCv(conseiller.cv, app)
+        .then(async () => {
+          return suppressionCVConseiller(db, conseiller);
+        }).then(() => {
+          cvSupprimes++;
+        }).catch(onError);
         resolve();
       }));
-      cvSupprimes++;
     });
   }
 
