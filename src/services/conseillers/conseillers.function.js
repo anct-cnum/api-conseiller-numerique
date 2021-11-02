@@ -211,7 +211,7 @@ const suppressionTotalCandidat = async (email, app) => {
   }
 };
 
-const suppressionCv = async (cv, app, res) => {
+const suppressionCv = async (cv, app, res, isScript = false) => {
   let promise;
   promise = new Promise(async resolve => {
     try {
@@ -227,7 +227,9 @@ const suppressionCv = async (cv, app, res) => {
         if (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
-          res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
+          if (isScript === false) {
+            res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
+          }
         }
       });
       resolve();
