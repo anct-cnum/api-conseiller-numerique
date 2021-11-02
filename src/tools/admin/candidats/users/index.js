@@ -85,6 +85,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
   } else {
     const structures = await db.collection('conseillers').find({
       userCreated: false,
+      disponible: true, // si un des doublons a le statut RECRUTE, le disponible est passé à false
       userCreationError: { $ne: true },
       statut: { $ne: 'RECRUTE' }
     }, { limit: limit }).toArray();
