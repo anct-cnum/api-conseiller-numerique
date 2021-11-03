@@ -5,7 +5,6 @@ const logger = require('../../logger');
 const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 const aws = require('aws-sdk');
 const decode = require('jwt-decode');
-const { reject } = require('lodash');
 
 const checkAuth = (req, res) => {
   if (req.feathers?.authentication === undefined) {
@@ -214,7 +213,7 @@ const suppressionTotalCandidat = async (email, app) => {
 
 const suppressionCv = async (cv, app) => {
   let promise;
-  promise = new Promise(async resolve => {
+  promise = new Promise(async (resolve, reject) => {
     try {
       //initialisation AWS
       const awsConfig = app.get('aws');
