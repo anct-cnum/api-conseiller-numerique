@@ -2,6 +2,8 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
+const { Pool } = require('pg');
+const pool = new Pool();
 
 program
 .option('-c, --csv <path>', 'CSV file path');
@@ -26,15 +28,29 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
   let count = 0;
   let errors = 0;
   let promises = [];
+
+  const updateConseillersPG = async (email, disponible) => {
+    try {
+      const row = await pool.query(`
+        UPDATE djapp_coach
+        SET disponible = $2
+        WHERE email = $1`,
+      [email, disponible]);
+      return row;
+    } catch (error) {
+      console.error(error);
+      Sentry.captureException(error.message);
+    }
+  };
+
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
           const regexDateFormation = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
-          const email = conseiller['Mail CNFS'].toLowerCase();
           const idPGConseiller = parseInt(conseiller['ID conseiller']);
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ idPG: idPGConseiller, estRecrute: true });
-          const exist = await db.collection('conseillers').countDocuments({ idPG: idPGConseiller });
+          const conseillerOriginal = await db.collection('conseillers').findOne({ idPG: idPGConseiller });
           const structureId = parseInt(conseiller['ID structure']);
           const structure = await db.collection('structures').findOne({ idPG: structureId });
           const miseEnRelation = await db.collection('misesEnRelation').findOne({
@@ -46,7 +62,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
             reject();
-          } else if (exist === 0) {
+          } else if (conseillerOriginal === null) {
             logger.error(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
             Sentry.captureException(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
             errors++;
@@ -56,48 +72,43 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
             errors++;
             reject();
+          } else if (structure.email === conseillerOriginal.email) {
+            logger.error(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
+            Sentry.captureException(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
+            errors++;
+            reject();
           } else if (miseEnRelation === null) {
             logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             errors++;
             reject();
           // eslint-disable-next-line max-len
-          } else if ((conseiller['Date de fin de formation'] !== '#N/D' && !regexDateFormation.test(conseiller['Date de fin de formation'])) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
+          } else if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
             // eslint-disable-next-line max-len
             logger.error(`Format date invalide : attendu DD/MM/YYYY pour les dates de formation dans le fichier csv pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
             reject();
           } else {
             // eslint-disable-next-line max-len
-            const dateFinFormation = conseiller['Date de fin de formation'] !== '#N/D' ? conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1') : null;
+            const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
             const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
-            // eslint-disable-next-line max-len
-            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.idPG': idPGConseiller, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
-              $set: {
-                statut: 'finalisee',
-              }
-            });
 
-            // eslint-disable-next-line max-len
-            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.idPG': idPGConseiller, 'statut': { $ne: 'finalisee' } }, {
-              $set: {
-                statut: 'finalisee_non_disponible',
-              }
-            }, { multi: true });
+            //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
+            await updateConseillersPG(conseillerOriginal.email, false);
 
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
-            const conseillerDoc = await db.collection('conseillers').findOne({ _id: miseEnRelation.conseillerObj._id });
-            if (!conseillerDoc.userCreated) {
+            const userAccount = await db.collection('users').findOne({ name: conseillerOriginal.email, role: { $in: ['candidat'] } });
+            if (userAccount === null) {
               await feathers.service('users').create({
-                name: email,
-                prenom: conseillerDoc.prenom,
-                nom: conseillerDoc.nom,
+                name: conseillerOriginal.email,
+                prenom: conseillerOriginal.prenom,
+                nom: conseillerOriginal.nom,
                 password: uuidv4(), // random password (required to create user)
                 roles: Array(role),
                 entity: {
                   '$ref': `${role}s`,
-                  '$id': conseillerDoc._id,
+                  '$id': conseillerOriginal._id,
                   '$db': dbName
                 },
                 token: uuidv4(),
@@ -106,24 +117,62 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
                 createdAt: new Date(),
               });
             } else {
-              await db.collection('users').updateOne({ name: email }, {
+              await db.collection('users').updateOne({ name: conseillerOriginal.email }, {
                 $set: {
                   roles: Array(role),
                   token: uuidv4(),
                   mailSentDate: null,
                   passwordCreated: false,
+                  entity: {
+                    '$ref': `${role}s`,
+                    '$id': conseillerOriginal._id, //nécessaire si compte candidat pas sur le même doublon
+                    '$db': dbName
+                  }
                 }
               });
             }
-            await db.collection('conseillers').updateOne({ _id: miseEnRelation.conseillerObj._id }, { $set: {
+            await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, { $set: {
               statut: 'RECRUTE',
               disponible: false,
               estRecrute: true,
               datePrisePoste: dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
-              dateFinFormation: dateFinFormation !== null ? dayjs(dateFinFormation, 'YYYY-MM-DD').toDate() : null,
+              dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate(),
               structureId: structure._id,
               userCreated: true
             } });
+            const conseillerUpdated = db.collection('conseillers').findOne({ _id: conseillerOriginal._id });
+            
+            await db.collection('misesEnRelation').updateOne({ 'conseillerObj.idPG': idPGConseiller, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
+              $set: {
+                statut: 'finalisee',
+                conseillerObj: conseillerUpdated
+              }
+            });
+
+            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.idPG': idPGConseiller, 'statut': { $ne: 'finalisee' } }, {
+              $set: {
+                statut: 'finalisee_non_disponible',
+                conseillerObj: conseillerUpdated
+              }
+            });
+
+            //Mise à jour des doublons
+            await db.collection('conseillers').updateMany({ _id: { $ne: conseillerOriginal._id }, email: conseillerOriginal.email }, { $set: {
+              disponible: false,
+              userCreated: false //si compte candidat n'était pas sur le même doublon
+            } });
+
+            await db.collection('misesEnRelation').updateMany({
+              'conseillerObj.idPG': { $ne: idPGConseiller },
+              'conseillerObj.email': conseillerOriginal.email
+            }, {
+              $set: {
+                'statut': 'finalisee_non_disponible',
+                'conseillerObj.disponible': false,
+                'conseillerObj.userCreated': false
+              }
+            });
+
             count++;
             resolve();
           }
