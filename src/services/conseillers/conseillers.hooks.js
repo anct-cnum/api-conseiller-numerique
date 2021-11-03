@@ -31,9 +31,24 @@ module.exports = {
         if (context.params.query.certifie) {
           context.params.query.certifie = context.params.query.certifie === 'false' ? null : true;
         }
+
+        if (context.params.query.emailCNError === 'null') {
+          context.params.query.emailCNError = null;
+        }
+        if (context.params.query.mattermost === 'null') {
+          context.params.query.mattermost = null;
+        }
+        if (context.params.query.emailCNError?.$ne === 'null') {
+          context.params.query.emailCNError.$ne = null;
+        }
+        if (context.params.query.mattermost?.$ne === 'null') {
+          context.params.query.mattermost.$ne = null;
+        }
+
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
         }
+
         return context;
       }, search({ escape: false })
     ],
