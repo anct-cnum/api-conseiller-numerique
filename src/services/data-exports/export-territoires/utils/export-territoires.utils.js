@@ -20,11 +20,24 @@ const fileHeaders = [
   'Taux d\'activation'
 ];
 
+const codeAndNomTerritoire = (territoire, statTerritoire) => {
+  if (territoire === 'codeRegion') {
+    return [
+      statTerritoire.codeRegion,
+      statTerritoire.nomRegion
+    ];
+  } else if (territoire === 'codeDepartement') {
+    return [
+      statTerritoire.codeDepartement,
+      statTerritoire.nomDepartement
+    ];
+  }
+};
+
 const buildExportTerritoiresCsvFileContent = (statsTerritoires, territoire) => [
   fileHeaders.join(csvCellSeparator),
   ...statsTerritoires.map(statTerritoire => [
-    (territoire === 'codeRegion' ? statTerritoire.codeRegion : statTerritoire.codeDepartement),
-    (territoire === 'codeRegion' ? statTerritoire.nomRegion : statTerritoire.nomDepartement),
+    ...codeAndNomTerritoire(territoire, statTerritoire),
     statTerritoire.personnesAccompagnees,
     statTerritoire.nombreConseillersCoselec,
     statTerritoire.cnfsActives,
