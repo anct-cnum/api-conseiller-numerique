@@ -282,6 +282,23 @@ const getUsersMatchingConseillerIds = async (db, conseillerIds) =>
     'entity.$id': { $in: conseillerIds }
   }).toArray();
 
+const updateConseillerDuplicateIdInCras = async (db, conseillerRecruteId, conseillerDoublonIds) => {
+  await db.collection('cras').updateMany({
+    'conseiller.$id': { $in: conseillerDoublonIds.map(conseillerId => new ObjectId(conseillerId)) }
+  }, {
+    $set: { 'conseiller.$id': new ObjectId(conseillerRecruteId) }
+  });
+};
+
+const updateConseillerDuplicateIdInStatsCras = async (db, conseillerRecruteId, conseillerDoublonIds) => {
+  await db.collection('stats_conseillers_cras').updateMany({
+    'conseiller.$id': { $in: conseillerDoublonIds.map(conseillerId => new ObjectId(conseillerId)) }
+  }, {
+    $set: { 'conseiller.$id': new ObjectId(conseillerRecruteId) }
+  });
+};
+
+
 const fixConseillersWithInvalidUserCreated = async (db, conseillers) => {
   return await Promise.all(conseillers
   .map(async conseiller => {
@@ -433,6 +450,17 @@ const fixConseillersRecrutesUsersAndMiseEnRelations = async (db, conseillersWith
     await removeCandidatUsers(db, users.map(user => user._id));
   }));
 
+const fixCras = async (db, recruteStatutWithDuplicates) =>
+  await Promise.all(recruteStatutWithDuplicates.map(async conseillersByEmail => {
+    const conseillerRecruteId = conseillersByEmail.conseillers.find(isRecrute)._id;
+    const conseillerDoublonIds = conseillersByEmail.conseillers
+    .filter(conseiller => !isRecrute(conseiller))
+    .map(conseiller => conseiller._id);
+
+    await updateConseillerDuplicateIdInCras(db, conseillerRecruteId, conseillerDoublonIds);
+    await updateConseillerDuplicateIdInStatsCras(db, conseillerRecruteId, conseillerDoublonIds);
+  }));
+
 const fix = async (
   db,
   usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,
@@ -442,7 +470,8 @@ const fix = async (
   conseillersRecruteWithDuplicatesPropertiesInspectionResult,
   conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
   conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
-  conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee) => {
+  conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee,
+  recruteStatutWithDuplicates) => {
 
   const {
     conseillersWithoutAssociatedUser,
@@ -485,6 +514,8 @@ const fix = async (
   await fixConseillersWithInvalidUserCreated(db, conseillersWithInvalidUserCreatedWithDuplicates);
   await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithDuplicates);
   await fixConseillersWithInvalidEstRecrute(db, conseillersWithInvalidEstRecruteWithDuplicates);
+
+  await fixCras(db, recruteStatutWithDuplicates);
 
   return [
     ...conseillerWithoutConseillerRole,
@@ -852,7 +883,8 @@ execute(__filename, async ({ db, logger, exit }) => {
       conseillersRecruteWithDuplicatesPropertiesInspectionResult,
       conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee,
       conseillersWithStatutFinaliseeAndNoDuplicateWithStatutRecrutee,
-      conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee);
+      conseillersWithStatutRecruteeAndNoDuplicateWithStatutFinalisee,
+      recruteStatutWithDuplicates);
 
     writeConseillersToReimportInCSVFile(conseillersToReimport);
   }
