@@ -278,7 +278,7 @@ exports.Users = class Users extends Service {
         app.get('mongoClient').then(async db => {
           const verificationEmail = await db.collection('users').countDocuments({ name: email });
           if (verificationEmail !== 0) {
-            res.status(409).send(new Conflict(`Compte déjà éxistant pour l'email : ${email}`).toJSON());
+            res.status(409).send(new Conflict(`Compte déjà éxistant pour l'email : ${email}, veuillez le retirer de la liste`).toJSON());
             return;
           }
         });
