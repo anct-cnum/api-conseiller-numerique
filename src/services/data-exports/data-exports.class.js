@@ -4,13 +4,17 @@ const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 const utils = require('../../utils/index.js');
 const decode = require('jwt-decode');
-const { NotFound, Forbidden, NotAuthenticated, BadRequest } = require('@feathersjs/errors');
+const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
 const {
   validateExportTerritoireSchema,
   buildExportTerritoiresCsvFileContent
 } = require('./export-territoires/utils/export-territoires.utils');
 const { getStatsTerritoires } = require('./export-territoires/core/export-territoires.core');
-const { statsTerritoiresRepository } = require('./export-territoires/repository/export-territoires.repository');
+const { statsTerritoiresRepository } = require('./export-territoires/repositories/export-territoires.repository');
+const { canActivate, isAuthenticated, hasRoles, hasValidSchema, Role, activateRoute, authenticationFromRequest,
+  userIdFromRequestJwt, abort, csvFileResponse
+} = require('./common/utils/feather.utils');
+const { userAuthenticationRepository } = require('./common/repositories/user-authentication.repository');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -299,32 +303,14 @@ exports.DataExports = class DataExports {
 
     app.get('/exports/territoires.csv', async (req, res) => {
       const db = await app.get('mongoClient');
-
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
-
-      let userId = decode(req.feathers.authentication.accessToken).sub;
-      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-      if (!adminUser?.roles.includes('admin_coop')) {
-        res.status(403).send(new Forbidden('User not authorized', {
-          userId: userId
-        }).toJSON());
-        return;
-      }
-
-      const exportTerritoiresSchemaValidation = validateExportTerritoireSchema(req.query);
-      if (exportTerritoiresSchemaValidation.error) {
-        res.status(400).send(new BadRequest('Erreur : ' + exportTerritoiresSchemaValidation.error).toJSON());
-        return;
-      }
-
-      const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
-
-      res.setHeader('Content-disposition', 'attachment; filename=data.csv');
-      res.set('Content-Type', 'text/csv');
-      res.status(200).send(buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire));
+      activateRoute(await canActivate(
+        isAuthenticated(authenticationFromRequest(req)),
+        hasRoles(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        hasValidSchema(validateExportTerritoireSchema(req.query))
+      ), async () => {
+        const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
+        csvFileResponse(res, 'export-territoires.csv', buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire));
+      }, routeActivationError => abort(res, routeActivationError));
     });
   }
 
