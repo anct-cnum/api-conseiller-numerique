@@ -31,12 +31,11 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
   const updateConseillersPG = async (email, disponible) => {
     try {
-      const row = await pool.query(`
+      await pool.query(`
         UPDATE djapp_coach
         SET disponible = $2
         WHERE email = $1`,
       [email, disponible]);
-      return row;
     } catch (error) {
       console.error(error);
       Sentry.captureException(error.message);
