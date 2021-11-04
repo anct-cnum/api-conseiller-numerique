@@ -1,16 +1,14 @@
 const dayjs = require('dayjs');
 
-const statsTerritoiresForDepartement = async (nomOrdre, ordre, dateDebut, dateFin, { getStatsTerritoiresForDepartement, geCountPersonnesAccompagnees }) => {
+const statsTerritoiresForDepartement = async (nomOrdre, ordre, dateDebut, dateFin, { getStatsTerritoiresForDepartement, getPersonnesAccompagnees }) => {
   let promises = [];
-
   let statsTerritoires = await getStatsTerritoiresForDepartement(dayjs(new Date(dateFin)).format('DD/MM/YYYY'), nomOrdre, ordre);
 
   statsTerritoires.forEach(ligneStats => {
     if (ligneStats.conseillerIds.length > 0) {
       promises.push(new Promise(async resolve => {
-        let countAccompagnees = await geCountPersonnesAccompagnees(new Date(dateDebut), new Date(dateFin), ligneStats.conseillerIds);
-        ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
-
+        const personnesAccompagnees = await getPersonnesAccompagnees(new Date(dateDebut), new Date(dateFin), ligneStats.conseillerIds);
+        ligneStats.personnesAccompagnees = personnesAccompagnees.length > 0 ? personnesAccompagnees[0]?.count : 0;
         resolve();
       }));
     } else {
@@ -23,19 +21,18 @@ const statsTerritoiresForDepartement = async (nomOrdre, ordre, dateDebut, dateFi
   return statsTerritoires;
 };
 
-const statsTerritoiresForRegion = async (dateDebut, dateFin, { getStatsTerritoiresForRegion, geCountPersonnesAccompagnees }) => {
+const statsTerritoiresForRegion = async (nomOrdre, ordre, dateDebut, dateFin, { getStatsTerritoiresForRegion, getPersonnesAccompagnees }) => {
   let promises = [];
-  let statsTerritoires = await getStatsTerritoiresForRegion(dayjs(new Date(dateFin)).format('DD/MM/YYYY'));
+  let statsTerritoires = await getStatsTerritoiresForRegion(dayjs(new Date(dateFin)).format('DD/MM/YYYY'), nomOrdre, ordre);
 
   statsTerritoires.forEach(ligneStats => {
     ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec) ? Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
-    ligneStats.personnesAccompagnees = 0;
 
+    ligneStats.personnesAccompagnees = 0;
     if (ligneStats.conseillerIds.length > 0) {
       promises.push(new Promise(async resolve => {
-        let countAccompagnees = await geCountPersonnesAccompagnees(new Date(dateDebut), new Date(dateFin), ligneStats.conseillerIds);
-        ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
-
+        const personnesAccompagnees = await getPersonnesAccompagnees(new Date(dateDebut), new Date(dateFin), ligneStats.conseillerIds.flat());
+        ligneStats.personnesAccompagnees = personnesAccompagnees.length > 0 ? personnesAccompagnees[0]?.count : 0;
         resolve();
       }));
     } else {
@@ -50,18 +47,18 @@ const statsTerritoiresForRegion = async (dateDebut, dateFin, { getStatsTerritoir
 
 const getStatsTerritoires = async (
   { territoire, nomOrdre, ordre, dateDebut, dateFin },
-  { getStatsTerritoiresForDepartement, getStatsTerritoiresForRegion, geCountPersonnesAccompagnees }) => {
+  { getStatsTerritoiresForDepartement, getStatsTerritoiresForRegion, getPersonnesAccompagnees }) => {
   if (territoire === 'codeDepartement') {
     return await statsTerritoiresForDepartement(nomOrdre, ordre, dateDebut, dateFin, {
       getStatsTerritoiresForDepartement,
-      geCountPersonnesAccompagnees
+      getPersonnesAccompagnees
     });
   }
 
   if (territoire === 'codeRegion') {
-    return await statsTerritoiresForRegion(dateDebut, dateFin, {
+    return await statsTerritoiresForRegion(nomOrdre, ordre, dateDebut, dateFin, {
       getStatsTerritoiresForRegion,
-      geCountPersonnesAccompagnees
+      getPersonnesAccompagnees
     });
   }
 };

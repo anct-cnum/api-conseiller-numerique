@@ -1,61 +1,69 @@
-const statsCras = require("../../../stats/cras");
+const statsCras = require('../../../stats/cras');
 
-const getStatsTerritoiresForRegion = db => async dateFin => await db.collection('stats_Territoires').aggregate(
-  {
-    $match: {
-      date: dateFin
-    }
-  },
-  {
-    $group: {
-      _id: {
-        codeRegion: '$codeRegion',
-        nomRegion: '$nomRegion',
-      },
-      nombreConseillersCoselec: {
-        $sum: '$nombreConseillersCoselec'
-      },
-      cnfsActives: {
-        $sum: '$cnfsActives'
-      },
-      cnfsInactives: {
-        $sum: '$cnfsInactives'
-      },
-      conseillerIds: {
-        $push: '$conseillerIds'
+const getStatsTerritoiresForRegion = db => async (dateFin, nomOrdre, ordre) =>
+  await db.collection('stats_Territoires').aggregate(
+    {
+      $match: {
+        date: dateFin
       }
-    }
-  },
-  {
-    $addFields: {
-      'codeRegion': '$_id.codeRegion',
-      'nomRegion': '$_id.nomRegion'
-    }
-  },
-  {
-    $project: {
-      _id: 0, codeRegion: 1, nomRegion: 1, nombreConseillersCoselec: 1, cnfsActives: 1, cnfsInactives: 1,
-      conseillerIds: {
-        $reduce: {
-          input: '$conseillerIds',
-          initialValue: [],
-          in: {
-            $concatArrays: ['$$value', '$$this']
+    },
+    {
+      $group: {
+        _id: {
+          codeRegion: '$codeRegion',
+          nomRegion: '$nomRegion',
+        },
+        nombreConseillersCoselec: {
+          $sum: '$nombreConseillersCoselec'
+        },
+        cnfsActives: {
+          $sum: '$cnfsActives'
+        },
+        cnfsInactives: {
+          $sum: '$cnfsInactives'
+        },
+        conseillerIds: {
+          $push: '$conseillerIds'
+        }
+      }
+    },
+    {
+      $addFields: {
+        'codeRegion': '$_id.codeRegion',
+        'nomRegion': '$_id.nomRegion'
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        codeRegion: 1,
+        nomRegion: 1,
+        nombreConseillersCoselec: 1,
+        cnfsActives: 1,
+        cnfsInactives: 1,
+        conseillerIds: {
+          $reduce: {
+            input: '$conseillerIds',
+            initialValue: [],
+            in: {
+              $concatArrays: ['$$value', '$$this']
+            }
           }
         }
       }
     }
-  }
-).toArray();
+  )
+  .sort({ [nomOrdre]: parseInt(ordre) })
+  .toArray();
 
 const getStatsTerritoiresForDepartement = db => async (dateFin, nomOrdre, ordre) => await db.collection('stats_Territoires')
 .find({
   'date': dateFin
 })
-.sort(JSON.parse('{"' + nomOrdre + '":' + ordre + '}'))
+.sort({ [nomOrdre]: parseInt(ordre) })
 .toArray();
 
-const geCountPersonnesAccompagnees = db => async (dateDebut, dateFin, conseillerIds) => await statsCras.getPersonnesAccompagnees(db, {
+const getPersonnesAccompagnees = db => async (dateDebut, dateFin, conseillerIds) => await statsCras.getPersonnesAccompagnees(db, {
   'conseiller.$id': {
     $in: conseillerIds
   },
@@ -68,7 +76,7 @@ const geCountPersonnesAccompagnees = db => async (dateDebut, dateFin, conseiller
 const statsTerritoiresRepository = db => ({
   getStatsTerritoiresForDepartement: getStatsTerritoiresForDepartement(db),
   getStatsTerritoiresForRegion: getStatsTerritoiresForRegion(db),
-  geCountPersonnesAccompagnees: geCountPersonnesAccompagnees(db)
+  getPersonnesAccompagnees: getPersonnesAccompagnees(db)
 });
 
 module.exports = {
