@@ -110,7 +110,10 @@ execute(__filename, async ({ db, logger, emails, exit }) => {
 
   await db.collection('users').updateOne({ 'name': structurePG.contact_email, 'entity.$id': new ObjectID(structure._id) }, { $set: {
     name: contact.email } }, {});
-
+  await db.collection('misesEnRelation').updateMany(
+    { 'structure.$id': new ObjectID(structure._id) },
+    { $set: { 'structureObj.contact.email': contact.email }
+    });
   const structureUser = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
 
   if (program.invitation) {
