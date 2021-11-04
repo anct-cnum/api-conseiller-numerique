@@ -11,7 +11,7 @@ const {
 } = require('./export-territoires/utils/export-territoires.utils');
 const { getStatsTerritoires } = require('./export-territoires/core/export-territoires.core');
 const { statsTerritoiresRepository } = require('./export-territoires/repositories/export-territoires.repository');
-const { canActivate, isAuthenticated, hasRoles, hasValidSchema, Role, activateRoute, authenticationFromRequest,
+const { canActivate, authenticationGuard, rolesGuard, schemaGuard, Role, activateRoute, authenticationFromRequest,
   userIdFromRequestJwt, abort, csvFileResponse
 } = require('./common/utils/feather.utils');
 const { userAuthenticationRepository } = require('./common/repositories/user-authentication.repository');
@@ -304,9 +304,9 @@ exports.DataExports = class DataExports {
     app.get('/exports/territoires.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       activateRoute(await canActivate(
-        isAuthenticated(authenticationFromRequest(req)),
-        hasRoles(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
-        hasValidSchema(validateExportTerritoireSchema(req.query))
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        schemaGuard(validateExportTerritoireSchema(req.query))
       ), async () => {
         const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
         csvFileResponse(res, 'export-territoires.csv', buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire));

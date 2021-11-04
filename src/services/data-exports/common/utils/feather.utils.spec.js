@@ -1,8 +1,8 @@
 const { Forbidden, NotAuthenticated, Unprocessable } = require('@feathersjs/errors');
 const {
-  isAuthenticated,
-  hasRoles,
-  hasValidSchema,
+  authenticationGuard,
+  rolesGuard,
+  schemaGuard,
   canActivate, Role, activateRoute, authenticationFromRequest, userIdFromRequestJwt, abort, csvFileResponse
 } = require('./feather.utils');
 
@@ -67,7 +67,7 @@ describe('can activate route checks', () => {
 
   it('should make an abort response', async () => {
     const routeActivation = await canActivate(
-      isAuthenticated(undefined)
+      authenticationGuard(undefined)
     );
 
     const res = new Response();
@@ -111,7 +111,7 @@ describe('can activate route checks', () => {
     };
 
     const routeActivation = await canActivate(
-      isAuthenticated(authentication)
+      authenticationGuard(authentication)
     );
 
     expect(routeActivation).toEqual({
@@ -123,7 +123,7 @@ describe('can activate route checks', () => {
     const authentication = undefined;
 
     const routeActivation = await canActivate(
-      isAuthenticated(authentication)
+      authenticationGuard(authentication)
     );
 
     expect(routeActivation).toEqual({
@@ -138,7 +138,7 @@ describe('can activate route checks', () => {
     const roles = [Role.Admin, Role.AdminCoop];
 
     const routeActivation = await canActivate(
-      hasRoles(userId, roles, userAuthenticationRepository)
+      rolesGuard(userId, roles, userAuthenticationRepository)
     );
 
     expect(routeActivation).toEqual({
@@ -152,7 +152,7 @@ describe('can activate route checks', () => {
     const roles = [Role.AdminCoop];
 
     const routeActivation = await canActivate(
-      hasRoles(userId, roles, userAuthenticationRepository)
+      rolesGuard(userId, roles, userAuthenticationRepository)
     );
 
     expect(routeActivation).toEqual({
@@ -171,7 +171,7 @@ describe('can activate route checks', () => {
     };
 
     const routeActivation = await canActivate(
-      hasValidSchema(schemaValidation)
+      schemaGuard(schemaValidation)
     );
 
     expect(routeActivation).toEqual({
@@ -197,7 +197,7 @@ describe('can activate route checks', () => {
     };
 
     const routeActivation = await canActivate(
-      hasValidSchema(schemaValidation)
+      schemaGuard(schemaValidation)
     );
 
     expect(routeActivation).toEqual({
@@ -225,9 +225,9 @@ describe('can activate route checks', () => {
     };
 
     const routeActivation = await canActivate(
-      isAuthenticated(authentication),
-      hasRoles(userId, roles, userAuthenticationRepository),
-      hasValidSchema(schemaValidation)
+      authenticationGuard(authentication),
+      rolesGuard(userId, roles, userAuthenticationRepository),
+      schemaGuard(schemaValidation)
     );
 
     expect(routeActivation).toEqual({
@@ -246,7 +246,7 @@ describe('can activate route checks', () => {
     let error = false;
 
     activateRoute(await canActivate(
-      isAuthenticated(authentication)
+      authenticationGuard(authentication)
     ), () => {
       success = true;
     }, () => {
@@ -264,7 +264,7 @@ describe('can activate route checks', () => {
     let error = false;
 
     activateRoute(await canActivate(
-      isAuthenticated(authentication)
+      authenticationGuard(authentication)
     ), () => {
       success = true;
     }, () => {

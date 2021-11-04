@@ -19,7 +19,7 @@ const csvFileResponse = (res, fileName, fileContent) => {
   .send(fileContent);
 };
 
-const isAuthenticated = authentication => () => {
+const authenticationGuard = authentication => () => {
   if (authentication !== undefined) {
     return {
       hasError: false
@@ -32,7 +32,7 @@ const isAuthenticated = authentication => () => {
   };
 };
 
-const hasRoles = (userId, roles, userAuthenticationRepository) => async () => {
+const rolesGuard = (userId, roles, userAuthenticationRepository) => async () => {
   const user = await userAuthenticationRepository(userId);
 
   if (user?.roles.some(role => roles.includes(role))) {
@@ -47,7 +47,7 @@ const hasRoles = (userId, roles, userAuthenticationRepository) => async () => {
   };
 };
 
-const hasValidSchema = schemaValidation => async () => {
+const schemaGuard = schemaValidation => async () => {
   if (schemaValidation.error === undefined) {
     return {
       hasError: false
@@ -80,9 +80,9 @@ module.exports = {
   userIdFromRequestJwt,
   abort,
   csvFileResponse,
-  isAuthenticated,
-  hasRoles,
-  hasValidSchema,
+  authenticationGuard,
+  rolesGuard,
+  schemaGuard,
   canActivate,
   activateRoute
 };
