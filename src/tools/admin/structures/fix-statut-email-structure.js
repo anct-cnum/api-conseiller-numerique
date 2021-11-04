@@ -44,8 +44,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   await Promise.all(promises);
 
   // eslint-disable-next-line max-len
-  logger.info(`Il y a en tout ${countTotalStructure} structures, dont ${countNonMAJStatut} n'ont pas le même statut et ${countOKMAJStatut} ont le meme statut dans la collection misesEnRelation`);
+  logger.info(`${countTotalStructure} structures ont été traités, ${countNonMAJStatut} structures ont été modifié et ${countOKMAJStatut} ont le meme statut dans la collection misesEnRelation`);
   // eslint-disable-next-line max-len
-  logger.info(`Il y a en tout ${countTotalStructure} structures, dont ${countNonMAJEmail} n'ont pas le même email de contact et ${countOKMAJEmail} ont le meme email de contact dans la collection misesEnRelation`);
+  logger.info(`${countTotalStructure}structures ont été traités, ${countNonMAJEmail} structures ont été modifié et ${countOKMAJEmail} ont le meme email de contact dans la collection misesEnRelation`);
   exit();
 });
