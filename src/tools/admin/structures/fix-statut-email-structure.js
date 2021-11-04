@@ -21,8 +21,7 @@ execute(__filename, async ({ db, logger, exit }) => {
             { $set: { 'structureObj.statut': structure.statut }
             });
           countNonMAJStatut++;
-        }
-        if (verifMisesEnRelation?.structureObj?.statut === structure?.statut) {
+        } else {
           countOKMAJStatut++;
         }
         // Partie pour mettre à jour l'email de contact
@@ -33,8 +32,7 @@ execute(__filename, async ({ db, logger, exit }) => {
               { $set: { 'structureObj.contact.email': structure.contact.email }
               });
             countNonMAJEmail++;
-          }
-          if (verifMisesEnRelation?.structureObj?.email === structure?.email) {
+          } else {
             countOKMAJEmail++;
           }
         }
