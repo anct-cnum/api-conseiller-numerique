@@ -11,11 +11,16 @@ execute(__filename, async ({ db, logger, exit }) => {
     promises.push(new Promise(async resolve => {
       const verifMisesEnRelation = await db.collection('misesEnRelation').findOne({ 'structure.$id': structure._id });
       if (verifMisesEnRelation !== null) {
-        await db.collection('misesEnRelation').updateMany(
-          { 'structure.$id': structure._id },
-          { $set: { 'structureObj': structure }
-          });
-        countActionMAJ++;
+        if (verifMisesEnRelation?.structureObj?.contact !== undefined) {
+          // eslint-disable-next-line max-len
+          if ((verifMisesEnRelation.structureObj.statut !== structure?.statut) || (verifMisesEnRelation.structureObj.contact.email !== structure.contact.email)) {
+            await db.collection('misesEnRelation').updateMany(
+              { 'structure.$id': structure._id },
+              { $set: { 'structureObj': structure }
+              });
+            countActionMAJ++;
+          }
+        }
       }
       countTotalStructure++;
       resolve();
@@ -23,7 +28,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   });
   await Promise.all(promises);
 
-  logger.info(`${countTotalStructure} structures ont été traitées, ${countActionMAJ} structures qui ont au moins une misesEnRelation à été modifié`);
+  // eslint-disable-next-line max-len
+  logger.info(`${countTotalStructure} structures ont été traitées, ${countActionMAJ} structures qui ont au moins une misesEnRelation et qui n'était pas à jour dans les misesEnRelations à été modifié`);
 
   exit();
 });
