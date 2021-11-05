@@ -58,7 +58,7 @@ const getStatsTerritoiresForRegion = db => async (dateFin, nomOrdre, ordre) =>
 
 const getStatsTerritoiresForDepartement = db => async (dateFin, nomOrdre, ordre) => await db.collection('stats_Territoires')
 .find({
-  'date': dateFin
+  date: dateFin
 })
 .sort({ [nomOrdre]: parseInt(ordre) })
 .toArray();

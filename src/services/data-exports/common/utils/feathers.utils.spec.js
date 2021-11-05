@@ -3,8 +3,14 @@ const {
   authenticationGuard,
   rolesGuard,
   schemaGuard,
-  canActivate, Role, activateRoute, authenticationFromRequest, userIdFromRequestJwt, abort, csvFileResponse
-} = require('./feather.utils');
+  canActivate,
+  Role,
+  activateRoute,
+  authenticationFromRequest,
+  userIdFromRequestJwt,
+  abort,
+  csvFileResponse
+} = require('./feathers.utils');
 
 class Response {
   constructor() {
@@ -132,7 +138,7 @@ describe('can activate route checks', () => {
     });
   });
 
-  it('should not get forbidden access when the right user roles is not provided', async () => {
+  it('should not get forbidden error when the right user roles are provided', async () => {
     const userAuthenticationRepository = userId => ({ 1234567890: { roles: [Role.AdminCoop] } }[userId]);
     const userId = '1234567890';
     const roles = [Role.Admin, Role.AdminCoop];
@@ -146,7 +152,7 @@ describe('can activate route checks', () => {
     });
   });
 
-  it('should get forbidden access error when the right user roles is not provided', async () => {
+  it('should get forbidden error when the right user roles are not provided', async () => {
     const userAuthenticationRepository = userId => ({ 1234567890: { roles: [] } }[userId]);
     const userId = '1234567890';
     const roles = [Role.AdminCoop];
@@ -161,7 +167,7 @@ describe('can activate route checks', () => {
     });
   });
 
-  it('should get invalid schema error when the data do not pass schema validation', async () => {
+  it('should not get invalid schema error when inputs pass schema validation', async () => {
     const schemaValidation = {
       value: {
         territoire: 'codeDepartement',
@@ -179,7 +185,7 @@ describe('can activate route checks', () => {
     });
   });
 
-  it('should get invalid schema error when the data do not pass schema validation', async () => {
+  it('should get invalid schema error when inputs do not pass schema validation', async () => {
     const schemaValidation = {
       value: {
         territoire: 'codeDepartement',
@@ -206,7 +212,7 @@ describe('can activate route checks', () => {
     });
   });
 
-  it('should get forbidden access error when the right user roles is not provided but all other activation functions are valid', async () => {
+  it('should get forbidden error when the right user roles are not provided but all other activation functions are valid', async () => {
     const authentication = {
       strategy: 'jwt',
       accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.L8i6g3PfcHlioHCCPURC9pmXT7gdJpx3kOoyAfNUwCc'

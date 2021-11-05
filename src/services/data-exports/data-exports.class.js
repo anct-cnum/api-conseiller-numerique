@@ -13,7 +13,7 @@ const { getStatsTerritoires } = require('./export-territoires/core/export-territ
 const { statsTerritoiresRepository } = require('./export-territoires/repositories/export-territoires.repository');
 const { canActivate, authenticationGuard, rolesGuard, schemaGuard, Role, activateRoute, authenticationFromRequest,
   userIdFromRequestJwt, abort, csvFileResponse
-} = require('./common/utils/feather.utils');
+} = require('./common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('./common/repositories/user-authentication.repository');
 
 exports.DataExports = class DataExports {
