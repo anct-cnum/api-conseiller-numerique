@@ -294,7 +294,7 @@ exports.Users = class Users extends Service {
           createdAt: new Date()
         };
         await app.service('users').create(userInfo);
-        res.send({ status: 'accounts created' });
+        res.send({ status: 'compte créée' });
       });
     });
 
