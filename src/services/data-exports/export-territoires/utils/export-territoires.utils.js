@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const dayjs = require('dayjs');
 
 const validateExportTerritoireSchema = exportTerritoiresInput => Joi.object({
   territoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
@@ -7,6 +8,9 @@ const validateExportTerritoireSchema = exportTerritoiresInput => Joi.object({
   nomOrdre: Joi.string().required().error(new Error('Le nom de l\'ordre est invalide')),
   ordre: Joi.number().required().error(new Error('L\'ordre est invalide')),
 }).validate(exportTerritoiresInput);
+
+const getExportTerritoiresFileName = (territoire, dateDebut, dateFin) =>
+  `export-territoires_${territoire}_entre_${dayjs(dateDebut).format('YYYY-MM-DD')}_et_${dayjs(dateFin).format('YYYY-MM-DD')}.csv`;
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
@@ -49,5 +53,6 @@ const buildExportTerritoiresCsvFileContent = (statsTerritoires, territoire) => [
 
 module.exports = {
   validateExportTerritoireSchema,
+  getExportTerritoiresFileName,
   buildExportTerritoiresCsvFileContent
 };
