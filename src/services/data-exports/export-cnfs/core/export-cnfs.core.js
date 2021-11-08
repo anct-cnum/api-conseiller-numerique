@@ -11,7 +11,7 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
     ...nextStatCnfs,
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
-    nomStructure: (await getStructureNameFromId(structureId)).nom,
+    nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
     certifie: 'Non',
     isUserActif: userActifStatus(mattermost, emailCNError)
   };
