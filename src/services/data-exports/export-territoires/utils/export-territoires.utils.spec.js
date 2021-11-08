@@ -1,4 +1,4 @@
-const { validateExportTerritoireSchema, buildExportTerritoiresCsvFileContent } = require('./export-territoires.utils');
+const { validateExportTerritoireSchema, buildExportTerritoiresCsvFileContent, getExportTerritoiresFileName } = require('./export-territoires.utils');
 const { ValidationError } = require('joi');
 
 const statsTerritoires = [
@@ -86,6 +86,16 @@ describe('export territoires utils', () => {
         ordre: 1
       },
     });
+  });
+
+  it('should get export territoires file name', () => {
+    const territoire = 'codeDepartement';
+    const dateDebut = 'Mon Nov 02 2020 01:00:00 GMT 0100 (Central European Standard Time)';
+    const dateFin = 'Tue Nov 17 2020 01:00:00 GMT 0100 (Central European Standard Time)';
+
+    const fileName = getExportTerritoiresFileName(territoire, dateDebut, dateFin);
+
+    expect(fileName).toEqual('export-territoires_codeDepartement_entre_2020-11-02_et_2020-11-17.csv');
   });
 
   it('should build territoires csv file content for territoire with codeRegion value', () => {

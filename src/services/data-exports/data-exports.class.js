@@ -7,12 +7,22 @@ const decode = require('jwt-decode');
 const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
 const {
   validateExportTerritoireSchema,
-  buildExportTerritoiresCsvFileContent
+  buildExportTerritoiresCsvFileContent,
+  getExportTerritoiresFileName
 } = require('./export-territoires/utils/export-territoires.utils');
 const { getStatsTerritoires } = require('./export-territoires/core/export-territoires.core');
 const { statsTerritoiresRepository } = require('./export-territoires/repositories/export-territoires.repository');
-const { canActivate, authenticationGuard, rolesGuard, schemaGuard, Role, activateRoute, authenticationFromRequest,
-  userIdFromRequestJwt, abort, csvFileResponse
+const {
+  canActivate,
+  authenticationGuard,
+  rolesGuard,
+  schemaGuard,
+  Role,
+  activateRoute,
+  authenticationFromRequest,
+  userIdFromRequestJwt,
+  abort,
+  csvFileResponse
 } = require('./common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('./common/repositories/user-authentication.repository');
 
@@ -309,7 +319,11 @@ exports.DataExports = class DataExports {
         schemaGuard(validateExportTerritoireSchema(req.query))
       ), async () => {
         const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
-        csvFileResponse(res, 'export-territoires.csv', buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire));
+        csvFileResponse(
+          res,
+          getExportTerritoiresFileName(req.query.territoire, req.query.dateDebut, req.query.dateFin),
+          buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire)
+        );
       }, routeActivationError => abort(res, routeActivationError));
     });
   }
