@@ -34,7 +34,7 @@ const rolesGuard = (userId, roles, userAuthenticationRepository) => async () =>
     noError() :
     { error: new Forbidden('User not authorized', { userId }), hasError: true };
 
-const schemaGuard = schemaValidation => async () =>
+const schemaGuard = schemaValidation => () =>
   schemaValidation.error === undefined ?
     noError() :
     { error: new Unprocessable('Schema validation error', schemaValidation.error), hasError: true };
