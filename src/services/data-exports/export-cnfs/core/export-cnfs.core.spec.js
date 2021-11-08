@@ -30,6 +30,17 @@ const getStatsCnfsUserActifSingleValue = () => [
     }
   }
 ];
+const getStatsCnfsNoStructureIdSingleValue = () => [
+  {
+    prenom: 'John',
+    nom: 'Doe',
+    codePostal: 69005,
+    datePrisePoste: '2021-01-27T22:00:00.000Z',
+    dateFinFormation: '2021-03-12T22:00:00.000Z',
+    emailCNError: undefined,
+    mattermost: undefined
+  }
+];
 const getStructureNameFromId = () => ({
   nom: 'Association pour l\'accès au numérique'
 });
@@ -79,6 +90,26 @@ describe('export cnfs core', () => {
         dateFinFormation: '12/03/2021',
         certifie: 'Non',
         isUserActif: 'Oui'
+      }
+    ]);
+  });
+
+  it('should get single stats cnfs without name when the collection of stats cnfs contains one element and there is no matching structure', async () => {
+    const statsTerritoires = await getStatsCnfs({}, {
+      getStatsCnfs: getStatsCnfsNoStructureIdSingleValue,
+      getStructureNameFromId: getStructureNameFromId,
+    });
+
+    expect(statsTerritoires).toEqual([
+      {
+        prenom: 'John',
+        nom: 'Doe',
+        nomStructure: '',
+        codePostal: 69005,
+        datePrisePoste: '27/01/2021',
+        dateFinFormation: '12/03/2021',
+        certifie: 'Non',
+        isUserActif: 'Non'
       }
     ]);
   });
