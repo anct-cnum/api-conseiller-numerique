@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
-const { NotFound, Conflict, NotAuthenticated, Forbidden, GeneralError } = require('@feathersjs/errors');
+const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 const aws = require('aws-sdk');
 const decode = require('jwt-decode');
 
@@ -211,9 +211,9 @@ const suppressionTotalCandidat = async (email, app) => {
   }
 };
 
-const suppressionCv = async (cv, app, res) => {
+const suppressionCv = async (cv, app) => {
   let promise;
-  promise = new Promise(async resolve => {
+  promise = new Promise(async (resolve, reject) => {
     try {
       //initialisation AWS
       const awsConfig = app.get('aws');
@@ -223,14 +223,13 @@ const suppressionCv = async (cv, app, res) => {
 
       //Suppression du fichier CV
       let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: cv?.file };
-      s3.deleteObject(paramsDelete, function(error) {
+      s3.deleteObject(paramsDelete, function(error, data) {
         if (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
-          res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
+          reject(error);
+        } else {
+          resolve(data);
         }
       });
-      resolve();
     } catch (error) {
       logger.info(error);
       app.get('sentry').captureException(error);
