@@ -37,7 +37,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
         WHERE email = $1`,
       [email, disponible]);
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       Sentry.captureException(error.message);
     }
   };
@@ -71,7 +71,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
             errors++;
             reject();
-          } else if (structure.email === conseillerOriginal.email) {
+          } else if (structure.contact.email === conseillerOriginal.email) {
             logger.error(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
             Sentry.captureException(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
             errors++;
@@ -94,7 +94,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
-            const userAccount = await db.collection('users').findOne({ name: conseillerOriginal.email, role: { $in: ['candidat'] } });
+            const userAccount = await db.collection('users').findOne({ name: conseillerOriginal.email, roles: { $in: ['candidat'] } });
             if (userAccount === null) {
               await feathers.service('users').create({
                 name: conseillerOriginal.email,
@@ -136,7 +136,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               structureId: structure._id,
               userCreated: true
             } });
-            const conseillerUpdated = db.collection('conseillers').findOne({ _id: conseillerOriginal._id });
+            const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerOriginal._id });
 
             await db.collection('misesEnRelation').updateOne({ 'conseillerObj.idPG': idPGConseiller, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
               $set: {
