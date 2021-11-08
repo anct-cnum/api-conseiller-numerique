@@ -81,14 +81,11 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             errors++;
             reject();
-          // eslint-disable-next-line max-len
           } else if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
-            // eslint-disable-next-line max-len
-            logger.error(`Format date invalide : attendu DD/MM/YYYY pour les dates de formation dans le fichier csv pour le conseiller avec l'id: ${idPGConseiller}`);
+            logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
             reject();
           } else {
-            // eslint-disable-next-line max-len
             const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
             const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
 
@@ -140,7 +137,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               userCreated: true
             } });
             const conseillerUpdated = db.collection('conseillers').findOne({ _id: conseillerOriginal._id });
-            
+
             await db.collection('misesEnRelation').updateOne({ 'conseillerObj.idPG': idPGConseiller, 'structureObj.idPG': structureId, 'statut': 'recrutee' }, {
               $set: {
                 statut: 'finalisee',
