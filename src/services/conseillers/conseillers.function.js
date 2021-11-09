@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
-const { NotFound, Conflict, NotAuthenticated, Forbidden, GeneralError } = require('@feathersjs/errors');
+const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 const aws = require('aws-sdk');
 const decode = require('jwt-decode');
 

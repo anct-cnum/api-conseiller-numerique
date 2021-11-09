@@ -519,6 +519,7 @@ exports.Conseillers = class Conseillers extends Service {
         if (conseillerUser === null) {
           const verifEmail = await db.collection('users').countDocuments({ name: conseiller.email });
           if (verifEmail !== 0) {
+            await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreationError: true } });
             res.status(409).send(new Conflict(`un doublon a déjà un compte associé à ${conseiller.email}`));
             return;
           }
