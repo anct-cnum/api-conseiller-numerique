@@ -84,7 +84,8 @@
     "password": "password",
     "teamId": "teamId",
     "themeChannelId": "themeChannelId",
-    "resourcesChannelId": "resourcesChannelId"
+    "resourcesChannelId": "resourcesChannelId",
+    "hubTeamId": "hubTeamId"
   },
   "aws": {
     "endpoint": "AWS_ENDPOINT",

@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict, BadRequest, GeneralError } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadRequest, GeneralError, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
@@ -9,6 +9,7 @@ const { createAccount, updateAccountPassword } = require('../../utils/mattermost
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
+const decode = require('jwt-decode');
 
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
@@ -31,8 +32,8 @@ exports.Users = class Users extends Service {
         const { nom, prenom, telephone, dateDisponibilite, email } = req.body;
         const body = { nom, prenom, telephone, dateDisponibilite, email };
         const schema = Joi.object({
-          prenom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
-          nom: Joi.string().alphanum().error(new Error('Le nom est invalide')),
+          prenom: Joi.string().error(new Error('Le nom est invalide')),
+          nom: Joi.string().error(new Error('Le nom est invalide')),
           telephone: Joi.string().required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
           // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
@@ -256,14 +257,32 @@ exports.Users = class Users extends Service {
     });
 
     app.post('/users/inviteAccountsPrefet', async (req, res) => {
-      const token = req.body.token;
-      const expectedToken = app.get('authentication').prefet.token;
-      if (token !== expectedToken) {
-        res.status(404).send(new NotFound('Token invalid', {
-          token
+      if (req?.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await this.find({
+        query: {
+          _id: new ObjectID(userId),
+          $limit: 1,
+        }
+      });
+      if (!adminUser?.data[0].roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser?.data[0]._id
         }).toJSON());
         return;
       }
+      req.body.emails.forEach(async email => {
+        app.get('mongoClient').then(async db => {
+          const verificationEmail = await db.collection('users').countDocuments({ name: email });
+          if (verificationEmail !== 0) {
+            res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
+            return;
+          }
+        });
+      });
       req.body.emails.forEach(async email => {
         let userInfo = {
           name: email.toLowerCase(),
@@ -275,14 +294,8 @@ exports.Users = class Users extends Service {
           createdAt: new Date()
         };
         await app.service('users').create(userInfo);
+        res.send({ status: 'compte créé' });
       });
-      res.send({ status: 'accounts created' });
-    });
-
-    app.get('/users/verifyPrefetToken/:token', async (req, res) => {
-      const token = req.params.token;
-      const expectedToken = app.get('authentication').prefet.token;
-      res.send({ isValid: token === expectedToken });
     });
 
     app.post('/users/inviteStructure', async (req, res) => {
@@ -330,7 +343,7 @@ exports.Users = class Users extends Service {
       app.get('mongoClient').then(async db => {
         const users = await db.collection('users').aggregate([
           { '$match': { 'entity.$id': new ObjectId(idStructure) } },
-          { '$project': { name: 1, roles: 1 } }
+          { '$project': { name: 1, roles: 1, passwordCreated: 1 } }
         ]).toArray();
         res.send(users);
       });

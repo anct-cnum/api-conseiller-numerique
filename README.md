@@ -1,12 +1,78 @@
 # api-conseiller-numerique
 
->
-
 ## About
 
 This project uses [Feathers](http://feathersjs.com). An open source web framework for building modern real-time applications.
 
 ## Getting Started
+
+### Base de donnés postgres (optionnel)
+
+#### Avec Docker
+
+Créer un dossier pour le fichier `pgsql` à importer.
+
+```shell
+mkdir /tmp/docker-import
+```
+
+Télécharger un export de la base de données au format `pgsql` depuis Scalingo dans le dossier `/tmp/import`
+
+Créer un volume qui sera persistant après l'extinction du conteneur :
+
+```shell
+docker volume create postgres.conseiller-numerique
+```
+
+Télécharger et lancer l'image de postgres + l'extension postgis avec les informations d'identifications de votre choix :
+
+```shell
+docker run -d --rm --name=postgres-conseiller-numerique -p 5432:5432 -v postgres.conseiller-numerique:/var/lib/postgresql/data -v /tmp/import:/var/lib/postgresql/import -e POSTGRES_PASSWORD=pwd -e POSTGRES_USER=usr -e POSTGRES_DB=conseiller-numerique postgis/postgis
+```
+
+Se connecter au conteneur pour exécuter l'import de la base :
+
+```shell
+docker exec -it postgres-conseiller-numerique sh
+```
+
+Lorsque l'on lance le conteneur avec l'image `postgis` une base de donnée configurée avec postgis est créée, il faut la supprimer pour éviter les conflits lors de l'import :
+
+```shell
+dropdb -U usr conseiller-numerique
+```
+
+Puis recréer une base de donnée vide prête à recevoir les données de l'import :
+
+```shell
+createdb -U usr conseiller-numerique
+```
+
+Exécuter la commande pour importer le fichier `dump.pgsql` :
+
+```shell
+pg_restore --clean --if-exists --no-owner --no-privileges --no-comments -U usr -d conseiller-numerique /var/lib/postgresql/import/dump.pgsql
+```
+
+Puis quitter le terminal du conteneur :
+
+```shell
+exit
+```
+
+Pour mettre fin à l'instance du conteneur :
+
+```shell
+docker stop postgres-conseiller-numerique
+```
+
+Pour supprimer définitivement les données de la base :
+
+```shell
+docker volume rm postgres.conseiller-numerique
+```
+
+### API
 
 Getting up and running is as easy as 1, 2, 3.
 
