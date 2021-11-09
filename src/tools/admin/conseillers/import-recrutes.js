@@ -115,6 +115,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             } else {
               await db.collection('users').updateOne({ name: conseillerOriginal.email }, {
                 $set: {
+                  prenom: conseillerOriginal.prenom, //nécessaire si compte candidat pas sur le même doublon avec renseignements différents
+                  nom: conseillerOriginal.nom,
                   roles: Array(role),
                   token: uuidv4(),
                   mailSentDate: null,
