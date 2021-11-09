@@ -3,9 +3,36 @@
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 const utils = require('../../utils/index.js');
-
 const decode = require('jwt-decode');
 const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
+const {
+  validateExportTerritoireSchema,
+  buildExportTerritoiresCsvFileContent,
+  getExportTerritoiresFileName
+} = require('./export-territoires/utils/export-territoires.utils');
+const { getStatsTerritoires } = require('./export-territoires/core/export-territoires.core');
+const { statsTerritoiresRepository } = require('./export-territoires/repositories/export-territoires.repository');
+const {
+  canActivate,
+  authenticationGuard,
+  rolesGuard,
+  schemaGuard,
+  Role,
+  activateRoute,
+  authenticationFromRequest,
+  userIdFromRequestJwt,
+  abort,
+  csvFileResponse
+} = require('./common/utils/feathers.utils');
+const { userAuthenticationRepository } = require('./common/repositories/user-authentication.repository');
+const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
+const { getStatsCnfs } = require('./export-cnfs/core/export-cnfs.core');
+const {
+  buildExportCnfsCsvFileContent,
+  validateExportCnfsSchema,
+  exportCnfsQueryToSchema,
+  getExportCnfsFileName
+} = require('./export-cnfs/utils/export-cnfs.utils');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -290,6 +317,36 @@ exports.DataExports = class DataExports {
 
       await Promise.all(promises);
       res.send();
+    });
+
+    app.get('/exports/territoires.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      activateRoute(await canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        schemaGuard(validateExportTerritoireSchema(req.query))
+      ), async () => {
+        const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
+        csvFileResponse(
+          res,
+          getExportTerritoiresFileName(req.query.territoire, req.query.dateDebut, req.query.dateFin),
+          buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire)
+        );
+      }, routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports/cnfs.csv', async (req, res) => {
+      const query = exportCnfsQueryToSchema(req.query);
+      const db = await app.get('mongoClient');
+
+      activateRoute(await canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        schemaGuard(validateExportCnfsSchema(query))
+      ), async () => {
+        const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
+        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), buildExportCnfsCsvFileContent(statsCnfs));
+      }, routeActivationError => abort(res, routeActivationError));
     });
   }
 

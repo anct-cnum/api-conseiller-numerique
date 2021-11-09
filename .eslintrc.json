@@ -346,6 +346,15 @@
         "parserOptions": {
           "sourceType": "module"
         }
+      },      {
+        "files": [
+          "tests/stress/*.js",
+          "**/*.spec.js",
+          "**/*.spec.jsx"
+        ],
+        "env": {
+          "jest": true
+        }
       }
     ]
   }
