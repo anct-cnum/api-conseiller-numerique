@@ -3,6 +3,9 @@ const { deleteAccount } = require('../../../utils/mattermost');
 const dayjs = require('dayjs');
 const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
+const { v4: uuidv4 } = require('uuid');
+const { Pool } = require('pg');
+const pool = new Pool();
 
 program
 .option('-c, --csv <path>', 'CSV file path');
@@ -12,7 +15,7 @@ program.parse(process.argv);
 const readCSV = async filePath => {
   try {
     // eslint-disable-next-line new-cap
-    const users = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
+    const users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     return users;
   } catch (err) {
     throw err;
@@ -21,9 +24,22 @@ const readCSV = async filePath => {
 
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
+execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost }) => {
 
-  logger.info('Désinscription des conseillers déjà recrutés');
+  const updateConseillersPG = async (email, disponible) => {
+    try {
+      await pool.query(`
+        UPDATE djapp_coach
+        SET disponible = $2
+        WHERE email = $1`,
+      [email, disponible]);
+    } catch (error) {
+      logger.error(error);
+      Sentry.captureException(error.message);
+    }
+  };
+
+  logger.info('[DESINSCRIPTION COOP] Traitement des ruptures de contrat');
   let promises = [];
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
@@ -31,64 +47,178 @@ execute(__filename, async ({ db, logger, exit, Sentry, gandi, mattermost }) => {
       let count = 0;
       let ok = 0;
       let errors = 0;
+      const messageStructure = emails.getEmailMessageByTemplateName('conseillerRuptureStructure');
       if (total === 0) {
         logger.info(`[DESINSCRIPTION COOP] Aucun conseiller dans le fichier fourni`);
       }
       conseillers.forEach(conseiller => {
         let p = new Promise(async (resolve, reject) => {
-          const email = conseiller['email'].toLowerCase();
-          const conseillerCoop = await db.collection('conseillers').findOne({ email, statut: 'RECRUTE', estRecrute: true });
+          const conseillerId = parseInt(conseiller['ID du CNFS']);
+          const structureId = parseInt(conseiller['ID de la structure']);
+          const regexDateRupture = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
+          const structure = await db.collection('structures').findOne({ idPG: structureId });
+          const conseillerCoop = await db.collection('conseillers').findOne({
+            idPG: conseillerId,
+            statut: 'RECRUTE',
+            estRecrute: true,
+            structureId: structure?._id
+          });
+          const miseEnRelation = await db.collection('misesEnRelation').findOne({
+            'conseiller.$id': conseillerCoop?._id,
+            'structure.$id': conseillerCoop?.structureId,
+            'statut': 'finalisee'
+          });
           const userCoop = await db.collection('users').findOne({
             'roles': { $in: ['conseiller'] },
             'entity.$id': conseillerCoop?._id
           });
           const login = conseillerCoop?.emailCN?.address?.substring(0, conseillerCoop.emailCN?.address?.lastIndexOf('@'));
           if (conseillerCoop === null) {
-            logger.warn(`Aucun conseiller recruté avec l'email '${email}' n'a été trouvé`);
+            logger.error(`Aucun conseiller recruté entre la structure id ${structureId} et le conseiller id ${conseillerId}`);
             errors++;
             reject();
-          } else if (conseillerCoop.structureId === undefined) {
-            logger.warn(`Aucune structure associé au conseiller recruté avec l'email '${email}'`);
+          } else if (miseEnRelation === null) {
+            logger.error(`Aucune mise en relation finalisée entre la structure id ${structureId} et le conseiller id ${conseillerId}`);
+            errors++;
+            reject();
+          } else if (!regexDateRupture.test(conseiller['Date de démission'])) {
+            // eslint-disable-next-line max-len
+            logger.warn(`Format date rupture invalide : attendu DD/MM/YYYY pour le conseiller id ${conseillerId}`);
+            errors++;
+            reject();
+          } else if (conseiller['Motif de la sortie du dispositif (QCM)'] === '') {
+            logger.warn(`Motif de sortie non renseigné pour le conseiller id ${conseillerId}`);
             errors++;
             reject();
           } else {
-            //Mise à jour du statut
-            await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
-              $set: {
-                statut: 'RUPTURE',
-                dateRuptureContrat: conseiller['Date rupture de contrat'] ? dayjs(conseiller['Date rupture de contrat'], 'YYYY-MM-DD').toDate() : new Date()
-              }
-            });
-            //Mise à jour de la mise en relation
-            await db.collection('misesEnRelation').updateOne(
-              { 'conseiller.$id': conseillerCoop._id,
-                'structure.$id': conseillerCoop.structureId,
-                'statut': 'finalisee'
-              },
-              {
+            const dateRupture = conseiller['Date de démission'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+            const motifRupture = conseiller['Motif de la sortie du dispositif (QCM)'];
+
+            try {
+              //Mise à jour PG du champ disponible pour le ou les conseillers avec le même email (en premier pour éviter une resynchro PG->Mongo entre-temps)
+              await updateConseillersPG(conseillerCoop.email, true);
+
+              //Historisation de la rupture
+              await db.collection('conseillersRuptures').insertOne({
+                conseillerId,
+                structureId,
+                dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
+                motifRupture
+              });
+
+              //Mise à jour du conseiller
+              await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
                 $set: {
-                  statut: 'finalisee_rupture',
+                  disponible: true,
+                  ruptures: { $push: {
+                    structureId,
+                    dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
+                    motifRupture
+                  } }
+                },
+                $unset: {
+                  statut: '',
+                  estRecrute: '',
+                  datePrisePoste: '',
+                  dateFinFormation: '',
+                  structureId: '',
+                  emailCNError: '',
+                  emailCN: '',
+                  mattermost: ''
                 }
+              });
+              const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerCoop._id });
+
+              //Mise à jour de la mise en relation avec la structure en rupture
+              await db.collection('misesEnRelation').updateOne(
+                { 'conseiller.$id': conseillerCoop._id,
+                  'structure.$id': conseillerCoop.structureId,
+                  'statut': 'finalisee'
+                },
+                {
+                  $set: {
+                    statut: 'finalisee_rupture',
+                    dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
+                    motifRupture,
+                    conseillerObj: conseillerUpdated
+                  }
+                }
+              );
+
+              //Mise à jour des autres mises en relation en candidature nouvelle
+              await db.collection('misesEnRelation').updateMany(
+                { 'conseiller.$id': conseillerCoop._id,
+                  'statut': 'finalisee_non_disponible'
+                },
+                {
+                  $set: {
+                    statut: 'nouvelle',
+                    conseillerObj: conseillerUpdated
+                  }
+                }
+              );
+
+              //Modifications des doublons potentiels
+              await db.collection('conseillers').updateMany(
+                {
+                  _id: { $ne: conseillerCoop._id },
+                  email: conseillerCoop.email
+                },
+                {
+                  $set: {
+                    disponible: true,
+                  }
+                }
+              );
+              await db.collection('misesEnRelation').updateMany(
+                { 'conseiller.$id': { $ne: conseillerCoop._id },
+                  'statut': 'finalisee_non_disponible',
+                  'conseillerObj.email': conseillerCoop.email
+                },
+                {
+                  $set: {
+                    'statut': 'nouvelle',
+                    'conseillerObj.disponible': true
+                  }
+                }
+              );
+
+              //Passage en compte candidat avec email perso
+              if (userCoop !== null) {
+                await db.collection('users').updateOne({ _id: userCoop._id }, {
+                  $set: {
+                    name: conseillerCoop.email,
+                    roles: ['candidat'],
+                    token: uuidv4(),
+                    tokenCreatedAt: new Date(),
+                    mailSentDate: null, //pour le mécanisme de relance d'invitation candidat
+                    passwordCreated: false,
+                  }
+                });
               }
-            );
-            //Suppression du user associé
-            if (userCoop !== null) {
-              await db.collection('users').deleteOne({ _id: userCoop._id });
-            }
-            //Suppression compte Gandi
-            if (login !== undefined) {
-              await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
-            }
-            //Suppression compte Mattermost
-            if (conseillerCoop.mattermost?.id !== undefined) {
-              await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
+
+              //Suppression compte Gandi
+              if (login !== undefined) {
+                await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
+              }
+              //Suppression compte Mattermost
+              if (conseillerCoop.mattermost?.id !== undefined) {
+                await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
+              }
+
+              //Envoi du mail d'information à la structure
+              await messageStructure.send(miseEnRelation._id, structure.contact.email);
+            } catch (error) {
+              logger.error(error.message);
+              Sentry.captureException(error);
             }
             ok++;
           }
           count++;
           if (total === count) {
+            //TODO PIX
             logger.info(`[DESINSCRIPTION COOP] Des conseillers ont été désinscrits :  ` +
-                `${ok} désinscrits / ${errors} erreurs`);
+                `${ok} désinscrit(s) / ${errors} erreur(s)`);
             exit();
           }
         });
