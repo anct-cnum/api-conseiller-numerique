@@ -25,7 +25,6 @@ module.exports = {
       async context => {
         if (context.params.query.createdAt && context.params.query.createdAt.$gt) {
           context.params.query.createdAt.$gt = parseStringToDate(context.params.query.createdAt.$gt);
-          context.params.query.statut = { '$ne': 'ANNULEE' };
         }
         if (context.params.query.createdAt && context.params.query.createdAt.$lt) {
           context.params.query.createdAt.$lt = parseStringToDate(context.params.query.createdAt.$lt);

@@ -1,6 +1,5 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { ObjectID } = require('mongodb');
 
 execute(__filename, async ({ db, logger, exit }) => {
 
@@ -28,9 +27,10 @@ execute(__filename, async ({ db, logger, exit }) => {
   }
 
   await db.collection('structures').updateOne({ idPG: id }, { $set: { statut: statut } }, {});
+  await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id }, { $set: { 'structureObj.statut': statut } });
 
   if (structure.userCreated === true) {
-    await db.collection('users').updateOne({ 'entity.$id': new ObjectID(structure._id) }, { $set: { password: null } }, {});
+    await db.collection('users').updateOne({ 'entity.$id': structure._id }, { $set: { password: null } }, {});
   }
 
   logger.info('Statut mis à jour');

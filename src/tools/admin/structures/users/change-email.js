@@ -3,7 +3,6 @@
 
 const { program } = require('commander');
 const { Pool } = require('pg');
-const { ObjectID } = require('mongodb');
 
 const { execute } = require('../../../utils');
 
@@ -108,10 +107,13 @@ execute(__filename, async ({ db, logger, emails, exit }) => {
 
   const structure = await db.collection('structures').findOne({ idPG: id });
 
-  await db.collection('users').updateOne({ 'name': structurePG.contact_email, 'entity.$id': new ObjectID(structure._id) }, { $set: {
+  await db.collection('users').updateOne({ 'name': structurePG.contact_email, 'entity.$id': structure._id }, { $set: {
     name: contact.email } }, {});
-
-  const structureUser = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
+  await db.collection('misesEnRelation').updateMany(
+    { 'structure.$id': structure._id },
+    { $set: { 'structureObj.contact.email': contact.email }
+    });
+  const structureUser = await db.collection('users').findOne({ 'entity.$id': structure._id });
 
   if (program.invitation) {
     let message = emails.getEmailMessageByTemplateName('creationCompteStructure');
