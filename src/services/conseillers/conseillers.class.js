@@ -554,7 +554,7 @@ exports.Conseillers = class Conseillers extends Service {
           await message.send(user);
           res.send({ emailEnvoyer: true });
         } else {
-          res.status(409).send(new Conflict(`${conseiller.prenom} ${conseiller.nom} est déjà recrutée donc a un compte COOP existant`));
+          res.status(409).send(new Conflict(`${conseiller.prenom} ${conseiller.nom} est déjà recruté donc a un compte COOP existant`));
           return;
         }
       } catch (error) {
