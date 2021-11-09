@@ -282,7 +282,7 @@ exports.Conseillers = class Conseillers extends Service {
       const user = checkRoleCandidat(db, req, res);
       const conseiller = await checkConseillerExist(db, req.params.id, user, res);
       checkConseillerHaveCV(conseiller, user, res);
-      suppressionCv(conseiller.cv, app, res).then(() => {
+      suppressionCv(conseiller.cv, app).then(() => {
         return suppressionCVConseiller(db, conseiller);
       }).then(() => {
         res.send({ deleteSuccess: true });
@@ -481,7 +481,11 @@ exports.Conseillers = class Conseillers extends Service {
         return suppressionTotalCandidat(email, app);
       }).then(() => {
         if (cv?.file) {
-          return suppressionCv(cv, app, res);
+          return suppressionCv(cv, app).catch(error => {
+            logger.error(error);
+            app.get('sentry').captureException(error);
+            res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
+          });
         }
         return;
       }).then(() => {
