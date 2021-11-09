@@ -523,6 +523,7 @@ exports.Conseillers = class Conseillers extends Service {
             res.status(409).send(new Conflict(`un doublon a déjà un compte associé à ${conseiller.email}`));
             return;
           }
+          const NOW = new Date();
           const obj = {
             name: conseiller.email,
             prenom: conseiller.prenom,
@@ -535,10 +536,10 @@ exports.Conseillers = class Conseillers extends Service {
               '$db': db.serverConfig.s.options.dbName
             },
             token: uuidv4(),
-            tokenCreatedAt: new Date(),
+            tokenCreatedAt: NOW,
             mailSentDate: null,
             passwordCreated: false,
-            createdAt: new Date(),
+            createdAt: NOW,
           };
           const createUser = await db.collection('users').insertOne(obj);
           user = createUser.ops[0];
