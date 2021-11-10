@@ -10,6 +10,9 @@ const crypto = require('crypto');
 const statsPdf = require('../stats/stats.pdf');
 const dayjs = require('dayjs');
 const Joi = require('joi');
+const createEmails = require('../../emails/emails');
+const createMailer = require('../../mailer');
+const { v4: uuidv4 } = require('uuid');
 
 const {
   checkAuth,
@@ -22,7 +25,8 @@ const {
   suppressionTotalCandidat,
   suppressionCv,
   suppressionCVConseiller,
-  checkFormulaire } = require('./conseillers.function');
+  checkFormulaire,
+  checkRoleAdmin } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -503,6 +507,69 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression de la candidature, veuillez réessayer.').toJSON());
       });
+    });
+
+
+    app.post('/conseillers/:id/relance-inscription-candidat', async (req, res) => {
+      await checkAuth(req, res);
+      await checkRoleAdmin(db, req, res);
+      const conseillerId = new ObjectId(req.params.id);
+      let user;
+      let conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
+      if (conseiller === null) {
+        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+          conseillerId,
+        }).toJSON());
+      }
+
+      try {
+        const conseillerUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
+        if (conseillerUser === null) {
+          const verifEmail = await db.collection('users').countDocuments({ name: conseiller.email });
+          if (verifEmail !== 0) {
+            await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreationError: true } });
+            res.status(409).send(new Conflict(`un doublon a déjà un compte associé à ${conseiller.email}`));
+            return;
+          }
+          const NOW = new Date();
+          const obj = {
+            name: conseiller.email,
+            prenom: conseiller.prenom,
+            nom: conseiller.nom,
+            password: uuidv4(),
+            roles: Array('candidat'),
+            entity: {
+              '$ref': `conseillers`,
+              '$id': conseiller._id,
+              '$db': db.serverConfig.s.options.dbName
+            },
+            token: uuidv4(),
+            tokenCreatedAt: NOW,
+            mailSentDate: null,
+            passwordCreated: false,
+            createdAt: NOW,
+          };
+          const createUser = await db.collection('users').insertOne(obj);
+          user = createUser.ops[0];
+        } else {
+          user = conseillerUser;
+        }
+        if (user.roles[0] === 'candidat') {
+          await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreated: true }, $unset: { userCreationError: true } });
+          let mailer = createMailer(app);
+          const emails = createEmails(db, mailer, app);
+          let message = emails.getEmailMessageByTemplateName('creationCompteCandidat');
+          await message.send(user);
+          res.send({ emailEnvoyer: true });
+        } else {
+          res.status(409).send(new Conflict(`${conseiller.prenom} ${conseiller.nom} est déjà recruté donc a un compte COOP existant`));
+          return;
+        }
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(500).send(new GeneralError('Une erreur est survenue lors de l\'envoi de l\'email').toJSON());
+      }
     });
   }
 };

@@ -242,6 +242,19 @@ const checkFormulaire = body => {
 
 };
 
+const checkRoleAdmin = async (db, req, res) => {
+  return new Promise(async resolve => {
+    let userId = decode(req.feathers.authentication.accessToken).sub;
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (user?.roles.filter(role => ['admin'].includes(role)).length < 1) {
+      res.status(403).send(new Forbidden('User not authorized', {
+        userId
+      }).toJSON());
+      return;
+    }
+    resolve();
+  });
+};
 module.exports = {
   checkAuth,
   checkRoleCandidat,
@@ -253,5 +266,6 @@ module.exports = {
   archiverLaSuppression,
   suppressionTotalCandidat,
   suppressionCv,
-  checkFormulaire
+  checkFormulaire,
+  checkRoleAdmin
 };
