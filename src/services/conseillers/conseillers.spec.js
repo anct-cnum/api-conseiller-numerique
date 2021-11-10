@@ -8,8 +8,8 @@ const {
   checkConseillerHaveCV,
   checkFormulaire } = require('./conseillers.function');
 
-describe('Vérifier le role candidat', () => {
-  it('En tant qu\'utilisateur, avoir un role candidat est considéré comme valide', () => {
+describe('Vérification du role candidat', () => {
+  it('devrait être considérée comme valide lorsque l\'utilisateur contient bien candidat parmi ses roles', () => {
 
     const userCandidat = {
       entity:
@@ -35,7 +35,7 @@ describe('Vérifier le role candidat', () => {
     expect(userWithRoleCandidat).toBe(true);
   });
 
-  it('En tant qu\'utilisateur, avoir un role candidat mais pas le bon id candidat est considéré comme invalide', () => {
+  it('devrait être considérée comme invalide lorsque l\'utilisateur contient bien candidat parmi ses roles, mais que son id n\'est pas le bon', () => {
 
     const userCandidat = {
       entity:
@@ -61,7 +61,7 @@ describe('Vérifier le role candidat', () => {
     expect(userWithRoleCandidat).toBe(false);
   });
 
-  it('En tant qu\'utilisateur, je ne pas avoir de role candidat est considéré comme invalide', () => {
+  it('devrait être considérée comme invalide lorsque l\'utilisateur ne contient pas candidat parmi ses roles', () => {
 
     const userNotCandidat = {
       entity:
@@ -89,8 +89,8 @@ describe('Vérifier le role candidat', () => {
   });
 });
 
-describe('Vérifier l\'existance du CV d\'un candidat', () => {
-  it('En tant qu\'utilisateur, avoir un CV est considéré comme valide', () => {
+describe('Vérification de la présence d\'un CV', () => {
+  it('devrait être considérée comme valide lorsque le candidat a bien un CV', () => {
 
     const candidatCV = {
       _id: '60f0357bbba64f21c296461a',
@@ -119,7 +119,7 @@ describe('Vérifier l\'existance du CV d\'un candidat', () => {
     expect(candidatWithCV).toBe(true);
   });
 
-  it('En tant qu\'utilisateur, je ne pas avoir de CV est considéré comme invalide', () => {
+  it('devrait être considérée comme invalide lorsque le candidat n\'a pas de CV', () => {
 
     const candidatNoCV = {
       _id: '60f0357bbba64f21c296461a',
@@ -144,8 +144,8 @@ describe('Vérifier l\'existance du CV d\'un candidat', () => {
   });
 });
 
-describe('Vérifier le formulaire Sexe/Age', () => {
-  it('En tant qu\'utilisateur de plus de 18 ans et moins de 99 ans ayant renseigner mon sexe, mon formulaire est considéré comme valide', () => {
+describe('Vérification du formulaire Sexe/Age', () => {
+  it('devrait être considérée comme valide lorsque l\'utilisateur a un age compris entre 18 et 99 ans et que son sexe a été précisé', () => {
 
     const bodyValid = {
       sexe: 'Homme',
@@ -158,7 +158,7 @@ describe('Vérifier le formulaire Sexe/Age', () => {
 
   });
 
-  it('En tant qu\'utilisateur de plus de 99 ans, ma date de naissance est considérée comme invalide', () => {
+  it('devrait être considérée comme invalide lorsque l\'utilisateur a plus de 99 ans', () => {
 
     const bodyTooOld = {
       sexe: 'Homme',
@@ -172,7 +172,7 @@ describe('Vérifier le formulaire Sexe/Age', () => {
 
   });
 
-  it('En tant qu\'utilisateur de moins de 18 ans, ma date de naissance est considérée comme invalide', () => {
+  it('devrait être considérée comme invalide lorsque l\'utilisateur n\'a pas 18 ans', () => {
 
     const bodyTooYoung = {
       sexe: 'Homme',
@@ -185,7 +185,7 @@ describe('Vérifier le formulaire Sexe/Age', () => {
 
   });
 
-  it('En tant qu\'utilisateur, ne pas renseigner mon sexe est considéré comme invalide', () => {
+  it('devrait être considérée comme invalide lorsque l\'utilisateur n\'a pas précisé son sexe', () => {
 
     const bodyWithoutSexe = {
       dateDeNaissance: new Date('1980-01-01')

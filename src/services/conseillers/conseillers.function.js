@@ -16,10 +16,7 @@ const checkAuth = (req, res) => {
 };
 
 const checkRoleCandidat = (user, req) => {
-  if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString())) {
-    return false;
-  }
-  return true;
+  return user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString();
 };
 
 const checkConseillerExist = async (db, id, user, res) => {
@@ -35,10 +32,7 @@ const checkConseillerExist = async (db, id, user, res) => {
 };
 
 const checkConseillerHaveCV = conseiller => {
-  if (!conseiller.cv?.file) {
-    return false;
-  }
-  return true;
+  return !!conseiller.cv?.file;
 };
 
 const suppressionCVConseiller = (db, conseiller) => {
