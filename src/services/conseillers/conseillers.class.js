@@ -25,6 +25,7 @@ const {
   suppressionTotalCandidat,
   suppressionCv,
   suppressionCVConseiller,
+  checkFormulaire,
   checkRoleAdmin } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
@@ -129,16 +130,10 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
-      const minDate = dayjs().subtract(99, 'year');
-      const maxDate = dayjs().subtract(18, 'year');
       const sexe = req.body.sexe;
       const dateDeNaissance = new Date(req.body.dateDeNaissance);
 
-      const schema = Joi.object({
-        dateDeNaissance: Joi.date().required().min(minDate).max(maxDate)
-        .error(new Error('La date de naissance est invalide')),
-        sexe: Joi.string().required().error(new Error('Le sexe est invalide')),
-      }).validate(req.body);
+      const schema = checkFormulaire(req.body);
 
       if (schema.error) {
         res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
@@ -283,9 +278,22 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
       checkAuth(req, res);
-      const user = checkRoleCandidat(db, req, res);
+
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+      if (!checkRoleCandidat(user, req)) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+      }
+
       const conseiller = await checkConseillerExist(db, req.params.id, user, res);
-      checkConseillerHaveCV(conseiller, user, res);
+      if (!checkConseillerHaveCV(conseiller)) {
+        res.status(404).send(new NotFound('CV not found for this conseiller', {
+          conseillerId: user.entity.oid
+        }).toJSON());
+      }
       suppressionCv(conseiller.cv, app).then(() => {
         return suppressionCVConseiller(db, conseiller);
       }).then(() => {

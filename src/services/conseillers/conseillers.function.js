@@ -4,6 +4,8 @@ const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
 const aws = require('aws-sdk');
+const dayjs = require('dayjs');
+const Joi = require('joi');
 const decode = require('jwt-decode');
 
 const checkAuth = (req, res) => {
@@ -13,18 +15,8 @@ const checkAuth = (req, res) => {
   }
 };
 
-const checkRoleCandidat = async (db, req, res) => {
-  //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
-  let userId = decode(req.feathers.authentication.accessToken).sub;
-  const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-  // eslint-disable-next-line max-len
-  if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString())) {
-    res.status(403).send(new Forbidden('User not authorized', {
-      userId: userId
-    }).toJSON());
-    return;
-  }
-  return user;
+const checkRoleCandidat = (user, req) => {
+  return user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString();
 };
 
 const checkConseillerExist = async (db, id, user, res) => {
@@ -39,13 +31,8 @@ const checkConseillerExist = async (db, id, user, res) => {
   return conseiller;
 };
 
-const checkConseillerHaveCV = (conseiller, user, res) => {
-  if (!conseiller.cv?.file) {
-    res.status(404).send(new NotFound('CV not found for this conseiller', {
-      conseillerId: user.entity.oid
-    }).toJSON());
-    return;
-  }
+const checkConseillerHaveCV = conseiller => {
+  return !!conseiller.cv?.file;
 };
 
 const suppressionCVConseiller = (db, conseiller) => {
@@ -237,6 +224,19 @@ const suppressionCv = async (cv, app) => {
   });
   await promise;
 };
+
+const checkFormulaire = body => {
+
+  const minDate = dayjs().subtract(99, 'year');
+  const maxDate = dayjs().subtract(18, 'year');
+
+  return Joi.object({
+    dateDeNaissance: Joi.date().required().min(minDate).max(maxDate).error(new Error('La date de naissance est invalide')),
+    sexe: Joi.string().required().error(new Error('Le sexe est invalide')),
+  }).validate(body);
+
+};
+
 const checkRoleAdmin = async (db, req, res) => {
   return new Promise(async resolve => {
     let userId = decode(req.feathers.authentication.accessToken).sub;
@@ -261,5 +261,6 @@ module.exports = {
   archiverLaSuppression,
   suppressionTotalCandidat,
   suppressionCv,
+  checkFormulaire,
   checkRoleAdmin
 };
