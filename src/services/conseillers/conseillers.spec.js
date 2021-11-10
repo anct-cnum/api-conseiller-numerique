@@ -8,8 +8,8 @@ const {
   checkConseillerHaveCV,
   checkFormulaire } = require('./conseillers.function');
 
-describe('check role candidat', () => {
-  it('should check if user has role candidat', () => {
+describe('Vérifier le role candidat', () => {
+  it('doit vérifier si l\'utilisateur a le role candidat', () => {
 
     const userCandidat = {
       entity:
@@ -35,7 +35,7 @@ describe('check role candidat', () => {
     expect(userWithRoleCandidat).toBe(true);
   });
 
-  it('should check if user has role candidat and is not the good candidat', () => {
+  it('doit vérifier si l\'utilisateur a le role candidat mais n\'est pas le bon candidat', () => {
 
     const userCandidat = {
       entity:
@@ -61,7 +61,7 @@ describe('check role candidat', () => {
     expect(userWithRoleCandidat).toBe(false);
   });
 
-  it('should check if user has not role candidat', () => {
+  it('doit vérifier si l\'utilisateur n\'a pas le role candidat', () => {
 
     const userNotCandidat = {
       entity:
@@ -89,8 +89,8 @@ describe('check role candidat', () => {
   });
 });
 
-describe('check candidat cv', () => {
-  it('should check candidat with CV', () => {
+describe('Vérifier l\'existance du CV d\'un candidat', () => {
+  it('doit vérifier si le candidat a un CV', () => {
 
     const candidatCV = {
       _id: '60f0357bbba64f21c296461a',
@@ -119,7 +119,7 @@ describe('check candidat cv', () => {
     expect(candidatWithCV).toBe(true);
   });
 
-  it('should check candidat without CV', () => {
+  it('doit vérifier si le candidat n\'a pas de CV', () => {
 
     const candidatNoCV = {
       _id: '60f0357bbba64f21c296461a',
@@ -144,8 +144,8 @@ describe('check candidat cv', () => {
   });
 });
 
-describe('check Formulaire Sexe/Age', () => {
-  it('should check  99 > age > 18 and sexe is not empty', () => {
+describe('Vérifier le formulaire Sexe/Age', () => {
+  it('doit vérifier que  99 > age > 18 et que le champ sexe existe', () => {
 
     const bodyValid = {
       sexe: 'Homme',
@@ -158,7 +158,7 @@ describe('check Formulaire Sexe/Age', () => {
 
   });
 
-  it('should check age > 99', () => {
+  it('doit vérifier que age > 99', () => {
 
     const bodyTooOld = {
       sexe: 'Homme',
@@ -172,7 +172,7 @@ describe('check Formulaire Sexe/Age', () => {
 
   });
 
-  it('should check age < 18', () => {
+  it('doit vérifier que age < 18', () => {
 
     const bodyTooYoung = {
       sexe: 'Homme',
@@ -185,7 +185,7 @@ describe('check Formulaire Sexe/Age', () => {
 
   });
 
-  it('should check sexe is empty', () => {
+  it('doit vérifier que le champ sexe n\'existe pas', () => {
 
     const bodyWithoutSexe = {
       dateDeNaissance: new Date('1980-01-01')
