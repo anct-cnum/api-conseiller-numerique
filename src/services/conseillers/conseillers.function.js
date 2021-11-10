@@ -6,6 +6,7 @@ const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs
 const aws = require('aws-sdk');
 const dayjs = require('dayjs');
 const Joi = require('joi');
+const decode = require('jwt-decode');
 
 const checkAuth = (req, res) => {
   if (req.feathers?.authentication === undefined) {
