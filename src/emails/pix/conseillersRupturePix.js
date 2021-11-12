@@ -1,12 +1,13 @@
+const { Parser } = require('json2csv');
+const jsonToCsvParser = new Parser({ delimiter: ';', withBOM: true });
+
 module.exports = (db, mailer, app) => {
 
   const templateName = 'conseillersRupturePix';
   let { utils } = mailer;
 
-  let render = conseillers => {
-
-    //TODO voir pour un csv en attachement plutot...
-    return mailer.render(__dirname, templateName, { conseillers });
+  let render = () => {
+    return mailer.render(__dirname, templateName);
   };
 
   return {
@@ -23,8 +24,13 @@ module.exports = (db, mailer, app) => {
         utils.getPixContactMail(),
         {
           subject: 'Conseillers en rupture de contrat',
-          body: await render(conseillers)
+          body: await render()
         },
+        { attachments: [{
+          filename: 'ListeConseillersRupture.csv',
+          content: jsonToCsvParser.parse(conseillers, ['Prénom', 'Nom', 'Email personnelle', 'Email professionnelle'])
+        }]
+        }
       )
       .then(onSuccess)
       .catch(onError);

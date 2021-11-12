@@ -222,9 +222,10 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               Sentry.captureException(error);
             }
             conseillerslistPix.push({
-              prenom: conseillerCoop.prenom,
-              nom: conseillerCoop.nom,
-              email: conseillerCoop.email
+              'Prénom': conseillerCoop.prenom,
+              'Nom': conseillerCoop.nom,
+              'Email personnelle': conseillerCoop.email,
+              'Email professionnelle': conseillerCoop?.emailCN?.address ?? 'Non défini'
             });
             ok++;
           }
