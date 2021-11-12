@@ -1,4 +1,4 @@
-module.exports = (db, mailer) => {
+module.exports = (db, mailer, app) => {
 
   const templateName = 'conseillerRuptureStructure';
 
@@ -9,12 +9,12 @@ module.exports = (db, mailer) => {
   return {
     templateName,
     render,
-    send: async (idMiseEnRelationFinalisee, emailContactStructure) => {
+    send: async (miseEnRelation, emailContactStructure) => {
       let onSuccess = () => {
-        return db.collection('misesEnRelation').updateOne({ _id: idMiseEnRelationFinalisee._id }, {
+        return db.collection('misesEnRelation').updateOne({ _id: miseEnRelation._id }, {
           $set: {
             mailCnfsRuptureSentDate: new Date(),
-            resendMailCnfsRupture: !!idMiseEnRelationFinalisee.resendMailCnfsRupture,
+            resendMailCnfsRupture: !!miseEnRelation.resendMailCnfsRupture,
           },
           $unset: {
             mailErrorCnfsRupture: '',
@@ -24,13 +24,13 @@ module.exports = (db, mailer) => {
       };
 
       let onError = async err => {
-        await db.collection('misesEnRelation').updateOne({ _id: idMiseEnRelationFinalisee._id }, {
+        await db.collection('misesEnRelation').updateOne({ _id: miseEnRelation._id }, {
           $set: {
             mailErrorCnfsRupture: 'smtpError',
             mailErrorDetailCnfsRupture: err.message
           }
         });
-        throw err;
+        app.get('sentry').captureException(err);
       };
       return mailer.createMailer().sendEmail(
         emailContactStructure,
@@ -44,4 +44,3 @@ module.exports = (db, mailer) => {
     },
   };
 };
-

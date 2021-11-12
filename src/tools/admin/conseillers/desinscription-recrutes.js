@@ -48,6 +48,8 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
       let ok = 0;
       let errors = 0;
       const messageStructure = emails.getEmailMessageByTemplateName('conseillerRuptureStructure');
+      const messagePix = emails.getEmailMessageByTemplateName('conseillersRupturePix');
+      let conseillerslistPix = [];
       if (total === 0) {
         logger.info(`[DESINSCRIPTION COOP] Aucun conseiller dans le fichier fourni`);
       }
@@ -94,28 +96,26 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
             const dateRupture = conseiller['Date de démission'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
             const motifRupture = conseiller['Motif de la sortie du dispositif (QCM)'];
 
-            try {
-              //Mise à jour PG du champ disponible pour le ou les conseillers avec le même email (en premier pour éviter une resynchro PG->Mongo entre-temps)
-              await updateConseillersPG(conseillerCoop.email, true);
+            //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
+            await updateConseillersPG(conseillerCoop.email, true);
 
+            try {
               //Historisation de la rupture
               await db.collection('conseillersRuptures').insertOne({
-                conseillerId,
-                structureId,
+                conseillerId: conseillerCoop._id,
+                structureId: conseillerCoop.structureId,
                 dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
                 motifRupture
               });
 
               //Mise à jour du conseiller
               await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
-                $set: {
-                  disponible: true,
-                  ruptures: { $push: {
-                    structureId,
-                    dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
-                    motifRupture
-                  } }
-                },
+                $set: { disponible: true },
+                $push: { ruptures: {
+                  structureId: structure._id,
+                  dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
+                  motifRupture
+                } },
                 $unset: {
                   statut: '',
                   estRecrute: '',
@@ -184,17 +184,26 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               );
 
               //Passage en compte candidat avec email perso
+              let userToUpdate = {
+                name: conseillerCoop.email,
+                roles: ['candidat'],
+                token: uuidv4(),
+                tokenCreatedAt: new Date(),
+                mailSentDate: null, //pour le mécanisme de relance d'invitation candidat
+                passwordCreated: false,
+              };
               if (userCoop !== null) {
-                await db.collection('users').updateOne({ _id: userCoop._id }, {
-                  $set: {
-                    name: conseillerCoop.email,
-                    roles: ['candidat'],
-                    token: uuidv4(),
-                    tokenCreatedAt: new Date(),
-                    mailSentDate: null, //pour le mécanisme de relance d'invitation candidat
-                    passwordCreated: false,
-                  }
-                });
+                //Maj name si le compte coop a été activé
+                if (conseillerCoop.email !== userCoop.name) {
+                  await db.collection('users').updateOne({ _id: userCoop._id }, {
+                    $set: { ...userToUpdate }
+                  });
+                } else {
+                  const { name: _, ...userWithoutName } = userToUpdate; //nécessaire pour ne pas avoir d'erreur de duplicate key
+                  await db.collection('users').updateOne({ _id: userCoop._id }, {
+                    $set: { ...userWithoutName }
+                  });
+                }
               }
 
               //Suppression compte Gandi
@@ -207,16 +216,24 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               }
 
               //Envoi du mail d'information à la structure
-              await messageStructure.send(miseEnRelation._id, structure.contact.email);
+              await messageStructure.send(miseEnRelation, structure.contact.email);
             } catch (error) {
               logger.error(error.message);
               Sentry.captureException(error);
             }
+            conseillerslistPix.push({
+              prenom: conseillerCoop.prenom,
+              nom: conseillerCoop.nom,
+              email: conseillerCoop.email
+            });
             ok++;
           }
           count++;
           if (total === count) {
-            //TODO PIX
+            //Envoi du mail global à PIX
+            if (conseillerslistPix.length > 0) {
+              await messagePix.send(conseillerslistPix);
+            }
             logger.info(`[DESINSCRIPTION COOP] Des conseillers ont été désinscrits :  ` +
                 `${ok} désinscrit(s) / ${errors} erreur(s)`);
             exit();

@@ -40,7 +40,9 @@ module.exports = app => {
 
   let getEspaceCandidatUrl = path => `${app.get('espace_candidat_hostname')}${path}`;
 
-  let getPixUrl = path => `${app.get('pix_hostname')}${path}`;
+  let getPixUrl = path => `${app.get('pix').hostname}${path}`;
+
+  let getPixContactMail = () => app.get('pix').contactMailing;
 
   let getHelpUrl = app.get('help_url');
 
@@ -52,6 +54,7 @@ module.exports = app => {
     getEspaceCandidatUrl,
     getPixUrl,
     getHelpUrl,
+    getPixContactMail,
   };
 
   return {
