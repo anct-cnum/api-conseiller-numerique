@@ -10,6 +10,9 @@ const crypto = require('crypto');
 const statsPdf = require('../stats/stats.pdf');
 const dayjs = require('dayjs');
 const Joi = require('joi');
+const createEmails = require('../../emails/emails');
+const createMailer = require('../../mailer');
+const { v4: uuidv4 } = require('uuid');
 
 const {
   checkAuth,
@@ -21,7 +24,9 @@ const {
   archiverLaSuppression,
   suppressionTotalCandidat,
   suppressionCv,
-  suppressionCVConseiller } = require('./conseillers.function');
+  suppressionCVConseiller,
+  checkFormulaire,
+  checkRoleAdmin } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -125,16 +130,10 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
 
-      const minDate = dayjs().subtract(99, 'year');
-      const maxDate = dayjs().subtract(18, 'year');
       const sexe = req.body.sexe;
       const dateDeNaissance = new Date(req.body.dateDeNaissance);
 
-      const schema = Joi.object({
-        dateDeNaissance: Joi.date().required().min(minDate).max(maxDate)
-        .error(new Error('La date de naissance est invalide')),
-        sexe: Joi.string().required().error(new Error('Le sexe est invalide')),
-      }).validate(req.body);
+      const schema = checkFormulaire(req.body);
 
       if (schema.error) {
         res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
@@ -279,9 +278,22 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
       checkAuth(req, res);
-      const user = checkRoleCandidat(db, req, res);
+
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+      if (!checkRoleCandidat(user, req)) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+      }
+
       const conseiller = await checkConseillerExist(db, req.params.id, user, res);
-      checkConseillerHaveCV(conseiller, user, res);
+      if (!checkConseillerHaveCV(conseiller)) {
+        res.status(404).send(new NotFound('CV not found for this conseiller', {
+          conseillerId: user.entity.oid
+        }).toJSON());
+      }
       suppressionCv(conseiller.cv, app).then(() => {
         return suppressionCVConseiller(db, conseiller);
       }).then(() => {
@@ -495,6 +507,69 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression de la candidature, veuillez réessayer.').toJSON());
       });
+    });
+
+
+    app.post('/conseillers/:id/relance-inscription-candidat', async (req, res) => {
+      await checkAuth(req, res);
+      await checkRoleAdmin(db, req, res);
+      const conseillerId = new ObjectId(req.params.id);
+      let user;
+      let conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
+      if (conseiller === null) {
+        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+          conseillerId,
+        }).toJSON());
+      }
+
+      try {
+        const conseillerUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
+        if (conseillerUser === null) {
+          const verifEmail = await db.collection('users').countDocuments({ name: conseiller.email });
+          if (verifEmail !== 0) {
+            await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreationError: true } });
+            res.status(409).send(new Conflict(`un doublon a déjà un compte associé à ${conseiller.email}`));
+            return;
+          }
+          const NOW = new Date();
+          const obj = {
+            name: conseiller.email,
+            prenom: conseiller.prenom,
+            nom: conseiller.nom,
+            password: uuidv4(),
+            roles: Array('candidat'),
+            entity: {
+              '$ref': `conseillers`,
+              '$id': conseiller._id,
+              '$db': db.serverConfig.s.options.dbName
+            },
+            token: uuidv4(),
+            tokenCreatedAt: NOW,
+            mailSentDate: null,
+            passwordCreated: false,
+            createdAt: NOW,
+          };
+          const createUser = await db.collection('users').insertOne(obj);
+          user = createUser.ops[0];
+        } else {
+          user = conseillerUser;
+        }
+        if (user.roles[0] === 'candidat') {
+          await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreated: true }, $unset: { userCreationError: true } });
+          let mailer = createMailer(app);
+          const emails = createEmails(db, mailer, app);
+          let message = emails.getEmailMessageByTemplateName('creationCompteCandidat');
+          await message.send(user);
+          res.send({ emailEnvoyer: true });
+        } else {
+          res.status(409).send(new Conflict(`${conseiller.prenom} ${conseiller.nom} est déjà recruté donc a un compte COOP existant`));
+          return;
+        }
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        return res.status(500).send(new GeneralError('Une erreur est survenue lors de l\'envoi de l\'email').toJSON());
+      }
     });
   }
 };
