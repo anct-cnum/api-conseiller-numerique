@@ -4,9 +4,9 @@ const jsonToCsvParser = new Parser({ delimiter: ';', withBOM: true, fields: ['Pr
 module.exports = (db, mailer, app) => {
 
   const templateName = 'conseillersRupturePix';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
-  let render = () => {
+  const render = () => {
     return mailer.render(__dirname, templateName);
   };
 
@@ -14,9 +14,9 @@ module.exports = (db, mailer, app) => {
     templateName,
     render,
     send: async conseillers => {
-      let onSuccess = () => { };
+      const onSuccess = () => { };
 
-      let onError = async err => {
+      const onError = async err => {
         app.get('sentry').captureException(err);
       };
 

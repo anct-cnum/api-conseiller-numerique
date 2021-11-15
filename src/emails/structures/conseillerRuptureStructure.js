@@ -2,7 +2,7 @@ module.exports = (db, mailer, app) => {
 
   const templateName = 'conseillerRuptureStructure';
 
-  let render = () => {
+  const render = () => {
     return mailer.render(__dirname, templateName);
   };
 
@@ -10,7 +10,7 @@ module.exports = (db, mailer, app) => {
     templateName,
     render,
     send: async (miseEnRelation, emailContactStructure) => {
-      let onSuccess = () => {
+      const onSuccess = () => {
         return db.collection('misesEnRelation').updateOne({ _id: miseEnRelation._id }, {
           $set: {
             mailCnfsRuptureSentDate: new Date(),
@@ -23,7 +23,7 @@ module.exports = (db, mailer, app) => {
         });
       };
 
-      let onError = async err => {
+      const onError = async err => {
         await db.collection('misesEnRelation').updateOne({ _id: miseEnRelation._id }, {
           $set: {
             mailErrorCnfsRupture: 'smtpError',
