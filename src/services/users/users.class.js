@@ -540,7 +540,7 @@ exports.Users = class Users extends Service {
     });
 
     app.post('/users/sendForgottenPasswordEmail', async (req, res) => {
-      const username = req.body.username.trim();
+      const username = req.body.username.toLowerCase().trim();
       const users = await this.find({
         query: {
           name: username,
