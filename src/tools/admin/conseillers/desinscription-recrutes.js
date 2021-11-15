@@ -39,6 +39,10 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
     }
   };
 
+  const formatDateDb = date => {
+    return dayjs(date, 'YYYY-MM-DD').toDate();
+  };
+
   logger.info('[DESINSCRIPTION COOP] Traitement des ruptures de contrat');
   let promises = [];
   await new Promise(resolve => {
@@ -104,7 +108,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               await db.collection('conseillersRuptures').insertOne({
                 conseillerId: conseillerCoop._id,
                 structureId: conseillerCoop.structureId,
-                dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
+                dateRupture: formatDateDb(dateRupture),
                 motifRupture
               });
 
@@ -113,7 +117,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 $set: { disponible: true },
                 $push: { ruptures: {
                   structureId: structure._id,
-                  dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
+                  dateRupture: formatDateDb(dateRupture),
                   motifRupture
                 } },
                 $unset: {
@@ -124,7 +128,8 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   structureId: '',
                   emailCNError: '',
                   emailCN: '',
-                  mattermost: ''
+                  mattermost: '',
+                  resetPasswordCNError: ''
                 }
               });
               const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerCoop._id });
@@ -138,7 +143,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 {
                   $set: {
                     statut: 'finalisee_rupture',
-                    dateRupture: dayjs(dateRupture, 'YYYY-MM-DD').toDate(),
+                    dateRupture: formatDateDb(dateRupture),
                     motifRupture,
                     conseillerObj: conseillerUpdated
                   }
@@ -158,7 +163,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 }
               );
 
-              //Modifications des doublons potentiels
+              //Modification des doublons potentiels
               await db.collection('conseillers').updateMany(
                 {
                   _id: { $ne: conseillerCoop._id },
@@ -216,17 +221,21 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               }
 
               //Envoi du mail d'information à la structure
-              await messageStructure.send(miseEnRelation, structure.contact.email);
+              if (conseillerslistPix.find(conseiller => conseiller['Structure id'] === conseillerCoop.structureId) === undefined) {
+                await messageStructure.send(miseEnRelation, structure.contact.email);
+              }
+
+              conseillerslistPix.push({
+                'Prénom': conseillerCoop.prenom,
+                'Nom': conseillerCoop.nom,
+                'Email personnel': conseillerCoop.email,
+                'Email professionnel': conseillerCoop?.emailCN?.address ?? 'Non défini',
+                'Structure id': conseillerCoop.structureId //pour éviter d'envoyer le mail plusieurs fois à la même structure
+              });
             } catch (error) {
               logger.error(error.message);
               Sentry.captureException(error);
             }
-            conseillerslistPix.push({
-              'Prénom': conseillerCoop.prenom,
-              'Nom': conseillerCoop.nom,
-              'Email personnelle': conseillerCoop.email,
-              'Email professionnelle': conseillerCoop?.emailCN?.address ?? 'Non défini'
-            });
             ok++;
           }
           count++;

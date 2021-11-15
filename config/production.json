@@ -7,7 +7,8 @@
   "espace_candidat_hostname": "ESPACE_CANDIDAT_HOSTNAME",
   "pix": {
     "hostname": "PIX_HOSTNAME",
-    "contactMailing": "PIX_MAILING"
+    "contactMailing": "PIX_CONTACT_MAILING",
+    "supportMailing": "PIX_SUPPORT_MAILING"
   },
   "port": "PORT",
   "authentication": {

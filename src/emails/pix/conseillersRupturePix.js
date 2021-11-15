@@ -1,5 +1,5 @@
 const { Parser } = require('json2csv');
-const jsonToCsvParser = new Parser({ delimiter: ';', withBOM: true });
+const jsonToCsvParser = new Parser({ delimiter: ';', withBOM: true, fields: ['Prénom', 'Nom', 'Email personnel', 'Email professionnel'] });
 
 module.exports = (db, mailer, app) => {
 
@@ -28,9 +28,10 @@ module.exports = (db, mailer, app) => {
         },
         { attachments: [{
           filename: 'ListeConseillersRupture.csv',
-          content: jsonToCsvParser.parse(conseillers, ['Prénom', 'Nom', 'Email personnelle', 'Email professionnelle'])
+          content: jsonToCsvParser.parse(conseillers)
         }]
-        }
+        },
+        utils.getPixSupportMail()
       )
       .then(onSuccess)
       .catch(onError);
