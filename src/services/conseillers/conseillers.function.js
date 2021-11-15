@@ -254,11 +254,10 @@ const checkRoleAdmin = async (db, req, res) => {
 };
 
 const candidatSupprimeEmailPix = async (candidat, db, app) => {
-  let mailer = createMailer(app);
+  const mailer = createMailer(app);
   const emails = createEmails(db, mailer, app);
   const emailPix = emails.getEmailMessageByTemplateName('candidatSupprimePix');
   await emailPix.send(candidat);
-  return;
 };
 
 module.exports = {

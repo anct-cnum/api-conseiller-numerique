@@ -43,8 +43,8 @@ module.exports = app => {
   let getPixUrl = path => `${app.get('pix_hostname')}${path}`;
 
   let getHelpUrl = app.get('help_url');
-  let getPixContactMail = () => app.get('pix').contactMailing;
-  let getPixSupportMail = () => app.get('pix').supportMailing;
+  const getPixContactMail = () => app.get('pix').contactMailing;
+  const getPixSupportMail = () => app.get('pix').supportMailing;
 
   let utils = {
     getPublicUrl,

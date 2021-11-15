@@ -1,9 +1,9 @@
 module.exports = (db, mailer, app, logger) => {
 
   const templateName = 'candidatSupprimePix';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
-  let render = candidat => {
+  const render = candidat => {
     return mailer.render(__dirname, templateName, { candidat });
   };
   let options = {};
@@ -11,11 +11,11 @@ module.exports = (db, mailer, app, logger) => {
     templateName,
     render,
     send: async candidat => {
-      let onSuccess = () => {
-        logger.info(`Mail envoyer à PIX avec succès pour le candidat ${candidat}`);
+      const onSuccess = () => {
+        logger.info(`Email envoyé à PIX avec succès pour le candidat ${candidat}`);
       };
 
-      let onError = async err => {
+      const onError = async err => {
         app.get('sentry').captureException(err);
       };
 
