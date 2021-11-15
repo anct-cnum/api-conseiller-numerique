@@ -7,6 +7,8 @@ const aws = require('aws-sdk');
 const dayjs = require('dayjs');
 const Joi = require('joi');
 const decode = require('jwt-decode');
+const createEmails = require('../../emails/emails');
+const createMailer = require('../../mailer');
 
 const checkAuth = (req, res) => {
   if (req.feathers?.authentication === undefined) {
@@ -250,6 +252,15 @@ const checkRoleAdmin = async (db, req, res) => {
     resolve();
   });
 };
+
+const candidatSupprimeEmailPix = async (candidat, db, app) => {
+  let mailer = createMailer(app);
+  const emails = createEmails(db, mailer, app);
+  const emailPix = emails.getEmailMessageByTemplateName('candidatSupprimePix');
+  await emailPix.send(candidat);
+  return;
+};
+
 module.exports = {
   checkAuth,
   checkRoleCandidat,
@@ -262,5 +273,6 @@ module.exports = {
   suppressionTotalCandidat,
   suppressionCv,
   checkFormulaire,
-  checkRoleAdmin
+  checkRoleAdmin,
+  candidatSupprimeEmailPix
 };

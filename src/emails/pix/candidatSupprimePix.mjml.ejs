@@ -1,0 +1,56 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Candidat a supprimer
+            </mj-text>
+            <mj-text align="left">
+              Bonjour,
+            </mj-text>
+            <mj-text align="left">
+              Veuillez trouver ci-dessous la liste des conseillers numérique qui souhaitent se retirer du dispositif.
+            </mj-text>
+            <mj-table>
+              <tr style="border-bottom:1px solid;text-align:left;padding:15px 0;">
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th style="padding: 0 0 0 15px;">Adresse mail</th>
+              </tr>
+              <tr>
+                <td style="padding: 0 15px 0 0;">
+                  <mj-text>
+                    <%= candidat.nom %>
+                  </mj-text>
+                </td>
+                <td style="padding: 0 15px;">
+                  <mj-text>
+                    <%= candidat.prenom %>
+                  </mj-text>
+                </td>
+                <td style="padding: 0 0 0 15px;">
+                  <mj-text>
+                    <%= candidat.email %>
+                  </mj-text>
+                </td>
+              </tr>
+            </mj-table>
+            <mj-text align="left">
+              Merci de bien vouloir supprimer leur information et leur accès Pix.
+            </mj-text>
+             <mj-text align="left">
+              A bientôt,
+            </mj-text>
+            <mj-text align="left">
+              L'équipe conseiller numérique.
+            </mj-text>
+          </mj-column>
+      </mj-wrapper>
+  </mj-body>
+</mjml>
