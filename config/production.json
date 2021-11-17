@@ -5,7 +5,11 @@
   "backoffice_hostname": "BACKOFFICE_HOSTNAME",
   "espace_coop_hostname": "ESPACE_COOP_HOSTNAME",
   "espace_candidat_hostname": "ESPACE_CANDIDAT_HOSTNAME",
-  "pix_hostname": "PIX_HOSTNAME",
+  "pix": {
+    "hostname": "PIX_HOSTNAME",
+    "contactMailing": "PIX_CONTACT_MAILING",
+    "supportMailing": "PIX_SUPPORT_MAILING"
+  },
   "port": "PORT",
   "authentication": {
     "secret": "AUTHENTICATION_SECRET",

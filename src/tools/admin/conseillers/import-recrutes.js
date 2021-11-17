@@ -5,6 +5,15 @@ const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 const pool = new Pool();
 
+const configPG = {
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  db: process.env.PGDATABASE,
+  port: process.env.PGPORT,
+  sslMode: process.env.PGSSLMODE,
+  host: process.env.PGHOST
+};
+
 program
 .option('-c, --csv <path>', 'CSV file path');
 
@@ -23,6 +32,11 @@ const readCSV = async filePath => {
 const { execute } = require('../../utils');
 
 execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
+
+  if (Object.values(configPG).includes(undefined)) {
+    logger.warn(`ATTENTION : les 6 vars d'env PG n'ont pas été configurées`);
+    return exit();
+  }
 
   logger.info('Import des conseillers recrutés');
   let count = 0;
