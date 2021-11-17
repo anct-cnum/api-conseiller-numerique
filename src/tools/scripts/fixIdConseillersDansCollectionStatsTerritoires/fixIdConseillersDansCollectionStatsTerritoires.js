@@ -4,15 +4,15 @@ const { execute } = require('../../utils');
 
 const getTerritoires = async db => await db.collection('stats_Territoires').find().toArray();
 
-const getConseillerRecrute = async (db, id) => await db.collection('conseillers').findOne({ '_id': id, 'statut': 'RECRUTE' });
+const getConseillerRecrute = db => async id => await db.collection('conseillers').findOne({ '_id': id, 'statut': 'RECRUTE' });
 
-const getConseillerIdCorrect = async (db, id) => {
+const getConseillerIdCorrect = db => async id => {
   const doublon = await db.collection('conseillers').findOne({ '_id': id });
   const conseiller = await db.collection('conseillers').findOne({ 'email': doublon.email, 'statut': 'RECRUTE' });
   return conseiller._id;
 };
 
-const updateTerritoire = async (db, id, list) => {
+const updateTerritoire = db => async (id, list) => {
   await db.collection('stats_Territoires').updateOne({ '_id': id }, {
     $set: {
       conseillerIds: list,
@@ -32,9 +32,9 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
         territoire.conseillerIds.forEach(id => {
 
           promises.push(new Promise(async resolve => {
-            const conseillerRecrute = await getConseillerRecrute(db, id);
+            const conseillerRecrute = await getConseillerRecrute(db)(id);
             if (conseillerRecrute === null) {
-              const conseillerId = await getConseillerIdCorrect(db, id);
+              const conseillerId = await getConseillerIdCorrect(db)(id);
               nouvelleListeConseillerIds.push(conseillerId);
             } else {
               nouvelleListeConseillerIds.push(id);
@@ -45,7 +45,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
         await Promise.all(promises);
 
-        await updateTerritoire(db, territoire._id, nouvelleListeConseillerIds);
+        await updateTerritoire(db)(territoire._id, nouvelleListeConseillerIds);
       }
     });
 
