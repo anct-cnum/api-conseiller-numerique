@@ -1,39 +1,57 @@
 #!/usr/bin/env node
 'use strict';
-
 const { execute } = require('../../utils');
 
-const toTerritoireList = null;
-const getTerritoires = async db => await db.collection('stats_Territoires').find().map(toTerritoireList).toArray();
+const getTerritoires = async db => await db.collection('stats_Territoires').find().toArray();
 
-const isConseillerDoublon = null;
+const getConseillerRecrute = async (db, id) => await db.collection('conseillers').findOne({ '_id': id, 'statut': 'RECRUTE' });
 
-const searchCorrectConseillerId = null;
+const getConseillerIdCorrect = async (db, id) => {
+  const doublon = await db.collection('conseillers').findOne({ '_id': id });
+  const conseiller = await db.collection('conseillers').findOne({ 'email': doublon.email, 'statut': 'RECRUTE' });
+  return conseiller._id;
+};
 
-const updateTerritoire = null;
-
-execute(__filename, async ({ db, logger, exit }) => {
+const updateTerritoire = async (db, id, list) => {
+  await db.collection('stats_Territoires').updateOne({ '_id': id }, {
+    $set: {
+      conseillerIds: list,
+    }
+  });
+};
+execute(__filename, async ({ db, logger, Sentry, exit }) => {
   logger.info('Script de correction des Ids conseillers en doublon par territoires');
 
   const territoires = await getTerritoires(db);
 
   try {
-    territoires.forEach(territoire => {
+    territoires.forEach(async territoire => {
+      let promises = [];
       if (territoire.conseillerIds.length > 0) {
         let nouvelleListeConseillerIds = [];
-
         territoire.conseillerIds.forEach(id => {
-          if (isConseillerDoublon(db, id)) {
 
-          } else {
-
-          }
+          promises.push(new Promise(async resolve => {
+            const conseillerRecrute = await getConseillerRecrute(db, id);
+            if (conseillerRecrute === null) {
+              const conseillerId = await getConseillerIdCorrect(db, id);
+              nouvelleListeConseillerIds.push(conseillerId);
+            } else {
+              nouvelleListeConseillerIds.push(id);
+            }
+            resolve();
+          }));
         });
-        console.log(territoire);
+
+        await Promise.all(promises);
+
+        await updateTerritoire(db, territoire._id, nouvelleListeConseillerIds);
       }
     });
-  } catch (error) {
 
+  } catch (error) {
+    logger.error(error);
+    Sentry.captureException(error);
   }
 
   exit();
