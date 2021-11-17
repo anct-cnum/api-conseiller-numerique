@@ -20,6 +20,7 @@ const ouvertureEspaceCoopStructure = require('./structures/ouvertureEspaceCoopSt
 const candidatConfirmeNouveauEmail = require('./confirmeChangeEmail/candidatConfirmeNouveauEmail');
 const creationCompteCandidat = require('./candidats/creationCompteCandidat');
 const bienvenueCompteCandidat = require('./candidats/bienvenueCompteCandidat');
+const candidatSupprimePix = require('./pix/candidatSupprimePix');
 const conseillerRuptureStructure = require('./structures/conseillerRuptureStructure');
 const conseillersRupturePix = require('./pix/conseillersRupturePix');
 
@@ -48,6 +49,7 @@ module.exports = (db, mailer, app) => {
     candidatConfirmeNouveauEmail(db, mailer, app),
     creationCompteCandidat(db, mailer, app),
     bienvenueCompteCandidat(db, mailer, app),
+    candidatSupprimePix(db, mailer, app),
     conseillerRuptureStructure(db, mailer, app),
     conseillersRupturePix(db, mailer, app)
   ];
