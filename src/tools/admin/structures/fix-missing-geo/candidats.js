@@ -21,7 +21,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
         logger.info(`Aucun code departement manquant pour les candidats`);
       }
     } catch (error) {
-      logger.error(error.message);
+      logger.error(error);
       Sentry.captureException(error);
     }
   };
@@ -40,7 +40,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
       const result = await axios.get(urlAPI, { params: params });
       return result.data;
     } catch (error) {
-      logger.error(error.message);
+      logger.error(error);
       Sentry.captureException(error);
     }
   };
@@ -50,7 +50,7 @@ execute(__filename, async ({ logger, exit, Sentry }) => {
       await pool.query('UPDATE djapp_coach SET commune_code=$2, departement_code=$3, region_code=$4, geo_name=$5 WHERE id=$1',
         [c.id, geo.code, geo.codeDepartement, geo.codeRegion, geo.nom]);
     } catch (error) {
-      logger.error(error.message);
+      logger.error(error);
       Sentry.captureException(error);
     }
   };

@@ -40,7 +40,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     SET email = $2 WHERE id = $1`,
     [id, email]);
   } catch (error) {
-    logger.error(error.message);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }
@@ -56,7 +56,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     }
 
   } catch (error) {
-    logger.error(error.message);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }

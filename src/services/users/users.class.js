@@ -188,7 +188,7 @@ exports.Users = class Users extends Service {
         await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier, token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
       } catch (err) {
         app.get('sentry').captureException(err);
-        logger.error(`Erreur BD: ${err}`);
+        logger.error(err);
       }
 
       const apresEmailConfirmer = await this.find({
@@ -519,7 +519,7 @@ exports.Users = class Users extends Service {
           extension = match[3];
         } else {
           const err = new Error('Erreur mot de passe oublié, format email invalide');
-          logger.error(err.message);
+          logger.error(err);
           app.get('sentry').captureException(err);
           res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
           return;
@@ -533,7 +533,7 @@ exports.Users = class Users extends Service {
           successCheckEmail: true
         });
       } catch (err) {
-        logger.error(err.message);
+        logger.error(err);
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }

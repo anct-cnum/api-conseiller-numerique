@@ -44,7 +44,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       }
     });
   } catch (e) {
-    logger.error(e.message);
+    logger.error(e);
     Sentry.captureException(e);
   }
 
