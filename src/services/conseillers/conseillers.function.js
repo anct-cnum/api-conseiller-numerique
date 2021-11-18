@@ -255,7 +255,7 @@ const checkRoleAdmin = async (db, req, res) => {
 
 const candidatSupprimeEmailPix = async (candidat, db, app) => {
   const mailer = createMailer(app);
-  const emails = createEmails(db, mailer, app);
+  const emails = createEmails(db, mailer, app, logger);
   const emailPix = emails.getEmailMessageByTemplateName('candidatSupprimePix');
   await emailPix.send(candidat);
 };

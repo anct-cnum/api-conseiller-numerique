@@ -12,7 +12,7 @@ module.exports = (db, mailer, app, logger) => {
     render,
     send: async candidat => {
       const onSuccess = () => {
-        logger.info(`Email envoyé à PIX avec succès pour le candidat ${candidat}`);
+        logger.info(`Email envoyé à PIX avec succès pour le candidat ${candidat.nom} ${candidat.prenom}`);
       };
 
       const onError = async err => {
