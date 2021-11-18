@@ -448,11 +448,11 @@ exports.Users = class Users extends Service {
             }
           } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
             const conseiller = await app.service('conseillers').get(user.entity?.oid);
-            //Mise à jour du password également dans Mattermost et Gandi
+            // Mise à jour du password également dans Mattermost et Gandi
             const adressCN = conseiller.emailCN?.address;
             if (adressCN === undefined) {
               logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
-              res.status(404).send(new NotFound('Adresse Conseiller numerique non trouvé').toJSON());
+              res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
               return;
             }
             const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
