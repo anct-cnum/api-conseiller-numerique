@@ -145,14 +145,10 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
     return true;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
-        { mattermost:
-          {
-            error: true
-          }
-        }
+        { 'mattermost.error': true, 'mattermost.errorMessage': e.message }
       });
     return false;
   }
@@ -181,7 +177,7 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
     return true;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorResetPassword': true }
@@ -214,7 +210,7 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
     return true;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorDeleteAccount': true }

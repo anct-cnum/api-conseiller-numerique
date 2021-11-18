@@ -355,7 +355,7 @@ exports.Structures = class Structures extends Service {
             });
           res.send({ emailUpdated: true });
         } catch (error) {
-          logger.error(error.message);
+          logger.error(error);
           app.get('sentry').captureException(error);
           res.status(500).send(new GeneralError(`Echec du changement d'email de la structure ${structure.nom}`));
         }

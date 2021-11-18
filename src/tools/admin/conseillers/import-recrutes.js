@@ -193,7 +193,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       });
       resolve();
     }).catch(error => {
-      logger.error(error.message);
+      logger.error(error);
     });
   });
   await Promise.allSettled(promises);

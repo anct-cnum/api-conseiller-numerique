@@ -15,7 +15,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     logger.info('Suppression collection stats_PostesValidesStructure OK');
     exit();
   } catch (error) {
-    logger.error(error.message);
+    logger.error(error);
     Sentry.captureException(error);
   }
 

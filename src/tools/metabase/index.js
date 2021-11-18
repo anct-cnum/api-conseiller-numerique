@@ -157,7 +157,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         }
       } catch (error) {
         Sentry.captureException(error);
-        logger.error(error.message);
+        logger.error(error);
       }
       resolve();
     }));

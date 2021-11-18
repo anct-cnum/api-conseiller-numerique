@@ -24,7 +24,7 @@ const candidatSupprimePix = require('./pix/candidatSupprimePix');
 const conseillerRuptureStructure = require('./structures/conseillerRuptureStructure');
 const conseillersRupturePix = require('./pix/conseillersRupturePix');
 
-module.exports = (db, mailer, app) => {
+module.exports = (db, mailer, app, logger) => {
 
   let emails = [
     creationCompteStructure(db, mailer),
@@ -49,7 +49,7 @@ module.exports = (db, mailer, app) => {
     candidatConfirmeNouveauEmail(db, mailer, app),
     creationCompteCandidat(db, mailer, app),
     bienvenueCompteCandidat(db, mailer, app),
-    candidatSupprimePix(db, mailer, app),
+    candidatSupprimePix(db, mailer, app, logger),
     conseillerRuptureStructure(db, mailer, app),
     conseillersRupturePix(db, mailer, app)
   ];

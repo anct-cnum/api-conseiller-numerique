@@ -32,7 +32,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         logger.info(`Structure introuvable`);
       }
     } catch (error) {
-      logger.error(`Erreur DB : ${error.message}`);
+      logger.error(error);
       Sentry.captureException(error);
     }
   };
@@ -60,7 +60,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             ($2) WHERE id=$1`,
       [s.id, geo.geometry]);
     } catch (error) {
-      logger.error(`Erreur DB : ${error.message}`);
+      logger.error(error);
       Sentry.captureException(error);
     }
   };

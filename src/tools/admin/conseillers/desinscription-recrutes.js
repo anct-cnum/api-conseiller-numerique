@@ -267,7 +267,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
       });
       resolve();
     }).catch(error => {
-      logger.error(error.message);
+      logger.error(error);
       Sentry.captureException(error);
     });
   });
