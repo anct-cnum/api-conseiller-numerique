@@ -236,7 +236,7 @@ exports.Stats = class Stats extends Service {
     });
 
     app.get('/stats/admincoop/territoires', async (req, res) => {
-      if (statsFct.checkAuth(req)) {
+      if (!statsFct.checkAuth(req)) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }

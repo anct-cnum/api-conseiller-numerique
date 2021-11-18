@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const checkAuth = req => {
-  return !req.feathers?.authentication === undefined;
+  return req.feathers?.authentication !== undefined;
 };
 
 const checkRole = (roles, authorized) => {
@@ -22,6 +22,7 @@ const checkSchema = req => {
 };
 
 const getTerritoires = db => async (type, date, ordre, page, limit) => {
+  console.log(ordre);
   if (type === 'codeDepartement') {
     return await db.collection('stats_Territoires').find({ 'date': date })
     .sort(ordre)
