@@ -52,7 +52,7 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
     db.collection('stats_externes_pix').insertOne(statsPIX);
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
   }
   exit();
 });

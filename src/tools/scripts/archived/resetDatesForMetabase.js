@@ -69,7 +69,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     logger.info(`Fin RAZ heures, minutes, secondes des dates pour les collections metabase`);
     exit();
   } catch (error) {
-    logger.error(error.message);
+    logger.error(error);
     Sentry.captureException(error);
   }
 });

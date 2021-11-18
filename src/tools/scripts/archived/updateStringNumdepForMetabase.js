@@ -29,7 +29,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     logger.info(`Fin rattrapage en string du numeroDepartement collection Metabase stats_PostesValidesDepartement`);
     exit();
   } catch (error) {
-    logger.error(error.message);
+    logger.error(error);
     Sentry.captureException(error);
   }
 });

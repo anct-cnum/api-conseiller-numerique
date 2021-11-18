@@ -110,7 +110,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       deleteMatchingConseiller(id);// supprimer également dans matching sinon erreur "constraint" coter PG
       deleteConseiller(id);
     } catch (error) {
-      logger.error(`Erreur Mongo (delete): ${error.message}`);
+      logger.error(error);
       Sentry.captureException(error);
       return;
     }
@@ -133,7 +133,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       }, {});
       updateConseiller(id, disponibleChange);
     } catch (error) {
-      logger.error(`Erreur Mongo (update): ${error.message}`);
+      logger.error(error);
       Sentry.captureException(error);
       return;
     }

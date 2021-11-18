@@ -57,7 +57,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: miseAJour });
     await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: miseAJourMiseEnRelation });
   } catch (error) {
-    logger.error(`Erreur MongoDB : ${error.message}`);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }
@@ -82,7 +82,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       data.properties.codeRegion
     ]);
   } catch (error) {
-    logger.error(`Erreur PG : ${error.message}`);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }

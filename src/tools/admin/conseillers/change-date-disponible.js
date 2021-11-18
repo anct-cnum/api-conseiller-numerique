@@ -35,7 +35,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       });
 
   } catch (error) {
-    logger.error(`Erreur MongoDB : ${error.message}`);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }
@@ -46,7 +46,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     [conseiller.idPG, disponible]);
 
   } catch (error) {
-    logger.error(`Erreur PG : ${error.message}`);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }

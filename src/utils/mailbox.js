@@ -23,7 +23,7 @@ const createMailbox = async ({ gandi, conseillerId, login, password, db, logger,
     return true;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:
         { emailCNError: true }
@@ -72,7 +72,7 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
     }
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:
         { resetPasswordCNError: true }
@@ -120,7 +120,7 @@ const deleteMailbox = async (gandi, conseillerId, login, db, logger, Sentry) => 
     }
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:
         { 'emailCN.deleteMailboxCNError': true }
