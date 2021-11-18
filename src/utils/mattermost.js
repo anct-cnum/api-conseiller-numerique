@@ -148,11 +148,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
     logger.error(e.message);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
-        { mattermost:
-          {
-            error: true
-          }
-        }
+        { 'mattermost.error': true, 'mattermost.errorMessage': e.message }
       });
     return false;
   }
