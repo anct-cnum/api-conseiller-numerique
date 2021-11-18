@@ -23,8 +23,8 @@ const {
   userIdFromRequestJwt,
   abort,
   csvFileResponse
-} = require('./common/utils/feathers.utils');
-const { userAuthenticationRepository } = require('./common/repositories/user-authentication.repository');
+} = require('../../common/utils/feathers.utils');
+const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
 const { getStatsCnfs } = require('./export-cnfs/core/export-cnfs.core');
 const {

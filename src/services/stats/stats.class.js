@@ -7,6 +7,26 @@ const Joi = require('joi');
 const dayjs = require('dayjs');
 const logger = require('../../logger');
 const statsPdf = require('./stats.pdf');
+const {
+  activateRoute,
+  canActivate,
+  authenticationGuard,
+  rolesGuard,
+  schemaGuard,
+  authenticationFromRequest,
+  userIdFromRequestJwt,
+  abort,
+  csvFileResponse,
+  Role
+} = require('../../common/utils/feathers.utils');
+const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
+const {
+  validateExportStatistiquesSchema,
+  exportStatistiquesQueryToSchema,
+  buildExportStatistiquesCsvFileContent,
+  getExportStatistiquesFileName
+} = require('./export-statistiques/utils/export-statistiques.utils');
+const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -173,6 +193,31 @@ exports.Stats = class Stats extends Service {
           return;
         }
       });
+    });
+
+    app.get('/stats/admincoop/statistiques.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = exportStatistiquesQueryToSchema(req.query);
+
+      activateRoute(await canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        schemaGuard(validateExportStatistiquesSchema(query))
+      ), async () => {
+        const statsQuery = {
+          'conseiller.$id': new ObjectID(query.idType),
+          'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+        };
+
+        const { getConseillerById } = exportStatistiquesRepository(db);
+        const conseiller = await getConseillerById(query.idType);
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
+
+        csvFileResponse(res,
+          `${getExportStatistiquesFileName(conseiller, query.dateDebut, query.dateFin)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, `${conseiller.prenom} ${conseiller.nom}`, query.dateDebut, query.dateFin)
+        );
+      }, routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/stats/admincoop/dashboard', async (req, res) => {
