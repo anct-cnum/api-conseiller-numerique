@@ -26,7 +26,8 @@ const {
   suppressionCv,
   suppressionCVConseiller,
   checkFormulaire,
-  checkRoleAdmin } = require('./conseillers.function');
+  checkRoleAdmin,
+  candidatSupprimeEmailPix } = require('./conseillers.function');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -483,8 +484,12 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
       }
-
-      const { email, cv } = conseiller.data[0];
+      const { nom, prenom, email, cv } = conseiller.data[0];
+      const candidat = {
+        nom,
+        prenom,
+        email
+      };
       await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
         const actionUser = req.body.actionUser;
         const motif = req.body.motif;
@@ -500,6 +505,8 @@ exports.Conseillers = class Conseillers extends Service {
           });
         }
         return;
+      }).then(() => {
+        return candidatSupprimeEmailPix(candidat, db, app);
       }).then(() => {
         res.send({ deleteSuccess: true });
       }).catch(error => {

@@ -40,10 +40,11 @@ module.exports = app => {
 
   let getEspaceCandidatUrl = path => `${app.get('espace_candidat_hostname')}${path}`;
 
-  let getPixUrl = path => `${app.get('pix_hostname')}${path}`;
+  let getPixUrl = path => `${app.get('pix').hostname}${path}`;
+  const getPixContactMail = () => app.get('pix').contactMailing;
+  const getPixSupportMail = () => app.get('pix').supportMailing;
 
   let getHelpUrl = app.get('help_url');
-
 
   let utils = {
     getPublicUrl,
@@ -52,6 +53,8 @@ module.exports = app => {
     getEspaceCandidatUrl,
     getPixUrl,
     getHelpUrl,
+    getPixContactMail,
+    getPixSupportMail
   };
 
   return {
@@ -66,7 +69,7 @@ module.exports = app => {
     },
     createMailer: () => {
       return {
-        sendEmail: async (emailAddress, message, options = {}) => {
+        sendEmail: async (emailAddress, message, options = {}, carbonCopy = null) => {
 
           const schema = await Joi.object({
             subject: Joi.string().required(),
@@ -82,6 +85,7 @@ module.exports = app => {
               help: getPublicUrl('/faq'),
             },
             html: body,
+            ...(carbonCopy !== null ? { cc: carbonCopy } : {})
           }, {
             ...options,
             ...(process.env.CNUM_MAIL_BCC ? { bcc: process.env.CNUM_MAIL_BCC } : {}),

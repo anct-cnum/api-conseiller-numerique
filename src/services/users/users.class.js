@@ -94,11 +94,12 @@ exports.Users = class Users extends Service {
             SET (
                   first_name,
                   last_name,
-                  phone)
+                  phone,
+                  start_date)
                   =
-                  ($2,$3,$4)
+                  ($2,$3,$4,$5)
                 WHERE id = $1`,
-          [idPG, prenom, nom, telephone]);
+          [idPG, prenom, nom, telephone, dateDisponibilite]);
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
