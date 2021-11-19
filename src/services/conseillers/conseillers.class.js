@@ -13,7 +13,7 @@ const Joi = require('joi');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { v4: uuidv4 } = require('uuid');
-
+const { ObjectID } = require('mongodb');
 const {
   checkAuth,
   checkRoleCandidat,
@@ -28,6 +28,27 @@ const {
   checkFormulaire,
   checkRoleAdmin,
   candidatSupprimeEmailPix } = require('./conseillers.function');
+const {
+  activateRoute,
+  canActivate,
+  authenticationGuard,
+  authenticationFromRequest,
+  rolesGuard,
+  userIdFromRequestJwt,
+  Role,
+  schemaGuard,
+  abort,
+  csvFileResponse
+} = require('../../common/utils/feathers.utils');
+const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
+const statsCras = require('../stats/cras');
+const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
+const {
+  getExportStatistiquesFileName,
+  validateExportStatistiquesSchema,
+  exportStatistiquesQueryToSchema
+} = require('./export-statistiques/utils/export-statistiques.utils');
+const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -414,6 +435,34 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
+    app.get('/conseillers/statistiques.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = exportStatistiquesQueryToSchema(req.query);
+      const getUserById = userAuthenticationRepository(db);
+      const userId = userIdFromRequestJwt(req);
+
+      activateRoute(await canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Conseiller], getUserById),
+        schemaGuard(validateExportStatistiquesSchema(query))
+      ), async () => {
+        const { getConseillerAssociatedWithUser } = exportStatistiquesRepository(db);
+        const conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
+
+        const statsQuery = {
+          'conseiller.$id': new ObjectID(conseiller._id),
+          'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+        };
+
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
+
+        csvFileResponse(res,
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, `${conseiller.prenom} ${conseiller.nom}`, query.dateDebut, query.dateFin)
+        );
+      }, routeActivationError => abort(res, routeActivationError));
+    });
+
     app.get('/conseillers/:id/employeur', async (req, res) => {
       checkAuth(req, res);
 
@@ -515,7 +564,6 @@ exports.Conseillers = class Conseillers extends Service {
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression de la candidature, veuillez réessayer.').toJSON());
       });
     });
-
 
     app.post('/conseillers/:id/relance-inscription-candidat', async (req, res) => {
       await checkAuth(req, res);

@@ -23,10 +23,10 @@ const { userAuthenticationRepository } = require('../../common/repositories/user
 const {
   validateExportStatistiquesSchema,
   exportStatistiquesQueryToSchema,
-  buildExportStatistiquesCsvFileContent,
   getExportStatistiquesFileName
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
+const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
