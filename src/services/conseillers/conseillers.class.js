@@ -458,11 +458,11 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
-      let userAuthentifier = [];
       const roles = ['admin', 'candidat'];
-      await verificationRoleUser(userAuthentifier, db, decode, req, res, roles);
-      const user = userAuthentifier[0];
+      let user;
+      const actionUser = req.query.actionUser;
       const id = req.params.id;
+      const motif = req.query.motif;
       const conseiller = await this.find({
         query: {
           _id: new ObjectId(id),
@@ -475,29 +475,24 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-
-      if (user.roles.includes('candidat')) {
-        if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
-          res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
-            id
-          }).toJSON());
-          return;
-        }
-      }
       const { nom, prenom, email, cv } = conseiller.data[0];
       const candidat = {
         nom,
         prenom,
         email
       };
-      await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
-        const actionUser = req.body.actionUser;
-        const motif = req.body.motif;
-        return archiverLaSuppression(email, user, app, motif, actionUser);
+      const instructionSuppression = motif === 'doublon' ? { '_id': new ObjectId(id), 'email': email } : { 'email': email };
+      const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
+      await verificationRoleUser(db, decode, req, res)(roles).then(userIdentifier => {
+        user = userIdentifier;
       }).then(() => {
-        return suppressionTotalCandidat(email, app);
+        return verificationCandidaturesRecrutee(app, res)(tableauCandidat, id);
       }).then(() => {
-        if (cv?.file) {
+        return archiverLaSuppression(app)(tableauCandidat, user, motif, actionUser);
+      }).then(() => {
+        return suppressionTotalCandidat(app)(tableauCandidat);
+      }).then(() => {
+        if (cv?.file && (motif !== 'doublon')) {
           return suppressionCv(cv, app).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
@@ -506,7 +501,10 @@ exports.Conseillers = class Conseillers extends Service {
         }
         return;
       }).then(() => {
-        return candidatSupprimeEmailPix(candidat, db, app);
+        if (motif !== 'doublon') {
+          return candidatSupprimeEmailPix(db, app)(candidat);
+        }
+        return;
       }).then(() => {
         res.send({ deleteSuccess: true });
       }).catch(error => {
