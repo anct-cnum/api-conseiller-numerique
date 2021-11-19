@@ -57,7 +57,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
       });
     });
 
-    it('devrait être en succès lorsque la donnée d\'entrée est valide', () => {
+    it('devrait être en succès lorsque la donnée d\'entrée est valide avec id type', () => {
       const schemaValidation = validateExportStatistiquesSchema({
         dateDebut: new Date('2021-11-01T00:00:00.000Z'),
         dateFin: new Date('2021-12-31T11:00:00.000Z'),
@@ -74,18 +74,30 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
         },
       });
     });
+
+    it('devrait être en succès lorsque la donnée d\'entrée est valide sans id type', () => {
+      const schemaValidation = validateExportStatistiquesSchema({
+        dateDebut: new Date('2021-11-01T00:00:00.000Z'),
+        dateFin: new Date('2021-12-31T11:00:00.000Z'),
+        type: 'user'
+      });
+
+      expect(schemaValidation).toStrictEqual({
+        value: {
+          dateDebut: new Date('2021-11-01T00:00:00.000Z'),
+          dateFin: new Date('2021-12-31T11:00:00.000Z'),
+          type: 'user'
+        },
+      });
+    });
   });
 
   describe('nom du fichier CSV d\'export des statistiques', () => {
     it('devrait contenir le nom complet du CNFS et les dates correspondant aux filtres', () => {
-      const conseiller = {
-        prenom: 'John',
-        nom: 'Doe',
-      };
       const dateDebut = new Date('2021-01-01T00:00:00.000Z');
       const dateFin = new Date('2021-11-18T00:00:00.000Z');
 
-      const fileName = getExportStatistiquesFileName(conseiller, dateDebut, dateFin);
+      const fileName = getExportStatistiquesFileName(dateDebut, dateFin, 'John_Doe');
 
       expect(fileName).toBe('Statistiques_John_Doe_01-01-2021_18-11-2021');
     });

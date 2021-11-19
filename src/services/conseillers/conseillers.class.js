@@ -458,7 +458,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, `${conseiller.prenom} ${conseiller.nom}`, query.dateDebut, query.dateFin)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`)
         );
       }, routeActivationError => abort(res, routeActivationError));
     });

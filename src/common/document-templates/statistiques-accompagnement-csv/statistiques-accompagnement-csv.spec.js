@@ -191,6 +191,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       '\n' +
       'Général\n' +
       'Personnes accompagnées durant cette période;23\n' +
+      'Accompagnements enregistrés;23\n' +
       'Ateliers réalisés;0\n' +
       'Total des participants aux ateliers;0\n' +
       'Accompagnements individuels;10\n' +
@@ -249,7 +250,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Septembre;4022\n' +
       'Octobre;8438\n' +
       'Novembre;430\n';
-    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, cnfsFullName, dateDebut, dateFin);
+    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName);
 
     expect(fileContent).toEqual(expectedFileContent);
   });

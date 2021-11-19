@@ -3,7 +3,8 @@ const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${
 
 const general = statistiques => [
   'Général',
-  `Personnes accompagnées durant cette période;${statistiques.nbAccompagnement}`,
+  `Personnes accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
+  `Accompagnements enregistrés;${statistiques.nbAccompagnement}`,
   `Ateliers réalisés;${statistiques.nbAteliers}`,
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
   `Accompagnements individuels;${statistiques.nbAccompagnementPerso}`,
@@ -94,8 +95,8 @@ const statsEvolutions = statistiques => [
   ]).flat()
 ];
 
-const buildExportStatistiquesCsvFileContent = (statistiques, cnfsFullName, dateDebut, dateFin) => [
-  `Statistiques ${cnfsFullName} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
+const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type) => [
+  `Statistiques ${type} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
   ...statsThemes(statistiques),
   ...statsLieux(statistiques),

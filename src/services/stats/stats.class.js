@@ -25,8 +25,9 @@ const {
   exportStatistiquesQueryToSchema,
   getExportStatistiquesFileName
 } = require('./export-statistiques/utils/export-statistiques.utils');
-const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
+const { getStatistiquesToExport } = require('./export-statistiques/core/export-statistiques.core');
+const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -204,18 +205,14 @@ exports.Stats = class Stats extends Service {
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ), async () => {
-        const statsQuery = {
-          'conseiller.$id': new ObjectID(query.idType),
-          'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
-        };
-
-        const { getConseillerById } = exportStatistiquesRepository(db);
-        const conseiller = await getConseillerById(query.idType);
-        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
+        const { stats, type } = await getStatistiquesToExport(
+          query.dateDebut, query.dateFin, query.idType, query.type,
+          exportStatistiquesRepository(db)
+        );
 
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(conseiller, query.dateDebut, query.dateFin)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, `${conseiller.prenom} ${conseiller.nom}`, query.dateDebut, query.dateFin)
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type)
         );
       }, routeActivationError => abort(res, routeActivationError));
     });
