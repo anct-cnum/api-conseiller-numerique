@@ -4,9 +4,20 @@ const puppeteer = require('puppeteer');
 
 const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) => {
 
-  const browser = await puppeteer.launch({
-    executablePath: app.get('puppeteer_browser')
-  });
+  let browser = null;
+
+  if (app.get('espace_coop_hostname') === 'http://localhost:3000') {
+    //fonctionnement en local
+    browser = await puppeteer.launch({
+      executablePath: app.get('puppeteer_browser')
+    });
+  } else {
+    //fonctionnement sur les autres environnements
+    const browserURL = app.get('browser_wss_link') + '?token=' + app.get('browser_wss_token');
+    browser = await puppeteer.connect({
+      browserWSEndpoint: browserURL,
+    });
+  }
 
   try {
     browser.on('targetchanged', async target => {
