@@ -76,5 +76,7 @@
   },
   "cv_file_max_size": "CV_FILE_MAX_SIZE",
   "api_entreprise": "API_ENTREPRISE_KEY",
-  "puppeteer_browser": "PUPPETEER_BROWSER"
+  "puppeteer_browser": "PUPPETEER_BROWSER",
+  "browser_wss_link":"BROWSER_WSS_LINK",
+  "browser_wss_token":"BROWSER_WSS_TOKEN"
 }
