@@ -363,7 +363,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.get('/conseillers/statistiques.pdf', async (req, res) => {
+    app.get('/conseillers/:id/statistiques.pdf', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
 

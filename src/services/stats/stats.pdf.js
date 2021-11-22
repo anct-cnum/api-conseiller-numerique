@@ -12,7 +12,7 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
       executablePath: app.get('puppeteer_browser')
     });
   } else {
-    //fonctionnement sur les autres environnement
+    //fonctionnement sur les autres environnements
     const browserURL = app.get('browser_wss_link') + '?token=' + app.get('browser_wss_token');
     browser = await puppeteer.connect({
       browserWSEndpoint: browserURL,
