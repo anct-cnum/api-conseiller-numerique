@@ -13,7 +13,6 @@ const Joi = require('joi');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { v4: uuidv4 } = require('uuid');
-const { ObjectID } = require('mongodb');
 const {
   checkAuth,
   checkRoleCandidat,
@@ -450,7 +449,7 @@ exports.Conseillers = class Conseillers extends Service {
         const conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
 
         const statsQuery = {
-          'conseiller.$id': new ObjectID(conseiller._id),
+          'conseiller.$id': conseiller._id,
           'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
         };
 
