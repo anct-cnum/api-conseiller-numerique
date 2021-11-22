@@ -326,11 +326,11 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
-            let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
             ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
           } else {
