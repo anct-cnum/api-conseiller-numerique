@@ -1,16 +1,12 @@
 #!/usr/bin/env node
 'use strict';
 
-const { date } = require('joi');
 /* eslint-disable no-undef */
 
 const {
   checkAuth,
   checkRole,
-  checkSchema,
-  getTerritoires,
-  getTotalTerritoires } = require('./stats.function');
-
+  checkSchema } = require('./stats.function');
 
 describe('Vérification de l\'authentification', () => {
   it('devrait être considérée comme valide lorsque l\'utilisateur possède une clé d\'authentification', () => {
@@ -180,19 +176,4 @@ describe('Vérification des données pour obtenir les statistiques des territoir
 
     expect(formInvalideOrdre.error).toMatchObject(new Error('L\'ordre est invalide'));
   });
-});
-
-describe('Vérification de l\'authentification', () => {
-  it('devrait être considérée comme valide lorsque l\'utilisateur possède une clé d\'authentification', () => {
-
-    const type = 'codeDepartement';
-    const date = new Date();
-    const ordre = '';
-    const page = 1;
-    const limit = 10;
-
-    const territoires = getTerritoires(type, date, ordre, page, limit);
-
-  });
-
 });
