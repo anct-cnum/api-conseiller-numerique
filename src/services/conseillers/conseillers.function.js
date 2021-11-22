@@ -51,9 +51,8 @@ const suppressionCVConseiller = (db, conseiller) => {
   });
 };
 
-const verificationRoleUser = async (userAuthentifier, db, decode, req, res, roles) => {
-  let promise;
-  promise = new Promise(async resolve => {
+const verificationRoleUser = (db, decode, req, res) => async roles => {
+  return new Promise(async resolve => {
     const accessToken = req.feathers?.authentication?.accessToken;
     if (req.feathers?.authentication === undefined) {
       res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -61,22 +60,20 @@ const verificationRoleUser = async (userAuthentifier, db, decode, req, res, role
     }
     let userId = decode(accessToken).sub;
     const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-    userAuthentifier.push(user);
     if (roles.filter(role => user?.roles.includes(role)).length === 0) {
-      res.status(403).send(new Forbidden('User not authorized', {
+      res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
         userId: userId
       }).toJSON());
       return;
     }
-    resolve();
+    resolve(user);
   });
-  await promise;
 };
-const verificationCandidaturesRecrutee = async (email, id, app, res) => {
+const verificationCandidaturesRecrutee = (app, res) => async (tableauCandidat, id) => {
   try {
     let promises = [];
     await app.get('mongoClient').then(async db => {
-      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+      tableauCandidat.forEach(profil => {
         promises.push(new Promise(async resolve => {
           //Pour vérifier qu'il n'a pas été validé ou recruté dans une quelconque structure
           const misesEnRelations = await db.collection('misesEnRelation').find(
@@ -125,11 +122,11 @@ const verificationCandidaturesRecrutee = async (email, id, app, res) => {
 
 };
 
-const archiverLaSuppression = async (email, user, app, motif, actionUser) => {
+const archiverLaSuppression = app => async (tableauCandidat, user, motif, actionUser) => {
   try {
     let promises = [];
     await app.get('mongoClient').then(async db => {
-      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+      tableauCandidat.forEach(profil => {
         promises.push(new Promise(async resolve => {
           try {
             // eslint-disable-next-line no-unused-vars
@@ -163,18 +160,18 @@ const archiverLaSuppression = async (email, user, app, motif, actionUser) => {
   }
 };
 
-const suppressionTotalCandidat = async (email, app) => {
+const suppressionTotalCandidat = app => async tableauCandidat => {
   try {
     let promises = [];
     await app.get('mongoClient').then(async db => {
-      await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
+      tableauCandidat.forEach(profil => {
         promises.push(new Promise(async resolve => {
           try {
             await pool.query(`
-        DELETE FROM djapp_matching WHERE coach_id = $1`,
+            DELETE FROM djapp_matching WHERE coach_id = $1`,
             [profil.idPG]);
             await pool.query(`
-        DELETE FROM djapp_coach WHERE id = $1`,
+            DELETE FROM djapp_coach WHERE id = $1`,
             [profil.idPG]);
           } catch (error) {
             logger.info(error);
@@ -253,7 +250,7 @@ const checkRoleAdmin = async (db, req, res) => {
   });
 };
 
-const candidatSupprimeEmailPix = async (candidat, db, app) => {
+const candidatSupprimeEmailPix = (db, app) => async candidat => {
   const mailer = createMailer(app);
   const emails = createEmails(db, mailer, app, logger);
   const emailPix = emails.getEmailMessageByTemplateName('candidatSupprimePix');

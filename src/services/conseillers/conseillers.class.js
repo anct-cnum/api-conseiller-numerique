@@ -13,7 +13,6 @@ const Joi = require('joi');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { v4: uuidv4 } = require('uuid');
-
 const {
   checkAuth,
   checkRoleCandidat,
@@ -28,6 +27,27 @@ const {
   checkFormulaire,
   checkRoleAdmin,
   candidatSupprimeEmailPix } = require('./conseillers.function');
+const {
+  activateRoute,
+  canActivate,
+  authenticationGuard,
+  authenticationFromRequest,
+  rolesGuard,
+  userIdFromRequestJwt,
+  Role,
+  schemaGuard,
+  abort,
+  csvFileResponse
+} = require('../../common/utils/feathers.utils');
+const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
+const statsCras = require('../stats/cras');
+const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
+const {
+  getExportStatistiquesFileName,
+  validateExportStatistiquesSchema,
+  exportStatistiquesQueryToSchema
+} = require('./export-statistiques/utils/export-statistiques.utils');
+const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -414,6 +434,34 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
+    app.get('/conseillers/statistiques.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = exportStatistiquesQueryToSchema(req.query);
+      const getUserById = userAuthenticationRepository(db);
+      const userId = userIdFromRequestJwt(req);
+
+      activateRoute(await canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Conseiller], getUserById),
+        schemaGuard(validateExportStatistiquesSchema(query))
+      ), async () => {
+        const { getConseillerAssociatedWithUser } = exportStatistiquesRepository(db);
+        const conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
+
+        const statsQuery = {
+          'conseiller.$id': conseiller._id,
+          'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+        };
+
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
+
+        csvFileResponse(res,
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`)
+        );
+      }, routeActivationError => abort(res, routeActivationError));
+    });
+
     app.get('/conseillers/:id/employeur', async (req, res) => {
       checkAuth(req, res);
 
@@ -458,11 +506,11 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
-      let userAuthentifier = [];
       const roles = ['admin', 'candidat'];
-      await verificationRoleUser(userAuthentifier, db, decode, req, res, roles);
-      const user = userAuthentifier[0];
+      let user;
+      const actionUser = req.query.actionUser;
       const id = req.params.id;
+      const motif = req.query.motif;
       const conseiller = await this.find({
         query: {
           _id: new ObjectId(id),
@@ -475,29 +523,32 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-
-      if (user.roles.includes('candidat')) {
-        if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
-          res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
-            id
-          }).toJSON());
-          return;
-        }
-      }
       const { nom, prenom, email, cv } = conseiller.data[0];
       const candidat = {
         nom,
         prenom,
         email
       };
-      await verificationCandidaturesRecrutee(email, id, app, res).then(() => {
-        const actionUser = req.body.actionUser;
-        const motif = req.body.motif;
-        return archiverLaSuppression(email, user, app, motif, actionUser);
+      const instructionSuppression = motif === 'doublon' ? { '_id': new ObjectId(id), 'email': email } : { 'email': email };
+      const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
+      await verificationRoleUser(db, decode, req, res)(roles).then(userIdentifier => {
+        user = userIdentifier;
+        if (user.roles.includes('candidat')) {
+          if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation', {
+              id
+            }).toJSON();
+          }
+        }
+        return;
       }).then(() => {
-        return suppressionTotalCandidat(email, app);
+        return verificationCandidaturesRecrutee(app, res)(tableauCandidat, id);
       }).then(() => {
-        if (cv?.file) {
+        return archiverLaSuppression(app)(tableauCandidat, user, motif, actionUser);
+      }).then(() => {
+        return suppressionTotalCandidat(app)(tableauCandidat);
+      }).then(() => {
+        if (cv?.file && (motif !== 'doublon')) {
           return suppressionCv(cv, app).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
@@ -506,7 +557,10 @@ exports.Conseillers = class Conseillers extends Service {
         }
         return;
       }).then(() => {
-        return candidatSupprimeEmailPix(candidat, db, app);
+        if (motif !== 'doublon') {
+          return candidatSupprimeEmailPix(db, app)(candidat);
+        }
+        return;
       }).then(() => {
         res.send({ deleteSuccess: true });
       }).catch(error => {
@@ -515,7 +569,6 @@ exports.Conseillers = class Conseillers extends Service {
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression de la candidature, veuillez réessayer.').toJSON());
       });
     });
-
 
     app.post('/conseillers/:id/relance-inscription-candidat', async (req, res) => {
       await checkAuth(req, res);
