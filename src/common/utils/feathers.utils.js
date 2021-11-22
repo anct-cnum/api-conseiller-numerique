@@ -3,7 +3,8 @@ const decode = require('jwt-decode');
 
 const Role = {
   Admin: 'admin',
-  AdminCoop: 'admin_coop'
+  AdminCoop: 'admin_coop',
+  Conseiller: 'conseiller'
 };
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
