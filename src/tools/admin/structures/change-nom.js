@@ -27,7 +27,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     await db.collection('structures').updateOne({ idPG: id }, { $set: { nom: nouveauNom } });
     await db.collection('misesEnRelation').updateMany({ 'structureObj._id': structure._id }, { $set: { 'structureObj.nom': nouveauNom } });
   } catch (error) {
-    logger.error(`Erreur Mongo : ${error.message}`);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }
@@ -39,7 +39,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     [structure.idPG, nouveauNom]);
 
   } catch (error) {
-    logger.error(`Erreur PG : ${error.message}`);
+    logger.error(error.message);
     Sentry.captureException(error);
     return;
   }

@@ -5,7 +5,11 @@
   "backoffice_hostname":  "https://admin.conseiller-numerique.gouv.fr",
   "espace_coop_hostname": "https://beta.coop.conseiller-numerique.gouv.fr",
   "espace_candidat_hostname": "https://beta.candidat.conseiller-numerique.gouv.fr",
-  "pix_hostname": "https://pix.fr/abc-pix-cnfs/",
+  "pix": {
+    "hostname": "https://pix.fr/abc-pix-cnfs/",
+    "contactMailing": "PIX_CONTACT_MAILING",
+    "supportMailing": "PIX_SUPPORT_MAILING"
+  },
   "port": 8080,
   "paginate": {
     "default": 20,
@@ -99,5 +103,7 @@
   },
   "cv_file_max_size": "CV_FILE_MAX_SIZE",
   "api_entreprise": "API_ENTREPRISE_KEY",
-  "puppeteer_browser": "PUPPETEER_BROWSER"
+  "puppeteer_browser": "PUPPETEER_BROWSER",
+  "browser_wss_link":"BROWSER_WSS_LINK",
+  "browser_wss_token":"BROWSER_WSS_TOKEN"
 }

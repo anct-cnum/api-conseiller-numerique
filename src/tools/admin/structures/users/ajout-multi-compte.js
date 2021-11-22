@@ -56,7 +56,7 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
     let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
     await message.send(user, username);
   } catch (error) {
-    logger.error(error.message);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }

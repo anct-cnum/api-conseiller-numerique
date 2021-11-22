@@ -68,7 +68,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       });
       resolve();
     }).catch(error => {
-      logger.error(error.message);
+      logger.error(error);
       Sentry.captureException(error);
     });
   });

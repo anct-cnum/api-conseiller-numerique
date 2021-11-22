@@ -22,7 +22,7 @@ execute(__filename, async ({ logger, exit }) => {
         logger.info(`Aucune manquante`);
       }
     } catch (error) {
-      logger.error(`Erreur DB : ${error.message}`);
+      logger.error(error);
     }
   };
 
@@ -49,7 +49,7 @@ execute(__filename, async ({ logger, exit }) => {
       await pool.query('UPDATE djapp_hostorganization SET commune_code=$2, departement_code=$3, region_code=$4, geo_name=$5 WHERE id=$1',
         [s.id, geo.code, geo.codeDepartement, geo.codeRegion, geo.nom]);
     } catch (error) {
-      logger.error(`Erreur DB : ${error.message}`);
+      logger.error(error);
     }
   };
 

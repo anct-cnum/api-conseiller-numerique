@@ -8,6 +8,27 @@ const dayjs = require('dayjs');
 const logger = require('../../logger');
 const statsPdf = require('./stats.pdf');
 const statsFct = require('./stats.function');
+const {
+  activateRoute,
+  canActivate,
+  authenticationGuard,
+  rolesGuard,
+  schemaGuard,
+  authenticationFromRequest,
+  userIdFromRequestJwt,
+  abort,
+  csvFileResponse,
+  Role
+} = require('../../common/utils/feathers.utils');
+const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
+const {
+  validateExportStatistiquesSchema,
+  exportStatistiquesQueryToSchema,
+  getExportStatistiquesFileName
+} = require('./export-statistiques/utils/export-statistiques.utils');
+const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
+const { getStatistiquesToExport } = require('./export-statistiques/core/export-statistiques.core');
+const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -104,6 +125,7 @@ exports.Stats = class Stats extends Service {
         //Composition de la partie query en formattant la date
         let dateDebut = new Date(req.body?.dateDebut);
         dateDebut.setUTCHours(0, 0, 0, 0);
+
         let dateFin = new Date(req.body?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
         let query = {
@@ -173,6 +195,27 @@ exports.Stats = class Stats extends Service {
           return;
         }
       });
+    });
+
+    app.get('/stats/admincoop/statistiques.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = exportStatistiquesQueryToSchema(req.query);
+
+      activateRoute(await canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        schemaGuard(validateExportStatistiquesSchema(query))
+      ), async () => {
+        const { stats, type } = await getStatistiquesToExport(
+          query.dateDebut, query.dateFin, query.idType, query.type,
+          exportStatistiquesRepository(db)
+        );
+
+        csvFileResponse(res,
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type)
+        );
+      }, routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/stats/admincoop/dashboard', async (req, res) => {

@@ -94,11 +94,12 @@ exports.Users = class Users extends Service {
             SET (
                   first_name,
                   last_name,
-                  phone)
+                  phone,
+                  start_date)
                   =
-                  ($2,$3,$4)
+                  ($2,$3,$4,$5)
                 WHERE id = $1`,
-          [idPG, prenom, nom, telephone]);
+          [idPG, prenom, nom, telephone, dateDisponibilite]);
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
@@ -188,7 +189,7 @@ exports.Users = class Users extends Service {
         await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier, token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
       } catch (err) {
         app.get('sentry').captureException(err);
-        logger.error(`Erreur BD: ${err}`);
+        logger.error(err);
       }
 
       const apresEmailConfirmer = await this.find({
@@ -447,11 +448,11 @@ exports.Users = class Users extends Service {
             }
           } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
             const conseiller = await app.service('conseillers').get(user.entity?.oid);
-            //Mise à jour du password également dans Mattermost et Gandi
+            // Mise à jour du password également dans Mattermost et Gandi
             const adressCN = conseiller.emailCN?.address;
             if (adressCN === undefined) {
               logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
-              res.status(404).send(new NotFound('Adresse Conseiller numerique non trouvé').toJSON());
+              res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
               return;
             }
             const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
@@ -519,7 +520,7 @@ exports.Users = class Users extends Service {
           extension = match[3];
         } else {
           const err = new Error('Erreur mot de passe oublié, format email invalide');
-          logger.error(err.message);
+          logger.error(err);
           app.get('sentry').captureException(err);
           res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
           return;
@@ -533,7 +534,7 @@ exports.Users = class Users extends Service {
           successCheckEmail: true
         });
       } catch (err) {
-        logger.error(err.message);
+        logger.error(err);
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }

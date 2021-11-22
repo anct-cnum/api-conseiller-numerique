@@ -154,7 +154,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         }
       }
     } catch (error) {
-      logger.error(`Erreur DB : ${error.message}`);
+      logger.error(error);
       Sentry.captureException(error);
     }
   };
@@ -194,7 +194,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         });
       }
     } catch (error) {
-      logger.error(`KO ${error.message}`);
+      logger.error(error);
       Sentry.captureException(error);
     }
   }

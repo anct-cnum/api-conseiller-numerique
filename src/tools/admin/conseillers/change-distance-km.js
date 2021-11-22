@@ -35,7 +35,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       { $set: { 'conseillerObj.distanceMax': distance }
       });
   } catch (error) {
-    logger.error(`Erreur MongoDB : ${error.message}`);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }
@@ -44,7 +44,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       SET max_distance = $2 WHERE id = $1`,
     [id, distance]);
   } catch (error) {
-    logger.error(`Erreur PG : ${error.message}`);
+    logger.error(error);
     Sentry.captureException(error);
     return;
   }

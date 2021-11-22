@@ -13,7 +13,7 @@ const getToken = async ({ metabase, login, password, logger, Sentry }) => {
     return result?.data?.id;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     return false;
   }
 };
@@ -31,7 +31,7 @@ const apiCallGET = async ({ metabase, token, path, logger, Sentry }) => {
     return result?.data;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     return false;
   }
 };
@@ -50,7 +50,7 @@ const apiCallPOST = async ({ metabase, token, path, data, logger, Sentry }) => {
     return result?.data;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e.message);
+    logger.error(e);
     return false;
   }
 };
