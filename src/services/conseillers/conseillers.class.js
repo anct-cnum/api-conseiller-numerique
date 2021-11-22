@@ -485,6 +485,14 @@ exports.Conseillers = class Conseillers extends Service {
       const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
       await verificationRoleUser(db, decode, req, res)(roles).then(userIdentifier => {
         user = userIdentifier;
+        if (user.roles.includes('candidat')) {
+          if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
+            res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
+              id
+            }).toJSON());
+            return;
+          }
+        }
       }).then(() => {
         return verificationCandidaturesRecrutee(app, res)(tableauCandidat, id);
       }).then(() => {
