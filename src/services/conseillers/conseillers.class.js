@@ -535,12 +535,12 @@ exports.Conseillers = class Conseillers extends Service {
         user = userIdentifier;
         if (user.roles.includes('candidat')) {
           if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
-            res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation', {
+            throw new Forbidden('Vous n\'avez pas l\'autorisation', {
               id
-            }).toJSON());
-            return;
+            }).toJSON();
           }
         }
+        return;
       }).then(() => {
         return verificationCandidaturesRecrutee(app, res)(tableauCandidat, id);
       }).then(() => {
