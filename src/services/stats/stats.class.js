@@ -29,6 +29,7 @@ const {
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
 const { getStatistiquesToExport } = require('./export-statistiques/core/export-statistiques.core');
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
+const { statsRepository } = require('./stats.repository');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -311,12 +312,13 @@ exports.Stats = class Stats extends Service {
         let statsTerritoires = [];
         let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
 
-        statsTerritoires = await statsFct.getTerritoires(db)(
+        statsTerritoires = await statsFct.getTerritoires(
           territoire,
           dateFin,
           ordreColonne,
           page > 0 ? ((page - 1) * options.paginate.default) : 0,
-          options.paginate.default
+          options.paginate.default,
+          statsRepository(db)
         );
 
         await Promise.all(statsTerritoires.map(async ligneStats => {

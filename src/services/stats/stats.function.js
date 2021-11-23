@@ -21,39 +21,11 @@ const checkSchema = req => {
   return schema;
 };
 
-const getTerritoires = db => async (type, date, ordre, page, limit) => {
-  console.log(ordre);
+const getTerritoires = async (type, date, ordre, page, limit, { getDepartements, getRegions }) => {
   if (type === 'codeDepartement') {
-    return await db.collection('stats_Territoires').find({ 'date': date })
-    .sort(ordre)
-    .skip(page)
-    .limit(limit).toArray();
+    return await getDepartements(date, ordre, page, limit);
   } else if (type === 'codeRegion') {
-    return await db.collection('stats_Territoires').aggregate(
-      { $match: { date: date } },
-      { $group: {
-        _id: {
-          codeRegion: '$codeRegion',
-          nomRegion: '$nomRegion',
-        },
-        nombreConseillersCoselec: { $sum: '$nombreConseillersCoselec' },
-        cnfsActives: { $sum: '$cnfsActives' },
-        cnfsInactives: { $sum: '$cnfsInactives' },
-        conseillerIds: { $push: '$conseillerIds' }
-      } },
-      { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
-      { $project: {
-        _id: 0, codeRegion: 1, nomRegion: 1, nombreConseillersCoselec: 1, cnfsActives: 1, cnfsInactives: 1,
-        conseillerIds: { $reduce: {
-          input: '$conseillerIds',
-          initialValue: [],
-          in: { $concatArrays: ['$$value', '$$this'] }
-        } }
-      } },
-      { $sort: ordre },
-      { $skip: page },
-      { $limit: limit },
-    ).toArray();
+    return await getRegions(date, ordre, page, limit);
   }
 };
 

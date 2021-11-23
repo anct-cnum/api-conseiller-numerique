@@ -6,7 +6,74 @@
 const {
   checkAuth,
   checkRole,
-  checkSchema } = require('./stats.function');
+  checkSchema,
+  getTerritoires } = require('./stats.function');
+
+const getDepartements = () => ([
+  {
+    _id: '619501799c612d326db31de6',
+    date: '17/11/2021',
+    nombreConseillersCoselec: 40,
+    cnfsActives: 13,
+    cnfsInactives: 27,
+    conseillerIds: [
+      '60462227871498b5cec245d7',
+      '604621ae871498b5cec23a59',
+      '60462066871498b5cec2184e',
+      '60d49e28838083d339271a85',
+      '60dc24f1838083d3397db45d',
+      '6100663f838083d3394e6a5d',
+      '60462000871498b5cec20c07',
+      '604621bf871498b5cec23bed',
+      '60854bd34f47999865c2c58c',
+      '60462061871498b5cec217ab',
+      '60c8eaef838083d339a1917f',
+      '60462036871498b5cec212a4',
+      '6046223a871498b5cec2474f',
+      '60462257871498b5cec24a06'
+    ],
+    codeDepartement: '01',
+    codeRegion: '84',
+    nomDepartement: 'Ain',
+    nomRegion: 'Auvergne-Rhône-Alpes',
+    tauxActivation: 33
+  }
+]);
+
+const getRegions = () => ([
+  {
+    _id: { codeRegion: '01', nomRegion: 'Guadeloupe' },
+    nombreConseillersCoselec: 39,
+    cnfsActives: 17,
+    cnfsInactives: 22,
+    codeRegion: '01',
+    nomRegion: 'Guadeloupe',
+    conseillerIds: [
+      '604621e2871498b5cec23f57',
+      '60462036871498b5cec212af',
+      '6046224e871498b5cec24926',
+      '60462090871498b5cec21d15',
+      '60d50edd838083d3392c7fac',
+      '6091fc43838083d33950f476',
+      '609e828f838083d339d3a0c9',
+      '61001fb0838083d3394a638c',
+      '609e90d3838083d339d420ca',
+      '60630891250d66297ef275a6',
+      '60462231871498b5cec246b0',
+      '60a2cb79838083d339fb9289',
+      '60afb453838083d339838083',
+      '6046208c871498b5cec21c9c',
+      '6046208e871498b5cec21cd5',
+      '60462183871498b5cec23623',
+      '604621cb871498b5cec23d21',
+      '60462238871498b5cec2471d',
+      '608abc184f47999865f8d614',
+      '608ddda6838083d339252b16',
+      '60c299e9838083d33959de41',
+      '60f9a499838083d339fba163'
+    ]
+  }
+]);
 
 describe('Vérification de l\'authentification', () => {
   it('devrait être considérée comme valide lorsque l\'utilisateur possède une clé d\'authentification', () => {
@@ -175,5 +242,99 @@ describe('Vérification des données pour obtenir les statistiques des territoir
     const formInvalideOrdre = checkSchema(bodyInvalideOrdre);
 
     expect(formInvalideOrdre.error).toMatchObject(new Error('L\'ordre est invalide'));
+  });
+});
+
+describe('Vérification des statistiques par département ou région', () => {
+  it('devrait être considérée comme valide lorsque la liste des départements est obtenue', () => {
+
+    const listDepartements = [
+      {
+        _id: '619501799c612d326db31de6',
+        date: '17/11/2021',
+        nombreConseillersCoselec: 40,
+        cnfsActives: 13,
+        cnfsInactives: 27,
+        conseillerIds: [
+          '60462227871498b5cec245d7',
+          '604621ae871498b5cec23a59',
+          '60462066871498b5cec2184e',
+          '60d49e28838083d339271a85',
+          '60dc24f1838083d3397db45d',
+          '6100663f838083d3394e6a5d',
+          '60462000871498b5cec20c07',
+          '604621bf871498b5cec23bed',
+          '60854bd34f47999865c2c58c',
+          '60462061871498b5cec217ab',
+          '60c8eaef838083d339a1917f',
+          '60462036871498b5cec212a4',
+          '6046223a871498b5cec2474f',
+          '60462257871498b5cec24a06'
+        ],
+        codeDepartement: '01',
+        codeRegion: '84',
+        nomDepartement: 'Ain',
+        nomRegion: 'Auvergne-Rhône-Alpes',
+        tauxActivation: 33
+      }
+    ];
+
+    const type = 'codeDepartement';
+    const date = new Date();
+    const ordre = { codeDepartement: 1 };
+    const page = 1;
+    const limit = 1;
+
+    const getListDepartements = getTerritoires(type, date, ordre, page, limit, { getDepartements, getRegions });
+
+    expect(getListDepartements).toBe(listDepartements);
+  });
+
+  it('devrait être considérée comme valide lorsque la liste des régions est obtenue', () => {
+
+    const listRegions = [
+      {
+        _id: { codeRegion: '01', nomRegion: 'Guadeloupe' },
+        nombreConseillersCoselec: 39,
+        cnfsActives: 17,
+        cnfsInactives: 22,
+        codeRegion: '01',
+        nomRegion: 'Guadeloupe',
+        conseillerIds: [
+          '604621e2871498b5cec23f57',
+          '60462036871498b5cec212af',
+          '6046224e871498b5cec24926',
+          '60462090871498b5cec21d15',
+          '60d50edd838083d3392c7fac',
+          '6091fc43838083d33950f476',
+          '609e828f838083d339d3a0c9',
+          '61001fb0838083d3394a638c',
+          '609e90d3838083d339d420ca',
+          '60630891250d66297ef275a6',
+          '60462231871498b5cec246b0',
+          '60a2cb79838083d339fb9289',
+          '60afb453838083d339838083',
+          '6046208c871498b5cec21c9c',
+          '6046208e871498b5cec21cd5',
+          '60462183871498b5cec23623',
+          '604621cb871498b5cec23d21',
+          '60462238871498b5cec2471d',
+          '608abc184f47999865f8d614',
+          '608ddda6838083d339252b16',
+          '60c299e9838083d33959de41',
+          '60f9a499838083d339fba163'
+        ]
+      }
+    ];
+
+    const type = 'codeRegion';
+    const date = new Date();
+    const ordre = { codeRegion: 1 };
+    const page = 1;
+    const limit = 1;
+
+    const getListRegions = getTerritoires(type, date, ordre, page, limit, { getDepartements, getRegions });
+
+    expect(getListRegions).toBe(listRegions);
   });
 });
