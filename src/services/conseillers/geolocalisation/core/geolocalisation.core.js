@@ -9,8 +9,11 @@ const toGeoJson = geolocatedConseiller => ({
   }
 });
 
-const geolocatedConseillers = async ({ getConseillerWithGeolocation }) =>
-  (await getConseillerWithGeolocation()).map(toGeoJson);
+const geolocatedConseillers = async ({ getConseillerWithGeolocation }) => ({
+  type: 'FeatureCollection',
+  features: (await getConseillerWithGeolocation()).map(toGeoJson)
+});
+
 
 module.exports = {
   geolocatedConseillers
