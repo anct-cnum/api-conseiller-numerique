@@ -11,7 +11,7 @@ const authenticationFromRequest = req => req.feathers?.authentication ?? {};
 
 const userIdFromRequestJwt = req => decode(req.feathers.authentication.accessToken).sub;
 
-const abort = (res, routeActivation) => res.status(routeActivation.error.code).send(routeActivation.error.toJSON());
+const abort = (res, error) => res.status(error.code).send(error.toJSON());
 
 const csvFileResponse = (res, fileName, fileContent) => {
   res.setHeader('Content-disposition', `attachment; filename=${fileName}`)
@@ -20,40 +20,25 @@ const csvFileResponse = (res, fileName, fileContent) => {
   .send(fileContent);
 };
 
+const authenticationGuard = async authentication =>
+  authentication !== undefined ?
+    await Promise.resolve() :
+    await Promise.reject(new NotAuthenticated('User not authenticated'));
+
 const userHasAtLeastOneAuthorizedRole = async (userAuthenticationRepository, userId, authorizedRoles) =>
   (await userAuthenticationRepository(userId))?.roles.some(role => authorizedRoles.includes(role));
 
-const noError = () => ({ hasError: false });
-
-const authenticationGuard = authentication => () =>
-  authentication !== undefined ?
-    noError() :
-    { error: new NotAuthenticated('User not authenticated'), hasError: true };
-
-const rolesGuard = (userId, roles, userAuthenticationRepository) => async () =>
+const rolesGuard = async (userId, roles, userAuthenticationRepository) =>
   await userHasAtLeastOneAuthorizedRole(userAuthenticationRepository, userId, roles) ?
-    noError() :
-    { error: new Forbidden('User not authorized', { userId }), hasError: true };
+    Promise.resolve() :
+    Promise.reject(new Forbidden('User not authorized', { userId }));
 
-const schemaGuard = schemaValidation => () =>
+const schemaGuard = async schemaValidation =>
   schemaValidation.error === undefined ?
-    noError() :
-    { error: new Unprocessable('Schema validation error', schemaValidation.error), hasError: true };
+    await Promise.resolve() :
+    await Promise.reject(new Unprocessable('Schema validation error', schemaValidation.error));
 
-const firstError = activationChecksResults => activationChecksResults.find(result => result.hasError);
-
-const runAllActivationChecks = async activationChecks => await Promise.all(activationChecks.map(async activationCheck => await activationCheck()));
-
-const canActivate = async (...activationChecks) => firstError(await runAllActivationChecks(activationChecks)) ?? noError();
-
-const activateRoute = (routeActivation, onActivate, onAbort) => {
-  if (routeActivation.hasError) {
-    onAbort(routeActivation.error);
-    return;
-  }
-
-  onActivate();
-};
+const canActivate = (...activationChecks) => Promise.all(activationChecks);
 
 module.exports = {
   Role,
@@ -64,6 +49,5 @@ module.exports = {
   authenticationGuard,
   rolesGuard,
   schemaGuard,
-  canActivate,
-  activateRoute
+  canActivate
 };

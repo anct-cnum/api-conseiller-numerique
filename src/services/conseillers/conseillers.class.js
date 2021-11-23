@@ -28,7 +28,6 @@ const {
   checkRoleAdmin,
   candidatSupprimeEmailPix } = require('./conseillers.function');
 const {
-  activateRoute,
   canActivate,
   authenticationGuard,
   authenticationFromRequest,
@@ -440,11 +439,11 @@ exports.Conseillers = class Conseillers extends Service {
       const getUserById = userAuthenticationRepository(db);
       const userId = userIdFromRequestJwt(req);
 
-      activateRoute(await canActivate(
+      canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.Conseiller], getUserById),
         schemaGuard(validateExportStatistiquesSchema(query))
-      ), async () => {
+      ).then(async () => {
         const { getConseillerAssociatedWithUser } = exportStatistiquesRepository(db);
         const conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
 
@@ -459,7 +458,7 @@ exports.Conseillers = class Conseillers extends Service {
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`)
         );
-      }, routeActivationError => abort(res, routeActivationError));
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/conseillers/:id/employeur', async (req, res) => {
