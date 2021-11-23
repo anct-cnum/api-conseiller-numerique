@@ -16,20 +16,20 @@ const departement = [{
   cnfsActives: 13,
   cnfsInactives: 27,
   conseillerIds: [
-    '60462227871498b5cec245d7',
-    '604621ae871498b5cec23a59',
-    '60462066871498b5cec2184e',
-    '60d49e28838083d339271a85',
-    '60dc24f1838083d3397db45d',
-    '6100663f838083d3394e6a5d',
-    '60462000871498b5cec20c07',
-    '604621bf871498b5cec23bed',
-    '60854bd34f47999865c2c58c',
-    '60462061871498b5cec217ab',
-    '60c8eaef838083d339a1917f',
-    '60462036871498b5cec212a4',
-    '6046223a871498b5cec2474f',
-    '60462257871498b5cec24a06'
+    '64876222ec2d1498b557c047',
+    '621ae871498b5cec20463a59',
+    '6204966b871582184ce046ce',
+    '623d3392883718080d49ea85',
+    '67db8083450dc2d3394f183d',
+    '6194e085d6a066033f83833d',
+    '621498b5ec204000870cc607',
+    '671bf8ed23b1ecc6204498b5',
+    '698650834fbd2c5847995c4c',
+    '6c21b5ce71701849846206ab',
+    '6a1918eaef8380830d339c7f',
+    '671e66820498b5cc212a0434',
+    '6047487223a544cec2198b6f',
+    '6e71a24906046c8422578b5c'
   ],
   codeDepartement: '01',
   codeRegion: '84',
@@ -47,28 +47,28 @@ const region = [
     codeRegion: '01',
     nomRegion: 'Guadeloupe',
     conseillerIds: [
-      '604621e2871498b5cec23f57',
-      '60462036871498b5cec212af',
-      '6046224e871498b5cec24926',
-      '60462090871498b5cec21d15',
-      '60d50edd838083d3392c7fac',
-      '6091fc43838083d33950f476',
-      '609e828f838083d339d3a0c9',
-      '61001fb0838083d3394a638c',
-      '609e90d3838083d339d420ca',
-      '60630891250d66297ef275a6',
-      '60462231871498b5cec246b0',
-      '60a2cb79838083d339fb9289',
-      '60afb453838083d339838083',
-      '6046208c871498b5cec21c9c',
-      '6046208e871498b5cec21cd5',
-      '60462183871498b5cec23623',
-      '604621cb871498b5cec23d21',
-      '60462238871498b5cec2471d',
-      '608abc184f47999865f8d614',
-      '608ddda6838083d339252b16',
-      '60c299e9838083d33959de41',
-      '60f9a499838083d339fba163'
+      '604c287198b5ce34621e2f57',
+      '68498b5203c2ce60471612af',
+      '6c249871498b5046224ece26',
+      '604c21d908716208b5ce4915',
+      '60edd838083d3392cd507fac',
+      '683d33950f091fc438380476',
+      '628f838083d3309e89d3a0c9',
+      '61b0838083d33001f94a638c',
+      '609d90d383e3380839d420ca',
+      '63089125927ef260660d75a6',
+      '6e2311c462098b5c487246b0',
+      '83a2cd339fb960b798380289',
+      '83d339838afb603838045083',
+      '60471498bec21c6205c8c89c',
+      '6046e871498b20cec21c85d5',
+      '69ec230462188b5c38714623',
+      '60cb823d4621271498b5cec1',
+      '688235cec24771498b04621d',
+      '60bc1845af48799986f8d614',
+      '6683808308dddd339a252b16',
+      '6d33959d299e90c838083e41',
+      '60998380f9aa1483d339fb63'
     ]
   }
 ];
@@ -145,7 +145,7 @@ describe('Vérification des données pour obtenir les statistiques des territoir
     expect(formValid.error).toBe(undefined);
   });
 
-  it('devrait être considérée comme valide lorsque le territoire n\'est pas renseignés', () => {
+  it('devrait être considérée comme invalide lorsque le territoire n\'est pas renseigné', () => {
     const bodyInvalideTerritoire = {
       query: {
         dateDebut: new Date(),
@@ -161,7 +161,7 @@ describe('Vérification des données pour obtenir les statistiques des territoir
     expect(formInvalideTerritoire.error).toMatchObject(new Error('Le type de territoire est invalide'));
   });
 
-  it('devrait être considérée comme valide lorsque la page, le territoire, la date de début de période n\'est pas renseignés', () => {
+  it('devrait être considérée comme invalide lorsque la page, le territoire, la date de début de période n\'est pas renseigné', () => {
 
     const bodyInvalideDateDebut = {
       query: {
@@ -178,7 +178,7 @@ describe('Vérification des données pour obtenir les statistiques des territoir
     expect(formInvalideateDebut.error).toMatchObject(new Error('La date de début est invalide'));
   });
 
-  it('devrait être considérée comme valide lorsque la date de fin de période n\'est pas renseignés', () => {
+  it('devrait être considérée comme invalide lorsque la date de fin de période n\'est pas renseigné', () => {
 
     const bodyInvalideDateFin = {
       query: {
@@ -195,7 +195,7 @@ describe('Vérification des données pour obtenir les statistiques des territoir
     expect(formInvalideDateFin.error).toMatchObject(new Error('La date de fin est invalide'));
   });
 
-  it('devrait être considérée comme valide lorsque la page n\'est pas renseignés', () => {
+  it('devrait être considérée comme invalide lorsque la page n\'est pas renseigné', () => {
 
     const bodyInvalidePage = {
       query: {
@@ -212,7 +212,7 @@ describe('Vérification des données pour obtenir les statistiques des territoir
     expect(formInvalidePage.error).toMatchObject(new Error('Le numéro de page est invalide'));
   });
 
-  it('devrait être considérée comme valide lorsque le nom du tri n\'est pas renseignés', () => {
+  it('devrait être considérée comme invalide lorsque le nom du tri n\'est pas renseigné', () => {
 
     const bodyInvalideNomOrdre = {
       query: {
@@ -229,7 +229,7 @@ describe('Vérification des données pour obtenir les statistiques des territoir
     expect(formInvalideNomOrdre.error).toMatchObject(new Error('Le nom de l\'ordre est invalide'));
   });
 
-  it('devrait être considérée comme invalide lorsque l\'ordre du tri n\'est pas renseignés', () => {
+  it('devrait être considérée comme invalide lorsque l\'ordre du tri n\'est pas renseigné', () => {
 
     const bodyInvalideOrdre = {
       query: {
@@ -258,20 +258,20 @@ describe('Vérification des statistiques par département ou région', () => {
         cnfsActives: 13,
         cnfsInactives: 27,
         conseillerIds: [
-          '60462227871498b5cec245d7',
-          '604621ae871498b5cec23a59',
-          '60462066871498b5cec2184e',
-          '60d49e28838083d339271a85',
-          '60dc24f1838083d3397db45d',
-          '6100663f838083d3394e6a5d',
-          '60462000871498b5cec20c07',
-          '604621bf871498b5cec23bed',
-          '60854bd34f47999865c2c58c',
-          '60462061871498b5cec217ab',
-          '60c8eaef838083d339a1917f',
-          '60462036871498b5cec212a4',
-          '6046223a871498b5cec2474f',
-          '60462257871498b5cec24a06'
+          '64876222ec2d1498b557c047',
+          '621ae871498b5cec20463a59',
+          '6204966b871582184ce046ce',
+          '623d3392883718080d49ea85',
+          '67db8083450dc2d3394f183d',
+          '6194e085d6a066033f83833d',
+          '621498b5ec204000870cc607',
+          '671bf8ed23b1ecc6204498b5',
+          '698650834fbd2c5847995c4c',
+          '6c21b5ce71701849846206ab',
+          '6a1918eaef8380830d339c7f',
+          '671e66820498b5cc212a0434',
+          '6047487223a544cec2198b6f',
+          '6e71a24906046c8422578b5c'
         ],
         codeDepartement: '01',
         codeRegion: '84',
@@ -303,28 +303,28 @@ describe('Vérification des statistiques par département ou région', () => {
         codeRegion: '01',
         nomRegion: 'Guadeloupe',
         conseillerIds: [
-          '604621e2871498b5cec23f57',
-          '60462036871498b5cec212af',
-          '6046224e871498b5cec24926',
-          '60462090871498b5cec21d15',
-          '60d50edd838083d3392c7fac',
-          '6091fc43838083d33950f476',
-          '609e828f838083d339d3a0c9',
-          '61001fb0838083d3394a638c',
-          '609e90d3838083d339d420ca',
-          '60630891250d66297ef275a6',
-          '60462231871498b5cec246b0',
-          '60a2cb79838083d339fb9289',
-          '60afb453838083d339838083',
-          '6046208c871498b5cec21c9c',
-          '6046208e871498b5cec21cd5',
-          '60462183871498b5cec23623',
-          '604621cb871498b5cec23d21',
-          '60462238871498b5cec2471d',
-          '608abc184f47999865f8d614',
-          '608ddda6838083d339252b16',
-          '60c299e9838083d33959de41',
-          '60f9a499838083d339fba163'
+          '604c287198b5ce34621e2f57',
+          '68498b5203c2ce60471612af',
+          '6c249871498b5046224ece26',
+          '604c21d908716208b5ce4915',
+          '60edd838083d3392cd507fac',
+          '683d33950f091fc438380476',
+          '628f838083d3309e89d3a0c9',
+          '61b0838083d33001f94a638c',
+          '609d90d383e3380839d420ca',
+          '63089125927ef260660d75a6',
+          '6e2311c462098b5c487246b0',
+          '83a2cd339fb960b798380289',
+          '83d339838afb603838045083',
+          '60471498bec21c6205c8c89c',
+          '6046e871498b20cec21c85d5',
+          '69ec230462188b5c38714623',
+          '60cb823d4621271498b5cec1',
+          '688235cec24771498b04621d',
+          '60bc1845af48799986f8d614',
+          '6683808308dddd339a252b16',
+          '6d33959d299e90c838083e41',
+          '60998380f9aa1483d339fb63'
         ]
       }
     ];
