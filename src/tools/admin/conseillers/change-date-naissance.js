@@ -13,9 +13,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let id = ~~program.id;
-  let date = formatDate(program.date);
-  console.log('date:', date);
+  const id = Math.floor(program.id);
+  const date = formatDate(program.date);
 
   if (id === 0 || !date) {
     exit('Paramètres invalides. Veuillez préciser un id et une date de naissance');
