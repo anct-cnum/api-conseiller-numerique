@@ -81,11 +81,6 @@ exports.Users = class Users extends Service {
             const emails = createEmails(db, mailer);
             let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
             await message.send(user);
-            const { idPG } = await app.service('conseillers').get(id);
-            await pool.query(`UPDATE djapp_coach
-              SET email = $2
-                  WHERE id = $1`,
-            [idPG, nouveauEmail]);
           } catch (error) {
             context.app.get('sentry').captureException(error);
             logger.error(error);
