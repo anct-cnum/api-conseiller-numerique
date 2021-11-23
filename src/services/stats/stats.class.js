@@ -324,7 +324,7 @@ exports.Stats = class Stats extends Service {
         await Promise.all(statsTerritoires.map(async ligneStats => {
           ligneStats.personnesAccompagnees = 0;
           ligneStats.CRAEnregistres = 0;
-          ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec) ?
+          ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec && ligneStats?.nombreConseillersCoselec > 0) ?
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
