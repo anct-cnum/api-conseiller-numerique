@@ -9,38 +9,36 @@ const {
   checkSchema,
   getTerritoires } = require('./stats.function');
 
-const getDepartements = () => ([
-  {
-    _id: '619501799c612d326db31de6',
-    date: '17/11/2021',
-    nombreConseillersCoselec: 40,
-    cnfsActives: 13,
-    cnfsInactives: 27,
-    conseillerIds: [
-      '60462227871498b5cec245d7',
-      '604621ae871498b5cec23a59',
-      '60462066871498b5cec2184e',
-      '60d49e28838083d339271a85',
-      '60dc24f1838083d3397db45d',
-      '6100663f838083d3394e6a5d',
-      '60462000871498b5cec20c07',
-      '604621bf871498b5cec23bed',
-      '60854bd34f47999865c2c58c',
-      '60462061871498b5cec217ab',
-      '60c8eaef838083d339a1917f',
-      '60462036871498b5cec212a4',
-      '6046223a871498b5cec2474f',
-      '60462257871498b5cec24a06'
-    ],
-    codeDepartement: '01',
-    codeRegion: '84',
-    nomDepartement: 'Ain',
-    nomRegion: 'Auvergne-Rhône-Alpes',
-    tauxActivation: 33
-  }
-]);
+const departement = [{
+  _id: '619501799c612d326db31de6',
+  date: '17/11/2021',
+  nombreConseillersCoselec: 40,
+  cnfsActives: 13,
+  cnfsInactives: 27,
+  conseillerIds: [
+    '60462227871498b5cec245d7',
+    '604621ae871498b5cec23a59',
+    '60462066871498b5cec2184e',
+    '60d49e28838083d339271a85',
+    '60dc24f1838083d3397db45d',
+    '6100663f838083d3394e6a5d',
+    '60462000871498b5cec20c07',
+    '604621bf871498b5cec23bed',
+    '60854bd34f47999865c2c58c',
+    '60462061871498b5cec217ab',
+    '60c8eaef838083d339a1917f',
+    '60462036871498b5cec212a4',
+    '6046223a871498b5cec2474f',
+    '60462257871498b5cec24a06'
+  ],
+  codeDepartement: '01',
+  codeRegion: '84',
+  nomDepartement: 'Ain',
+  nomRegion: 'Auvergne-Rhône-Alpes',
+  tauxActivation: 33
+}];
 
-const getRegions = () => ([
+const region = [
   {
     _id: { codeRegion: '01', nomRegion: 'Guadeloupe' },
     nombreConseillersCoselec: 39,
@@ -73,7 +71,11 @@ const getRegions = () => ([
       '60f9a499838083d339fba163'
     ]
   }
-]);
+];
+
+const getDepartements = async () => departement;
+
+const getRegions = async () => region;
 
 describe('Vérification de l\'authentification', () => {
   it('devrait être considérée comme valide lorsque l\'utilisateur possède une clé d\'authentification', () => {
@@ -246,7 +248,7 @@ describe('Vérification des données pour obtenir les statistiques des territoir
 });
 
 describe('Vérification des statistiques par département ou région', () => {
-  it('devrait être considérée comme valide lorsque la liste des départements est obtenue', () => {
+  it('devrait être considérée comme valide lorsque la liste des départements est obtenue', async () => {
 
     const listDepartements = [
       {
@@ -285,12 +287,12 @@ describe('Vérification des statistiques par département ou région', () => {
     const page = 1;
     const limit = 1;
 
-    const getListDepartements = getTerritoires(type, date, ordre, page, limit, { getDepartements, getRegions });
+    const getListDepartements = await getTerritoires(type, date, ordre, page, limit, { getDepartements, getRegions });
 
-    expect(getListDepartements).toBe(listDepartements);
+    expect(getListDepartements).toStrictEqual(listDepartements);
   });
 
-  it('devrait être considérée comme valide lorsque la liste des régions est obtenue', () => {
+  it('devrait être considérée comme valide lorsque la liste des régions est obtenue', async () => {
 
     const listRegions = [
       {
@@ -333,8 +335,8 @@ describe('Vérification des statistiques par département ou région', () => {
     const page = 1;
     const limit = 1;
 
-    const getListRegions = getTerritoires(type, date, ordre, page, limit, { getDepartements, getRegions });
+    const getListRegions = await getTerritoires(type, date, ordre, page, limit, { getDepartements, getRegions });
 
-    expect(getListRegions).toBe(listRegions);
+    expect(getListRegions).toStrictEqual(listRegions);
   });
 });
