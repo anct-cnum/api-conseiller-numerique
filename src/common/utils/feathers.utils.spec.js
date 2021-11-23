@@ -5,7 +5,6 @@ const {
   schemaGuard,
   canActivate,
   Role,
-  activateRoute,
   authenticationFromRequest,
   userIdFromRequestJwt,
   abort,
@@ -72,13 +71,9 @@ describe('can activate route checks', () => {
   });
 
   it('should make an abort response', async () => {
-    const routeActivation = await canActivate(
-      authenticationGuard(undefined)
-    );
-
     const res = new Response();
 
-    abort(res, routeActivation);
+    abort(res, new NotAuthenticated('User not authenticated'));
 
     expect({
       status: res._status,
@@ -116,26 +111,21 @@ describe('can activate route checks', () => {
       accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.L8i6g3PfcHlioHCCPURC9pmXT7gdJpx3kOoyAfNUwCc'
     };
 
-    const routeActivation = await canActivate(
-      authenticationGuard(authentication)
-    );
-
-    expect(routeActivation).toEqual({
-      hasError: false
-    });
+    await expect((async () => {
+      await canActivate(
+        authenticationGuard(authentication)
+      );
+    })()).resolves.toBeUndefined();
   });
 
   it('should get authentication error when authentication data is not provided', async () => {
     const authentication = undefined;
 
-    const routeActivation = await canActivate(
-      authenticationGuard(authentication)
-    );
-
-    expect(routeActivation).toEqual({
-      error: new NotAuthenticated('User not authenticated'),
-      hasError: true
-    });
+    await expect((async () => {
+      await canActivate(
+        authenticationGuard(authentication)
+      );
+    })()).rejects.toThrowError(new NotAuthenticated('User not authenticated'));
   });
 
   it('should not get forbidden error when the right user roles are provided', async () => {
@@ -143,13 +133,11 @@ describe('can activate route checks', () => {
     const userId = '1234567890';
     const roles = [Role.Admin, Role.AdminCoop];
 
-    const routeActivation = await canActivate(
-      rolesGuard(userId, roles, userAuthenticationRepository)
-    );
-
-    expect(routeActivation).toEqual({
-      hasError: false
-    });
+    await expect((async () => {
+      await canActivate(
+        rolesGuard(userId, roles, userAuthenticationRepository)
+      );
+    })()).resolves.toBeUndefined();
   });
 
   it('should get forbidden error when the right user roles are not provided', async () => {
@@ -157,14 +145,11 @@ describe('can activate route checks', () => {
     const userId = '1234567890';
     const roles = [Role.AdminCoop];
 
-    const routeActivation = await canActivate(
-      rolesGuard(userId, roles, userAuthenticationRepository)
-    );
-
-    expect(routeActivation).toEqual({
-      error: new Forbidden('User not authorized', { userId }),
-      hasError: true
-    });
+    await expect((async () => {
+      await canActivate(
+        rolesGuard(userId, roles, userAuthenticationRepository)
+      );
+    })()).rejects.toThrowError(new Forbidden('User not authorized', { userId }));
   });
 
   it('should not get invalid schema error when inputs pass schema validation', async () => {
@@ -176,13 +161,11 @@ describe('can activate route checks', () => {
       }
     };
 
-    const routeActivation = await canActivate(
-      schemaGuard(schemaValidation)
-    );
-
-    expect(routeActivation).toEqual({
-      hasError: false
-    });
+    await expect((async () => {
+      await canActivate(
+        schemaGuard(schemaValidation)
+      );
+    })()).resolves.toBeUndefined();
   });
 
   it('should get invalid schema error when inputs do not pass schema validation', async () => {
@@ -202,14 +185,11 @@ describe('can activate route checks', () => {
       }
     };
 
-    const routeActivation = await canActivate(
-      schemaGuard(schemaValidation)
-    );
-
-    expect(routeActivation).toEqual({
-      error: new Unprocessable('Schema validation error', schemaValidation.error),
-      hasError: true
-    });
+    await expect((async () => {
+      await canActivate(
+        schemaGuard(schemaValidation)
+      );
+    })()).rejects.toThrowError(new Unprocessable('Schema validation error', schemaValidation.error));
   });
 
   it('should get forbidden error when the right user roles are not provided but all other activation functions are valid', async () => {
@@ -230,55 +210,12 @@ describe('can activate route checks', () => {
       }
     };
 
-    const routeActivation = await canActivate(
-      authenticationGuard(authentication),
-      rolesGuard(userId, roles, userAuthenticationRepository),
-      schemaGuard(schemaValidation)
-    );
-
-    expect(routeActivation).toEqual({
-      error: new Forbidden('User not authorized', { userId }),
-      hasError: true
-    });
-  });
-
-  it('should activate route', async () => {
-    const authentication = {
-      strategy: 'jwt',
-      accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.L8i6g3PfcHlioHCCPURC9pmXT7gdJpx3kOoyAfNUwCc'
-    };
-
-    let success = false;
-    let error = false;
-
-    activateRoute(await canActivate(
-      authenticationGuard(authentication)
-    ), () => {
-      success = true;
-    }, () => {
-      error = true;
-    });
-
-    expect(success).toEqual(true);
-    expect(error).toEqual(false);
-  });
-
-  it('should not activate route', async () => {
-    const authentication = undefined;
-
-    let success = false;
-    let error = false;
-
-    activateRoute(await canActivate(
-      authenticationGuard(authentication)
-    ), () => {
-      success = true;
-    }, () => {
-      error = true;
-    });
-
-    expect(success).toEqual(false);
-    expect(error).toEqual(true);
+    await expect((async () => {
+      await canActivate(
+        authenticationGuard(authentication),
+        rolesGuard(userId, roles, userAuthenticationRepository),
+        schemaGuard(schemaValidation)
+      );
+    })()).rejects.toThrowError(new Forbidden('User not authorized', { userId }));
   });
 });
-

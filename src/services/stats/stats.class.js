@@ -8,7 +8,6 @@ const dayjs = require('dayjs');
 const logger = require('../../logger');
 const statsPdf = require('./stats.pdf');
 const {
-  activateRoute,
   canActivate,
   authenticationGuard,
   rolesGuard,
@@ -200,11 +199,11 @@ exports.Stats = class Stats extends Service {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
 
-      activateRoute(await canActivate(
+      canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
-      ), async () => {
+      ).then(async () => {
         const { stats, type } = await getStatistiquesToExport(
           query.dateDebut, query.dateFin, query.idType, query.type,
           exportStatistiquesRepository(db)
@@ -214,7 +213,7 @@ exports.Stats = class Stats extends Service {
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type)}.csv`,
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type)
         );
-      }, routeActivationError => abort(res, routeActivationError));
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/stats/admincoop/dashboard', async (req, res) => {

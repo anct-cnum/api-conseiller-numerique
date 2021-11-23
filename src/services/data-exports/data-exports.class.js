@@ -18,7 +18,6 @@ const {
   rolesGuard,
   schemaGuard,
   Role,
-  activateRoute,
   authenticationFromRequest,
   userIdFromRequestJwt,
   abort,
@@ -321,32 +320,33 @@ exports.DataExports = class DataExports {
 
     app.get('/exports/territoires.csv', async (req, res) => {
       const db = await app.get('mongoClient');
-      activateRoute(await canActivate(
+
+      canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportTerritoireSchema(req.query))
-      ), async () => {
+      ).then(async () => {
         const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
         csvFileResponse(
           res,
           getExportTerritoiresFileName(req.query.territoire, req.query.dateDebut, req.query.dateFin),
           buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire)
         );
-      }, routeActivationError => abort(res, routeActivationError));
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/exports/cnfs.csv', async (req, res) => {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
 
-      activateRoute(await canActivate(
+      canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportCnfsSchema(query))
-      ), async () => {
+      ).then(async () => {
         const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), buildExportCnfsCsvFileContent(statsCnfs));
-      }, routeActivationError => abort(res, routeActivationError));
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
 
