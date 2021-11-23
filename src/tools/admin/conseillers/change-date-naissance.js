@@ -8,7 +8,7 @@ const formatDate = date => {
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
-  program.option('-d, --date <type>', 'date : date de naissance sous le format AAAA/MM/DD');
+  program.option('-d, --date <type>', 'date : date de naissance sous le format AAAA-MM-DD');
   program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
