@@ -1,5 +1,6 @@
-module.exports = (db, mailer, app) => {
+module.exports = (db, mailer) => {
 
+  let { utils } = mailer;
   const templateName = 'conseillerRuptureStructure';
 
   const render = () => {
@@ -30,7 +31,7 @@ module.exports = (db, mailer, app) => {
             mailErrorDetailCnfsRupture: err.message
           }
         });
-        app.get('sentry').captureException(err);
+        utils.setSentryError(err);
       };
       return mailer.createMailer().sendEmail(
         emailContactStructure,

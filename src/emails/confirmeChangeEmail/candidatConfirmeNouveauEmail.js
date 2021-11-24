@@ -32,6 +32,7 @@ module.exports = (db, mailer) => {
             mailConfirmErrorDetail: err.message
           }
         });
+        
         throw err;
       };
       return mailer.createMailer().sendEmail(

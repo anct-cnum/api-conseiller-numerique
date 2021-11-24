@@ -1,5 +1,6 @@
-module.exports = (db, mailer, app) => {
+module.exports = (db, mailer) => {
 
+  let { utils } = mailer;
   const templateName = 'candidatPixEnAttente';
 
   let render = async candidat => {
@@ -13,7 +14,7 @@ module.exports = (db, mailer, app) => {
       let onSuccess = () => { };
 
       let onError = async err => {
-        app.get('sentry').captureException(err);
+        utils.setSentryError(err);
       };
       return mailer.createMailer().sendEmail(
         candidat.email,

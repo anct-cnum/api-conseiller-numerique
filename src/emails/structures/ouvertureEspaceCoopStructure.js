@@ -1,5 +1,6 @@
-module.exports = (db, mailer, app) => {
+module.exports = (db, mailer) => {
 
+  let { utils } = mailer;
   const templateName = 'ouvertureEspaceCoopStructure';
 
   let render = async () => {
@@ -14,7 +15,7 @@ module.exports = (db, mailer, app) => {
       let onSuccess = () => {};
 
       let onError = async err => {
-        app.get('sentry').captureException(err);
+        utils.setSentryError(err);
       };
       return mailer.createMailer().sendEmail(
         structure.contact.email,

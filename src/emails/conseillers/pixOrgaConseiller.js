@@ -15,6 +15,7 @@ module.exports = (db, mailer) => {
       let onSuccess = () => { };
 
       let onError = async err => {
+        utils.setSentryError(err);
         throw err;
       };
       return mailer.createMailer().sendEmail(
