@@ -1,6 +1,6 @@
 const toGeoJson = geolocatedConseiller => ({
   type: 'Feature',
-  geometry: { ...geolocatedConseiller.location },
+  geometry: { ...geolocatedConseiller.structure.location },
   properties: {
     name: `${geolocatedConseiller.prenom} ${geolocatedConseiller.nom}`,
   }
