@@ -32,23 +32,27 @@ describe('geolocated conseillers', () => {
       {
         prenom: 'John',
         nom: 'Doe',
-        location: {
-          type: 'Point',
-          coordinates: [
-            2.2622,
-            48.872
-          ]
+        structure: {
+          location: {
+            type: 'Point',
+            coordinates: [
+              2.2622,
+              48.872
+            ]
+          }
         }
       },
       {
         prenom: 'Bob',
         nom: 'Doe',
-        location: {
-          type: 'Point',
-          coordinates: [
-            1.9632,
-            48.6206
-          ]
+        structure: {
+          location: {
+            type: 'Point',
+            coordinates: [
+              1.9632,
+              48.6206
+            ]
+          }
         }
       }
     ];
