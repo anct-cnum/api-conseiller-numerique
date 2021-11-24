@@ -7,6 +7,7 @@ const Joi = require('joi');
 const dayjs = require('dayjs');
 const logger = require('../../logger');
 const statsPdf = require('./stats.pdf');
+const statsFct = require('./stats.function');
 const {
   canActivate,
   authenticationGuard,
@@ -27,6 +28,7 @@ const {
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
 const { getStatistiquesToExport } = require('./export-statistiques/core/export-statistiques.core');
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
+const { statsRepository } = require('./stats.repository');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -277,7 +279,7 @@ exports.Stats = class Stats extends Service {
     });
 
     app.get('/stats/admincoop/territoires', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
+      if (!statsFct.checkAuth(req)) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
@@ -285,21 +287,14 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!adminUser?.roles.includes('admin_coop')) {
+        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
           return;
         }
 
-        const schema = Joi.object({
-          page: Joi.number().required().error(new Error('Le numéro de page est invalide')),
-          territoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
-          dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
-          dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
-          nomOrdre: Joi.string().required().error(new Error('Le nom de l\'ordre est invalide')),
-          ordre: Joi.number().required().error(new Error('L\'ordre est invalide')),
-        }).validate(req.query);
+        const schema = statsFct.checkSchema(req);
 
         if (schema.error) {
           res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
@@ -315,94 +310,37 @@ exports.Stats = class Stats extends Service {
         let items = {};
         let statsTerritoires = [];
         let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
-        let promises = [];
 
-        if (territoire === 'codeDepartement') {
+        statsTerritoires = await statsFct.getTerritoires(
+          territoire,
+          dateFin,
+          ordreColonne,
+          page > 0 ? ((page - 1) * options.paginate.default) : 0,
+          options.paginate.default,
+          statsRepository(db)
+        );
 
-          statsTerritoires = await db.collection('stats_Territoires').find({ 'date': dateFin })
-          .sort(ordreColonne)
-          .skip(page > 0 ? ((page - 1) * options.paginate.default) : 0)
-          .limit(options.paginate.default).toArray();
+        await Promise.all(statsTerritoires.map(async ligneStats => {
+          ligneStats.personnesAccompagnees = 0;
+          ligneStats.CRAEnregistres = 0;
+          ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec && ligneStats?.nombreConseillersCoselec > 0) ?
+            Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
-          statsTerritoires.forEach(ligneStats => {
-            if (ligneStats.conseillerIds.length > 0) {
-              let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
-                '$gte': dateDebutQuery,
-                '$lte': dateFinQuery,
-              } };
-
-              promises.push(new Promise(async resolve => {
-                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
-                ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
-                resolve();
-              }));
-            } else {
-              ligneStats.personnesAccompagnees = 0;
-            }
-          });
-          await Promise.all(promises);
-          items.total = await db.collection('stats_Territoires').countDocuments({ 'date': dateFin });
-        }
-
-        if (territoire === 'codeRegion') {
-          statsTerritoires = await db.collection('stats_Territoires').aggregate(
-            { $match: { date: dateFin } },
-            { $group: {
-              _id: {
-                codeRegion: '$codeRegion',
-                nomRegion: '$nomRegion',
-              },
-              nombreConseillersCoselec: { $sum: '$nombreConseillersCoselec' },
-              cnfsActives: { $sum: '$cnfsActives' },
-              cnfsInactives: { $sum: '$cnfsInactives' },
-              conseillerIds: { $push: '$conseillerIds' }
-            } },
-            { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
-            { $project: {
-              _id: 0, codeRegion: 1, nomRegion: 1, nombreConseillersCoselec: 1, cnfsActives: 1, cnfsInactives: 1,
-              conseillerIds: { $reduce: {
-                input: '$conseillerIds',
-                initialValue: [],
-                in: { $concatArrays: ['$$value', '$$this'] }
-              } }
-            } },
-            { $sort: ordreColonne },
-            { $skip: page > 0 ? ((page - 1) * options.paginate.default) : 0 },
-            { $limit: options.paginate.default },
-
-          ).toArray();
-
-          statsTerritoires.forEach(ligneStats => {
-            ligneStats.tauxActivation = (ligneStats?.nombreConseillersCoselec) ?
-              Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
-
+          if (ligneStats.conseillerIds.length > 0) {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+              '$gte': dateDebutQuery,
+              '$lte': dateFinQuery,
+            } };
+            const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
+          } else {
             ligneStats.personnesAccompagnees = 0;
-            if (ligneStats.conseillerIds.length > 0) {
-              let query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
-                '$gte': dateDebutQuery,
-                '$lte': dateFinQuery,
-              } };
+            ligneStats.CRAEnregistres = 0;
+          }
+        }));
 
-              promises.push(new Promise(async resolve => {
-                let countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
-                ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
-                resolve();
-              }));
-            } else {
-              ligneStats.personnesAccompagnees = 0;
-            }
-          });
-          await Promise.all(promises);
-
-          const statsTotal = await db.collection('stats_Territoires').aggregate(
-            { $match: { date: dateFin } },
-            { $group: { _id: { codeRegion: '$codeRegion' } } },
-            { $project: { _id: 0 } }
-          ).toArray();
-
-          items.total = statsTotal.length;
-        }
-
+        items.total = await statsFct.getTotalTerritoires(dateFin, territoire, statsRepository(db));
         items.data = statsTerritoires;
         items.limit = options.paginate.default;
         items.skip = page;
