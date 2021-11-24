@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'motDePasseOublie';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async user => {
     if (user.roles[0] === 'conseiller') {

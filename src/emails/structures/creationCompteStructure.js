@@ -2,7 +2,7 @@ module.exports = (db, mailer) => {
   const utilsStructure = require('../../utils/index.js');
 
   const templateName = 'creationCompteStructure';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async structure => {
     const structureObj = await db.collection('structures').findOne({ _id: structure.entity.oid });

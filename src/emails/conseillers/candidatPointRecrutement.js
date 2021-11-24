@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'candidatPointRecrutement';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async conseiller => {
     const link = utils.getBackofficeUrl(`/dites-nous-en-plus-sur-vous/${(conseiller.sondageToken)}`);

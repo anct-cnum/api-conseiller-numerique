@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'bienvenueComptePrefet';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = user => {
     return mailer.render(__dirname, templateName, {

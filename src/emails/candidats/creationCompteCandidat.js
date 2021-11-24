@@ -1,6 +1,6 @@
 module.exports = (db, mailer) => {
   const templateName = 'creationCompteCandidat';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async conseiller => {
     return mailer.render(__dirname, templateName, {

@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'bienvenueCompteCandidat';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async candidat => {
     return mailer.render(__dirname, templateName, {

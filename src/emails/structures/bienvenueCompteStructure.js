@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'bienvenueCompteStructure';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async structure => {
     return mailer.render(__dirname, templateName, {
