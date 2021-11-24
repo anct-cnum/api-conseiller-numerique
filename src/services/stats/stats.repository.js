@@ -31,9 +31,23 @@ const getRegions = db => async (date, ordre, page, limit) =>
     { $limit: limit },
   ).toArray();
 
+const getTotalDepartements = db => async date => await db.collection('stats_Territoires').countDocuments({ 'date': date });
+
+const getTotalRegions = db => async date => {
+  const statsTotal = await db.collection('stats_Territoires').aggregate(
+    { $match: { date: date } },
+    { $group: { _id: { codeRegion: '$codeRegion' } } },
+    { $project: { _id: 0 } }
+  ).toArray();
+
+  return statsTotal.length;
+};
+
 const statsRepository = db => ({
   getDepartements: getDepartements(db),
   getRegions: getRegions(db),
+  getTotalDepartements: getTotalDepartements(db),
+  getTotalRegions: getTotalRegions(db),
 });
 
 module.exports = {

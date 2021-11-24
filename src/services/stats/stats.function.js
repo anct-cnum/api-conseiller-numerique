@@ -29,16 +29,11 @@ const getTerritoires = async (type, date, ordre, page, limit, { getDepartements,
   }
 };
 
-const getTotalTerritoires = db => async (date, type) => {
+const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalRegions }) => {
   if (type === 'codeDepartement') {
-    return await db.collection('stats_Territoires').countDocuments({ 'date': date });
+    return await getTotalDepartements(date);
   } else if (type === 'codeRegion') {
-    const statsTotal = await db.collection('stats_Territoires').aggregate(
-      { $match: { date: date } },
-      { $group: { _id: { codeRegion: '$codeRegion' } } },
-      { $project: { _id: 0 } }
-    ).toArray();
-    return statsTotal.length;
+    return await getTotalRegions(date);
   }
 };
 

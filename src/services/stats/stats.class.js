@@ -341,7 +341,7 @@ exports.Stats = class Stats extends Service {
           }
         }));
 
-        items.total = await statsFct.getTotalTerritoires(db)(dateFin, territoire);
+        items.total = await statsFct.getTotalTerritoires(dateFin, territoire, statsRepository(db));
         items.data = statsTerritoires;
         items.limit = options.paginate.default;
         items.skip = page;
