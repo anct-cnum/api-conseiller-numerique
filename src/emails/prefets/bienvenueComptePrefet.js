@@ -1,7 +1,7 @@
-module.exports = (db, mailer, app) => {
+module.exports = (db, mailer) => {
 
   const templateName = 'bienvenueComptePrefet';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = user => {
     return mailer.render(__dirname, templateName, {
@@ -18,7 +18,7 @@ module.exports = (db, mailer, app) => {
       let onSuccess = () => { };
 
       let onError = async err => {
-        app.get('sentry').captureException(err);
+        utils.setSentryError(err);
       };
       return mailer.createMailer().sendEmail(
         user.name,

@@ -16,7 +16,7 @@ module.exports = (db, mailer, app, logger) => {
       };
 
       const onError = async err => {
-        app.get('sentry').captureException(err);
+        utils.setSentryError(err);
       };
 
       return mailer.createMailer().sendEmail(

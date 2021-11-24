@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'confirmeNouveauEmail';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
 
   let render = async user => {
@@ -32,6 +32,7 @@ module.exports = (db, mailer) => {
             mailConfirmErrorDetail: err.message
           }
         });
+        utils.setSentryError(err);
         throw err;
       };
       return mailer.createMailer().sendEmail(

@@ -9,6 +9,10 @@ const ejs = require('ejs');
 const { promisify } = require('util');
 const renderFile = promisify(ejs.renderFile);
 
+const configuration = require('@feathersjs/configuration');
+const config = configuration();
+const Sentry = require('@sentry/node');
+
 module.exports = app => {
 
   const configuration = app.get('smtp');
@@ -44,6 +48,21 @@ module.exports = app => {
   const getPixContactMail = () => app.get('pix').contactMailing;
   const getPixSupportMail = () => app.get('pix').supportMailing;
 
+  const setSentryError = err => {
+    if (config().sentry.enabled === 'true') {
+      Sentry.init({
+        dsn: config().sentry.dsn,
+        environment: config().sentry.environment,
+        tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+      });
+      app.use(Sentry.Handlers.requestHandler());
+      app.use(Sentry.Handlers.errorHandler());
+      app.set('sentry', Sentry);
+
+      app.get('sentry').captureException(err);
+    }
+  };
+
   let getHelpUrl = app.get('help_url');
 
   let utils = {
@@ -54,7 +73,8 @@ module.exports = app => {
     getPixUrl,
     getHelpUrl,
     getPixContactMail,
-    getPixSupportMail
+    getPixSupportMail,
+    setSentryError,
   };
 
   return {
