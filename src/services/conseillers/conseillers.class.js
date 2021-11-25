@@ -614,7 +614,7 @@ exports.Conseillers = class Conseillers extends Service {
           user = createUser.ops[0];
         } else {
           //Met à jour le token possiblement expiré
-          await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() }});
+          await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
           user = await db.collection('users').findOne({ _id: conseillerUser._id });
         }
         if (user.roles[0] === 'candidat') {
