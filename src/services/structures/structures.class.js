@@ -11,6 +11,7 @@ const createMailer = require('../../mailer');
 const decode = require('jwt-decode');
 const { Pool } = require('pg');
 const utils = require('../../utils/index.js');
+const { v4: uuidv4 } = require('uuid');
 
 const pool = new Pool();
 
@@ -257,6 +258,8 @@ exports.Structures = class Structures extends Service {
           }).toJSON());
           return;
         }
+        //Met à jour le token possiblement expiré
+        await db.collection('users').updateOne({ _id: structureUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() }});
         let mailer = createMailer(app);
         const emails = createEmails(db, mailer, app);
         let message = emails.getEmailMessageByTemplateName('creationCompteStructure');

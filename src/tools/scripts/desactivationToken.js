@@ -8,11 +8,11 @@ const dayjs = require('dayjs');
 const { ObjectID } = require('mongodb');
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
-  logger.info('Désactivation du token de mot de passe oublié 7 jours après sa création...');
+  logger.info('Désactivation du token de mot de passe oublié 28 jours après sa création...');
 
   let promises = [];
   let count = 0;
-  const date = dayjs(Date()).subtract(7, 'days').format('YYYY/MM/DD 23:59:59');
+  const date = dayjs(Date()).subtract(28, 'days').format('YYYY/MM/DD 23:59:59');
 
   await db.collection('users').find(
     { $or: [{ tokenCreatedAt: { $lt: new Date(date) } }, { tokenCreatedAt: { $exists: false } }] }

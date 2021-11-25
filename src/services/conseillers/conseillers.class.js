@@ -613,7 +613,9 @@ exports.Conseillers = class Conseillers extends Service {
           const createUser = await db.collection('users').insertOne(obj);
           user = createUser.ops[0];
         } else {
-          user = conseillerUser;
+          //Met à jour le token possiblement expiré
+          await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() }});
+          user = await db.collection('users').findOne({ _id: conseillerUser._id });
         }
         if (user.roles[0] === 'candidat') {
           await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreated: true }, $unset: { userCreationError: true } });
