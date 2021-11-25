@@ -122,7 +122,9 @@ module.exports = {
           Object.assign(structure, { dernierCoselec: utils.getCoselec(structure) });
         });
 
-        context.result.data = context.result.data.filter(structure => !isStructureDuplicate(structure));
+        if (context.params?.user?.roles.includes('prefet')) {
+          context.result.data = context.result.data.filter(structure => !isStructureDuplicate(structure));
+        }
 
         //Compter le nombre de candidats dont le recrutement est finalisé
         const p = new Promise(resolve => {
