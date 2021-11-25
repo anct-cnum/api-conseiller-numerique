@@ -1,7 +1,7 @@
-module.exports = (db, mailer, app) => {
+module.exports = (db, mailer) => {
 
   const templateName = 'renouvellementCompte';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async user => {
     const link = user.roles[0] !== 'conseiller' ? utils.getBackofficeUrl(`/login?role=${(user.roles[0])}`) : utils.getEspaceCoopUrl(`/login`);
@@ -19,7 +19,7 @@ module.exports = (db, mailer, app) => {
       let onSuccess = () => { };
 
       let onError = async err => {
-        app.get('sentry').captureException(err);
+        utils.setSentryError(err);
       };
 
       return mailer.createMailer().sendEmail(

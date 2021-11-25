@@ -185,13 +185,13 @@ exports.DataExports = class DataExports {
       }
 
       // eslint-disable-next-line max-len
-      const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': new ObjectID(structureUser.entity.oid) }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
+      const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': structureUser.entity.oid, 'statut': { $ne: 'finalisee_non_disponible' } }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
       let promises = [];
 
       res.write('Nom;Prénom;Email;Code postal;Expérience;Test PIX;CV\n');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
-          let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
+          let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
           // eslint-disable-next-line max-len
           res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};${conseiller.codePostal};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.pix === undefined ? 'non' : 'oui'};${conseiller.cv === undefined ? 'non' : 'oui'}\n`);
           resolve();

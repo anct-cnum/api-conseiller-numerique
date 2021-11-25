@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'creationCompteAdmin';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async admin => {
     return mailer.render(__dirname, templateName, {
@@ -35,6 +35,7 @@ module.exports = (db, mailer) => {
             mailErrorDetail: err.message
           }
         });
+        utils.setSentryError(err);
         throw err;
       };
       return mailer.createMailer().sendEmail(

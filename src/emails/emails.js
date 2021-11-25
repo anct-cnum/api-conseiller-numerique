@@ -31,31 +31,32 @@ module.exports = (db, mailer, app, logger) => {
     relanceCreationCompteStructure(db, mailer),
     creationComptePrefet(db, mailer),
     creationCompteAdmin(db, mailer),
-    bienvenueCompteStructure(db, mailer, app),
-    bienvenueComptePrefet(db, mailer, app),
-    bienvenueCompteAdmin(db, mailer, app),
-    motDePasseOublie(db, mailer, app),
-    renouvellementCompte(db, mailer, app),
-    candidatPointRecrutement(db, mailer, app),
-    bienvenueCompteConseiller(db, mailer, app),
-    candidatPixEnAttente(db, mailer, app),
-    creationCompteConseiller(db, mailer, app),
-    pixOrgaConseiller(db, mailer, app),
-    ouvertureEspaceCoopStructure(db, mailer, app),
-    confirmeNouveauEmail(db, mailer, app),
+    bienvenueCompteStructure(db, mailer),
+    bienvenueComptePrefet(db, mailer),
+    bienvenueCompteAdmin(db, mailer),
+    motDePasseOublie(db, mailer),
+    renouvellementCompte(db, mailer),
+    candidatPointRecrutement(db, mailer),
+    bienvenueCompteConseiller(db, mailer),
+    candidatPixEnAttente(db, mailer),
+    creationCompteConseiller(db, mailer),
+    pixOrgaConseiller(db, mailer),
+    ouvertureEspaceCoopStructure(db, mailer),
+    confirmeNouveauEmail(db, mailer),
     invitationCompteStructure(db, mailer),
     invitationAdminEspaceCoop(db, mailer),
     invitationAdminEspaceCoopBDT(db, mailer),
-    candidatConfirmeNouveauEmail(db, mailer, app),
-    creationCompteCandidat(db, mailer, app),
-    bienvenueCompteCandidat(db, mailer, app),
+    candidatConfirmeNouveauEmail(db, mailer),
+    creationCompteCandidat(db, mailer),
+    bienvenueCompteCandidat(db, mailer),
     candidatSupprimePix(db, mailer, app, logger),
-    conseillerRuptureStructure(db, mailer, app),
-    conseillersRupturePix(db, mailer, app)
+    conseillerRuptureStructure(db, mailer),
+    conseillersRupturePix(db, mailer)
   ];
 
   return {
     getEmailMessageByTemplateName: name => {
+
       return emails.find(email => email.templateName === name);
     }
   };

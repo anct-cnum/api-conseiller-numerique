@@ -1,7 +1,7 @@
 module.exports = (db, mailer) => {
 
   const templateName = 'invitationAdminEspaceCoopBDT';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = user => {
     return mailer.render(__dirname, templateName, {
@@ -23,6 +23,7 @@ module.exports = (db, mailer) => {
             mailErrorDetail: err.message
           }
         });
+        utils.setSentryError(err);
         throw err;
       };
       return mailer.createMailer().sendEmail(

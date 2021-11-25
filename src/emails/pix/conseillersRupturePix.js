@@ -1,7 +1,7 @@
 const { Parser } = require('json2csv');
 const jsonToCsvParser = new Parser({ delimiter: ';', withBOM: true, fields: ['Prénom', 'Nom', 'Email personnel', 'Email professionnel'] });
 
-module.exports = (db, mailer, app) => {
+module.exports = (db, mailer) => {
 
   const templateName = 'conseillersRupturePix';
   const { utils } = mailer;
@@ -17,7 +17,7 @@ module.exports = (db, mailer, app) => {
       const onSuccess = () => { };
 
       const onError = async err => {
-        app.get('sentry').captureException(err);
+        utils.setSentryError(err);
       };
 
       return mailer.createMailer().sendEmail(

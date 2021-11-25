@@ -4,7 +4,7 @@ const getStatsGlobales = async (db, query, statsCras) => {
 
   let statsGlobales = {};
   //Nombre total d'accompagnements
-  statsGlobales.nbAccompagnement = await db.collection('cras').countDocuments(query);
+  statsGlobales.nbAccompagnement = await statsCras.getNombreCra(db)(query);
 
   //Nombre total atelier collectif + accompagnement individuel + demande ponctuel + somme total des participants (utile pour atelier collectif)
   let statsActivites = await statsCras.getStatsActivites(db, query);

@@ -47,6 +47,8 @@ const {
   exportStatistiquesQueryToSchema
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
+const { geolocatedConseillers } = require('./geolocalisation/core/geolocalisation.core');
+const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -629,6 +631,14 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de l\'envoi de l\'email').toJSON());
       }
+    });
+
+    app.get('/conseillers/geolocalisation', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      const conseillers = await geolocatedConseillers(geolocationRepository(db));
+
+      res.send(conseillers);
     });
   }
 };

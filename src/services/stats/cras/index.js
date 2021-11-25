@@ -11,5 +11,6 @@ module.exports = {
   ...require('./personnesAccompagnees'),
   ...require('./totalParticipants'),
   ...require('./tauxAccompagnements'),
+  ...require('./nombreCra'),
   ...require('./globale'),
 };

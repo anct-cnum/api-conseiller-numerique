@@ -1,6 +1,6 @@
 module.exports = (db, mailer) => {
   const templateName = 'creationCompteCandidat';
-  let { utils } = mailer;
+  const { utils } = mailer;
 
   let render = async conseiller => {
     return mailer.render(__dirname, templateName, {
@@ -34,6 +34,7 @@ module.exports = (db, mailer) => {
             mailErrorDetail: err.message
           }
         });
+        utils.setSentryError(err);
         throw err;
       };
       return mailer.createMailer().sendEmail(
