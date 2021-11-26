@@ -271,4 +271,40 @@ const deleteArchivedChannels = async (mattermost, token) => {
   return Promise.all(promises);
 };
 
-module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, joinTeam, deleteArchivedChannels };
+const patchLogin = async ({ mattermost, token, conseiller, login, Sentry, logger, db }) => {
+
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+  try {
+    const resultUpdatePassword = await axios({
+      method: 'put',
+      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      data: { 'username': login }
+    });
+    logger.info(resultUpdatePassword);
+    logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id}`);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      { $set:
+        { 'mattermost.errorPatchLogin': false,
+          'mattermost.login': login
+        }
+      });
+    return true;
+  } catch (e) {
+    Sentry.captureException(e);
+    logger.error(e);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      { $set:
+        { 'mattermost.errorPatchLogin': true }
+      });
+    return false;
+  }
+};
+
+// eslint-disable-next-line max-len
+module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, joinTeam, deleteArchivedChannels, patchLogin };
