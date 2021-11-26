@@ -96,10 +96,11 @@ exports.Stats = class Stats extends Service {
     //Statistiques CRA du conseiller
     app.post('/stats/cra', async (req, res) => {
       app.get('mongoClient').then(async db => {
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
+        if (!statsFct.checkAuth(req)) {
+          res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
           return;
         }
+
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -141,6 +142,39 @@ exports.Stats = class Stats extends Service {
 
         res.send(stats);
       });
+    });
+
+    app.get('stats/cra/:id/codePostal', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
+        return;
+      }
+
+      const userId = decode(req.feathers.authentication.accessToken).sub;
+      const idConseiller = new ObjectID(req.params.id);
+
+      app.get('mongoClient').then(async db => {
+        const user = await db.collection('users').findOne({ _id: new ObjectID('userId') });
+        if (!statsFct.checkRole(user?.roles, ['conseiller', 'admin_coop'])) {
+          res.status(403).send(new Forbidden('Utilisateur non autorisé', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        try {
+          const listCodePostaux = await statsFct.getCodesPostauxCras(idConseiller, statsRepository(db));
+          res.send(listCodePostaux);
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('Une erreur est survenue lors de la génération de la liste des codes postaux.').toJSON());
+          return;
+        }
+
+
+      });
+
     });
 
     app.get('/stats/admincoop/statistiques.pdf', async (req, res) => {
