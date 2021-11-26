@@ -17,29 +17,21 @@ module.exports = app => {
 
   const configuration = app.get('smtp');
 
-  // let transporter = nodemailer.createTransport({
-  //   name: configuration.hostname,
-  //   host: configuration.host,
-  //   port: configuration.port,
-  //   secure: configuration.secure === 'true',
-  //   greetingTimeout: parseInt(configuration.greetingTimeout),
-  //   tls: {
-  //     rejectUnauthorized: false
-  //   },
-  //   ...(!configuration.user ? {} : {
-  //     auth: {
-  //       user: configuration.user,
-  //       pass: configuration.password
-  //     }
-  //   })
-  // });
   let transporter = nodemailer.createTransport({
-    host: 'smtp.mailtrap.io',
-    port: 2525,
-    auth: {
-      user: 'f825cabc6a7eac',
-      pass: '5376ed7a1bc35a'
-    }
+    name: configuration.hostname,
+    host: configuration.host,
+    port: configuration.port,
+    secure: configuration.secure === 'true',
+    greetingTimeout: parseInt(configuration.greetingTimeout),
+    tls: {
+      rejectUnauthorized: false
+    },
+    ...(!configuration.user ? {} : {
+      auth: {
+        user: configuration.user,
+        pass: configuration.password
+      }
+    })
   });
 
   transporter.use('compile', htmlToText({ ignoreImage: true }));

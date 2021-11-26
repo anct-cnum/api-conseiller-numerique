@@ -31,55 +31,6 @@ const createMailbox = async ({ gandi, conseillerId, login, password, db, logger,
     return false;
   }
 };
-const updateMailboxLogin = async (gandi, conseillerId, nouveauEmail, login, password, db, logger, Sentry) => {
-
-  try {
-    const mailbox = await axios({
-      method: 'get',
-      url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
-      headers: {
-        'Authorization': `Apikey ${gandi.token}`
-      }
-    });
-
-    console.log('mailbox.data[0]:', mailbox.data);
-    console.log('gandi.domain:', gandi.domain);
-    if (mailbox?.data.length !== 1) {
-      // const resultUpdateEmailPro = await axios({
-      //   method: 'patch',
-      //   url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Apikey ${gandi.token}`
-      //   },
-      //   data: { 'login': nouveauEmail }
-      // });
-      // logger.info(resultUpdateEmailPro);
-      logger.info(`Nouveau Email professionnel mis à jour : ${login} pour le conseiller id=${conseillerId}`);
-      // await db.collection('conseillers').updateOne({ _id: conseillerId },
-      //   { $set:
-      //     { emailCNError: false,
-      //       emailCN: { address: `${nouveauEmail}` } }
-      //   });
-      return true;
-    } else {
-      logger.error(`Login ${login} inexistant dans Gandi`);
-      // await db.collection('conseillers').updateOne({ _id: conseillerId },
-      //   { $set:
-      //     { resetLoginCNError: true }
-      //   });
-      return false;
-    }
-  } catch (e) {
-    Sentry.captureException(e);
-    logger.error(e.message);
-    // await db.collection('conseillers').updateOne({ _id: conseillerId },
-    //   { $set:
-    //     { resetLoginCNError: true }
-    //   });
-    return false;
-  }
-};
 
 const updateMailboxPassword = async (gandi, conseillerId, login, password, db, logger, Sentry) => {
 
@@ -179,4 +130,4 @@ const deleteMailbox = async (gandi, conseillerId, login, db, logger, Sentry) => 
 
 };
 
-module.exports = { createMailbox, updateMailboxLogin, updateMailboxPassword, deleteMailbox };
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox };
