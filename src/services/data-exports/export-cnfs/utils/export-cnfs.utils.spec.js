@@ -6,6 +6,7 @@ const statsCnfs = [
   {
     prenom: 'John',
     nom: 'Doe',
+    email: 'john.doe@conseiller-numerique.fr',
     nomStructure: 'Association pour l\'accès au numérique',
     codePostal: 69005,
     datePrisePoste: '27/01/2021',
@@ -200,8 +201,8 @@ describe('export cnfs utils', () => {
     const fileContent = buildExportCnfsCsvFileContent(statsCnfs);
 
     expect(fileContent).toEqual(
-      'Prénom;Nom;Structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé\n' +
-      'John;Doe;Association pour l\'accès au numérique;69005;27/01/2021;12/03/2021;Non;Non'
+      'Prénom;Nom;Email;Structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé\n' +
+      'John;Doe;john.doe@conseiller-numerique.fr;Association pour l\'accès au numérique;69005;27/01/2021;12/03/2021;Non;Non'
     );
   });
 });

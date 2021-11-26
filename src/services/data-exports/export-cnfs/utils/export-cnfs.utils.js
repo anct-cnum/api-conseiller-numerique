@@ -43,6 +43,7 @@ const csvLineSeparator = '\n';
 const fileHeaders = [
   'Prénom',
   'Nom',
+  'Email',
   'Structure',
   'Code Postal',
   'Date de recrutement',
@@ -56,6 +57,7 @@ const buildExportCnfsCsvFileContent = statsCnfs => [
   ...statsCnfs.map(statCnfs => [
     statCnfs.prenom,
     statCnfs.nom,
+    statCnfs.email,
     statCnfs.nomStructure,
     statCnfs.codePostal,
     statCnfs.datePrisePoste,
