@@ -7,6 +7,7 @@ const { ObjectID } = require('mongodb');
 const { Pool } = require('pg');
 const pool = new Pool();
 const logger = require('../../logger');
+const { isStructureDuplicate } = require('./get-strucures/utils/get-structure.utils');
 
 module.exports = {
   before: {
@@ -120,6 +121,10 @@ module.exports = {
         context.result.data.forEach(structure => {
           Object.assign(structure, { dernierCoselec: utils.getCoselec(structure) });
         });
+
+        if (context.params?.user?.roles.includes('prefet')) {
+          context.result.data = context.result.data.filter(structure => !isStructureDuplicate(structure));
+        }
 
         //Compter le nombre de candidats dont le recrutement est finalisé
         const p = new Promise(resolve => {

@@ -11,6 +11,14 @@
     "supportMailing": "PIX_SUPPORT_MAILING"
   },
   "port": "PORT",
+  "paginate": {
+    "default": "PAGINATE_DEFAULT",
+    "max": "PAGINATE_MAX"
+  },
+  "paginate_resourcerie": {
+    "default": "PAGINATE_RESOURCERIE_DEFAULT",
+    "max": "PAGINATE_RESOURCERIE_MAX"
+  },
   "authentication": {
     "secret": "AUTHENTICATION_SECRET",
     "jwtOptions": {
