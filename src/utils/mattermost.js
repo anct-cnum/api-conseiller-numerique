@@ -271,12 +271,13 @@ const deleteArchivedChannels = async (mattermost, token) => {
   return Promise.all(promises);
 };
 
-const patchLogin = async ({ mattermost, token, conseiller, login, Sentry, logger, db }) => {
+const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry, logger, db }) => {
 
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
   try {
+    const { login, nom, prenom, email } = userIdentity;
     const resultUpdatePassword = await axios({
       method: 'put',
       url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
@@ -284,7 +285,12 @@ const patchLogin = async ({ mattermost, token, conseiller, login, Sentry, logger
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      data: { 'username': login }
+      data: {
+        'username': login,
+        'first_name': nom,
+        'last_name': prenom,
+        'email': email
+      }
     });
     logger.info(resultUpdatePassword);
     logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id}`);
