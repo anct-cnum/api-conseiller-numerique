@@ -4,8 +4,8 @@ const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const slugify = require('slugify');
-const { createMailbox, updateMailboxPassword } = require('../../utils/mailbox');
-const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
+const { createMailbox, updateMailboxPassword, deleteMailbox } = require('../../utils/mailbox');
+const { createAccount, updateAccountPassword, patchLogin } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
@@ -573,6 +573,87 @@ exports.Users = class Users extends Service {
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }
+    });
+
+    app.patch('/conseillers/changement-email-pro/:token', async (req, res) => {
+      const misesajourMongo = db => async (conseillerId, email, userIdentity) => {
+        const { mattermost, emailCN } = await db.collection('conseillers').findOne({ _id: conseillerId });
+        await db.collection('conseillers').updateOne({ _id: conseillerId }, { $set: { nom: userIdentity.nom, prenom: userIdentity.prenom } });
+        console.log('1');
+
+        await db.collection('misesEnRelation').updateMany(
+          { 'conseiller.$id': conseillerId },
+          { $set: {
+            'conseillerObj.mattermost': mattermost,
+            'conseillerObj.emailCN': emailCN,
+            'conseillerObj.nom': userIdentity.nom,
+            'conseillerObj.prenom': userIdentity.prenom
+          }
+          });
+        console.log('2');
+        await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $set: { name: email, nom: userIdentity.nom, prenom: userIdentity.prenom } });
+        console.log('3');
+
+      };
+      const misesajourPg = async (idPG, nom, prenom) => {
+        await pool.query(`UPDATE djapp_coach
+        SET (first_name, last_name) = ($2, $3) WHERE id = $1`,
+        [idPG, prenom, nom]);
+      };
+      const { total, data } = await this.find({
+        query: {
+          token: req.params.token,
+          $limit: 1,
+        }
+      });
+      const user = data[0];
+      if (total === 0) {
+        res.status(404).send(new NotFound('Compte non trouvé', {
+          id: user._id
+        }).toJSON());
+        return;
+      }
+      const password = req.body.password;
+      const conseillerId = user.entity.oid;
+      const gandi = app.get('gandi');
+      const Sentry = app.get('sentry');
+      const mattermost = app.get('mattermost');
+
+      app.get('mongoClient').then(async db => {
+        //GANDI
+        const conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
+        const login = conseiller.emailCN.address.substring(0, conseiller.emailCN.address.lastIndexOf('@'));
+        const email = `${user.support_cnfs.login}@${gandi.domain}`;
+        const userIdentity = {
+          email: user.support_cnfs.nouveauEmail,
+          nom: user.support_cnfs.nom,
+          prenom: user.support_cnfs.prenom,
+          login: user.support_cnfs.login
+        };
+        if (conseiller.emailCN.address) {
+          await deleteMailbox(gandi, conseillerId, login, db, logger, Sentry).then(() => {
+            return createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
+          }).then(() => {
+            return patchLogin({ mattermost, conseiller, userIdentity, Sentry, logger, db });
+          }).then(async () => {
+            await misesajourPg(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
+            await misesajourMongo(db)(conseillerId, email, userIdentity);
+            return res.status(200).send('ok');
+          }).catch(error => {
+            logger.error(error);
+            app.get('sentry').captureException(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite.'));
+          });
+        }
+        // await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry }); //test ok pour creer la boite mail !
+        // await deleteMailbox(gandi, conseillerId, login, db, logger, Sentry); //test ok pour delete la boite mail !
+        // update mattermost, le login + penser à changer l'adresse mail + nom et prenom également
+        // await patchLogin({ mattermost, conseiller, userIdentity, Sentry, logger, db }); // test ok pour update mattermost
+        // await misesajourPg(conseiller.idPG, conseiller.nom, conseiller.prenom); // test ok pour changer dans PG
+        // await misesajourMongo(db)(conseillerId, email); //test ok pour changer dans PG
+        // Ajout modif mot de passe ! // (non ajouté)
+      });
+
     });
   }
 };
