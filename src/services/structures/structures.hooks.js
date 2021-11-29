@@ -131,7 +131,7 @@ module.exports = {
           const candidatsRecrutes = await db.collection('misesEnRelation')
           .countDocuments({
             'statut': 'finalisee',
-            'structure.$id': new ObjectID(structure._id)
+            'structure.$id': structure._id
           });
 
           return { ...structure, nbCandidatsRecrutes: candidatsRecrutes };
