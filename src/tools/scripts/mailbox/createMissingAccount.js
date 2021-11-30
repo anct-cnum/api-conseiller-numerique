@@ -34,9 +34,9 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       logger.error(e);
     }
 
-    // To avoid overload Mattermost API
+    // To avoid overload Gandi API
     await sleep(500);
   }
 
-  logger.info(`[MATTERMOST] ${count} comptes conseillers créés`);
+  logger.info(`[GANDI MAILBOX]] ${count} comptes conseillers créés`);
 });
