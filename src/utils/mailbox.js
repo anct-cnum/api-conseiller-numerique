@@ -129,5 +129,14 @@ const deleteMailbox = async (gandi, conseillerId, login, db, logger, Sentry) => 
   }
 
 };
+const getMailBox = async ({ gandi, login }) => {
+  return axios({
+    method: 'get',
+    url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
+    headers: {
+      'Authorization': `Apikey ${gandi.token}`
+    }
+  });
+};
 
-module.exports = { createMailbox, updateMailboxPassword, deleteMailbox };
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox };

@@ -3,6 +3,7 @@ const { execute } = require('../../utils');
 const slugify = require('slugify');
 const createEmails = require('../../../emails/emails');
 const createMailer = require('../../../mailer');
+const { getMailBox } = require('../../../utils/mailbox');
 
 execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
 
@@ -36,7 +37,6 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
   prenom = slugify(`${condition1}`, { replacement: '-', lower: true, strict: true });
   nom = slugify(`${condition2}`, { replacement: '-', lower: true, strict: true });
   login = `${prenom}.${nom}`;
-  console.log('login:', login);
 
   conseiller.message_email = {
     email_actuelle: conseiller.emailCN.address,
@@ -44,17 +44,22 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
   };
   conseiller.support_cnfs = {
     login,
-    nouveauEmail: `${login}@${gandi.domain}`
+    nouveauEmail: `${login}@${gandi.domain}`,
+    prenom,
+    nom
   };
-
   try {
-    // Envoi email pour que l'utilisateur entre son mp lui meme !
-    let mailer = createMailer(app);
-    const emails = createEmails(db, mailer, app, logger);
-    let message = emails.getEmailMessageByTemplateName('conseillerChangeEmailCnfs');
-    await message.send(conseiller);
-    await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { 'support_cnfs': conseiller.support_cnfs } });
-
+    const mailbox = await getMailBox({ gandi, login });
+    if (mailbox.data.length === 0) {
+      // Envoi email pour que l'utilisateur entre son mp lui meme !
+      let mailer = createMailer(app);
+      const emails = createEmails(db, mailer, app, logger);
+      let message = emails.getEmailMessageByTemplateName('conseillerChangeEmailCnfs');
+      await message.send(conseiller);
+      await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { 'support_cnfs': conseiller.support_cnfs } });
+    } else {
+      logger.info(`une adresse mail existe déjà pour: ${mailbox.data[0].adress}`);
+    }
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
