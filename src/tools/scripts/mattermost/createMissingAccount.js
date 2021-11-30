@@ -29,9 +29,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
         const login = `${prenom}.${nom}`;
         const gandi = app.get('gandi');
         const email = `${login}@${gandi.domain}`;
-        const password = uuidv4() + 'AZEdsf;+:';
-
-        //console.log(login);
+        const password = uuidv4() + 'AZEdsf;+:'; // pour respecter la règle de complexité de mot de passe
 
         createAccount({ mattermost, conseiller, email, login, password, db, logger, Sentry });
 
