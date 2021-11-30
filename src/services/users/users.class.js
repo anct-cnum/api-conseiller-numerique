@@ -576,11 +576,9 @@ exports.Users = class Users extends Service {
     });
 
     app.patch('/conseillers/changement-email-pro/:token', async (req, res) => {
-      const misesajourMongo = db => async (conseillerId, email, userIdentity) => {
+      const misesajourMongo = db => async (conseillerId, email, userIdentity, password) => {
         const { mattermost, emailCN } = await db.collection('conseillers').findOne({ _id: conseillerId });
         await db.collection('conseillers').updateOne({ _id: conseillerId }, { $set: { nom: userIdentity.nom, prenom: userIdentity.prenom } });
-        console.log('1');
-
         await db.collection('misesEnRelation').updateMany(
           { 'conseiller.$id': conseillerId },
           { $set: {
@@ -590,10 +588,8 @@ exports.Users = class Users extends Service {
             'conseillerObj.prenom': userIdentity.prenom
           }
           });
-        console.log('2');
-        await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $set: { name: email, nom: userIdentity.nom, prenom: userIdentity.prenom } });
-        console.log('3');
-
+        const idUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
+        app.service('users').patch(idUser._id, { password: password, name: email, nom: userIdentity.nom, prenom: userIdentity.prenom });
       };
       const misesajourPg = async (idPG, nom, prenom) => {
         await pool.query(`UPDATE djapp_coach
@@ -620,9 +616,8 @@ exports.Users = class Users extends Service {
       const mattermost = app.get('mattermost');
 
       app.get('mongoClient').then(async db => {
-        //GANDI
         const conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
-        const login = conseiller.emailCN.address.substring(0, conseiller.emailCN.address.lastIndexOf('@'));
+        let lastLogin = conseiller.emailCN.address.substring(0, conseiller.emailCN.address.lastIndexOf('@'));
         const email = `${user.support_cnfs.login}@${gandi.domain}`;
         const userIdentity = {
           email: user.support_cnfs.nouveauEmail,
@@ -630,30 +625,26 @@ exports.Users = class Users extends Service {
           prenom: user.support_cnfs.prenom,
           login: user.support_cnfs.login
         };
+        let login = user.support_cnfs.login;
         if (conseiller.emailCN.address) {
-          await deleteMailbox(gandi, conseillerId, login, db, logger, Sentry).then(() => {
-            return createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
+          await deleteMailbox(gandi, conseillerId, lastLogin, db, logger, Sentry).then(async () => {
+            return await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
           }).then(() => {
             return patchLogin({ mattermost, conseiller, userIdentity, Sentry, logger, db });
+          }).then(() => {
+            return updateAccountPassword(mattermost, conseiller, password, db, logger, Sentry);
           }).then(async () => {
             await misesajourPg(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
-            await misesajourMongo(db)(conseillerId, email, userIdentity);
-            return res.status(200).send('ok');
+            await misesajourMongo(db)(conseillerId, email, userIdentity, password);
+            return res.status(200).send('Votre nouveau email a été crée avec succès');
           }).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
-            res.status(500).json(new GeneralError('Une erreur s\'est produite.'));
+            res.status(500).json(new GeneralError('Une erreur s\'est produite., veuillez réessayer plus tard.'));
+            return;
           });
         }
-        // await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry }); //test ok pour creer la boite mail !
-        // await deleteMailbox(gandi, conseillerId, login, db, logger, Sentry); //test ok pour delete la boite mail !
-        // update mattermost, le login + penser à changer l'adresse mail + nom et prenom également
-        // await patchLogin({ mattermost, conseiller, userIdentity, Sentry, logger, db }); // test ok pour update mattermost
-        // await misesajourPg(conseiller.idPG, conseiller.nom, conseiller.prenom); // test ok pour changer dans PG
-        // await misesajourMongo(db)(conseillerId, email); //test ok pour changer dans PG
-        // Ajout modif mot de passe ! // (non ajouté)
       });
-
     });
   }
 };
