@@ -6,7 +6,7 @@ const { createMailbox } = require('../../../utils/mailbox');
 const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
 
-// On crée les comptes pour les 75 boites emails en erreurs
+// On crée les comptes pour les 5 boites emails en erreurs
 // Ils pourront utiliser la fonction "mot de passe oublié" pour se changer leur mot de passe et se connecter
 execute(__filename, async ({ app, db, logger, Sentry }) => {
   const gandi = app.get('gandi');
