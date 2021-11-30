@@ -20,6 +20,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
 
   let count = 0;
   const conseillers = await db.collection('conseillers').find({
+    'statut': { $ne: 'RUPTURE' },
     'mattermost': { $ne: null },
     'mattermost.error': { $ne: true },
     'mattermost.hubJoined': { $ne: true }
