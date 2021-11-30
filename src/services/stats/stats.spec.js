@@ -357,7 +357,7 @@ describe('Vérification des statistiques conseiller par code postal', () => {
     ];
     const idConseiller = '60462000871498b5cec20c0b';
 
-    const listeCodePostauxCra = await getCodesPostauxCras(idConseiller, getCodesPostauxStatistiquesCras);
+    const listeCodePostauxCra = await getCodesPostauxCras(idConseiller, { getCodesPostauxStatistiquesCras });
 
     expect(listeCodePostauxCra).toStrictEqual(listCodePostaux);
   });

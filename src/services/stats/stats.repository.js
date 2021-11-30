@@ -45,7 +45,7 @@ const getTotalRegions = db => async date => {
 
 const getCodesPostauxStatistiquesCras = db => async conseillerId => await db.collection('cras').distinct('cra.codePostal',
   { 'conseiller.$id': conseillerId }
-).toArray();
+);
 
 const statsRepository = db => ({
   getDepartements: getDepartements(db),

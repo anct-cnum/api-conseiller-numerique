@@ -37,7 +37,7 @@ const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalR
   }
 };
 
-const getCodesPostauxCras = async (idConseiller, getCodesPostauxStatistiquesCras) => {
+const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras }) => {
   return await getCodesPostauxStatistiquesCras(idConseiller);
 };
 
