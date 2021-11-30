@@ -4,7 +4,7 @@
 const { execute } = require('../../utils');
 const slugify = require('slugify');
 
-// un bug par le passé a empêcher de stocker en base le login correctement alors que la boite a bien été créée avec succès
+// un bug par le passé a empêcher de stocker en base le login correctement alors que la boite a bien été créée avec succès (70 cas)
 execute(__filename, async ({ app, db, logger, Sentry }) => {
   const gandi = app.get('gandi');
 
