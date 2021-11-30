@@ -10,6 +10,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
+const axios = require('axios');
 
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
@@ -628,15 +629,17 @@ exports.Users = class Users extends Service {
         let login = user.support_cnfs.login;
         if (conseiller.emailCN.address) {
           await deleteMailbox(gandi, conseillerId, lastLogin, db, logger, Sentry).then(async () => {
-            return await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
-          }).then(() => {
             return patchLogin({ mattermost, conseiller, userIdentity, Sentry, logger, db });
           }).then(() => {
             return updateAccountPassword(mattermost, conseiller, password, db, logger, Sentry);
           }).then(async () => {
             await misesajourPg(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
-            await misesajourMongo(db)(conseillerId, email, userIdentity, password);
-            return res.status(200).send('Votre nouveau email a été crée avec succès');
+            return await misesajourMongo(db)(conseillerId, email, userIdentity, password);
+          }).then(async () => {
+            await setTimeout(async () => {
+              await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
+              return res.status(200).send('Votre nouveau email a été crée avec succès');
+            }, 5000);
           }).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
