@@ -40,7 +40,6 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   try {
     const page = await browser.newPage();
 
-
     await Promise.all([
       await page.goto(app.get('espace_coop_hostname') + '/statistiques' + finUrl, { waitUntil: 'networkidle0', timeout: 10000 }),
       await page.waitForTimeout(500),

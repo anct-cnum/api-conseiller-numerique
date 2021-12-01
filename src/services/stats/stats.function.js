@@ -37,10 +37,15 @@ const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalR
   }
 };
 
+const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras }) => {
+  return await getCodesPostauxStatistiquesCras(idConseiller);
+};
+
 module.exports = {
   checkAuth,
   checkRole,
   checkSchema,
   getTerritoires,
-  getTotalTerritoires
+  getTotalTerritoires,
+  getCodesPostauxCras
 };

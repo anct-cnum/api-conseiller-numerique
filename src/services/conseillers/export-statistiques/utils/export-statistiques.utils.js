@@ -4,13 +4,15 @@ const dayjs = require('dayjs');
 const exportStatistiquesQueryToSchema = query => {
   return {
     dateDebut: new Date(query.dateDebut),
-    dateFin: new Date(query.dateFin)
+    dateFin: new Date(query.dateFin),
+    codePostal: query.codePostal,
   };
 };
 
 const validateExportStatistiquesSchema = exportTerritoiresInput => Joi.object({
   dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
-  dateFin: Joi.date().required().error(new Error('La date de fin est invalide'))
+  dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+  codePostal: Joi.required().error(new Error('Le code postal est invalide')),
 }).validate(exportTerritoiresInput);
 
 const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${separator}MM${separator}YYYY`);
