@@ -45,7 +45,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
       await pool.query(`
         UPDATE djapp_coach
         SET disponible = $2
-        WHERE email = $1`,
+        WHERE LOWER(email) = LOWER($1)`,
       [email, disponible]);
     } catch (error) {
       logger.error(error);
