@@ -358,8 +358,8 @@ exports.Stats = class Stats extends Service {
           territoire,
           dateFin,
           ordreColonne,
-          page > 0 ? ((page - 1) * options.paginate.default) : 0,
-          options.paginate.default,
+          page > 0 ? ((page - 1) * Number(options.paginate.default)) : 0,
+          Number(options.paginate.default),
           statsRepository(db)
         );
 
