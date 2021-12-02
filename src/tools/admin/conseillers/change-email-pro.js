@@ -4,6 +4,7 @@ const slugify = require('slugify');
 const createEmails = require('../../../emails/emails');
 const createMailer = require('../../../mailer');
 const { getMailBox } = require('../../../utils/mailbox');
+const { v4: uuidv4 } = require('uuid');
 
 execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
 
@@ -49,24 +50,26 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
     nom
   };
   try {
+    await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { token: uuidv4() } });
     const mailbox = await getMailBox({ gandi, login });
     if (mailbox.data.length === 0) {
+      const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
+      conseiller.token = user.token;
       // Envoi email pour que l'utilisateur entre son mp lui meme !
       let mailer = createMailer(app);
       const emails = createEmails(db, mailer, app, logger);
       let message = emails.getEmailMessageByTemplateName('conseillerChangeEmailCnfs');
       await message.send(conseiller);
       await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { 'support_cnfs': conseiller.support_cnfs } });
+      // eslint-disable-next-line max-len
+      logger.info(`Envoi e-mail pour la demande de changement d'email professionnel : ${conseiller.emailCN.address} par => ${login}@${gandi.domain} pour le conseiller avec l'id ${id}`);
     } else {
-      logger.info(`une adresse mail existe déjà pour: ${mailbox.data[0].adress}`);
+      logger.error(`une adresse mail existe déjà pour: ${mailbox.data[0].address}`);
     }
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
     return;
   }
-
-  // eslint-disable-next-line max-len
-  logger.info(`Envoi e-mail pour la demande de changement d'email professionnel : ${conseiller.emailCN.address} par => ${login}@${gandi.domain} pour le conseiller avec l'id ${id}`);
   exit();
 });

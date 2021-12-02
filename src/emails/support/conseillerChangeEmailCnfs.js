@@ -3,9 +3,10 @@ module.exports = (db, mailer, app, logger) => {
   const { utils } = mailer;
 
   let render = async conseiller => {
+    console.log('conseiller:', conseiller);
     return mailer.render(__dirname, templateName, {
       conseiller,
-      link: utils.getEspaceCoopUrl(`/support-email-coop/${conseiller.token}`),
+      link: utils.getEspaceCoopUrl(`/changement-email-cnfs/${conseiller.token}`),
     });
   };
 
