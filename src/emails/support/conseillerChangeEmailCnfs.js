@@ -41,7 +41,7 @@ module.exports = (db, mailer, app, logger) => {
       return mailer.createMailer().sendEmail(
         conseiller.email,
         {
-          subject: 'Suite à votre demande de modification de l\'email @conseiller-numerique.fr ',
+          subject: 'Changement de votre e-mail @conseiller-numerique.fr',
           body: await render(conseiller),
         },
       )

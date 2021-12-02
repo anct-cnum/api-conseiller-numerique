@@ -15,47 +15,59 @@
           <mj-text>
             Bonjour <%= conseiller.prenom %> <%= conseiller.nom %>,
           </mj-text>
-          <mj-text>
+          <mj-text align="left">
+            Vous avez signalé un problème dans votre actuelle adresse mail @conseiller-numerique.fr (orthographe, changement de nom, etc.).
           </mj-text>
-          <mj-text>
-            TODO pour un wording adapter à ce type de demande
+          <mj-text align="left">
+            Pour effectuer la modification que vous avez demandé :
           </mj-text>
-          <mj-text>
+          <mj-text align="left" font-weight="bold">
+            nous allons supprimer votre adresse mail actuelle
           </mj-text>
-        </mj-column>
-      </mj-section>
 
-      <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
-        <mj-column border="1px solid #C8CBCE">
-          <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
-            Pour votre demande, votre adresse actuelle est :
-          </mj-text>
-          <mj-text font-size="14px" line-height="21px">
+          <mj-text align="left" color="#FD7B44">
             <%= conseiller.message_email.email_actuelle %>
           </mj-text>
 
-          <mj-text font-size="14px" line-height="21px">
-            Changer par :
+          <mj-text align="left" font-weight="bold">
+            et créer une nouvelle boîte mail avec l'intitulé que vous avez demandé :
           </mj-text>
-          <mj-text font-size="14px" line-height="21px">
+          <mj-text align="left" color="#0063CB">
             <%= conseiller.message_email.email_future %>
           </mj-text>
-
-          <mj-text padding="0" css-class="text-secondary">
-            Suivez ce lien pour procéder à la validation du changement
+          <mj-text align="left" color="#FD7B44" font-weight="bold">
+            La création de votre nouvelle boîte mail entrainera la perte de l'ensemble des données
+            présentes dans l'ancienne.
           </mj-text>
-
-          <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
+          <mj-text align="left">
+            Avant de commencer le processus, veillez à sauvegarder les données
+            présentes dans la boite qui sera supprimée (mails reçus, carnets de contacts, etc.).
+          </mj-text>
+          <mj-text align="left" font-weight="bold">
+            Comme l'ancienne, votre nouvelle boîte mail et son mot de passe vous serviront d'identifiants de connexion à l'ensemble de vos outils Conseiller numérique France services :
+          </mj-text>
+          <mj-text>
+            <ul>
+                <li align="left">Espace Coop</li>
+                <li align="left">Espace de discussion (Mattermost)</li>
+                <li align="left">Client mail</li>
+             </ul>
+         </mj-text>
+          <mj-text align="left">
+            Notez précieusement votre mot de passe (lors de l'enregistrement, vous pouvez garder le mot de passe de votre ancienne adresse si vous le souhaitez).
+          </mj-text>
+          <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold" padding-left="100px" padding-right="100px"
             text-transform="uppercase">
-            Je choisi mon nouveau mot de passe
+            Créer ma nouvelle adresse mail Conseiller numérique
           </mj-button>
-
-          <mj-text css-class="text-secondary">
-            <%= link %>
+          <mj-text align="left">
+            [ ! ] Cette opération est irréversible, si vous changez d'avis cliquez obligatoirement sur ce lien:
+          </mj-text>
+          <mj-text align="left">
+            [ annuler ma demande de changement d'e-mail Conseiller numérique ]
           </mj-text>
         </mj-column>
       </mj-section>
-
     </mj-wrapper>
     <mj-wrapper css-class="wrapper">
       <mj-section>
