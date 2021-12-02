@@ -10,7 +10,6 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-const axios = require('axios');
 
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
@@ -591,7 +590,7 @@ exports.Users = class Users extends Service {
           }
           });
         const idUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
-        app.service('users').patch(idUser._id, { password: password, name: email, nom: userIdentity.nom, prenom: userIdentity.prenom });
+        app.service('users').patch(idUser._id, { password: password, name: email, nom: userIdentity.nom, prenom: userIdentity.prenom, token: uuidv4() });
       };
       const misesajourPg = async (idPG, nom, prenom) => {
         await pool.query(`UPDATE djapp_coach
@@ -612,7 +611,6 @@ exports.Users = class Users extends Service {
         return;
       }
       const password = req.body.password;
-      console.log('password:', password);
       const conseillerId = user.entity.oid;
       const gandi = app.get('gandi');
       const Sentry = app.get('sentry');
@@ -649,18 +647,29 @@ exports.Users = class Users extends Service {
               try {
                 await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
                 await message.send(conseiller);
-                return res.status(200).send('Votre nouveau email a été crée avec succès');
+                await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $unset: { support_cnfs: {} } });
+                await db.collection('conseillers').updateOne({ _id: conseillerId }, {
+                  $push: {
+                    historique: {
+                      data: {
+                        ancienEmail: conseiller.emailCN.address,
+                        nouveauEmail: user.support_cnfs.nouveauEmail
+                      },
+                      date: new Date()
+                    }
+                  } });
+                return res.status(200).send({ message: 'Votre nouveau email a été crée avec succès' });
               } catch (error) {
                 logger.error(error);
                 app.get('sentry').captureException(error);
-                res.status(500).json(new GeneralError('Erreur lors de la création de la boite mail, veuillez contacter le support'));
+                res.status(500).send(new GeneralError('Erreur lors de la création de la boite mail, veuillez contacter le support'));
                 return;
               }
             }, 5000);
           }).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
-            res.status(500).json(new GeneralError('Une erreur s\'est produite., veuillez réessayer plus tard.'));
+            res.status(500).send(new GeneralError('Une erreur s\'est produite., veuillez réessayer plus tard.'));
             return;
           });
         }
