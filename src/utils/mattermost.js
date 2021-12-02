@@ -141,7 +141,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
     }
 
-    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
+    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
     return true;
   } catch (e) {
     Sentry.captureException(e);
@@ -169,7 +169,7 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
       data: { 'new_password': newPassword }
     });
     logger.info(resultUpdatePassword);
-    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id}`);
+    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorResetPassword': false }
@@ -202,7 +202,7 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
       }
     });
     logger.info(resultDeleteAccount);
-    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id}`);
+    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorDeleteAccount': false }
@@ -293,7 +293,7 @@ const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry,
       }
     });
     logger.info(resultUpdatePassword);
-    logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id}`);
+    logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorPatchLogin': false,
