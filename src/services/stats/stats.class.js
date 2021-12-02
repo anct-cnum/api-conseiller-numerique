@@ -353,13 +353,16 @@ exports.Stats = class Stats extends Service {
         let items = {};
         let statsTerritoires = [];
         let ordreColonne = JSON.parse('{"' + nomOrdre + '":' + ordre + '}');
-
+        const paginate = app.get('paginate');
+        /* TEST état du paginate */
+        console.log(app.get('paginate'));
+        console.log(options.paginate);
         statsTerritoires = await statsFct.getTerritoires(
           territoire,
           dateFin,
           ordreColonne,
           page > 0 ? ((page - 1) * options.paginate.default) : 0,
-          options.paginate.default,
+          paginate.default,
           statsRepository(db)
         );
 
