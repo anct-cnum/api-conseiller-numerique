@@ -59,7 +59,6 @@ const joinTeam = async (mattermost, token, idTeam, idUser) => {
 };
 
 const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
-
   try {
     const token = await loginAPI({ mattermost });
 
@@ -271,6 +270,7 @@ const deleteArchivedChannels = async (mattermost, token) => {
   return Promise.all(promises);
 };
 
+
 const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry, logger, db }) => {
 
   if (token === undefined || token === null) {
@@ -312,5 +312,36 @@ const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry,
   }
 };
 
-// eslint-disable-next-line max-len
-module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, joinTeam, deleteArchivedChannels, patchLogin };
+const searchUser = async (mattermost, token, conseiller) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+  const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+  const login = `${prenom}.${nom}`;
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/users/usernames`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: [login]
+  });
+};
+
+module.exports = {
+  slugifyName,
+  loginAPI,
+  createAccount,
+  updateAccountPassword,
+  deleteAccount,
+  createChannel,
+  joinChannel,
+  joinTeam,
+  deleteArchivedChannels,
+  searchUser,
+  patchLogin
+};
