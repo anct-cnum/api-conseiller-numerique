@@ -248,13 +248,14 @@ exports.Users = class Users extends Service {
       }
 
       //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
-      if (users.data[0].roles[0] === 'conseiller') {
-        let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
-        users.data[0].persoEmail = conseiller.email;
-        res.send({ roles: users.data[0].roles,
-          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: conseiller.nom, prenom: conseiller.prenom });
+      let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
+      users.data[0].persoEmail = conseiller.email;
+      // eslint-disable-next-line camelcase
+      const { roles, name, persoEmail, nom, prenom, support_cnfs } = users.data[0];
+      if (roles.includes('conseiller')) {
+        res.send({ roles, name, persoEmail, nom, prenom, support_cnfs });
       } else {
-        res.send({ roles: users.data[0].roles, name: users.data[0].name });
+        res.send({ roles, name });
       }
     });
 
@@ -576,7 +577,7 @@ exports.Users = class Users extends Service {
       }
     });
 
-    app.patch('/conseillers/changement-email-pro/:token', async (req, res) => {
+    app.patch('/users/changement-email-pro/:token', async (req, res) => {
       const misesajourMongo = db => async (conseillerId, email, userIdentity, password) => {
         const { mattermost, emailCN } = await db.collection('conseillers').findOne({ _id: conseillerId });
         await db.collection('conseillers').updateOne({ _id: conseillerId }, { $set: { nom: userIdentity.nom, prenom: userIdentity.prenom } });
@@ -611,10 +612,14 @@ exports.Users = class Users extends Service {
         return;
       }
       const password = req.body.password;
+      console.log('password:', password);
       const conseillerId = user.entity.oid;
       const gandi = app.get('gandi');
       const Sentry = app.get('sentry');
       const mattermost = app.get('mattermost');
+      let mailer = createMailer(app);
+      const emails = createEmails(db, mailer, app, logger);
+      let message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
 
       app.get('mongoClient').then(async db => {
         const conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
@@ -626,7 +631,11 @@ exports.Users = class Users extends Service {
           prenom: user.support_cnfs.prenom,
           login: user.support_cnfs.login
         };
+        conseiller.message_email = {
+          email_future: user.support_cnfs.nouveauEmail
+        };
         let login = user.support_cnfs.login;
+
         if (conseiller.emailCN.address) {
           await deleteMailbox(gandi, conseillerId, lastLogin, db, logger, Sentry).then(async () => {
             return patchLogin({ mattermost, conseiller, userIdentity, Sentry, logger, db });
@@ -637,8 +646,16 @@ exports.Users = class Users extends Service {
             return await misesajourMongo(db)(conseillerId, email, userIdentity, password);
           }).then(async () => {
             await setTimeout(async () => {
-              await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
-              return res.status(200).send('Votre nouveau email a été crée avec succès');
+              try {
+                await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
+                await message.send(conseiller);
+                return res.status(200).send('Votre nouveau email a été crée avec succès');
+              } catch (error) {
+                logger.error(error);
+                app.get('sentry').captureException(error);
+                res.status(500).json(new GeneralError('Erreur lors de la création de la boite mail, veuillez contacter le support'));
+                return;
+              }
             }, 5000);
           }).catch(error => {
             logger.error(error);
