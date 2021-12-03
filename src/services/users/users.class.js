@@ -601,6 +601,19 @@ exports.Users = class Users extends Service {
         SET (first_name, last_name) = ($2, $3) WHERE id = $1`,
         [idPG, prenom, nom]);
       };
+      const historisationMongo = db => async (conseillerId, conseiller, user) => {
+        await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $unset: { support_cnfs: {} } });
+        await db.collection('conseillers').updateOne({ _id: conseillerId }, {
+          $push: {
+            historique: {
+              data: {
+                ancienEmail: conseiller.emailCN.address,
+                nouveauEmail: user.support_cnfs.nouveauEmail
+              },
+              date: new Date()
+            }
+          } });
+      };
       const { total, data } = await this.find({
         query: {
           token: req.params.token,
@@ -651,17 +664,7 @@ exports.Users = class Users extends Service {
               try {
                 await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
                 await message.send(conseiller);
-                await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $unset: { support_cnfs: {} } });
-                await db.collection('conseillers').updateOne({ _id: conseillerId }, {
-                  $push: {
-                    historique: {
-                      data: {
-                        ancienEmail: conseiller.emailCN.address,
-                        nouveauEmail: user.support_cnfs.nouveauEmail
-                      },
-                      date: new Date()
-                    }
-                  } });
+                await historisationMongo(conseillerId, conseiller, user);
                 return res.status(200).send({ message: 'Votre nouvel email a été créé avec succès' });
               } catch (error) {
                 logger.error(error);
