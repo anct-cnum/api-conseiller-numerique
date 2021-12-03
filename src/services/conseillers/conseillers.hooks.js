@@ -13,7 +13,18 @@ module.exports = {
       })
     ],
     find: [
+      checkPermissions({
+        roles: ['admin', 'prefet'],
+        field: 'roles',
+      }),
       context => {
+        if (context.params?.user?.roles.includes('prefet')) {
+          context.params.query = {
+            ...context.params.query,
+            codeDepartement: context.params?.user.departement.toString()
+          };
+        }
+
         if (context.params.query.$skip) {
           const paginate = context.app.get('paginate');
           const page = context.params.query.$skip;
