@@ -229,7 +229,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
 
               //Suppression compte Gandi
               if (login !== undefined) {
-                await deleteMailbox(gandi, conseillerCoop._id, login, db, logger, Sentry);
+                deleteMailbox(gandi, db, logger, Sentry)(conseillerCoop._id, login);
               }
               //Suppression compte Mattermost
               if (conseillerCoop.mattermost?.id !== undefined) {

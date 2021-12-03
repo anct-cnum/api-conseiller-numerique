@@ -80,7 +80,7 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
   }
 };
 
-const deleteMailbox = async (gandi, conseillerId, login, db, logger, Sentry) => {
+const deleteMailbox = (gandi, db, logger, Sentry) => async (conseillerId, login) => {
 
   try {
     //Récuperation de l'id mailbox associé au login pour 'delete'

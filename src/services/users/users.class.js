@@ -645,7 +645,7 @@ exports.Users = class Users extends Service {
         let message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
 
         if (conseiller.emailCN.address) {
-          await deleteMailbox(gandi, conseillerId, lastLogin, db, logger, Sentry).then(async () => {
+          await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
             return patchLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
