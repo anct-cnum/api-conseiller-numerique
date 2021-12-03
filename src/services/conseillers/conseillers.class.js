@@ -405,6 +405,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
         const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
+        const codePostal = req.query?.codePostal ? req.query.codePostal : 'null';
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
@@ -413,6 +414,7 @@ exports.Conseillers = class Conseillers extends Service {
         const schema = Joi.object({
           dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
           dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+          codePostal: Joi.required().error(new Error('Le code postal est invalide')),
         }).validate(req.query);
 
         if (schema.error) {
@@ -420,7 +422,7 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        let finUrl = '/conseiller/' + user.entity.oid + '/' + dateDebut + '/' + dateFin;
+        let finUrl = '/conseiller/' + user.entity.oid + '/' + dateDebut + '/' + dateFin + '/' + codePostal;
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
@@ -449,10 +451,17 @@ exports.Conseillers = class Conseillers extends Service {
         const { getConseillerAssociatedWithUser } = exportStatistiquesRepository(db);
         const conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
 
-        const statsQuery = {
+        let statsQuery = {
           'conseiller.$id': conseiller._id,
           'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
         };
+        if (query.codePostal !== '') {
+          statsQuery = {
+            'conseiller.$id': conseiller._id,
+            'cra.codePostal': req.query?.codePostal,
+            'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+          };
+        }
 
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
 

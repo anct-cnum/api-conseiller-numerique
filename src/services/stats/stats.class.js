@@ -94,12 +94,13 @@ exports.Stats = class Stats extends Service {
     });
 
     //Statistiques CRA du conseiller
-    app.post('/stats/cra', async (req, res) => {
+    app.get('/stats/cra', async (req, res) => {
       app.get('mongoClient').then(async db => {
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
+        if (!statsFct.checkAuth(req)) {
+          res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
           return;
         }
+
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -117,18 +118,18 @@ exports.Stats = class Stats extends Service {
           req.body.idConseiller : conseillerUser.entity.oid;
 
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
-        if (conseiller?._id.toString() !== req.body?.idConseiller.toString()) {
+        if (conseiller?._id.toString() !== req.query?.idConseiller.toString()) {
           res.status(403).send(new Forbidden('User not authorized', {
-            conseillerId: req.body.idConseiller
+            conseillerId: req.query.idConseiller
           }).toJSON());
           return;
         }
-console.log(conseiller);
+
         //Composition de la partie query en formattant la date
-        let dateDebut = new Date(req.body?.dateDebut);
+        let dateDebut = new Date(req.query?.dateDebut);
         dateDebut.setUTCHours(0, 0, 0, 0);
 
-        let dateFin = new Date(req.body?.dateFin);
+        let dateFin = new Date(req.query?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
         let query = {
           'conseiller.$id': new ObjectID(conseiller._id),
@@ -138,10 +139,50 @@ console.log(conseiller);
           }
         };
 
+        if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
+          query = {
+            'conseiller.$id': new ObjectID(conseiller._id),
+            'cra.codePostal': req.query?.codePostal,
+            'createdAt': {
+              $gte: dateDebut,
+              $lt: dateFin,
+            }
+          };
+        }
+
         //Construction des statistiques
         let stats = await statsCras.getStatsGlobales(db, query, statsCras);
 
         res.send(stats);
+      });
+    });
+
+    app.get('/stats/cra/codesPostaux/conseiller/:id', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
+        return;
+      }
+      const userId = decode(req.feathers.authentication.accessToken).sub;
+      const idConseiller = new ObjectID(req.params.id);
+
+      app.get('mongoClient').then(async db => {
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!statsFct.checkRole(user?.roles, 'conseiller')) {
+          res.status(403).send(new Forbidden('Utilisateur non autorisé', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        try {
+          const listCodePostaux = await statsFct.getCodesPostauxCras(idConseiller, statsRepository(db));
+          res.send(listCodePostaux);
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('Une erreur est survenue lors de la génération de la liste des codes postaux.').toJSON());
+          return;
+        }
       });
     });
 
@@ -166,6 +207,7 @@ console.log(conseiller);
           const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
           const type = req.query.type;
           const idType = req.query.idType === 'undefined' ? '' : req.query.idType + '/';
+          const codePostalNull = idType === '' ? '' : '/null';
 
           const schema = Joi.object({
             dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
@@ -179,7 +221,8 @@ console.log(conseiller);
             return;
           }
 
-          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin;
+          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostalNull;
+
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
             await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
@@ -317,8 +360,8 @@ console.log(conseiller);
           territoire,
           dateFin,
           ordreColonne,
-          page > 0 ? ((page - 1) * options.paginate.default) : 0,
-          options.paginate.default,
+          page > 0 ? ((page - 1) * Number(options.paginate.default)) : 0,
+          Number(options.paginate.default),
           statsRepository(db)
         );
 
