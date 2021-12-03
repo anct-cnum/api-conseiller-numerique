@@ -271,34 +271,22 @@ const deleteArchivedChannels = async (mattermost, token) => {
 };
 
 
-const patchLogin = ({ Sentry, logger, db, mattermost, patchLoginMattermost, patchLoginMattermostError }) => async ({ conseiller, userIdentity }) => {
+// eslint-disable-next-line max-len
+const patchLogin = ({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError, patchApiMattermostLogin }) => async ({ conseiller, userIdentity }) => {
 
   const token = await loginAPI({ mattermost });
 
   try {
     const { login, nom, prenom, email } = userIdentity;
-    const resultUpdatePassword = await axios({
-      method: 'put',
-      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      data: {
-        'username': login,
-        'first_name': nom,
-        'last_name': prenom,
-        'email': email
-      }
-    });
-    logger.info(resultUpdatePassword);
+    const resultUpdateLogin = await patchApiMattermostLogin(mattermost, axios)(conseiller, login, nom, prenom, email, token);
+    logger.info(resultUpdateLogin);
     logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
-    await patchLoginMattermost(db)(conseiller, login);
+    await patchLoginMattermostMongo(db)(conseiller, login);
     return true;
   } catch (e) {
     Sentry.captureException(e);
     logger.error(e);
-    await patchLoginMattermostError(db)(conseiller);
+    await patchLoginMattermostMongoError(db)(conseiller);
     return false;
   }
 };

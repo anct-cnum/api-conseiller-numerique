@@ -5,12 +5,13 @@ const misesajourMongo = (db, app) => async (conseillerId, email, userIdentity, p
   await db.collection('conseillers').updateOne({ _id: conseillerId }, { $set: { nom: userIdentity.nom, prenom: userIdentity.prenom } });
   await db.collection('misesEnRelation').updateMany(
     { 'conseiller.$id': conseillerId },
-    { $set: {
-      'conseillerObj.mattermost': mattermost,
-      'conseillerObj.emailCN': emailCN,
-      'conseillerObj.nom': userIdentity.nom,
-      'conseillerObj.prenom': userIdentity.prenom
-    }
+    {
+      $set: {
+        'conseillerObj.mattermost': mattermost,
+        'conseillerObj.emailCN': emailCN,
+        'conseillerObj.nom': userIdentity.nom,
+        'conseillerObj.prenom': userIdentity.prenom
+      }
     });
   const idUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
   const newDateAction = new Date();
@@ -37,24 +38,45 @@ const historisationMongo = db => async (conseillerId, conseiller, user) => {
         },
         date: new Date()
       }
-    } });
+    }
+  });
 };
 
 const getConseiller = db => async conseillerId => await db.collection('conseillers').findOne({ _id: conseillerId });
 
-const patchLoginMattermost = db => async (conseiller, login) => {
+const patchLoginMattermostMongo = db => async (conseiller, login) => {
   return await db.collection('conseillers').updateOne({ _id: conseiller._id },
-    { $set:
-      { 'mattermost.errorPatchLogin': false,
+    {
+      $set:
+      {
+        'mattermost.errorPatchLogin': false,
         'mattermost.login': login
       }
     });
 };
-const patchLoginMattermostError = db => async conseiller => {
+const patchLoginMattermostMongoError = db => async conseiller => {
   return db.collection('conseillers').updateOne({ _id: conseiller._id },
-    { $set:
-      { 'mattermost.errorPatchLogin': true }
+    {
+      $set:
+        { 'mattermost.errorPatchLogin': true }
     });
+};
+
+const patchApiMattermostLogin = (mattermost, axios) => async (conseiller, login, nom, prenom, email, token) => {
+  return await axios({
+    method: 'put',
+    url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'username': login,
+      'first_name': nom,
+      'last_name': prenom,
+      'email': email
+    }
+  });
 };
 
 module.exports = {
@@ -62,6 +84,7 @@ module.exports = {
   misesajourPg,
   historisationMongo,
   getConseiller,
-  patchLoginMattermost,
-  patchLoginMattermostError
+  patchLoginMattermostMongo,
+  patchLoginMattermostMongoError,
+  patchApiMattermostLogin
 };

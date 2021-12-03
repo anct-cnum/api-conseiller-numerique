@@ -10,8 +10,8 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-const { misesajourPg, misesajourMongo, historisationMongo, getConseiller, patchLoginMattermost,
-  patchLoginMattermostError } = require('./users.repository');
+const { misesajourPg, misesajourMongo, historisationMongo, getConseiller, patchLoginMattermostMongo,
+  patchLoginMattermostMongoError, patchApiMattermostLogin } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -53,7 +53,8 @@ exports.Users = class Users extends Service {
           'conseillerObj.nom': nom,
           'conseillerObj.prenom': prenom,
           'conseillerObj.telephone': telephone,
-          'conseillerObj.dateDisponibilite': dateDisponibilite };
+          'conseillerObj.dateDisponibilite': dateDisponibilite
+        };
         try {
           await app.service('conseillers').patch(id, changeInfos);
           await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id }, { $set: changeInfosMisesEnRelation });
@@ -100,7 +101,7 @@ exports.Users = class Users extends Service {
                   =
                   ($2,$3,$4,$5)
                 WHERE id = $1`,
-          [idPG, prenom, nom, telephone, dateDisponibilite]);
+            [idPG, prenom, nom, telephone, dateDisponibilite]);
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
@@ -144,7 +145,7 @@ exports.Users = class Users extends Service {
         await pool.query(`UPDATE djapp_coach
             SET email = $2
                 WHERE id = $1`,
-        [idPG, userInfo.mailAModifier]);
+          [idPG, userInfo.mailAModifier]);
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
@@ -610,7 +611,8 @@ exports.Users = class Users extends Service {
 
         if (conseiller.emailCN.address) {
           await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
-            return patchLogin({ Sentry, logger, db, mattermost, patchLoginMattermost, patchLoginMattermostError })({ conseiller, userIdentity });
+            // eslint-disable-next-line max-len
+            return patchLogin({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError, patchApiMattermostLogin })({ conseiller, userIdentity });
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
           }).then(async () => {
