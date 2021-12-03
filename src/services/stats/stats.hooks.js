@@ -6,7 +6,7 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop'],
         field: 'roles',
       })
     ],

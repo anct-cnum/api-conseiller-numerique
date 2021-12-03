@@ -104,7 +104,8 @@ exports.Stats = class Stats extends Service {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
 
-        if (!conseillerUser?.roles.includes('conseiller') && !conseillerUser?.roles.includes('admin_coop')) {
+        if (!conseillerUser?.roles.includes('conseiller') && !conseillerUser?.roles.includes('admin_coop') &&
+            !conseillerUser?.roles.includes('structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -112,7 +113,8 @@ exports.Stats = class Stats extends Service {
         }
 
         //Verification du conseiller associé à l'utilisateur correspondant
-        const id = conseillerUser?.roles.includes('admin_coop') ? req.body.idConseiller : conseillerUser.entity.oid;
+        const id = conseillerUser?.roles.includes('admin_coop') || conseillerUser?.roles.includes('structure_coop') ?
+          req.body.idConseiller : conseillerUser.entity.oid;
 
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
         if (conseiller?._id.toString() !== req.body?.idConseiller.toString()) {
@@ -121,7 +123,7 @@ exports.Stats = class Stats extends Service {
           }).toJSON());
           return;
         }
-
+console.log(conseiller);
         //Composition de la partie query en formattant la date
         let dateDebut = new Date(req.body?.dateDebut);
         dateDebut.setUTCHours(0, 0, 0, 0);
@@ -154,7 +156,7 @@ exports.Stats = class Stats extends Service {
         try {
           let userId = decode(accessToken).sub;
           const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-          if (!user?.roles.includes('admin_coop')) {
+          if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
             res.status(403).send(new Forbidden('User not authorized', {
               userId: userId
             }).toJSON());
@@ -287,7 +289,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop')) {
+        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop') && !statsFct.checkRole(adminUser?.roles, 'structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -359,7 +361,7 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop')) {
+        if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -404,7 +406,7 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop')) {
+        if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
