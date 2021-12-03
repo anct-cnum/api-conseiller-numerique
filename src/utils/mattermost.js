@@ -271,11 +271,10 @@ const deleteArchivedChannels = async (mattermost, token) => {
 };
 
 
-const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry, logger, db }) => {
+const patchLogin = ({ Sentry, logger, db, mattermost }) => async ({ conseiller, userIdentity }) => {
 
-  if (token === undefined || token === null) {
-    token = await loginAPI({ mattermost });
-  }
+  const token = await loginAPI({ mattermost });
+
   try {
     const { login, nom, prenom, email } = userIdentity;
     const resultUpdatePassword = await axios({

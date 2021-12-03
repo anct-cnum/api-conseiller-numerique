@@ -640,7 +640,7 @@ exports.Users = class Users extends Service {
 
         if (conseiller.emailCN.address) {
           await deleteMailbox(gandi, conseillerId, lastLogin, db, logger, Sentry).then(async () => {
-            return patchLogin({ mattermost, conseiller, userIdentity, Sentry, logger, db });
+            return patchLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
           }).then(() => {
             return updateAccountPassword(mattermost, conseiller, password, db, logger, Sentry);
           }).then(async () => {
