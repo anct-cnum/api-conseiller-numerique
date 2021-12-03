@@ -459,7 +459,7 @@ exports.Users = class Users extends Service {
             const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
             app.get('mongoClient').then(async db => {
               await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
-              await updateAccountPassword(app.get('mattermost'), conseiller, password, db, logger, app.get('sentry'));
+              await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
             });
             //Renouvellement conseiller => envoi email perso
             user.persoEmail = conseiller.email;
@@ -655,7 +655,7 @@ exports.Users = class Users extends Service {
           await deleteMailbox(gandi, conseillerId, lastLogin, db, logger, Sentry).then(async () => {
             return patchLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
           }).then(() => {
-            return updateAccountPassword(mattermost, conseiller, password, db, logger, Sentry);
+            return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
           }).then(async () => {
             await misesajourPg(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
             return await misesajourMongo(db)(conseillerId, email, userIdentity, password);

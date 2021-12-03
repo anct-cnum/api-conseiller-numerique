@@ -153,7 +153,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
   }
 };
 
-const updateAccountPassword = async (mattermost, conseiller, newPassword, db, logger, Sentry) => {
+const updateAccountPassword = (mattermost, db, logger, Sentry) => async (conseiller, newPassword) => {
 
   try {
     const token = await loginAPI({ mattermost });
