@@ -1,7 +1,6 @@
 const axios = require('axios');
 
-const createMailbox = async ({ gandi, conseillerId, login, password, db, logger, Sentry }) => {
-
+const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, login, password }) => {
   try {
     const resultCreation = await axios({
       method: 'post',

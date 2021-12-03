@@ -388,15 +388,7 @@ exports.Users = class Users extends Service {
             }
           });
           user.name = email;
-          createMailbox({
-            gandi,
-            conseillerId: user.entity.oid,
-            login,
-            password,
-            db,
-            logger,
-            Sentry: app.get('sentry')
-          });
+          createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: user.entity.oid, login, password });
           createAccount({
             mattermost,
             conseiller,
@@ -663,7 +655,7 @@ exports.Users = class Users extends Service {
           }).then(async () => {
             await setTimeout(async () => {
               try {
-                await createMailbox({ gandi, conseillerId, login, password, db, logger, Sentry });
+                await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password });
                 await message.send(conseiller);
                 await historisationMongo(conseillerId, conseiller, user);
                 return res.status(200).send({ message: 'Votre nouvel email a été créé avec succès' });
