@@ -10,14 +10,16 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis l\
     it('devrait transformer les données de la requête dans le format attendu quand le idType est défini', () => {
       const query = {
         dateDebut: 'Fri Jan 01 2021 00:00:00 GMT 0100 (Central European Standard Time)',
-        dateFin: 'Thu Nov 18 2021 11:00:00 GMT 0100 (Central European Standard Time)'
+        dateFin: 'Thu Nov 18 2021 11:00:00 GMT 0100 (Central European Standard Time)',
+        codePostal: '75000'
       };
 
       const schemaModel = exportStatistiquesQueryToSchema(query);
 
       expect(schemaModel).toStrictEqual({
         dateDebut: new Date('2021-01-01T00:00:00.000Z'),
-        dateFin: new Date('2021-11-18T11:00:00.000Z')
+        dateFin: new Date('2021-11-18T11:00:00.000Z'),
+        codePostal: '75000'
       });
     });
   });
@@ -36,6 +38,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis l\
       const schemaValidation = validateExportStatistiquesSchema({
         dateDebut: new Date('2021-11-01T00:00:00.000Z'),
         dateFin: new Date('2021-12-31T11:00:00.000Z'),
+        codePostal: '75000',
         test: 'error'
       });
 
@@ -44,6 +47,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis l\
         value: {
           dateDebut: new Date('2021-11-01T00:00:00.000Z'),
           dateFin: new Date('2021-12-31T11:00:00.000Z'),
+          codePostal: '75000',
           test: 'error'
         }
       });
@@ -53,12 +57,14 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis l\
       const schemaValidation = validateExportStatistiquesSchema({
         dateDebut: new Date('2021-11-01T00:00:00.000Z'),
         dateFin: new Date('2021-12-31T11:00:00.000Z'),
+        codePostal: '75000'
       });
 
       expect(schemaValidation).toEqual({
         value: {
           dateDebut: new Date('2021-11-01T00:00:00.000Z'),
           dateFin: new Date('2021-12-31T11:00:00.000Z'),
+          codePostal: '75000'
         },
       });
     });

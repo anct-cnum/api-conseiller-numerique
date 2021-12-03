@@ -43,11 +43,16 @@ const getTotalRegions = db => async date => {
   return statsTotal.length;
 };
 
+const getCodesPostauxStatistiquesCras = db => async conseillerId => await db.collection('cras').distinct('cra.codePostal',
+  { 'conseiller.$id': conseillerId }
+);
+
 const statsRepository = db => ({
   getDepartements: getDepartements(db),
   getRegions: getRegions(db),
   getTotalDepartements: getTotalDepartements(db),
   getTotalRegions: getTotalRegions(db),
+  getCodesPostauxStatistiquesCras: getCodesPostauxStatistiquesCras(db),
 });
 
 module.exports = {

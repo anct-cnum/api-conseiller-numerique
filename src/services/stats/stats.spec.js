@@ -7,7 +7,8 @@ const {
   checkAuth,
   checkRole,
   checkSchema,
-  getTerritoires } = require('./stats.function');
+  getTerritoires,
+  getCodesPostauxCras } = require('./stats.function');
 
 const departement = [{
   _id: '619501799c612d326db31de6',
@@ -73,9 +74,16 @@ const region = [
   }
 ];
 
+const codePostaux = [
+  '44000',
+  '44300'
+];
+
 const getDepartements = async () => departement;
 
 const getRegions = async () => region;
+
+const getCodesPostauxStatistiquesCras = async () => codePostaux;
 
 describe('Vérification de l\'authentification', () => {
   it('devrait être considérée comme valide lorsque l\'utilisateur possède une clé d\'authentification', () => {
@@ -338,5 +346,19 @@ describe('Vérification des statistiques par département ou région', () => {
     const getListRegions = await getTerritoires(type, date, ordre, page, limit, { getDepartements, getRegions });
 
     expect(getListRegions).toStrictEqual(listRegions);
+  });
+});
+
+describe('Vérification des statistiques conseiller par code postal', () => {
+  it('devrait être considérée comme valide lorsque la liste des codes postaux est obtenue', async () => {
+    const listCodePostaux = [
+      '44000',
+      '44300'
+    ];
+    const idConseiller = '60462000871498b5cec20c0b';
+
+    const listeCodePostauxCra = await getCodesPostauxCras(idConseiller, { getCodesPostauxStatistiquesCras });
+
+    expect(listeCodePostauxCra).toStrictEqual(listCodePostaux);
   });
 });

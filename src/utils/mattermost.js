@@ -59,7 +59,6 @@ const joinTeam = async (mattermost, token, idTeam, idUser) => {
 };
 
 const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
-
   try {
     const token = await loginAPI({ mattermost });
 
@@ -141,7 +140,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
     }
 
-    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
+    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     return true;
   } catch (e) {
     Sentry.captureException(e);
@@ -169,7 +168,7 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
       data: { 'new_password': newPassword }
     });
     logger.info(resultUpdatePassword);
-    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
+    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorResetPassword': false }
@@ -202,7 +201,7 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
       }
     });
     logger.info(resultDeleteAccount);
-    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
+    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorDeleteAccount': false }
@@ -271,6 +270,7 @@ const deleteArchivedChannels = async (mattermost, token) => {
   return Promise.all(promises);
 };
 
+
 const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry, logger, db }) => {
 
   if (token === undefined || token === null) {
@@ -293,7 +293,7 @@ const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry,
       }
     });
     logger.info(resultUpdatePassword);
-    logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id} avec comme un id mattermost: ${conseiller.mattermost.id}`);
+    logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorPatchLogin': false,
@@ -312,5 +312,36 @@ const patchLogin = async ({ mattermost, token, conseiller, userIdentity, Sentry,
   }
 };
 
-// eslint-disable-next-line max-len
-module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, joinTeam, deleteArchivedChannels, patchLogin };
+const searchUser = async (mattermost, token, conseiller) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+  const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+  const login = `${prenom}.${nom}`;
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/users/usernames`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: [login]
+  });
+};
+
+module.exports = {
+  slugifyName,
+  loginAPI,
+  createAccount,
+  updateAccountPassword,
+  deleteAccount,
+  createChannel,
+  joinChannel,
+  joinTeam,
+  deleteArchivedChannels,
+  searchUser,
+  patchLogin
+};
