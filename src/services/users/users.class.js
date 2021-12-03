@@ -10,7 +10,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-
+const { misesajourPg, misesajourMongo, historisationMongo, getConseiller } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -569,44 +569,7 @@ exports.Users = class Users extends Service {
     });
 
     app.patch('/users/changement-email-pro/:token', async (req, res) => {
-      const misesajourMongo = db => async (conseillerId, email, userIdentity, password) => {
-        const { mattermost, emailCN } = await db.collection('conseillers').findOne({ _id: conseillerId });
-        await db.collection('conseillers').updateOne({ _id: conseillerId }, { $set: { nom: userIdentity.nom, prenom: userIdentity.prenom } });
-        await db.collection('misesEnRelation').updateMany(
-          { 'conseiller.$id': conseillerId },
-          { $set: {
-            'conseillerObj.mattermost': mattermost,
-            'conseillerObj.emailCN': emailCN,
-            'conseillerObj.nom': userIdentity.nom,
-            'conseillerObj.prenom': userIdentity.prenom
-          }
-          });
-        const idUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
-        const newDateAction = new Date();
-        app.service('users').patch(idUser._id, {
-          password: password, name: email, nom: userIdentity.nom, prenom: userIdentity.prenom,
-          token: uuidv4(), tokenCreatedAt: newDateAction, passwordCreatedAt: newDateAction
-        });
-      };
-      const misesajourPg = async (idPG, nom, prenom) => {
-        await pool.query(`UPDATE djapp_coach
-        SET (first_name, last_name) = ($2, $3) WHERE id = $1`,
-        [idPG, prenom, nom]);
-      };
-      const historisationMongo = db => async (conseillerId, conseiller, user) => {
-        await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $unset: { support_cnfs: {} } });
-        await db.collection('conseillers').updateOne({ _id: conseillerId }, {
-          $push: {
-            historique: {
-              data: {
-                ancienEmail: conseiller.emailCN.address,
-                nouveauEmail: user.support_cnfs.nouveauEmail
-              },
-              date: new Date()
-            }
-          } });
-      };
-      const getConseiller = db => async conseillerId => await db.collection('conseillers').findOne({ _id: conseillerId });
+
       const { total, data } = await this.find({
         query: {
           token: req.params.token,
@@ -650,14 +613,14 @@ exports.Users = class Users extends Service {
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
           }).then(async () => {
-            await misesajourPg(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
-            return await misesajourMongo(db)(conseillerId, email, userIdentity, password);
+            await misesajourPg(pool)(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
+            return await misesajourMongo(db, app)(conseillerId, email, userIdentity, password);
           }).then(async () => {
             await setTimeout(async () => {
               try {
                 await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password });
                 await message.send(conseiller);
-                await historisationMongo(conseillerId, conseiller, user);
+                await historisationMongo(db)(conseillerId, conseiller, user);
                 return res.status(200).send({ message: 'Votre nouvel email a été créé avec succès' });
               } catch (error) {
                 logger.error(error);
