@@ -614,6 +614,7 @@ exports.Users = class Users extends Service {
             }
           } });
       };
+      const getConseiller = db => async conseillerId => await db.collection('conseillers').findOne({ _id: conseillerId });
       const { total, data } = await this.find({
         query: {
           token: req.params.token,
@@ -634,7 +635,7 @@ exports.Users = class Users extends Service {
       const mattermost = app.get('mattermost');
 
       app.get('mongoClient').then(async db => {
-        const conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
+        const conseiller = await getConseiller(db)(conseillerId);
         const lastLogin = conseiller.emailCN.address.substring(0, conseiller.emailCN.address.lastIndexOf('@'));
         const email = `${user.support_cnfs.login}@${gandi.domain}`;
         const userIdentity = {
