@@ -590,7 +590,11 @@ exports.Users = class Users extends Service {
           }
           });
         const idUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
-        app.service('users').patch(idUser._id, { password: password, name: email, nom: userIdentity.nom, prenom: userIdentity.prenom, token: uuidv4() });
+        const newDateAction = new Date();
+        app.service('users').patch(idUser._id, {
+          password: password, name: email, nom: userIdentity.nom, prenom: userIdentity.prenom,
+          token: uuidv4(), tokenCreatedAt: newDateAction, passwordCreatedAt: newDateAction
+        });
       };
       const misesajourPg = async (idPG, nom, prenom) => {
         await pool.query(`UPDATE djapp_coach
