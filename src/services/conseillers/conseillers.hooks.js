@@ -19,9 +19,13 @@ module.exports = {
       }),
       context => {
         if (context.params?.user?.roles.includes('prefet')) {
+          const departement = context.params?.user.departement;
+          const region = context.params?.user.region;
+
           context.params.query = {
             ...context.params.query,
-            codeDepartement: context.params?.user.departement.toString()
+            ...(departement ? { codeDepartement: departement.toString() } : {}),
+            ...(region ? { codeRegion: region.toString() } : {})
           };
         }
 
