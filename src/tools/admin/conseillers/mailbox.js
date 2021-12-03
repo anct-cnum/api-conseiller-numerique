@@ -47,7 +47,7 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
 
   const gandi = app.get('gandi');
   if (operation === 'create') {
-    createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
+    await createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
 
   } else if (operation === 'updatePassword') {
     try {

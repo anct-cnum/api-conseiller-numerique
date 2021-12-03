@@ -101,7 +101,7 @@ exports.Users = class Users extends Service {
                   =
                   ($2,$3,$4,$5)
                 WHERE id = $1`,
-            [idPG, prenom, nom, telephone, dateDisponibilite]);
+          [idPG, prenom, nom, telephone, dateDisponibilite]);
         } catch (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
@@ -145,7 +145,7 @@ exports.Users = class Users extends Service {
         await pool.query(`UPDATE djapp_coach
             SET email = $2
                 WHERE id = $1`,
-          [idPG, userInfo.mailAModifier]);
+        [idPG, userInfo.mailAModifier]);
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
@@ -605,9 +605,9 @@ exports.Users = class Users extends Service {
           email_future: user.support_cnfs.nouveauEmail
         };
         const login = user.support_cnfs.login;
-        let mailer = createMailer(app);
+        const mailer = createMailer(app);
         const emails = createEmails(db, mailer, app, logger);
-        let message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
+        const message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
 
         if (conseiller.emailCN.address) {
           await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
