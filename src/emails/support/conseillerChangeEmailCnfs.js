@@ -2,10 +2,10 @@ module.exports = (db, mailer, app, logger) => {
   const templateName = 'conseillerChangeEmailCnfs';
   const { utils } = mailer;
 
-  let render = async conseiller => {
+  const render = async conseiller => {
     return mailer.render(__dirname, templateName, {
       conseiller,
-      link: utils.getEspaceCoopUrl(`/changement-email/${conseiller.token}`),
+      link: utils.getEspaceCoopUrl(`/changer-email/${conseiller.token}`),
     });
   };
 
@@ -14,11 +14,11 @@ module.exports = (db, mailer, app, logger) => {
     render,
     send: async conseiller => {
 
-      let onSuccess = () => {
+      const onSuccess = () => {
         logger.info(`Email pour changer l'email @conseiller-numerique.fr au conseiller avec l'idPG : ${conseiller.idPG}`);
-        return db.collection('users').updateOne({ '_id': conseiller._id }, {
+        return db.collection('users').updateOne({ 'entity.$id': conseiller._id }, {
           $set: {
-            mailSentSupportchangeEmailCnfsDate: new Date(),
+            mailSendSupportchangeEmailCnfsDate: new Date(),
             resendSupportchangeEmailCnfs: !!conseiller.mailSentSupportchangeEmailCnfsDate,
           },
           $unset: {
@@ -28,8 +28,8 @@ module.exports = (db, mailer, app, logger) => {
         });
       };
 
-      let onError = async err => {
-        await db.collection('users').updateOne({ '_id': conseiller._id }, {
+      const onError = async err => {
+        await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, {
           $set: {
             mailErrorSupportchangeEmailCnfs: 'smtpError',
             mailErrorSupportchangeEmailCnfsDetail: err.message

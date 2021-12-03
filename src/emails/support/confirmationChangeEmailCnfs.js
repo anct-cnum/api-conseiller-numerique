@@ -2,7 +2,7 @@ module.exports = (db, mailer, app, logger) => {
   const templateName = 'confirmationChangeEmailCnfs';
   const { utils } = mailer;
 
-  let render = async conseiller => {
+  const render = async conseiller => {
     return mailer.render(__dirname, templateName, {
       conseiller,
       link: utils.getEspaceCoopUrl(`/login`)
@@ -13,12 +13,22 @@ module.exports = (db, mailer, app, logger) => {
     templateName,
     render,
     send: async conseiller => {
-      let onSuccess = () => {
+      const onSuccess = async () => {
         logger.info(`Email pour confirmer  la réussite de la création de l'email @conseiller-numerique.fr au conseiller avec l'idPG : ${conseiller.idPG}`);
+        return db.collection('users').updateOne({ 'entity.$id': conseiller._id }, {
+          $set: {
+            mailSendConfirmechangeEmailCnfsDate: new Date(),
+            resendConfirmechangeEmailCnfs: !!conseiller.mailSentConfirmechangeEmailCnfsDate,
+          },
+          $unset: {
+            mailErrorConfirmechangeEmailCnfs: '',
+            mailErrorConfirmechangeEmailCnfsDetail: ''
+          },
+        });
       };
 
-      let onError = async err => {
-        await db.collection('users').updateOne({ '_id': conseiller._id }, {
+      const onError = async err => {
+        await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, {
           $set: {
             mailErrorConfirmechangeEmailCnfs: 'smtpError',
             mailErrorConfirmechangeEmailCnfsDetail: err.message

@@ -247,7 +247,7 @@ exports.Users = class Users extends Service {
       }
 
       //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
-      let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
+      const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
       users.data[0].persoEmail = conseiller.email;
       // eslint-disable-next-line camelcase
       const { roles, name, persoEmail, nom, prenom, support_cnfs } = users.data[0];
@@ -619,13 +619,10 @@ exports.Users = class Users extends Service {
       const gandi = app.get('gandi');
       const Sentry = app.get('sentry');
       const mattermost = app.get('mattermost');
-      let mailer = createMailer(app);
-      const emails = createEmails(db, mailer, app, logger);
-      let message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
 
       app.get('mongoClient').then(async db => {
         const conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
-        let lastLogin = conseiller.emailCN.address.substring(0, conseiller.emailCN.address.lastIndexOf('@'));
+        const lastLogin = conseiller.emailCN.address.substring(0, conseiller.emailCN.address.lastIndexOf('@'));
         const email = `${user.support_cnfs.login}@${gandi.domain}`;
         const userIdentity = {
           email: user.support_cnfs.nouveauEmail,
@@ -636,7 +633,10 @@ exports.Users = class Users extends Service {
         conseiller.message_email = {
           email_future: user.support_cnfs.nouveauEmail
         };
-        let login = user.support_cnfs.login;
+        const login = user.support_cnfs.login;
+        let mailer = createMailer(app);
+        const emails = createEmails(db, mailer, app, logger);
+        let message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
 
         if (conseiller.emailCN.address) {
           await deleteMailbox(gandi, conseillerId, lastLogin, db, logger, Sentry).then(async () => {
@@ -662,11 +662,11 @@ exports.Users = class Users extends Service {
                       date: new Date()
                     }
                   } });
-                return res.status(200).send({ message: 'Votre nouveau email a été crée avec succès' });
+                return res.status(200).send({ message: 'Votre nouvel email a été créé avec succès' });
               } catch (error) {
                 logger.error(error);
                 app.get('sentry').captureException(error);
-                res.status(500).send(new GeneralError('Erreur lors de la création de la boite mail, veuillez contacter le support'));
+                res.status(500).send(new GeneralError('Erreur lors de la création de la boîte mail, veuillez contacter le support'));
                 return;
               }
             }, 5000);
