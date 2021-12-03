@@ -5,7 +5,7 @@ module.exports = (db, mailer, app, logger) => {
   let render = async conseiller => {
     return mailer.render(__dirname, templateName, {
       conseiller,
-      link: utils.getEspaceCoopUrl(`/changement-email-cnfs/${conseiller.token}`),
+      link: utils.getEspaceCoopUrl(`/changement-email/${conseiller.token}`),
     });
   };
 
