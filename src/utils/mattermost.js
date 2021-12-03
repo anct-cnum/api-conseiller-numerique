@@ -271,7 +271,7 @@ const deleteArchivedChannels = async (mattermost, token) => {
 };
 
 
-const patchLogin = ({ Sentry, logger, db, mattermost }) => async ({ conseiller, userIdentity }) => {
+const patchLogin = ({ Sentry, logger, db, mattermost, patchLoginMattermost, patchLoginMattermostError }) => async ({ conseiller, userIdentity }) => {
 
   const token = await loginAPI({ mattermost });
 
@@ -293,20 +293,12 @@ const patchLogin = ({ Sentry, logger, db, mattermost }) => async ({ conseiller, 
     });
     logger.info(resultUpdatePassword);
     logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
-    await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorPatchLogin': false,
-          'mattermost.login': login
-        }
-      });
+    await patchLoginMattermost(db)(conseiller, login);
     return true;
   } catch (e) {
     Sentry.captureException(e);
     logger.error(e);
-    await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorPatchLogin': true }
-      });
+    await patchLoginMattermostError(db)(conseiller);
     return false;
   }
 };

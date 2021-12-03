@@ -10,7 +10,8 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-const { misesajourPg, misesajourMongo, historisationMongo, getConseiller } = require('./users.repository');
+const { misesajourPg, misesajourMongo, historisationMongo, getConseiller, patchLoginMattermost,
+  patchLoginMattermostError } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -609,7 +610,7 @@ exports.Users = class Users extends Service {
 
         if (conseiller.emailCN.address) {
           await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
-            return patchLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
+            return patchLogin({ Sentry, logger, db, mattermost, patchLoginMattermost, patchLoginMattermostError })({ conseiller, userIdentity });
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
           }).then(async () => {

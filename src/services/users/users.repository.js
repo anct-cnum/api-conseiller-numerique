@@ -42,9 +42,26 @@ const historisationMongo = db => async (conseillerId, conseiller, user) => {
 
 const getConseiller = db => async conseillerId => await db.collection('conseillers').findOne({ _id: conseillerId });
 
+const patchLoginMattermost = db => async (conseiller, login) => {
+  return await db.collection('conseillers').updateOne({ _id: conseiller._id },
+    { $set:
+      { 'mattermost.errorPatchLogin': false,
+        'mattermost.login': login
+      }
+    });
+};
+const patchLoginMattermostError = db => async conseiller => {
+  return db.collection('conseillers').updateOne({ _id: conseiller._id },
+    { $set:
+      { 'mattermost.errorPatchLogin': true }
+    });
+};
+
 module.exports = {
   misesajourMongo,
   misesajourPg,
   historisationMongo,
-  getConseiller
+  getConseiller,
+  patchLoginMattermost,
+  patchLoginMattermostError
 };
