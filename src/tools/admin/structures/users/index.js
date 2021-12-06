@@ -18,7 +18,7 @@ const doCreateUser = async (db, feathers, dbName, _id, logger) => {
       await feathers.service('users').create({
         name: structure?.contact?.email.toLowerCase(),
         password: uuidv4(), // mandatory param
-        roles: Array('structure'),
+        roles: ['structure', 'structure_coop'],
         entity: {
           '$ref': `structures`,
           '$id': _id,
