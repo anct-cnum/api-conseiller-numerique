@@ -184,11 +184,14 @@ const inspectMisesEnRelationsAssociatedWithConseillersOnStructureIdWithoutDuplic
 
 const hasFinaliseeNonDisponibleStatut = miseEnRelation => miseEnRelation.statut === MisesEnRelationStatut.FinaliseeNonDisponible;
 
+const hasFinaliseeRuptureStatut = miseEnRelation => miseEnRelation.statut === MisesEnRelationStatut.FinaliseeRupture;
+
 const inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId = conseillersWithMatchingMiseEnRelations =>
   conseillersWithMatchingMiseEnRelations.reduce((result, conseillerWithMatchingMiseEnRelations) => {
     result.misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus.push(
-      ...conseillerWithMatchingMiseEnRelations.misesEnRelations.filter(miseEnRelation => !hasFinaliseeNonDisponibleStatut(miseEnRelation))
-    );
+      ...conseillerWithMatchingMiseEnRelations.misesEnRelations.filter(
+        miseEnRelation => !hasFinaliseeNonDisponibleStatut(miseEnRelation) && !hasFinaliseeRuptureStatut(miseEnRelation)
+      ));
 
     return result;
   }, {
