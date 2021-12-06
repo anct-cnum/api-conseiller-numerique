@@ -115,9 +115,9 @@ exports.Stats = class Stats extends Service {
 
         //Verification du conseiller associé à l'utilisateur correspondant
         const id = conseillerUser?.roles.includes('admin_coop') || conseillerUser?.roles.includes('structure_coop') ?
-          req.body.idConseiller : conseillerUser.entity.oid;
-
+          req.query.idConseiller : conseillerUser.entity.oid;
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
+
         if (conseiller?._id.toString() !== req.query?.idConseiller.toString()) {
           res.status(403).send(new Forbidden('User not authorized', {
             conseillerId: req.query.idConseiller
@@ -248,7 +248,7 @@ exports.Stats = class Stats extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         const { stats, type } = await getStatistiquesToExport(
@@ -483,7 +483,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!adminUser?.roles.includes('admin_coop')) {
+        if (!adminUser?.roles.includes('admin_coop') && !adminUser?.roles.includes('structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());

@@ -2,6 +2,7 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
 const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
+const { ObjectID } = require('mongodb');
 
 module.exports = {
   before: {
@@ -40,6 +41,10 @@ module.exports = {
           context.params.query.emailCNError = null;
           context.params.query.mattermost = null;
           delete context.params.query.isUserActif;
+        }
+
+        if (context.params.query.structureId) {
+          context.params.query.structureId = new ObjectID(context.params.query.structureId);
         }
 
         if (context.params.query.$search) {
@@ -166,7 +171,6 @@ module.exports = {
         });
         return await p;
       }
-
     }],
     get: [async context => {
       if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||
