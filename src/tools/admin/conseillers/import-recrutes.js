@@ -161,7 +161,10 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               }
             });
 
-            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.idPG': idPGConseiller, 'statut': { $ne: 'finalisee' } }, {
+            await db.collection('misesEnRelation').updateMany({
+              'conseillerObj.idPG': idPGConseiller,
+              'statut': { $nin: ['finalisee', 'finalisee_rupture'] }
+            }, {
               $set: {
                 statut: 'finalisee_non_disponible',
                 conseillerObj: conseillerUpdated
@@ -176,7 +179,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
             await db.collection('misesEnRelation').updateMany({
               'conseillerObj.idPG': { $ne: idPGConseiller },
-              'conseillerObj.email': conseillerOriginal.email
+              'conseillerObj.email': conseillerOriginal.email,
+              'statut': { $ne: 'finalisee_rupture' }
             }, {
               $set: {
                 'statut': 'finalisee_non_disponible',
