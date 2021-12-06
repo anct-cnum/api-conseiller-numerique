@@ -180,7 +180,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             await db.collection('misesEnRelation').updateMany({
               'conseillerObj.idPG': { $ne: idPGConseiller },
               'conseillerObj.email': conseillerOriginal.email,
-              'statut': { $ne: 'finalisee_rupture ' }
+              'statut': { $ne: 'finalisee_rupture' }
             }, {
               $set: {
                 'statut': 'finalisee_non_disponible',
