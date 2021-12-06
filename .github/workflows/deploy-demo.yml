@@ -1,0 +1,48 @@
+name: Déploiement sur l'espace demo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+env:
+  branch:
+jobs:
+  preparation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # 47ng/actions-clever-cloud requires an unshallow working copy
+      - run: git fetch --prune --unshallow
+      - name: Replace crons for demo
+        run: |
+        CRON=$(cat << EOF
+          [
+            "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
+            "0 3 1 * * $ROOT/src/tools/jobs/stats-monthly-cras.sh",
+            "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh"
+          ]
+
+          EOF
+          )
+          echo "$CRON" > clevercloud/cron.json
+      - name: Upload release api as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: api
+          path: .
+
+  deploy:
+    needs: preparation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Retrieve api
+        uses: actions/download-artifact@v2
+        with:
+          name: api
+      - uses: 47ng/actions-clever-cloud@v1
+        with:
+          appID: ${{ secrets.CLEVER_APP_API_DEMO_ID }}
+        env:
+          CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+          CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
