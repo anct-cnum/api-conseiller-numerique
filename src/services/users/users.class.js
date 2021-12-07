@@ -5,13 +5,12 @@ const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const slugify = require('slugify');
 const { createMailbox, updateMailboxPassword, deleteMailbox } = require('../../utils/mailbox');
-const { createAccount, updateAccountPassword, patchLogin } = require('../../utils/mattermost');
+const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-const { misesAJourPg, misesAJourMongo, historisationMongo, getConseiller, patchLoginMattermostMongo,
-  patchLoginMattermostMongoError, patchApiMattermostLogin } = require('./users.repository');
+const { misesAJourPg, misesAJourMongo, historisationMongo, getConseiller, patchApiMattermostLogin } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -618,7 +617,7 @@ exports.Users = class Users extends Service {
         if (conseiller?.emailCN?.address) {
           await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
             // eslint-disable-next-line max-len
-            return patchLogin({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError, patchApiMattermostLogin })({ conseiller, userIdentity });
+            return patchApiMattermostLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
           }).then(async () => {

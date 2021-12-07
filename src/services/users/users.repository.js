@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const { patchLogin } = require('../../utils/mattermost');
 
 const misesAJourMongo = (db, app) => async (conseillerId, email, userIdentity, password) => {
   const { mattermost, emailCN } = await db.collection('conseillers').findOne({ _id: conseillerId });
@@ -62,21 +63,8 @@ const patchLoginMattermostMongoError = db => async conseiller => {
     });
 };
 
-const patchApiMattermostLogin = (mattermost, axios) => async (conseiller, login, nom, prenom, email, token) => {
-  return await axios({
-    method: 'put',
-    url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    data: {
-      'username': login,
-      'first_name': nom,
-      'last_name': prenom,
-      'email': email
-    }
-  });
+const patchApiMattermostLogin = ({ Sentry, logger, db, mattermost }) => ({ conseiller, userIdentity }) => {
+  return patchLogin({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError })({ conseiller, userIdentity });
 };
 
 module.exports = {
