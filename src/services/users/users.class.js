@@ -585,31 +585,37 @@ exports.Users = class Users extends Service {
         }).toJSON());
         return;
       }
+      if (!user?.roles.includes('conseiller') || !user?.support_cnfs) {
+        res.status(409).send(new Conflict('Vous n\'avez pas l\'autorisation', {
+          id: user._id
+        }).toJSON());
+        return;
+      }
       const password = req.body.password;
-      const conseillerId = user.entity.oid;
+      const conseillerId = user?.entity?.oid;
       const gandi = app.get('gandi');
       const Sentry = app.get('sentry');
       const mattermost = app.get('mattermost');
 
       app.get('mongoClient').then(async db => {
         const conseiller = await getConseiller(db)(conseillerId);
-        const lastLogin = conseiller.emailCN.address.substring(0, conseiller.emailCN.address.lastIndexOf('@'));
+        const lastLogin = conseiller?.emailCN?.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@'));
         const email = `${user.support_cnfs.login}@${gandi.domain}`;
         const userIdentity = {
-          email: user.support_cnfs.nouveauEmail,
-          nom: user.support_cnfs.nom,
-          prenom: user.support_cnfs.prenom,
-          login: user.support_cnfs.login
+          email: user?.support_cnfs?.nouveauEmail,
+          nom: user?.support_cnfs?.nom,
+          prenom: user?.support_cnfs?.prenom,
+          login: user?.support_cnfs?.login
         };
         conseiller.message_email = {
-          email_future: user.support_cnfs.nouveauEmail
+          email_future: user?.support_cnfs?.nouveauEmail
         };
-        const login = user.support_cnfs.login;
+        const login = user?.support_cnfs?.login;
         const mailer = createMailer(app);
         const emails = createEmails(db, mailer, app, logger);
         const message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
 
-        if (conseiller.emailCN.address) {
+        if (conseiller?.emailCN?.address) {
           await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
             // eslint-disable-next-line max-len
             return patchLogin({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError, patchApiMattermostLogin })({ conseiller, userIdentity });
