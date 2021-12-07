@@ -15,16 +15,16 @@ jobs:
       - run: git fetch --prune --unshallow
       - name: Replace crons for demo
         run: |
-        CRON=$(cat << EOF
-          [
-            "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
-            "0 3 1 * * $ROOT/src/tools/jobs/stats-monthly-cras.sh",
-            "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh"
-          ]
+          CRON=$(cat << EOF
+            [
+              "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
+              "0 3 1 * * $ROOT/src/tools/jobs/stats-monthly-cras.sh",
+              "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh"
+            ]
 
-          EOF
-          )
-          echo "$CRON" > clevercloud/cron.json
+            EOF
+            )
+            echo "$CRON" > clevercloud/cron.json
       - name: Upload release api as artifact
         uses: actions/upload-artifact@v2
         with:
