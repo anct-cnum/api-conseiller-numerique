@@ -3,28 +3,36 @@
 
 const { execute } = require('../utils');
 
-const getUsersStructure = db => async role => await db.collection('users').find({ 'roles': { $in: [role] } }).toArray();
+const getStructuresValidees = db => async skip => await db.collection('structures').find(
+  { 'statut': 'VALIDATION_COSELEC', 'userCreated': true }).limit(1000).skip(skip).toArray();
 
-const isStructureAutorisee = db => async idStructure => await db.collection('conseillers').findOne({ 'structureId': idStructure });
+const isStructureAutorisee = db => async idStructure => await db.collection('misesEnRelation').countDocuments({ 'structure.$id': idStructure });
 
-const updateUserStructure = db => async (idUser, roles) => await db.collection('users').updateOne(
-  { _id: idUser },
-  { $set: { roles: roles } }
-);
+const updateUserStructure = db => async structureId => {
+  await db.collection('users').updateOne(
+    { 'entity.$id': structureId },
+    { $set: { 'roles': ['structure', 'structure_coop'] } }
+  );
+};
+
+const skipArray = [0, 1000, 2000];
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
   logger.info('Création du rôle structure_coop pour les structures possédants au moins un conseiller...');
 
   try {
-    const usersStructure = await getUsersStructure(db)('structure');
-    usersStructure.forEach(async userStructure => {
-      const structureAutorisee = await isStructureAutorisee(db)(userStructure.entity.oid);
-      if (structureAutorisee !== null) {
-        userStructure.roles.push('structure_coop');
-        await updateUserStructure(db)(userStructure._id, userStructure.roles);
-      }
+    skipArray.forEach(async skip => {
+      const structures = await getStructuresValidees(db)(skip);
+      structures.forEach(async structure => {
+        const structureAutorisee = await isStructureAutorisee(db)(structure._id);
+        if (structureAutorisee > 0) {
+          await updateUserStructure(db)(structure._id);
+        }
+
+      });
     });
+
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
