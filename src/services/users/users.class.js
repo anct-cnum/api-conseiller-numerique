@@ -631,7 +631,7 @@ exports.Users = class Users extends Service {
                 await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password });
                 await message.send(conseiller);
                 await historisationMongo(db)(conseillerId, conseiller, user);
-                return res.status(200).send({ message: 'Votre nouvel email a été créé avec succès' });
+                return res.status(200).send({ messageCreationMail: 'Votre nouvel email a été créé avec succès' });
               } catch (error) {
                 logger.error(error);
                 app.get('sentry').captureException(error);
