@@ -55,7 +55,7 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
     if (mailbox.data.length === 0) {
       const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
       conseiller.token = user.token;
-      // Envoi email pour que l'utilisateur entre son mp lui meme !
+      // Envoi email pour que l'utilisateur entre son mot de passe lui même
       let mailer = createMailer(app);
       const emails = createEmails(db, mailer, app, logger);
       let message = emails.getEmailMessageByTemplateName('conseillerChangeEmailCnfs');
