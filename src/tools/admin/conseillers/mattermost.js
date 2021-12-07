@@ -47,6 +47,6 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
 
   const mattermost = app.get('mattermost');
   if (operation === 'create') {
-    createAccount({ mattermost, conseiller, login, password, db, logger, Sentry });
+    createAccount({ mattermost, conseiller, login, nom, prenom, password, db, logger, Sentry });
   }
 });

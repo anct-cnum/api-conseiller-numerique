@@ -58,7 +58,7 @@ const joinTeam = async (mattermost, token, idTeam, idUser) => {
   });
 };
 
-const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
+const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom, password, db, logger, Sentry }) => {
   try {
     const token = await loginAPI({ mattermost });
 
@@ -69,7 +69,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      data: { 'email': email, 'username': login, 'password': password }
+      data: { 'email': email, 'username': login, 'first_name': nom, 'last_name': prenom, 'password': password }
     });
     logger.info(resultCreation);
 

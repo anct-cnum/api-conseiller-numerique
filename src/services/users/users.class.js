@@ -395,6 +395,8 @@ exports.Users = class Users extends Service {
             conseiller,
             email,
             login,
+            nom,
+            prenom,
             password,
             db,
             logger,
