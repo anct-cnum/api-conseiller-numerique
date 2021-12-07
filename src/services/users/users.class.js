@@ -10,7 +10,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-const { misesajourPg, misesajourMongo, historisationMongo, getConseiller, patchLoginMattermostMongo,
+const { misesAJourPg, misesAJourMongo, historisationMongo, getConseiller, patchLoginMattermostMongo,
   patchLoginMattermostMongoError, patchApiMattermostLogin } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
@@ -622,8 +622,8 @@ exports.Users = class Users extends Service {
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
           }).then(async () => {
-            await misesajourPg(pool)(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
-            return await misesajourMongo(db, app)(conseillerId, email, userIdentity, password);
+            await misesAJourPg(pool)(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
+            return await misesAJourMongo(db, app)(conseillerId, email, userIdentity, password);
           }).then(async () => {
             await setTimeout(async () => {
               try {

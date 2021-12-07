@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 
-const misesajourMongo = (db, app) => async (conseillerId, email, userIdentity, password) => {
+const misesAJourMongo = (db, app) => async (conseillerId, email, userIdentity, password) => {
   const { mattermost, emailCN } = await db.collection('conseillers').findOne({ _id: conseillerId });
   await db.collection('conseillers').updateOne({ _id: conseillerId }, { $set: { nom: userIdentity.nom, prenom: userIdentity.prenom } });
   await db.collection('misesEnRelation').updateMany(
@@ -21,7 +21,7 @@ const misesajourMongo = (db, app) => async (conseillerId, email, userIdentity, p
   });
 };
 
-const misesajourPg = pool => async (idPG, nom, prenom) => {
+const misesAJourPg = pool => async (idPG, nom, prenom) => {
   await pool.query(`UPDATE djapp_coach
         SET (first_name, last_name) = ($2, $3) WHERE id = $1`,
   [idPG, prenom, nom]);
@@ -80,8 +80,8 @@ const patchApiMattermostLogin = (mattermost, axios) => async (conseiller, login,
 };
 
 module.exports = {
-  misesajourMongo,
-  misesajourPg,
+  misesAJourMongo,
+  misesAJourPg,
   historisationMongo,
   getConseiller,
   patchLoginMattermostMongo,

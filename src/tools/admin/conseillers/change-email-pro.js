@@ -18,8 +18,8 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
   let nom = program.nom;
   let prenom = program.prenom;
   let login;
-  if (id === 0) {
-    exit('Paramètres invalides. Veuillez préciser un id et un nom ou prenom');
+  if (id === 0 || (!nom && !prenom)) {
+    exit('Paramètres invalides. Veuillez préciser un id et un nom et/ou prenom');
     return;
   }
 
@@ -33,14 +33,14 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
     exit('idPG inconnu, conseiller non trouvé');
     return;
   }
-  const condition1 = prenom ? prenom : conseiller.prenom;
-  const condition2 = nom ? nom : conseiller.nom;
+  const condition1 = prenom ? prenom : conseiller?.prenom;
+  const condition2 = nom ? nom : conseiller?.nom;
   prenom = slugify(`${condition1}`, { replacement: '-', lower: true, strict: true });
   nom = slugify(`${condition2}`, { replacement: '-', lower: true, strict: true });
   login = `${prenom}.${nom}`;
 
   conseiller.message_email = {
-    email_actuelle: conseiller.emailCN.address,
+    email_actuelle: conseiller?.emailCN?.address,
     email_future: `${login}@${gandi.domain}`
   };
   conseiller.support_cnfs = {
@@ -62,7 +62,7 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
       await message.send(conseiller);
       await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { 'support_cnfs': conseiller.support_cnfs } });
       // eslint-disable-next-line max-len
-      logger.info(`Envoi e-mail pour la demande de changement d'email professionnel : ${conseiller.emailCN.address} par => ${login}@${gandi.domain} pour le conseiller avec l'id ${id}`);
+      logger.info(`Envoi e-mail pour la demande de changement d'email professionnel : ${conseiller?.emailCN?.address} par => ${login}@${gandi.domain} pour le conseiller avec l'id ${id}`);
     } else {
       logger.error(`une adresse mail existe déjà pour: ${mailbox.data[0].address}`);
     }
