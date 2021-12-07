@@ -626,19 +626,17 @@ exports.Users = class Users extends Service {
             await misesAJourPg(pool)(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
             return await misesAJourMongo(db, app)(conseillerId, email, userIdentity, password);
           }).then(async () => {
-            await setTimeout(async () => {
-              try {
-                await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password });
-                await message.send(conseiller);
-                await historisationMongo(db)(conseillerId, conseiller, user);
-                return res.status(200).send({ messageCreationMail: 'Votre nouvel email a été créé avec succès' });
-              } catch (error) {
-                logger.error(error);
-                app.get('sentry').captureException(error);
-                res.status(500).send(new GeneralError('Erreur lors de la création de la boîte mail, veuillez contacter le support'));
-                return;
-              }
-            }, 5000);
+            try {
+              await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password });
+              await message.send(conseiller);
+              await historisationMongo(db)(conseillerId, conseiller, user);
+              return res.status(200).send({ messageCreationMail: 'Votre nouvel email a été créé avec succès' });
+            } catch (error) {
+              logger.error(error);
+              app.get('sentry').captureException(error);
+              res.status(500).send(new GeneralError('Erreur lors de la création de la boîte mail, veuillez contacter le support'));
+              return;
+            }
           }).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
