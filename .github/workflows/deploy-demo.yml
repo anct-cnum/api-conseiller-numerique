@@ -11,8 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # 47ng/actions-clever-cloud requires an unshallow working copy
       - run: git fetch --prune --unshallow
+      - name: New branch demo
+        uses: peterjgrainger/action-create-branch@v2.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          branch: 'demo'
       - name: Replace crons for demo
         run: |
           CRON=$(cat << EOF
@@ -25,6 +30,11 @@ jobs:
           EOF
           )
           echo "$CRON" > clevercloud/cron.json
+      - name: Add and commit cron modification
+        run: |
+          git config --global user.email dummy@email.fr
+          git config --global user.name ClevercloudDeployer
+          git commit -am "Modification cron"
       - name: Upload release api as artifact
         uses: actions/upload-artifact@v2
         with:
@@ -50,3 +60,5 @@ jobs:
         run: clever deploy --force
       - name: Retrieve the deployment url
         run: clever domain
+      - name: Delete branch demo
+        run: git branch -D demo
