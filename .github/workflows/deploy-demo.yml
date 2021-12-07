@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      # Deploy requires an unshallow working copy
       - run: git fetch --prune --unshallow
       - name: New branch demo
         uses: peterjgrainger/action-create-branch@v2.0.1
@@ -20,16 +21,14 @@ jobs:
           branch: 'demo'
       - name: Replace crons for demo
         run: |
-          CRON=$(cat << EOF
+          cat > clevercloud/cron.json << EOF
           [
-            "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
-            "0 3 1 * * $ROOT/src/tools/jobs/stats-monthly-cras.sh",
-            "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh"
+            "0 0 * * * \$ROOT/src/tools/jobs/stats-daily-cras.sh",
+            "0 3 1 * * \$ROOT/src/tools/jobs/stats-monthly-cras.sh",
+            "0 6 * * * \$ROOT/src/tools/jobs/stats-territoires.sh"
           ]
 
           EOF
-          )
-          echo "$CRON" > clevercloud/cron.json
       - name: Add and commit cron modification
         run: |
           git config --global user.email dummy@email.fr
@@ -60,5 +59,11 @@ jobs:
         run: clever deploy --force
       - name: Retrieve the deployment url
         run: clever domain
+
+  clean:
+    needs: preparation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
       - name: Delete branch demo
-        run: git branch -D demo
+        run: git push origin --delete demo
