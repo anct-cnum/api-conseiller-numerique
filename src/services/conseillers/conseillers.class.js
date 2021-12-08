@@ -24,7 +24,6 @@ const {
   suppressionTotalCandidat,
   suppressionCv,
   suppressionCVConseiller,
-  checkFormulaire,
   checkRoleAdmin,
   candidatSupprimeEmailPix } = require('./conseillers.function');
 const {

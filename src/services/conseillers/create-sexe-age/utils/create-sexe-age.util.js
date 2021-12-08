@@ -1,5 +1,5 @@
-const Joi = require("joi");
-const {NotFound} = require("@feathersjs/errors");
+const Joi = require('joi');
+const { NotFound } = require('@feathersjs/errors');
 const Sexe = {
   Autre: 'Autre',
   Femme: 'Femme',
