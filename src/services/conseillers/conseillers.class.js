@@ -24,7 +24,6 @@ const {
   suppressionTotalCandidat,
   suppressionCv,
   suppressionCVConseiller,
-  checkFormulaire,
   checkRoleAdmin,
   candidatSupprimeEmailPix } = require('./conseillers.function');
 const {
@@ -49,6 +48,8 @@ const {
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
 const { geolocatedConseillers } = require('./geolocalisation/core/geolocalisation.core');
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
+const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
+const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -124,62 +125,25 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.post('/conseillers/createSexeAge', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = createSexeAgeBodyToSchema(req.body);
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const conseillerId = user.entity.oid;
 
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
-
-      let userId = decode(req.feathers.authentication.accessToken).sub;
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-
-      if (!user?.roles.includes('conseiller') && !user?.roles.includes('candidat')) {
-        res.status(403).send(new Forbidden('User not authorized', {
-          userId: userId
-        }).toJSON());
-        return;
-      }
-
-      let conseiller = await this.find({
-        query: {
-          _id: new ObjectId(user.entity.oid),
-          $limit: 1,
-        }
-      });
-
-      if (conseiller.total === 0) {
-        res.status(404).send(new NotFound('Ce compte n\'existe pas ! Vous allez être déconnecté.').toJSON());
-        return;
-      }
-
-      const sexe = req.body.sexe;
-      const dateDeNaissance = new Date(req.body.dateDeNaissance);
-
-      const schema = checkFormulaire(req.body);
-
-      if (schema.error) {
-        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
-        return;
-      }
-
-      if (sexe === '' || dateDeNaissance === '') {
-        res.status(400).send(new BadRequest('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
-        return;
-      }
-
-      try {
-        await this.patch(new ObjectId(user.entity.oid),
-          { $set: {
-            sexe: sexe,
-            dateDeNaissance: dateDeNaissance
-          } });
-      } catch (error) {
-        app.get('sentry').captureException(error);
-        logger.error(error);
-        res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
-      }
-
-      res.send({ isUpdated: true });
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller, Role.Candidat], () => user),
+        schemaGuard(validateCreateSexeAgeSchema(query)),
+        conseillerGuard(conseillerId, countConseillersDoubles(db))
+      ).then(async () => {
+        await setConseillerSexeAndDateDeNaissance(db)(conseillerId, query.sexe, query.dateDeNaissance).then(() => {
+          res.send({ isUpdated: true });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
+        });
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.post('/conseillers/cv', upload.single('file'), async (req, res) => {
