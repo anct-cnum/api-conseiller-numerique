@@ -104,9 +104,8 @@ exports.Stats = class Stats extends Service {
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-
-        if (!conseillerUser?.roles.includes('conseiller') && !conseillerUser?.roles.includes('admin_coop') &&
-            !conseillerUser?.roles.includes('structure_coop')) {
+        const rolesAllowed = ['conseiller', 'admin_coop', 'structure_coop'];
+        if (rolesAllowed.filter(role => conseillerUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -114,8 +113,9 @@ exports.Stats = class Stats extends Service {
         }
 
         //Verification du conseiller associé à l'utilisateur correspondant
-        const id = conseillerUser?.roles.includes('admin_coop') || conseillerUser?.roles.includes('structure_coop') ?
+        const id = ['admin_coop', 'structure_coop'].filter(role => conseillerUser?.roles.includes(role)).length > 0 ?
           req.query.idConseiller : conseillerUser.entity.oid;
+
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
 
         if (conseiller?._id.toString() !== req.query?.idConseiller.toString()) {

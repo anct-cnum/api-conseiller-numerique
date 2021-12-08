@@ -3,7 +3,7 @@ module.exports = (db, mailer) => {
   const templateName = 'invitationStructureEspaceCoop';
   const { utils } = mailer;
 
-  let render = user => {
+  const render = user => {
     return mailer.render(__dirname, templateName, {
       user,
       link: utils.getEspaceCoopUrl(`/login`),
@@ -14,10 +14,10 @@ module.exports = (db, mailer) => {
     templateName,
     render,
     send: async user => {
-      let onSuccess = () => {
+      const onSuccess = () => {
       };
 
-      let onError = async err => {
+      const onError = async err => {
         await db.collection('users').updateOne({ '_id': user._id }, {
           $set: {
             mailError: 'smtpError',
@@ -30,7 +30,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         user.name,
         {
-          subject: 'Connectez-vous à votre compte Structure sur l&rsquo;espace coop',
+          subject: 'Connectez-vous à votre compte Structure sur l\'espace backoffice coop',
           body: await render(user),
         },
       )
