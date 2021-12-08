@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { execute } = require('../../utils');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
