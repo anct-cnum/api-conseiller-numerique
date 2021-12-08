@@ -14,7 +14,22 @@ module.exports = {
       })
     ],
     find: [
+      checkPermissions({
+        roles: ['admin', 'admin_coop', 'prefet'],
+        field: 'roles',
+      }),
       context => {
+        if (context.params?.user?.roles.includes('prefet')) {
+          const departement = context.params?.user.departement;
+          const region = context.params?.user.region;
+
+          context.params.query = {
+            ...context.params.query,
+            ...(departement ? { codeDepartement: departement.toString() } : {}),
+            ...(region ? { codeRegion: region.toString() } : {})
+          };
+        }
+
         if (context.params.query.$skip) {
           const paginate = context.app.get('paginate');
           const page = context.params.query.$skip;

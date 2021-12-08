@@ -1,0 +1,69 @@
+name: Déploiement sur l'espace demo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+env:
+  branch:
+jobs:
+  preparation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Deploy requires an unshallow working copy
+      - run: git fetch --prune --unshallow
+      - name: New branch demo
+        uses: peterjgrainger/action-create-branch@v2.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          branch: 'demo'
+      - name: Replace crons for demo
+        run: |
+          cat > clevercloud/cron.json << EOF
+          [
+            "0 0 * * * \$ROOT/src/tools/jobs/stats-daily-cras.sh",
+            "0 3 1 * * \$ROOT/src/tools/jobs/stats-monthly-cras.sh",
+            "0 6 * * * \$ROOT/src/tools/jobs/stats-territoires.sh"
+          ]
+
+          EOF
+      - name: Add and commit cron modification
+        run: |
+          git config --global user.email dummy@email.fr
+          git config --global user.name ClevercloudDeployer
+          git commit -am "Modification cron"
+      - name: Upload release api as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: api
+          path: .
+
+  deploy:
+    needs: preparation
+    runs-on: ubuntu-latest
+    container:
+      image: clevercloud/clever-tools
+      env:
+        CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+        CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
+    steps:
+      - name: Retrieve api
+        uses: actions/download-artifact@v2
+        with:
+          name: api
+      - name: Link the application
+        run: clever link ${{ secrets.CLEVER_APP_API_DEMO_ID }}
+      - name: Deploy the application
+        run: clever deploy --force
+      - name: Retrieve the deployment url
+        run: clever domain
+
+  clean:
+    needs: preparation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Delete branch demo
+        run: git push origin --delete demo

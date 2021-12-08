@@ -45,6 +45,13 @@ const miseEnRelationJohnDoeStructureFinaliseeNonDisponible = {
   statut: MisesEnRelationStatut.FinaliseeNonDisponible
 };
 
+const miseEnRelationJohnDoeStructureFinaliseeRupture = {
+  _id: '09ab50a9232bb39241a9fa8e',
+  conseiller: 'b596d13ee91d97a85a5c8ae4',
+  structure: '14c596e420149b83b3fac421',
+  statut: MisesEnRelationStatut.FinaliseeRupture
+};
+
 const johnDoeConseiller = {
   _id: 'f653637acd03bc52be4412f5',
   prenom: 'john',
@@ -640,16 +647,16 @@ describe('inspect mises en relations associated with conseillers on structure id
 });
 
 describe('inspect mises en relations associated with conseillers except structure id', () => {
-  it('should inspect mises en relations associated with conseillers and get mises en relations without finalisee_non_disponible status in array', () => {
-    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: johnDoeConseiller }];
+  it('should inspect mises en relations associated with conseillers and get mises en relations without finalisee_non_disponible or finalisee_rupture status in array', () => {
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureFinaliseeNonDisponible, miseEnRelationJohnDoeStructureFinaliseeRupture], conseiller: johnDoeConseiller }];
 
     const { misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus } = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(conseillersWithMatchingMiseEnRelations);
 
     expect(misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus).toEqual([]);
   });
 
-  it('should inspect mises en relations associated with conseillers and get all mises en relations with non finalisee_non_disponible status in array', () => {
-    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle, miseEnRelationJohnDoeStructureRecrutee, miseEnRelationJohnDoeStructureFinaliseeNonDisponible], conseiller: johnDoeConseiller }];
+  it('should inspect mises en relations associated with conseillers and get all mises en relations with non finalisee_non_disponible and non finalisee_rupture status in array', () => {
+    const conseillersWithMatchingMiseEnRelations = [{ misesEnRelations: [miseEnRelationJohnDoeStructureNouvelle, miseEnRelationJohnDoeStructureRecrutee, miseEnRelationJohnDoeStructureFinaliseeNonDisponible, miseEnRelationJohnDoeStructureFinaliseeRupture], conseiller: johnDoeConseiller }];
 
     const { misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus } = inspectMisesEnRelationsAssociatedWithConseillersExceptStructureId(conseillersWithMatchingMiseEnRelations);
 
