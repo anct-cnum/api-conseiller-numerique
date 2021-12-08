@@ -17,15 +17,15 @@ const updateUserStructure = db => async structureId => {
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
-  logger.info('Création du rôle structure_coop pour les structures possédants au moins un conseiller...');
+  logger.info('Création du rôle structure_coop pour les structures étant validées coselec...');
   let nbAutorisees = 0;
-  let nbStructure = 0;
+  let nbStructures = 0;
 
   try {
     let promises = [];
     const structures = await getStructuresValidees(db)();
     structures.forEach(structure => {
-      nbStructure++;
+      nbStructures++;
       promises.push(new Promise(async resolve => {
         const structureAutorisee = await isStructureAutorisee(db)(structure._id);
         if (structureAutorisee > 0) {
@@ -36,12 +36,12 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       }));
     });
     await Promise.all(promises);
-    await logger.info(nbStructure + ' structure ont été sélectionné et ' + nbAutorisees + ' sont autorisées à avoir le nouveau rôle.');
+    await logger.info(nbStructures + ' structures ont été sélectionnées et ' + nbAutorisees + ' sont autorisées à avoir le nouveau rôle.');
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
   }
 
-  await logger.info('Fin de la création du rôle structure_coop pour les structures possédants au moins un conseiller.');
+  await logger.info('Fin de la création du rôle structure_coop pour les structures étant validées coselec.');
   exit();
 });

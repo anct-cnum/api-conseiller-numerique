@@ -14,14 +14,20 @@ module.exports = (db, mailer) => {
     templateName,
     render,
     send: async user => {
-      const onSuccess = () => {
+      const onSuccess = async () => {
+        await db.collection('users').updateOne({ '_id': user._id }, {
+          $set: {
+            mailCoopSend: true
+          }
+        });
       };
 
       const onError = async err => {
         await db.collection('users').updateOne({ '_id': user._id }, {
           $set: {
             mailError: 'smtpError',
-            mailErrorDetail: err.message
+            mailErrorDetail: err.message,
+            mailCoopSend: false
           }
         });
         utils.setSentryError(err);
