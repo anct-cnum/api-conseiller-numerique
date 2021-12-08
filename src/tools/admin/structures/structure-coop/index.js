@@ -7,7 +7,7 @@ const sendEmailStructureCoop = require('./tasks/sendEmailStructureCoop.js');
 const { execute } = require('../../../utils');
 const cli = require('commander');
 
-cli.description('Envoyé les emails d\'invitation aux structures_coop')
+cli.description('Envoi des emails d\'invitation aux structures_coop')
 .option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
 .option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
 .parse(process.argv);
