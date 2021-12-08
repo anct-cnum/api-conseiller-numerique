@@ -27,6 +27,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   const structures = await db.collection('structures').find({
     $and: [
       { statut: { $ne: 'VALIDATION_COSELEC' } },
+      { statut: { $ne: 'EXAMEN_COMPLEMENTAIRE_COSELEC' } },
+      { statut: { $ne: 'REFUS_COSELEC' } },
       { statut: { $ne: 'ABANDON' } },
       { statut: { $ne: 'ANNULEE' } },
       { statut: { $ne: 'DOUBLON' } },
