@@ -44,9 +44,10 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
   const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
   const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
   const login = `${prenom}.${nom}`;
+  const email = `${login}@conseiller-numerique.fr`;
 
   const mattermost = app.get('mattermost');
   if (operation === 'create') {
-    createAccount({ mattermost, conseiller, login, nom, prenom, password, db, logger, Sentry });
+    createAccount({ mattermost, conseiller, email, login, nom, prenom, password, db, logger, Sentry });
   }
 });
