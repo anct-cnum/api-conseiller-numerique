@@ -13,7 +13,7 @@ const mappingAvisStatut = new Map([
 
 /*
  * Dans certains cas, le dernier Coselec a un avis null
- * C'est du à des lignes erronées dans certains fichiers PV Coselec
+ * C'est dû à des lignes erronées dans certains fichiers PV Coselec
  * Pour le moment on ne les traite pas
  * */
 
