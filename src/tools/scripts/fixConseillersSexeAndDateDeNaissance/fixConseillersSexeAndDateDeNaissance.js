@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { execute } = require('../../utils');
 const { setConseillerSexeAndDateDeNaissance } = require('../../../services/conseillers/create-sexe-age/repositories/conseiller.repository');
 
