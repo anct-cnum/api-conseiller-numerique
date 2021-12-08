@@ -6,6 +6,7 @@ const Role = {
   AdminCoop: 'admin_coop',
   StructureCoop: 'structure_coop',
   Conseiller: 'conseiller'
+  Candidat: 'candidat'
 };
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
