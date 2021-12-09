@@ -315,7 +315,7 @@ exports.Users = class Users extends Service {
           const database = connection.substr(connection.lastIndexOf('/') + 1);
           const newUser = {
             name: email.toLowerCase(),
-            roles: ['structure'],
+            roles: ['structure', 'structure_coop'],
             entity: new DBRef('structures', new ObjectId(structureId), database),
             token: uuidv4(),
             tokenCreatedAt: new Date(),
@@ -329,6 +329,9 @@ exports.Users = class Users extends Service {
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
           await message.send(newUser, email);
+          
+          let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
+          await messageCoop.send(newUser);
 
           res.send({ status: 'Invitation à rejoindre la structure envoyée !' });
         } catch (error) {

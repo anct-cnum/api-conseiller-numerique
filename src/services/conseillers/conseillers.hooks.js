@@ -2,13 +2,14 @@ const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
 const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
+const { ObjectID } = require('mongodb');
 
 module.exports = {
   before: {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'candidat'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
         field: 'roles',
       })
     ],
@@ -57,6 +58,10 @@ module.exports = {
           delete context.params.query.isUserActif;
         }
 
+        if (context.params.query.structureId) {
+          context.params.query.structureId = new ObjectID(context.params.query.structureId);
+        }
+
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
         }
@@ -82,7 +87,7 @@ module.exports = {
     ],
     update: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -96,7 +101,7 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -181,7 +186,6 @@ module.exports = {
         });
         return await p;
       }
-
     }],
     get: [async context => {
       if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||

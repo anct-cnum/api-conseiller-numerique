@@ -4,6 +4,7 @@ const decode = require('jwt-decode');
 const Role = {
   Admin: 'admin',
   AdminCoop: 'admin_coop',
+  StructureCoop: 'structure_coop',
   Conseiller: 'conseiller',
   Candidat: 'candidat'
 };

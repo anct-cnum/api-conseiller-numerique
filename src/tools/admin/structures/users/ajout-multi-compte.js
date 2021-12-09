@@ -34,7 +34,7 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
   const user = {
     name: username.toLowerCase(),
     password: uuidv4(),
-    roles: ['structure'],
+    roles: ['structure', 'structure_coop'],
     entity: {
       '$ref': 'stuctures',
       '$id': _id,
@@ -55,6 +55,10 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
     const emails = createEmails(db, mailer);
     let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
     await message.send(user, username);
+
+    let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
+    await messageCoop.send(user);
+
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
