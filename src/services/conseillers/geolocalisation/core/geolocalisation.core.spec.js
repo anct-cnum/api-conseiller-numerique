@@ -255,4 +255,58 @@ describe('geolocated conseillers', () => {
 
     expect(conseillers).toStrictEqual(expectedConseillers);
   });
+
+  it('devrait retourner un conseiller dont la structure n\'a pas d\'informations insee', async () => {
+    const expectedConseillers = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [3.158667, 46.987344]
+          },
+          properties: {
+            conseiller: {
+              name: 'John Doe',
+              email: 'john.doe@conseiller-numerique.fr',
+            },
+            structure: {
+              name: 'Association pour la formation au numérique à Bessenay',
+              isLabeledFranceServices: true,
+              phone: '0474728936'
+            }
+          }
+        }
+      ]
+    };
+
+    const getConseillerWithGeolocation = async () => [
+      {
+        prenom: 'John',
+        nom: 'Doe',
+        emailCN: {
+          address: 'john.doe@conseiller-numerique.fr'
+        },
+        structure: {
+          nom: 'Association pour la formation au numérique à Bessenay',
+          estLabelliseFranceServices: 'OUI',
+          contact: {
+            telephone: '0474728936'
+          },
+          coordonneesInsee: {
+            type: 'Point',
+            coordinates: [
+              3.158667,
+              46.987344
+            ]
+          }
+        }
+      }
+    ];
+
+    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+
+    expect(conseillers).toStrictEqual(expectedConseillers);
+  });
 });

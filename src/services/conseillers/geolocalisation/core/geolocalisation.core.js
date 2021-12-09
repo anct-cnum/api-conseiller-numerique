@@ -22,7 +22,7 @@ const formatStructure = structure => ({
   name: structure.nom,
   isLabeledFranceServices: structure.estLabelliseFranceServices === 'OUI',
   ...structure.contact?.telephone ? { phone: structure.contact.telephone } : {},
-  address: formatAddress(structure.insee.etablissement.adresse)
+  ...structure.insee ? { address: formatAddress(structure.insee.etablissement.adresse) } : {}
 });
 
 const formatConseiller = conseiller => ({

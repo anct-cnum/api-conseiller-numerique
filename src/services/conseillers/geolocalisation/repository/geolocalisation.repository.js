@@ -4,7 +4,11 @@ const ConseillerStatut = {
 
 const getConseillerWithGeolocation = db => async () =>
   db.collection('conseillers').aggregate([
-    { $match: { statut: ConseillerStatut.Recrute } },
+    {
+      $match: {
+        statut: ConseillerStatut.Recrute
+      }
+    },
     {
       $lookup: {
         localField: 'structureId',
@@ -14,6 +18,11 @@ const getConseillerWithGeolocation = db => async () =>
       }
     },
     { $unwind: '$structure' },
+    {
+      $match: {
+        'structure.coordonneesInsee': { $ne: null }
+      }
+    },
     {
       $project: {
         '_id': 0,
