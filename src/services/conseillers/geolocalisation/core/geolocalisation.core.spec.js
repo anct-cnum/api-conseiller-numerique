@@ -1,6 +1,6 @@
 const { geolocatedConseillers } = require('./geolocalisation.core');
 
-describe('geolocated conseillers', () => {
+describe('conseillers géolocalisés', () => {
   it('devrait retourner les conseillers localisé sur leur structure d\'accueil', async () => {
     const expectedConseillers = {
       type: 'FeatureCollection',

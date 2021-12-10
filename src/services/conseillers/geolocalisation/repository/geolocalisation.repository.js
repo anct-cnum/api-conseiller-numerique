@@ -38,8 +38,24 @@ const getConseillerWithGeolocation = db => async () =>
     }
   ]).toArray();
 
+const getConseillersByCodeDepartement = db => async () => db.collection('conseillers').aggregate([
+  {
+    $match: {
+      statut: ConseillerStatut.Recrute
+    }
+  },
+  {
+    $group:
+      {
+        _id: '$codeDepartement',
+        count: { $sum: 1 }
+      }
+  }
+]).toArray();
+
 const geolocationRepository = db => ({
-  getConseillerWithGeolocation: getConseillerWithGeolocation(db)
+  getConseillerWithGeolocation: getConseillerWithGeolocation(db),
+  getConseillersByCodeDepartement: getConseillersByCodeDepartement(db)
 });
 
 module.exports = {
