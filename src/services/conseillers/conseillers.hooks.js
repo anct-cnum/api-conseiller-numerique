@@ -15,7 +15,7 @@ module.exports = {
     ],
     find: [
       checkPermissions({
-        roles: ['admin', 'admin_coop', 'prefet'],
+        roles: ['admin', 'structure', 'admin_coop', 'prefet'],
         field: 'roles',
       }),
       context => {
