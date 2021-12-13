@@ -56,6 +56,8 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
   });
   await Promise.all(promises);
   // eslint-disable-next-line max-len
-  logger.info(`Il y a en tout ${conseillers.length} conseillers dont ${fixMailBoxGandi} corrigé et ${okEmailBoxGandi} qui n'avait pas de problème et ${errorEmailBoxGandi} en erreur => [${idPGErrorEmailBoxGandi}]`);
-  logger.info(`Détails pour les ${fixMailBoxGandi} conseiller(s) corrigé => [${idPGSuccessEmailBoxGandi}]`);
+
+  logger.info(`${fixMailBoxGandi} boites mails corrigées, ${okEmailBoxGandi} déjà OK et ${errorEmailBoxGandi} en erreur`);
+  logger.info(`Détails pour les ${fixMailBoxGandi} conseiller(s) corrigé(s) => [${idPGSuccessEmailBoxGandi}]`);
+  logger.info(`Détails pour les ${errorEmailBoxGandi} conseiller(s) en erreur(s) => [${idPGErrorEmailBoxGandi}]`);
 });
