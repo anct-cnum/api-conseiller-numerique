@@ -24,6 +24,8 @@ const bienvenueCompteCandidat = require('./candidats/bienvenueCompteCandidat');
 const candidatSupprimePix = require('./pix/candidatSupprimePix');
 const conseillerRuptureStructure = require('./structures/conseillerRuptureStructure');
 const conseillersRupturePix = require('./pix/conseillersRupturePix');
+const conseillerChangeEmailCnfs = require('./support/conseillerChangeEmailCnfs');
+const confirmationChangeEmailCnfs = require('./support/confirmationChangeEmailCnfs');
 
 module.exports = (db, mailer, app, logger) => {
 
@@ -53,7 +55,9 @@ module.exports = (db, mailer, app, logger) => {
     bienvenueCompteCandidat(db, mailer),
     candidatSupprimePix(db, mailer, app, logger),
     conseillerRuptureStructure(db, mailer),
-    conseillersRupturePix(db, mailer)
+    conseillersRupturePix(db, mailer),
+    conseillerChangeEmailCnfs(db, mailer, app, logger),
+    confirmationChangeEmailCnfs(db, mailer, app, logger)
   ];
 
   return {
