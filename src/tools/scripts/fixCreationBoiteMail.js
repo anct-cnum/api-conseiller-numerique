@@ -28,7 +28,7 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
 
   logger.info('Fix des boites mail gandi non crée...');
   conseillers.forEach(conseiller => {
-    promises.push(new Promise(async resolve => {
+    promises.push(new Promise(async (resolve, reject) => {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
       let login = conseiller?.emailCN?.address ? conseiller?.emailCN?.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@')) : `${prenom}.${nom}`;
@@ -49,6 +49,7 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
         }).catch(error => {
           logger.error(error);
           Sentry.captureException(error);
+          reject(error);
         });
       } else {
         okEmailBoxGandi++;
