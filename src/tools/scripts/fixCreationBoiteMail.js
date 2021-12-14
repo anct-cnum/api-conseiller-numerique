@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const slugify = require('slugify');
 
 const miseAjourIdentifiant = (db, gandi) => async (conseillerId, login) => {
-  await db.collection('users').updateOne({ _id: conseillerId }, { $set: { name: `${login}@${gandi.domain}` } });
+  await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $set: { name: `${login}@${gandi.domain}` } });
   await db.collection('misesEnRelation').updateMany(
     { 'conseiller.$id': conseillerId },
     { $set:
@@ -21,7 +21,7 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
   let errorEmailBoxGandi = 0;
   let idPGErrorEmailBoxGandi = [];
   let idPGSuccessEmailBoxGandi = [];
-  const conseillers = await db.collection('conseillers').find({ emailCNError: { $exists: true } }).toArray();
+  const conseillers = await db.collection('conseillers').find({ emailCNError: { $exists: true }, statut: { $ne: 'RUPTURE' } }).toArray();
   let promises = [];
 
   logger.info('Fix des boites mail gandi non crée...');
