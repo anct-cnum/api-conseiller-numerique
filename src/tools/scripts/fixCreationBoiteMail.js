@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const slugify = require('slugify');
 
 const miseAjourIdentifiant = (db, gandi) => async (conseillerId, login) => {
-  await db.collection('users').updateOne({ _id: conseillerId }, { $set: { name: `${login}@${gandi.domain}` } });
+  await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $set: { name: `${login}@${gandi.domain}` } });
   await db.collection('misesEnRelation').updateMany(
     { 'conseiller.$id': conseillerId },
     { $set:
