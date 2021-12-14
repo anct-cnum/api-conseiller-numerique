@@ -23,7 +23,7 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
   let errorEmailBoxGandi = 0;
   let idPGErrorEmailBoxGandi = [];
   let idPGSuccessEmailBoxGandi = [];
-  const conseillers = await db.collection('conseillers').find({ emailCNError: { $exists: true }, statut: { $ne: 'RUPTURE' } }).toArray();
+  const conseillers = await db.collection('conseillers').find({ emailCNError: { $exists: true }, statut: { $ne: 'RUPTURE' } }).limit(2).toArray();
   let promises = [];
 
   logger.info('Fix des boites mail gandi non crée...');
@@ -37,7 +37,7 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
       const { data } = await getMailBox({ gandi, login });
 
       if (data.length === 0) {
-        await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password }).then(async result => {
+        createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password }).then(async result => {
           if (result) {
             fixMailBoxGandi++;
             idPGSuccessEmailBoxGandi.push(conseiller.idPG);
