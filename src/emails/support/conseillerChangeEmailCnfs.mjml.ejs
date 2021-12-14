@@ -1,0 +1,59 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+    <mj-wrapper css-class="wrapper">
+
+      <mj-section>
+        <mj-column>
+          <mj-text css-class="text-primary">
+          </mj-text>
+          <mj-text align="left">
+            Bonjour <%= conseiller.prenom %>,
+          </mj-text>
+          <mj-text align="left">
+            Vous nous avez fait remonter une demande de modification en lien avec votre adresse mail @conseiller-numerique.fr.
+          </mj-text>
+          <mj-text align="left">
+            Cette demande à bien été prise en compte. Pour ce faire nous allons supprimer votre adresse mail actuelle <%= conseiller.message_email.email_actuelle %>
+            et créer une nouvelle adresse avec l'intitulé que vous avez demandé.
+          </mj-text>
+          <mj-text align="left" font-weight="bold">
+            <%= conseiller.message_email.email_future %>
+          </mj-text>
+          <mj-text align="left">
+            La création de cette nouvelle adresse mail entraînera la perte des données actuellement présentes sur votre boite mail.
+            Avant de commencer le processus, veillez à sauvegarder les données présentes dans la boîte qui sera supprimée (mails reçus, carnets de contacts, etc.).
+          </mj-text>
+          <mj-text align="left">
+            La création de cette nouvelle adresse mail vous servira d'identifiants de connexion à l'ensemble de vos outils Conseiller numérique France Services (Espace coop, espace de discusion, mail)
+          </mj-text>
+          <mj-text align="left">
+            Notez précieusement votre mot de passe; lors de l'enregistrement, vous pouvez garder le mot de passe de votre ancienne adresse si vous le souhaitez.
+          </mj-text>
+          <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold" padding-left="100px" padding-right="100px"
+            text-transform="uppercase">
+            CRÉER MA NOUVELLE ADRESSE MAIL CONSEILLER NUMÉRIQUE
+          </mj-button>
+          <mj-text align="left">
+            [ ! ] Cette opération est irréversible
+          </mj-text>
+          <mj-text align="left">
+            Si vous changez d'avis, vous pouvez ignorer cet e-mail
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+    <mj-wrapper css-class="wrapper">
+      <mj-section>
+        <mj-column>
+          <%- include('../commun/signature.mjml.ejs'); %>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

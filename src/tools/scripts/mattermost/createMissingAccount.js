@@ -31,7 +31,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
         const email = `${login}@${gandi.domain}`;
         const password = uuidv4() + 'AZEdsf;+:'; // pour respecter la règle de complexité de mot de passe
 
-        createAccount({ mattermost, conseiller, email, login, password, db, logger, Sentry });
+        createAccount({ mattermost, conseiller, email, login, nom, prenom, password, db, logger, Sentry });
 
         count++;
       }

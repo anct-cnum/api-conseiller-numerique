@@ -22,7 +22,8 @@ const getCoselecPositif = structure => {
 const getLastCoselec = structure => {
   let coselecs = null;
   if ('coselec' in structure && structure.coselec !== null) {
-    coselecs = structure.coselec.sort((a, b) => ~~a.numero.replace('COSELEC ', '') - ~~b.numero.replace('COSELEC ', ''));
+    coselecs = structure.coselec.sort((a, b) =>
+      (a.numero !== null && b.numero !== null) ? ~~a.numero.replace('COSELEC ', '') - ~~b.numero.replace('COSELEC ', '') : -1);
   }
   return (coselecs !== null && coselecs.length > 0) ? coselecs.slice(-1).pop() : null;
 };

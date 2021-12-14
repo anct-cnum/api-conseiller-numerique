@@ -1,7 +1,6 @@
 const axios = require('axios');
 
-const createMailbox = async ({ gandi, conseillerId, login, password, db, logger, Sentry }) => {
-
+const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, login, password }) => {
   try {
     const resultCreation = await axios({
       method: 'post',
@@ -81,7 +80,7 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
   }
 };
 
-const deleteMailbox = async (gandi, conseillerId, login, db, logger, Sentry) => {
+const deleteMailbox = (gandi, db, logger, Sentry) => async (conseillerId, login) => {
 
   try {
     //Récuperation de l'id mailbox associé au login pour 'delete'
@@ -129,5 +128,14 @@ const deleteMailbox = async (gandi, conseillerId, login, db, logger, Sentry) => 
   }
 
 };
+const getMailBox = async ({ gandi, login }) => {
+  return axios({
+    method: 'get',
+    url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
+    headers: {
+      'Authorization': `Apikey ${gandi.token}`
+    }
+  });
+};
 
-module.exports = { createMailbox, updateMailboxPassword, deleteMailbox };
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox };
