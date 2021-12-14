@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
+
 const { execute } = require('../utils');
 const { getMailBox, createMailbox } = require('../../utils/mailbox');
 const { v4: uuidv4 } = require('uuid');
@@ -21,12 +23,12 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
   let errorEmailBoxGandi = 0;
   let idPGErrorEmailBoxGandi = [];
   let idPGSuccessEmailBoxGandi = [];
-  const conseillers = await db.collection('conseillers').find({ emailCNError: { $exists: true } }).toArray();
+  const conseillers = await db.collection('conseillers').find({ emailCNError: { $exists: true } }).limit(2).toArray();
   let promises = [];
 
   logger.info('Fix des boites mail gandi non crée...');
   conseillers.forEach(conseiller => {
-    promises.push(new Promise(async resolve => {
+    promises.push(new Promise(async (resolve, reject) => {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
       let login = conseiller?.emailCN?.address ? conseiller?.emailCN?.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@')) : `${prenom}.${nom}`;
@@ -35,7 +37,7 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
       const { data } = await getMailBox({ gandi, login });
 
       if (data.length === 0) {
-        await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password }).then(async result => {
+        createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password }).then(async result => {
           if (result) {
             fixMailBoxGandi++;
             idPGSuccessEmailBoxGandi.push(conseiller.idPG);
@@ -47,6 +49,7 @@ execute(__filename, async ({ logger, db, gandi, Sentry }) => {
         }).catch(error => {
           logger.error(error);
           Sentry.captureException(error);
+          reject(error);
         });
       } else {
         okEmailBoxGandi++;
