@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
+
 const { execute } = require('../utils');
 const { getMailBox, createMailbox } = require('../../utils/mailbox');
 const { v4: uuidv4 } = require('uuid');
