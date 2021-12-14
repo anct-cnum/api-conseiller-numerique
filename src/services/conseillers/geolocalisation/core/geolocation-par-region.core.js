@@ -39,17 +39,22 @@ const getConseillersByRegions = async getConseillersByCodeDepartement =>
       conseillerByCodeDepartement
     ), []);
 
-const regionGeometry = region =>
-  regionLocations.find(regionLocation => regionLocation.region_name === region).geometry;
+const regionLocationProperties = region =>
+  regionLocations.find(regionLocation => regionLocation.region_name === region);
 
-const toGeoJson = conseillersByRegion => ({
-  type: 'Feature',
-  geometry: regionGeometry(conseillersByRegion.region),
-  properties: {
-    region: conseillersByRegion.region,
-    count: conseillersByRegion.count
-  }
-});
+const toGeoJson = conseillersByRegion => {
+  const { geometry, boundingZoom } = regionLocationProperties(conseillersByRegion.region);
+
+  return {
+    type: 'Feature',
+    geometry,
+    properties: {
+      region: conseillersByRegion.region,
+      boundingZoom,
+      count: conseillersByRegion.count
+    }
+  };
+};
 
 const geolocatedConseillersByRegion = async ({ getConseillersByCodeDepartement }) => ({
   type: 'FeatureCollection',

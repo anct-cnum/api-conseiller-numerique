@@ -1,6 +1,7 @@
 [
   {
     "region_name": "Auvergne-Rhône-Alpes",
+    "boundingZoom": 8,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -11,6 +12,7 @@
   },
   {
     "region_name": "Hauts-de-France",
+    "boundingZoom": 8,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -21,6 +23,7 @@
   },
   {
     "region_name": "Provence-Alpes-Côte d'Azur",
+    "boundingZoom": 8,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -31,6 +34,7 @@
   },
   {
     "region_name": "Grand Est",
+    "boundingZoom": 10,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -41,6 +45,18 @@
   },
   {
     "region_name": "Occitanie",
+    "boundingZoom": 8,
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        2.137222,
+        43.702222
+      ]
+    }
+  },
+  {
+    "region_name": "Normandie",
+    "boundingZoom": 9,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -50,17 +66,8 @@
     }
   },
   {
-    "region_name": "Normandie",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [
-        2.775278,
-        49.966111
-      ]
-    }
-  },
-  {
     "region_name": "Nouvelle-Aquitaine",
+    "boundingZoom": 8,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -71,6 +78,7 @@
   },
   {
     "region_name": "Centre-Val de Loire",
+    "boundingZoom": 8,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -81,6 +89,7 @@
   },
   {
     "region_name": "Bourgogne-Franche-Comté",
+    "boundingZoom": 9,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -91,6 +100,7 @@
   },
   {
     "region_name": "Bretagne",
+    "boundingZoom": 9,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -101,6 +111,7 @@
   },
   {
     "region_name": "Corse",
+    "boundingZoom": 9,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -111,6 +122,7 @@
   },
   {
     "region_name": "Pays de la Loire",
+    "boundingZoom": 9,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -121,6 +133,7 @@
   },
   {
     "region_name": "Île-de-France",
+    "boundingZoom": 10,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -131,6 +144,7 @@
   },
   {
     "region_name": "Guadeloupe",
+    "boundingZoom": 11,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -141,6 +155,7 @@
   },
   {
     "region_name": "Martinique",
+    "boundingZoom": 11,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -151,6 +166,7 @@
   },
   {
     "region_name": "Guyane",
+    "boundingZoom": 8,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -161,6 +177,7 @@
   },
   {
     "region_name": "La Réunion",
+    "boundingZoom": 11,
     "geometry": {
       "type": "Point",
       "coordinates": [
@@ -171,6 +188,7 @@
   },
   {
     "region_name": "Mayotte",
+    "boundingZoom": 12,
     "geometry": {
       "type": "Point",
       "coordinates": [
