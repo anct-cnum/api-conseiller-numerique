@@ -247,12 +247,12 @@ exports.Users = class Users extends Service {
         return;
       }
 
-      //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
-      const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
-      users.data[0].persoEmail = conseiller.email;
       // eslint-disable-next-line camelcase
       const { roles, name, persoEmail, nom, prenom, support_cnfs } = users.data[0];
       if (roles.includes('conseiller')) {
+        //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
+        const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
+        users.data[0].persoEmail = conseiller.email;
         res.send({ roles, name, persoEmail, nom, prenom, support_cnfs });
       } else {
         res.send({ roles, name });
@@ -331,7 +331,6 @@ exports.Users = class Users extends Service {
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
           await message.send(newUser, email);
-
           let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
           await messageCoop.send(newUser);
 
