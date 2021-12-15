@@ -14,7 +14,7 @@ module.exports = (db, mailer, app, logger) => {
     render,
     send: async conseiller => {
       const onSuccess = async () => {
-        logger.info(`Email pour confirmer  la réussite de la création de l'email @conseiller-numerique.fr au conseiller avec l'idPG : ${conseiller.idPG}`);
+        logger.info(`Email pour confirmer la réussite de la création de l'email @conseiller-numerique.fr au conseiller avec l'idPG : ${conseiller.idPG}`);
         return db.collection('users').updateOne({ 'entity.$id': conseiller._id }, {
           $set: {
             mailSendConfirmechangeEmailCnfsDate: new Date(),
