@@ -331,7 +331,7 @@ exports.Users = class Users extends Service {
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
           await message.send(newUser, email);
-          
+
           let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
           await messageCoop.send(newUser);
 
@@ -492,7 +492,12 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       let hiddenEmail = '';
-
+      if (user.roles.includes('conseiller') && user.passwordCreated === false) {
+        res.status(409).send(new Conflict('Vous ne vous etes pas encore inscrite', {
+          username
+        }).toJSON());
+        return;
+      }
       //Si le user est un conseiller, on renvoie l'email obscurci
       if (user.roles[0] === 'conseiller') {
         const hide = t => {
