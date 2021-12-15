@@ -331,7 +331,6 @@ exports.Users = class Users extends Service {
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
           await message.send(newUser, email);
-          
           let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
           await messageCoop.send(newUser);
 
