@@ -493,7 +493,7 @@ exports.Users = class Users extends Service {
       let hiddenEmail = '';
       if (user.roles.includes('conseiller') && user.passwordCreated === false) {
         // eslint-disable-next-line max-len
-        res.status(409).send(new Conflict(`Vous n'avez pas encore activé votre compte, veuillez l'activé via le mail avec l'intitulé "Activer votre compte Coop des Conseillers numériques France Services.`, {
+        res.status(409).send(new Conflict(`Vous n'avez pas encore activé votre compte. Pour cela, cliquez sur le lien d'activation fourni dans le mail ayant pour objet "Activer votre compte Coop des Conseillers numériques France Services"`, {
           username
         }).toJSON());
         return;
