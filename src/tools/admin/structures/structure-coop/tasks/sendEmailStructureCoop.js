@@ -9,7 +9,8 @@ module.exports = async (db, logger, emails, options = {}) => {
   };
 
   let cursor = await db.collection('users').find({
-    'roles': { '$in': ['structure_coop'] }
+    'roles': { '$in': ['structure_coop'] },
+    'mailCoopSent': { '$ne': true }
   });
 
   if (options.limit) {

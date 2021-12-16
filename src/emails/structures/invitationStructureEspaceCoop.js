@@ -17,7 +17,7 @@ module.exports = (db, mailer) => {
       const onSuccess = async () => {
         await db.collection('users').updateOne({ '_id': user._id }, {
           $set: {
-            mailCoopSend: true
+            mailCoopSent: true
           }
         });
       };
@@ -27,7 +27,7 @@ module.exports = (db, mailer) => {
           $set: {
             mailError: 'smtpError',
             mailErrorDetail: err.message,
-            mailCoopSend: false
+            mailCoopSent: false
           }
         });
         utils.setSentryError(err);
