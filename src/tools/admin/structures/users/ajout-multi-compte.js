@@ -56,8 +56,9 @@ execute(__filename, async ({ db, logger, exit, Sentry, app }) => {
     let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
     await message.send(user, username);
 
-    let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
-    await messageCoop.send(user);
+    /* En attente de l'envoi de mail du 3 janvier */
+    //let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
+    //await messageCoop.send(user);
 
   } catch (error) {
     logger.error(error);

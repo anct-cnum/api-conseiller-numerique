@@ -10,50 +10,70 @@
         <mj-section>
           <mj-column>
             <mj-text css-class="text-primary">
-              Connectez-vous en tant que structure sur le backoffice de l'Espace Coop.
-            </mj-text>
-            <mj-text>
               Madame, Monsieur,
             </mj-text>
-            <mj-text>
-              Vous avez été invité sur la plateforme coop.conseiller-numerique.gouv.fr pour rejoindre l'espace Coop en tant que structure.
+            <mj-text align="justify">
+              Nous avons le plaisir de vous informer que votre espace structure évolue avec l’arrivée d’un nouveau tableau de bord dédié au pilotage des conseillers numériques.
             </mj-text>
+            <mj-text align="left">
+              Cet espace est un véritable outil de mesure d’impact et de pilotage des conseillers numériques pour votre structure.
+            </mj-text>
+            <mj-text align="left">
+              Il vous permet de :
+              <p>
+                - Consulter les données issues des Comptes Rendus d’Activité (CRA) de vos Conseillers Numériques. Les comptes rendus d’activité sont complétés à la suite de chaque accompagnement auprès du public.
+              </p>
+              <p>
+                - Consulter les statistiques nationales, régionales et départementales liées à l'activité des CnFS.
+              </p>
+              <p>
+                - Exporter les données statistiques au format CSV
+              </p>
+              <p>
+                - Accéder à la Ressourcerie des Conseillers Numériques. Cet espace permet d’outiller les Conseillers Numériques dans l’accompagnement des usagers. Il rassemble des supports prêts à l’emploi sur de multiples thématiques : protection des données (CNIL), démarches en ligne (CAF, Pôle Emploi, etc.), réseaux sociaux, bureautique, etc…
+              </p>
+              <p>
+                - Consulter la foire aux questions
+              </p>
+              <p>
+                - Nous contacter
+              </p>
+
+            </mj-text>
+            <mj-text align="justify">
+              Votre tableau de bord rassemble ainsi de nombreuses statistiques, que ce soit le nombre d’accompagnements réalisés, les thématiques, les lieux, les durées, ou encore l’âge et le statut des usagers.
+            </mj-text>
+
+            <mj-text align="justify">
+              Cet outil vous permet de mesurer votre impact et de comprendre les besoins des usagers, afin d’ajuster au mieux vos actions pour l’inclusion numérique.
+              A l’échelle étatique, ces données nous permettront par ailleurs d’évaluer l’impact du dispositif, afin de consolider les orientations de notre politique publique.
+            </mj-text>
+            <mj-text font-weight="600">
+              <p>Comment y accéder ?</p>
+            </mj-text>
+            <mj-text align="left">
+              <br/>
+              C’est très simple, il suffit de :
+              <p>1) Se connecter à l’espace structure</p>
+              <p>2) Ouvrir l’onglet “ Outil de suivi et pilotage des CnFS ” dans le menu</p>
+              <p>3) Cliquez sur le bouton “ Accéder au tableau de bord des Conseillers numériques France services “.</p>
+            </mj-text>
+
           </mj-column>
         </mj-section>
 
-        <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
-          <mj-column border="1px solid #C8CBCE">
-            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
-              Votre identifiant
-            </mj-text>
-            <mj-text font-size="14px" line-height="21px">
-              <%= user.name %>
-            </mj-text>
-            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
-              Votre mot de passe
-            </mj-text>
-            <mj-text font-size="14px" line-height="21px" font-weight="bold" text-decoration="underline">
-              identique à celui de votre compte sur admin.conseiller-numerique.gouv.fr
-            </mj-text>
-
-            <mj-text padding="0" css-class="text-secondary">
-              Suivez ce lien pour vous connecter :
-            </mj-text>
-
-            <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
-              text-transform="uppercase">
-              Accéder à mon espace backoffice Coop
-            </mj-button>
-          </mj-column>
-        </mj-section>
       </mj-wrapper>
       <mj-wrapper css-class="wrapper">
         <mj-section>
           <mj-column>
-
-      <%- include('../commun/signature.mjml.ejs'); %>
-    </mj-column>
-  </mj-section>
-</mj-wrapper>
+            <mj-text >
+              En vous souhaitant une bonne utilisation de votre tableau de bord
+            </mj-text>
+            <mj-text>
+              L’équipe Conseiller Numériques
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
   </mj-body>
 </mjml>
