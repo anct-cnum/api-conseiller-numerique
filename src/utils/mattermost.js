@@ -73,15 +73,15 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     });
     logger.info(resultCreation);
 
+    const mattermost = {
+      error: false,
+      login: login,
+      id: resultCreation.data.id
+    };
+    
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
-        { mattermost:
-          {
-            error: false,
-            login: login,
-            id: resultCreation.data.id
-          }
-        }
+        { mattermost: mattermost }
       });
 
     slugify.extend({ '-': ' ' });
@@ -137,10 +137,10 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
     }
     if (hub !== null) {
-      joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
+      joinChannel(mattermost, token, hub.channelId, mattermost.id);
     }
 
-    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
+    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${mattermost.id}`);
     return true;
   } catch (e) {
     Sentry.captureException(e);
