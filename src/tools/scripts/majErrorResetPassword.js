@@ -8,7 +8,7 @@ execute(__filename, async ({ logger, db }) => {
   let promises = [];
   let count = 0;
 
-  logger.info('Mettre tout les mattermost.errorResetPassword à false...');
+  logger.info('Mettre tous les mattermost.errorResetPassword à false...');
   conseillers.forEach(conseiller => {
     promises.push(new Promise(async resolve => {
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'mattermost.errorResetPassword': false } });
@@ -18,5 +18,5 @@ execute(__filename, async ({ logger, db }) => {
     }));
   });
   await Promise.all(promises);
-  logger.info(`${count} remis à false pour 'mattermost.errorResetPassword'`);
+  logger.info(`${count} conseiller(s) remis à false pour 'mattermost.errorResetPassword'`);
 });
