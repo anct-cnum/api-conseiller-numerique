@@ -12,7 +12,7 @@ execute(__filename, async ({ logger, db }) => {
   conseillers.forEach(conseiller => {
     promises.push(new Promise(async resolve => {
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'mattermost.errorResetPassword': false } });
-      logger.info(`Le conseiller avec l'idPG: ${conseiller.idPG} a eut un 'mattermost.errorResetPassword' à true`);
+      logger.info(`Le conseiller avec l'idPG: ${conseiller.idPG} a eu un 'mattermost.errorResetPassword' à true`);
       count++;
       resolve();
     }));
