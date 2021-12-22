@@ -1,10 +1,9 @@
-const departements = require('../../../../../data/imports/departements-region.json');
 const departementLocations = require('../../../../../data/imports/departements-location.json');
 
 const departementNotFound = 'departement not found';
 
 const getDepartementName = conseillerByCodeDepartement =>
-  departements.find(departement => departement.num_dep === conseillerByCodeDepartement._id)?.dep_name ?? departementNotFound;
+  departementLocations.find(departement => departement.num_dep === conseillerByCodeDepartement._id)?.dep_name ?? departementNotFound;
 
 const addDepartement = (curentConseillersByDepartements, departement, conseillerByCodeDepartement) =>
   [...curentConseillersByDepartements, { codeDepartement: conseillerByCodeDepartement._id, departement, count: conseillerByCodeDepartement.count }];
