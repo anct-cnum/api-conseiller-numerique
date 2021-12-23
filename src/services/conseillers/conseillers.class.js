@@ -51,6 +51,7 @@ const { geolocationRepository } = require('./geolocalisation/repository/geolocal
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
 const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
+const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -622,6 +623,14 @@ exports.Conseillers = class Conseillers extends Service {
       const conseillersByRegion = await geolocatedConseillersByRegion(geolocationRepository(db));
 
       res.send(conseillersByRegion);
+    });
+
+    app.get('/conseillers/geolocalisation/par-departement', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      const conseillersByDepartement = await geolocatedConseillersByDepartement(geolocationRepository(db));
+
+      res.send(conseillersByDepartement);
     });
   }
 };

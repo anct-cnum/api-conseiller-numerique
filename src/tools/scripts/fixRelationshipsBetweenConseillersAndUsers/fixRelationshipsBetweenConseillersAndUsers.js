@@ -142,7 +142,8 @@ const setAllMisesEnRelationsFinaliseeToNouvelleExceptStructureId = async (db, co
 });
 
 const setAllMisesEnRelationsToFinaliseeNonDisponible = async (db, conseillerId) => await db.collection('misesEnRelation').updateMany({
-  'conseiller.$id': new ObjectId(conseillerId)
+  'conseiller.$id': new ObjectId(conseillerId),
+  'statut': { $ne: MisesEnRelationStatut.FinaliseeRupture }
 }, {
   $set: { statut: MisesEnRelationStatut.FinaliseeNonDisponible }
 });
