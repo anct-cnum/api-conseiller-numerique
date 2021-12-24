@@ -322,75 +322,6 @@ const searchUser = async (mattermost, token, conseiller) => {
   });
 };
 
-const joinFixTeam = (db, logger, Sentry, mattermost, token) => async conseiller => {
-  try {
-    slugify.extend({ '-': ' ' });
-    slugify.extend({ '\'': ' ' });
-    const departements = require('../../data/imports/departements-region.json');
-    const departement = departements.find(d => `${d.num_dep}` === conseiller.codeDepartement);
-    const channelName = slugify(departement.dep_name, { replacement: '', lower: true });
-
-    const resultChannel = await axios({
-      method: 'get',
-      url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/channels/name/${channelName}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    logger.info(resultChannel);
-
-    const resultJoinTeam = await axios({
-      method: 'post',
-      url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/members`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      data: {
-        'user_id': conseiller.mattermost.id,
-        'team_id': mattermost.teamId
-      }
-    });
-    logger.info(resultJoinTeam);
-
-    [resultChannel.data.id, mattermost.themeChannelId, mattermost.resourcesChannelId].forEach(async canalId => {
-      const resultJoinChannel = await axios({
-        method: 'post',
-        url: `${mattermost.endPoint}/api/v4/channels/${canalId}/members`,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        data: {
-          'user_id': conseiller.mattermost.id,
-        }
-      });
-      logger.info(resultJoinChannel);
-    });
-
-    const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
-    const regionName = findDepartement(structure.codeDepartement).region_name;
-
-    let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
-    if (hub === null) {
-      hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
-    }
-    if (hub !== null) {
-      joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
-    }
-    return true;
-  } catch (e) {
-    Sentry.captureException(e);
-    logger.error(e);
-    await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorFix': true, 'mattermost.errorMessageFix': e.message }
-      });
-    return false;
-  }
-};
-
 module.exports = {
   slugifyName,
   loginAPI,
@@ -403,5 +334,4 @@ module.exports = {
   deleteArchivedChannels,
   searchUser,
   patchLogin,
-  joinFixTeam
 };
