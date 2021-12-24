@@ -70,11 +70,9 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
         $set: {
           'mattermost.error': false,
-          'mattermost.errorFix': false
         },
         $unset: {
           'mattermost.errorMessage': '',
-          'mattermost.errorMessageFix': ''
         }
       });
       count++;
@@ -84,8 +82,9 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       logger.error(e);
       await db.collection('conseillers').updateOne({ _id: conseiller._id },
         { $set:
-          { 'mattermost.errorFix': true, 'mattermost.errorMessageFix': e.message }
+          { 'mattermost.error': true, 'mattermost.errorMessage': e.message }
         });
+      countError++;
     }
     // To avoid overload Mattermost API
     await sleep(500);
