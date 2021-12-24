@@ -339,7 +339,6 @@ const joinFixTeam = (db, logger, Sentry, mattermost, token) => async conseiller 
       }
     });
     logger.info(resultChannel);
-    console.log('resultChannel:', resultChannel);
 
     const resultJoinTeam = await axios({
       method: 'post',
@@ -380,9 +379,7 @@ const joinFixTeam = (db, logger, Sentry, mattermost, token) => async conseiller 
     if (hub !== null) {
       joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
     }
-
     // eslint-disable-next-line max-len
-    logger.info(`Compte Mattermost corrigé ${conseiller.mattermost.login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     return true;
   } catch (e) {
     Sentry.captureException(e);

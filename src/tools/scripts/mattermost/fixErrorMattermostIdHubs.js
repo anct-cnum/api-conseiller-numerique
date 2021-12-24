@@ -18,8 +18,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
   for (const conseiller of conseillers) {
     try {
       const result = await joinFixTeam(db, logger, Sentry, mattermost, token)(conseiller);
-      if (result.data.length > 0) {
-
+      if (result) {
         db.collection('conseillers').updateOne({ _id: conseiller._id }, {
           $set: {
             'mattermost.error': false
@@ -29,18 +28,18 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
           }
         });
         count++;
+        logger.info(`Conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id} est corrigé par le script fixErrorMattermostIdHubs.js`);
       }
     } catch (e) {
       Sentry.captureException(e);
       logger.error(e);
     }
-
     // To avoid overload Mattermost API
     await sleep(500);
   }
-  // eslint-disable-next-line max-len
   logger.info('Suppression des mattermost.errorMessage pour les mattermost.error qui sont à false');
-  await db.collection('conseillers').updateMany({ 'mattermost.error': false, 'mattermost.errorMessage': '' }, { $unset: { 'mattermost.errorMessage': '' } });
+  // eslint-disable-next-line max-len
+  await db.collection('conseillers').updateMany({ 'mattermost.error': false, 'mattermost.errorMessage': { $exists: true} }, { $unset: { 'mattermost.errorMessage': '' } });
 
   logger.info(`[MATTERMOST] ${count} conseillers corrigés`);
 });
