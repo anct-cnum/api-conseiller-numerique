@@ -3,10 +3,9 @@
 
 const departements = require('./../../../../data/imports/departements-region.json');
 const { execute } = require('../../utils');
-const { loginAPI, joinTeam, joinChannel } = require('../../../utils/mattermost');
+const { loginAPI, joinTeam, joinChannel, getChannel } = require('../../../utils/mattermost');
 const slugify = require('slugify');
 const { findDepartement } = require('../../../utils/geo');
-const axios = require('axios');
 
 execute(__filename, async ({ app, db, logger, Sentry }) => {
   const mattermost = app.get('mattermost');
@@ -27,14 +26,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       const departement = departements.find(d => `${d.num_dep}` === conseiller.codeDepartement);
       const channelName = slugify(departement.dep_name, { replacement: '', lower: true });
 
-      const resultChannel = await axios({
-        method: 'get',
-        url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/channels/name/${channelName}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const resultChannel = await getChannel(mattermost, token, channelName);
       logger.info(resultChannel);
       const idTeam = mattermost.teamId;
       const idUser = conseiller.mattermost.id;
@@ -43,17 +35,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       logger.info(resultJoinTeam);
 
       [resultChannel.data.id, mattermost.themeChannelId, mattermost.resourcesChannelId].forEach(async canalId => {
-        const resultJoinChannel = await axios({
-          method: 'post',
-          url: `${mattermost.endPoint}/api/v4/channels/${canalId}/members`,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          data: {
-            'user_id': idUser,
-          }
-        });
+        const resultJoinChannel = await joinChannel(mattermost, token, canalId, idUser);
         logger.info(resultJoinChannel);
       });
 

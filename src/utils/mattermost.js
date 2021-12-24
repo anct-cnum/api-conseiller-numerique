@@ -21,6 +21,21 @@ const loginAPI = async ({ mattermost }) => {
   return resultLogin.request.res.headers.token;
 };
 
+const getChannel = async (mattermost, token, channelName) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'get',
+    url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/channels/name/${channelName}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 const joinChannel = async (mattermost, token, idChannel, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
@@ -325,6 +340,7 @@ const searchUser = async (mattermost, token, conseiller) => {
 module.exports = {
   slugifyName,
   loginAPI,
+  getChannel,
   createAccount,
   updateAccountPassword,
   deleteAccount,
