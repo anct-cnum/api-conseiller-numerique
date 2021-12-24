@@ -12,7 +12,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
   let count = 0;
   const conseillers = await db.collection('conseillers').find({
     'mattermost.error': true,
-    'mattermost.errorMessage': ''
+    'mattermost.errorMessage': { $exists: true }
   }).toArray();
 
   for (const conseiller of conseillers) {
@@ -39,7 +39,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
   }
   logger.info('Suppression des mattermost.errorMessage pour les mattermost.error qui sont à false');
   // eslint-disable-next-line max-len
-  await db.collection('conseillers').updateMany({ 'mattermost.error': false, 'mattermost.errorMessage': { $exists: true} }, { $unset: { 'mattermost.errorMessage': '' } });
+  await db.collection('conseillers').updateMany({ 'mattermost.error': false, 'mattermost.errorMessage': '' }, { $unset: { 'mattermost.errorMessage': '' } });
 
   logger.info(`[MATTERMOST] ${count} conseillers corrigés`);
 });

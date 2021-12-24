@@ -379,7 +379,6 @@ const joinFixTeam = (db, logger, Sentry, mattermost, token) => async conseiller 
     if (hub !== null) {
       joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
     }
-    // eslint-disable-next-line max-len
     return true;
   } catch (e) {
     Sentry.captureException(e);
