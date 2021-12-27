@@ -71,6 +71,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             'structureObj.idPG': structureId,
             'statut': 'recrutee'
           });
+          const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+          const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           if (alreadyRecruted > 0) {
             logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
@@ -99,10 +101,13 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
             reject();
+          // eslint-disable-next-line max-len
+          } else if ((dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY') === dayjs(dateFinFormation).format('DD/MM/YYYY')) && (idPGConseiller === conseillerOriginal.idPG)) {
+            // eslint-disable-next-line max-len
+            logger.error(`La date indiqué dans le fichier:${dateFinFormation} est le même que celui en base:${dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY')} pour le conseiller avec l'id: ${idPGConseiller}`);
+            errors++;
+            reject();
           } else {
-            const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
-            const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
-
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
             await updateConseillersPG(conseillerOriginal.email, false);
 
