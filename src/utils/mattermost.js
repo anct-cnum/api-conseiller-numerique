@@ -151,6 +151,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     }
     if (hub !== null) {
       joinChannel(mattermost, token, hub.channelId, mattermostSet.id);
+      await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
+        $set: { 'mattermost.hubJoined': true }
+      });
     }
 
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${mattermostSet.id}`);
