@@ -48,6 +48,9 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       }
       if (hub !== null) {
         joinChannel(mattermost, token, hub.channelId, idUser);
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
+          $set: { 'mattermost.hubJoined': true }
+        });
       }
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
         $set: {
