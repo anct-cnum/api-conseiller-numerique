@@ -71,8 +71,10 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             'structureObj.idPG': structureId,
             'statut': 'recrutee'
           });
-          const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+          let dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+          dateFinFormation = dayjs(dateFinFormation).format('DD/MM/YYYY');
+          const dateFinFormationConseiller = dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY');
           if (alreadyRecruted > 0) {
             logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
@@ -101,10 +103,9 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
             reject();
-          // eslint-disable-next-line max-len
-          } else if ((dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY') === dayjs(dateFinFormation).format('DD/MM/YYYY')) && (idPGConseiller === conseillerOriginal.idPG)) {
+          } else if ((dateFinFormationConseiller === dateFinFormation) && (idPGConseiller === conseillerOriginal.idPG)) {
             // eslint-disable-next-line max-len
-            logger.error(`La date indiqué dans le fichier:${dateFinFormation} est le même que celui en base:${dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY')} pour le conseiller avec l'id: ${idPGConseiller}`);
+            logger.error(`La date indiquée dans le fichier:${dateFinFormation} est le même que celui en base:${dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY')} pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
             reject();
           } else {
