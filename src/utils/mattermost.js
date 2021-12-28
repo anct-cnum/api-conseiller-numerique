@@ -21,6 +21,21 @@ const loginAPI = async ({ mattermost }) => {
   return resultLogin.request.res.headers.token;
 };
 
+const getChannel = async (mattermost, token, channelName) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'get',
+    url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/channels/name/${channelName}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 const joinChannel = async (mattermost, token, idChannel, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
@@ -136,6 +151,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     }
     if (hub !== null) {
       joinChannel(mattermost, token, hub.channelId, mattermostSet.id);
+      await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
+        $set: { 'mattermost.hubJoined': true }
+      });
     }
 
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${mattermostSet.id}`);
@@ -325,6 +343,7 @@ const searchUser = async (mattermost, token, conseiller) => {
 module.exports = {
   slugifyName,
   loginAPI,
+  getChannel,
   createAccount,
   updateAccountPassword,
   deleteAccount,
@@ -333,5 +352,5 @@ module.exports = {
   joinTeam,
   deleteArchivedChannels,
   searchUser,
-  patchLogin
+  patchLogin,
 };
