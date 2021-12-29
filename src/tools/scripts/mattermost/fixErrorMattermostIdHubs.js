@@ -15,7 +15,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
   let count = 0;
   let countError = 0;
   const conseillers = await db.collection('conseillers').find({
-    'mattermost.error': false,
+    'mattermost.error': true,
     'mattermost.errorMessage': { $exists: true }
   }).toArray();
 
