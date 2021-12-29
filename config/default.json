@@ -71,11 +71,6 @@
     "endPoint": "https://api.gandi.net/v5/email",
     "domain": "conseiller-numerique.fr"
   },
-  "metabase_pix": {
-    "endPoint": "PIX_METABASE_ENDPOINT",
-    "login": "PIX_METABASE_LOGIN",
-    "password": "PIX_METABASE_PASSWORD"
-  },
   "sentry": {
     "enabled": "false",
     "environment": "local",
