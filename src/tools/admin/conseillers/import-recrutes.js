@@ -73,22 +73,36 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
           });
           const dateFinFormation = conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
-          const dateFinFormationFichier = dayjs(dateFinFormation).format('DD/MM/YYYY');
-          const dateFinFormationConseiller = dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY');
-          if (alreadyRecruted > 0) {
-            if ((dateFinFormationConseiller !== dateFinFormationFichier) && (idPGConseiller === conseillerOriginal.idPG)) {
-              // eslint-disable-next-line max-len
-              logger.info(`La date indiquée dans le fichier:${dateFinFormationFichier} n'est pas identique que celui en base:${dayjs(conseillerOriginal.dateFinFormation).format('DD/MM/YYYY')} pour le conseiller avec l'id: ${idPGConseiller}`);
-              await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, { $set: {
-                dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate()
-              } });
-              await db.collection('misesEnRelation').updateOne({ 'conseiller.$id': conseillerOriginal._id, 'statut': 'finalisee' }, {
-                $set: {
-                  'conseillerObj.dateFinFormation': dayjs(dateFinFormation, 'YYYY-MM-DD').toDate()
-                } });
-            }
+          const formatDate = date => dayjs(date).format('DD/MM/YYYY');
+          const date = date => dayjs(date, 'YYYY-MM-DD').toDate();
+
+          if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
+            logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
+            errors++;
+            reject();
+          } else if (alreadyRecruted > 0) {
             logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
+            // eslint-disable-next-line max-len
+            if (((formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation)) || (formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste))) && (idPGConseiller === conseillerOriginal.idPG)) {
+              // eslint-disable-next-line max-len
+              const loggerDateFinFormation = `La date fin formation indiquée dans le fichier:${formatDate(dateFinFormation)} n'est pas identique que celui en base:${formatDate(conseillerOriginal.dateFinFormation)}`;
+              // eslint-disable-next-line max-len
+              const loggerDatePrisePoste = `La date Prise de poste indiquée dans le fichier:${formatDate(datePrisePoste)} n'est pas identique que celui en base:${formatDate(conseillerOriginal.datePrisePoste)}`;
+              const loggerDateFin = `${formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation) ? loggerDateFinFormation : ''}`;
+              const loggerDateDebut = `${formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste) ? loggerDatePrisePoste : ''}`;
+              logger.info(`${loggerDateFin} ${loggerDateDebut} pour le conseiller avec l'id: ${idPGConseiller}`);
+              await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, {
+                $set: {
+                  datePrisePoste: date(datePrisePoste),
+                  dateFinFormation: date(dateFinFormation)
+                } });
+              await db.collection('misesEnRelation').updateOne({ 'conseiller.$id': conseillerOriginal._id, 'statut': 'finalisee' }, {
+                $set: {
+                  'conseillerObj.datePrisePoste': date(datePrisePoste),
+                  'conseillerObj.dateFinFormation': date(dateFinFormation)
+                } });
+            }
             reject();
           } else if (conseillerOriginal === null) {
             logger.error(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
@@ -108,10 +122,6 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
           } else if (miseEnRelation === null) {
             logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
-            errors++;
-            reject();
-          } else if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
-            logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
             reject();
           } else {
@@ -159,8 +169,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               statut: 'RECRUTE',
               disponible: false,
               estRecrute: true,
-              datePrisePoste: dayjs(datePrisePoste, 'YYYY-MM-DD').toDate(),
-              dateFinFormation: dayjs(dateFinFormation, 'YYYY-MM-DD').toDate(),
+              datePrisePoste: date(datePrisePoste),
+              dateFinFormation: date(dateFinFormation),
               structureId: structure._id,
               userCreated: true
             } });
