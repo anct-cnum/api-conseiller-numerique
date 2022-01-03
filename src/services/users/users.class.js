@@ -277,6 +277,11 @@ exports.Users = class Users extends Service {
         }).toJSON());
         return;
       }
+      const { departement, regionCode } = req.body.niveau;
+      if (!departement && !regionCode) {
+        res.status(400).json(new BadRequest('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+        return;
+      }
       req.body.emails.forEach(async email => {
         app.get('mongoClient').then(async db => {
           const verificationEmail = await db.collection('users').countDocuments({ name: email });
@@ -295,7 +300,6 @@ exports.Users = class Users extends Service {
           passwordCreated: false,
           createdAt: new Date()
         };
-        const { departement, regionCode } = req.body.invitation;
         if (departement) {
           userInfo.departement = departement;
         } else {
