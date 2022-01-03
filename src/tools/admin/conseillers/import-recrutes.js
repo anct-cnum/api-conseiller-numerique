@@ -91,7 +91,12 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
               const loggerDatePrisePoste = `La date Prise de poste indiquée dans le fichier:${formatDate(datePrisePoste)} n'est pas identique que celui en base:${formatDate(conseillerOriginal.datePrisePoste)}`;
               const loggerDateFin = `${formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation) ? loggerDateFinFormation : ''}`;
               const loggerDateDebut = `${formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste) ? loggerDatePrisePoste : ''}`;
-              logger.info(`${loggerDateFin} ${loggerDateDebut} pour le conseiller avec l'id: ${idPGConseiller}`);
+              if (loggerDateFin !== '') {
+                logger.info(`${loggerDateFin} pour le conseiller avec l'id: ${idPGConseiller}`);
+              }
+              if (loggerDateDebut !== '') {
+                logger.info(`${loggerDateDebut} pour le conseiller avec l'id: ${idPGConseiller}`);
+              }
               await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, {
                 $set: {
                   datePrisePoste: date(datePrisePoste),
