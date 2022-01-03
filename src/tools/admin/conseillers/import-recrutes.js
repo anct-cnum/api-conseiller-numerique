@@ -84,7 +84,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
             logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
             // eslint-disable-next-line max-len
-            if (((formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation)) || (formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste))) && (idPGConseiller === conseillerOriginal.idPG)) {
+            if (((formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation)) || (formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste)))) {
               // eslint-disable-next-line max-len
               const loggerDateFinFormation = `La date fin formation indiquée dans le fichier:${formatDate(dateFinFormation)} n'est pas identique que celui en base:${formatDate(conseillerOriginal.dateFinFormation)}`;
               // eslint-disable-next-line max-len
@@ -97,7 +97,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
                   datePrisePoste: date(datePrisePoste),
                   dateFinFormation: date(dateFinFormation)
                 } });
-              await db.collection('misesEnRelation').updateOne({ 'conseiller.$id': conseillerOriginal._id, 'statut': 'finalisee' }, {
+              await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseillerOriginal._id }, {
                 $set: {
                   'conseillerObj.datePrisePoste': date(datePrisePoste),
                   'conseillerObj.dateFinFormation': date(dateFinFormation)
