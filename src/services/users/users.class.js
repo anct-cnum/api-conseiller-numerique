@@ -290,12 +290,17 @@ exports.Users = class Users extends Service {
         let userInfo = {
           name: email.toLowerCase(),
           roles: ['prefet'],
-          departement: req.body.departement,
           token: uuidv4(),
           tokenCreatedAt: new Date(),
           passwordCreated: false,
           createdAt: new Date()
         };
+        const { departement, regionCode } = req.body.invitation;
+        if (departement) {
+          userInfo.departement = departement;
+        } else {
+          userInfo.region = regionCode;
+        }
         await app.service('users').create(userInfo);
         res.send({ status: 'compte créé' });
       });
