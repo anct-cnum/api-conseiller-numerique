@@ -299,21 +299,26 @@ exports.Users = class Users extends Service {
           }
         }
       }
+      let promises = [];
       await emails.forEach(async email => {
-        const schema = await validationEmailPrefet(Joi)(email);
-        if (schema.error) {
-          console.log('je suis dans lerreur');
-          res.status(400).send(new BadRequest(schema.error));
-          return;
-        }
-        app.get('mongoClient').then(async db => {
-          const verificationEmail = await db.collection('users').countDocuments({ name: email });
-          if (verificationEmail !== 0) {
-            res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
-            return;
-          }
+        await app.get('mongoClient').then(async db => {
+          promises.push(new Promise(async resolve => {
+            const schema = await validationEmailPrefet(Joi)(email);
+            if (schema.error) {
+              console.log('je suis dans lerreur');
+              res.status(400).send(new BadRequest(schema.error));
+              return;
+            }
+            const verificationEmail = await db.collection('users').countDocuments({ name: email });
+            if (verificationEmail !== 0) {
+              res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
+              return;
+            }
+            resolve();
+          }));
         });
       });
+      await Promise.all(promises);
       await emails.forEach(async email => {
         let userInfo = {
           name: email.toLowerCase(),
@@ -329,10 +334,9 @@ exports.Users = class Users extends Service {
           userInfo.region = regionCode;
         }
         await app.service('users').create(userInfo);
-        res.send({ status: 'compte créé' }).toJSON();
       });
+      res.send({ status: 'compte créé' });
     });
-
     app.post('/users/inviteStructure', async (req, res) => {
       const email = req.body.email;
       const structureId = req.body.structureId;
