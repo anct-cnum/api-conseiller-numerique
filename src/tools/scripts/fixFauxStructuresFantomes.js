@@ -23,7 +23,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           'statut': { $in: ['interessee', 'recrutee', 'finalisee']
           } }
         );
-        if (nombreMiseEnRelation) {
+        if (nombreMiseEnRelation > 0) {
           await db.collection('users').updateOne(
             { _id: user._id },
             { $set: { passwordCreated: true } }
