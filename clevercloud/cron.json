@@ -6,7 +6,6 @@
   "*/5 * * * * $ROOT/src/tools/jobs/send-email-structures.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh",
   "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
-  "0 3 1 * * $ROOT/src/tools/jobs/stats-monthly-cras.sh",
   "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/create-account-candidats.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-candidats.sh",
