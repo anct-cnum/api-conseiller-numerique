@@ -235,7 +235,7 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
 };
 
-const createChannel = async (mattermost, token, name) => {
+const createChannel = async (mattermost, token, teamId, name) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
@@ -248,7 +248,7 @@ const createChannel = async (mattermost, token, name) => {
       'Authorization': `Bearer ${token}`
     },
     data: {
-      'team_id': mattermost.teamId,
+      'team_id': teamId,
       'name': slugifyName(name),
       'display_name': name,
       'type': 'P'
