@@ -16,7 +16,6 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
     if (hubCount === 0) {
       const result = await createChannel(mattermost, token, mattermost.hubTeamId, hub.name);
       hub.channelId = result.data.id;
-      console.log(hub);
       await db.collection('hubs').insertOne(hub);
     }
   }
