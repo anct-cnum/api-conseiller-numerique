@@ -3,7 +3,7 @@
     "num_dep": "01",
     "dep_name": "Ain",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -16,7 +16,7 @@
     "num_dep": "02",
     "dep_name": "Aisne",
     "insee_reg": "32",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -29,7 +29,7 @@
     "num_dep": "03",
     "dep_name": "Allier",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -42,7 +42,7 @@
     "num_dep": "04",
     "dep_name": "Alpes-de-Haute-Provence",
     "insee_reg": "93",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -55,7 +55,7 @@
     "num_dep": "05",
     "dep_name": "Hautes-Alpes",
     "insee_reg": "93",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -68,7 +68,7 @@
     "num_dep": "06",
     "dep_name": "Alpes-Maritimes",
     "insee_reg": "93",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -81,7 +81,7 @@
     "num_dep": "07",
     "dep_name": "Ardèche",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -94,7 +94,7 @@
     "num_dep": "08",
     "dep_name": "Ardennes",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -107,7 +107,7 @@
     "num_dep": "09",
     "dep_name": "Ariège",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -120,7 +120,7 @@
     "num_dep": "10",
     "dep_name": "Aube",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -133,7 +133,7 @@
     "num_dep": "11",
     "dep_name": "Aude",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -146,7 +146,7 @@
     "num_dep": "12",
     "dep_name": "Aveyron",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -159,7 +159,7 @@
     "num_dep": "13",
     "dep_name": "Bouches-du-Rhône",
     "insee_reg": "93",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -172,7 +172,7 @@
     "num_dep": "14",
     "dep_name": "Calvados",
     "insee_reg": "28",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -185,7 +185,7 @@
     "num_dep": "15",
     "dep_name": "Cantal",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -198,7 +198,7 @@
     "num_dep": "16",
     "dep_name": "Charente",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -211,7 +211,7 @@
     "num_dep": "17",
     "dep_name": "Charente-Maritime",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -224,7 +224,7 @@
     "num_dep": "18",
     "dep_name": "Cher",
     "insee_reg": "24",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -237,7 +237,7 @@
     "num_dep": "19",
     "dep_name": "Corrèze",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -250,7 +250,7 @@
     "num_dep": "21",
     "dep_name": "Côte-d'Or",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -263,7 +263,7 @@
     "num_dep": "22",
     "dep_name": "Côtes-d'Armor",
     "insee_reg": "53",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -276,7 +276,7 @@
     "num_dep": "23",
     "dep_name": "Creuse",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -289,7 +289,7 @@
     "num_dep": "24",
     "dep_name": "Dordogne",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -302,7 +302,7 @@
     "num_dep": "25",
     "dep_name": "Doubs",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -315,7 +315,7 @@
     "num_dep": "26",
     "dep_name": "Drôme",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -328,7 +328,7 @@
     "num_dep": "27",
     "dep_name": "Eure",
     "insee_reg": "28",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -341,7 +341,7 @@
     "num_dep": "28",
     "dep_name": "Eure-et-Loir",
     "insee_reg": "24",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -354,7 +354,7 @@
     "num_dep": "29",
     "dep_name": "Finistère",
     "insee_reg": "53",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -367,7 +367,7 @@
     "num_dep": "2A",
     "dep_name": "Corse-du-Sud",
     "insee_reg": "94",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -380,7 +380,7 @@
     "num_dep": "2B",
     "dep_name": "Haute-Corse",
     "insee_reg": "94",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -393,7 +393,7 @@
     "num_dep": "30",
     "dep_name": "Gard",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -406,7 +406,7 @@
     "num_dep": "31",
     "dep_name": "Haute-Garonne",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -419,7 +419,7 @@
     "num_dep": "32",
     "dep_name": "Gers",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -432,7 +432,7 @@
     "num_dep": "33",
     "dep_name": "Gironde",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -445,7 +445,7 @@
     "num_dep": "34",
     "dep_name": "Hérault",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -458,7 +458,7 @@
     "num_dep": "35",
     "dep_name": "Ille-et-Vilaine",
     "insee_reg": "53",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -471,7 +471,7 @@
     "num_dep": "36",
     "dep_name": "Indre",
     "insee_reg": "24",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -484,7 +484,7 @@
     "num_dep": "37",
     "dep_name": "Indre-et-Loire",
     "insee_reg": "24",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -497,7 +497,7 @@
     "num_dep": "38",
     "dep_name": "Isère",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -510,7 +510,7 @@
     "num_dep": "39",
     "dep_name": "Jura",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -523,7 +523,7 @@
     "num_dep": "40",
     "dep_name": "Landes",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -536,7 +536,7 @@
     "num_dep": "41",
     "dep_name": "Loir-et-Cher",
     "insee_reg": "24",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -549,7 +549,7 @@
     "num_dep": "42",
     "dep_name": "Loire",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -562,7 +562,7 @@
     "num_dep": "43",
     "dep_name": "Haute-Loire",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -575,7 +575,7 @@
     "num_dep": "44",
     "dep_name": "Loire-Atlantique",
     "insee_reg": "52",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -588,7 +588,7 @@
     "num_dep": "45",
     "dep_name": "Loiret",
     "insee_reg": "24",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -601,7 +601,7 @@
     "num_dep": "46",
     "dep_name": "Lot",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -614,7 +614,7 @@
     "num_dep": "47",
     "dep_name": "Lot-et-Garonne",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -627,7 +627,7 @@
     "num_dep": "48",
     "dep_name": "Lozère",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -640,7 +640,7 @@
     "num_dep": "49",
     "dep_name": "Maine-et-Loire",
     "insee_reg": "52",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -653,7 +653,7 @@
     "num_dep": "50",
     "dep_name": "Manche",
     "insee_reg": "28",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -666,7 +666,7 @@
     "num_dep": "51",
     "dep_name": "Marne",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -679,7 +679,7 @@
     "num_dep": "52",
     "dep_name": "Haute-Marne",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -692,7 +692,7 @@
     "num_dep": "53",
     "dep_name": "Mayenne",
     "insee_reg": "52",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -705,7 +705,7 @@
     "num_dep": "54",
     "dep_name": "Meurthe-et-Moselle",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -718,7 +718,7 @@
     "num_dep": "55",
     "dep_name": "Meuse",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -731,7 +731,7 @@
     "num_dep": "56",
     "dep_name": "Morbihan",
     "insee_reg": "53",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -744,7 +744,7 @@
     "num_dep": "57",
     "dep_name": "Moselle",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -757,7 +757,7 @@
     "num_dep": "58",
     "dep_name": "Nièvre",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -770,7 +770,7 @@
     "num_dep": "59",
     "dep_name": "Nord",
     "insee_reg": "32",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -783,7 +783,7 @@
     "num_dep": "60",
     "dep_name": "Oise",
     "insee_reg": "32",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -796,7 +796,7 @@
     "num_dep": "61",
     "dep_name": "Orne",
     "insee_reg": "28",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -809,7 +809,7 @@
     "num_dep": "62",
     "dep_name": "Pas-de-Calais",
     "insee_reg": "32",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -822,7 +822,7 @@
     "num_dep": "63",
     "dep_name": "Puy-de-Dôme",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -835,7 +835,7 @@
     "num_dep": "64",
     "dep_name": "Pyrénées-Atlantiques",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -848,7 +848,7 @@
     "num_dep": "65",
     "dep_name": "Hautes-Pyrénées",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -861,7 +861,7 @@
     "num_dep": "66",
     "dep_name": "Pyrénées-Orientales",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -874,7 +874,7 @@
     "num_dep": "67",
     "dep_name": "Bas-Rhin",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -887,7 +887,7 @@
     "num_dep": "68",
     "dep_name": "Haut-Rhin",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -900,7 +900,7 @@
     "num_dep": "69",
     "dep_name": "Rhône",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -913,7 +913,7 @@
     "num_dep": "70",
     "dep_name": "Haute-Saône",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -926,7 +926,7 @@
     "num_dep": "71",
     "dep_name": "Saône-et-Loire",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -939,7 +939,7 @@
     "num_dep": "72",
     "dep_name": "Sarthe",
     "insee_reg": "52",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -952,7 +952,7 @@
     "num_dep": "73",
     "dep_name": "Savoie",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -965,7 +965,7 @@
     "num_dep": "74",
     "dep_name": "Haute-Savoie",
     "insee_reg": "84",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -978,7 +978,7 @@
     "num_dep": "75",
     "dep_name": "Paris",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -991,7 +991,7 @@
     "num_dep": "76",
     "dep_name": "Seine-Maritime",
     "insee_reg": "28",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1004,7 +1004,7 @@
     "num_dep": "77",
     "dep_name": "Seine-et-Marne",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1017,7 +1017,7 @@
     "num_dep": "78",
     "dep_name": "Yvelines",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1030,7 +1030,7 @@
     "num_dep": "79",
     "dep_name": "Deux-Sèvres",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1043,7 +1043,7 @@
     "num_dep": "80",
     "dep_name": "Somme",
     "insee_reg": "32",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1056,7 +1056,7 @@
     "num_dep": "81",
     "dep_name": "Tarn",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1069,7 +1069,7 @@
     "num_dep": "82",
     "dep_name": "Tarn-et-Garonne",
     "insee_reg": "76",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1082,7 +1082,7 @@
     "num_dep": "83",
     "dep_name": "Var",
     "insee_reg": "93",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1095,7 +1095,7 @@
     "num_dep": "84",
     "dep_name": "Vaucluse",
     "insee_reg": "93",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1108,7 +1108,7 @@
     "num_dep": "85",
     "dep_name": "Vendée",
     "insee_reg": "52",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1121,7 +1121,7 @@
     "num_dep": "86",
     "dep_name": "Vienne",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1134,7 +1134,7 @@
     "num_dep": "87",
     "dep_name": "Haute-Vienne",
     "insee_reg": "75",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1147,7 +1147,7 @@
     "num_dep": "88",
     "dep_name": "Vosges",
     "insee_reg": "44",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1160,7 +1160,7 @@
     "num_dep": "89",
     "dep_name": "Yonne",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1173,7 +1173,7 @@
     "num_dep": "90",
     "dep_name": "Territoire de Belfort",
     "insee_reg": "27",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1186,7 +1186,7 @@
     "num_dep": "91",
     "dep_name": "Essonne",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1199,7 +1199,7 @@
     "num_dep": "92",
     "dep_name": "Hauts-de-Seine",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1212,7 +1212,7 @@
     "num_dep": "93",
     "dep_name": "Seine-Saint-Denis",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1225,7 +1225,7 @@
     "num_dep": "94",
     "dep_name": "Val-de-Marne",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1238,7 +1238,7 @@
     "num_dep": "95",
     "dep_name": "Val-d'Oise",
     "insee_reg": "11",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1251,7 +1251,7 @@
     "num_dep": "971",
     "dep_name": "Guadeloupe",
     "insee_reg": "01",
-    "boundingZoom": 13,
+    "boundingZoom": 11,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1264,7 +1264,7 @@
     "num_dep": "972",
     "dep_name": "Martinique",
     "insee_reg": "02",
-    "boundingZoom": 13,
+    "boundingZoom": 11,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1277,7 +1277,7 @@
     "num_dep": "973",
     "dep_name": "Guyane",
     "insee_reg": "03",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1290,7 +1290,7 @@
     "num_dep": "974",
     "dep_name": "La Réunion",
     "insee_reg": "04",
-    "boundingZoom": 13,
+    "boundingZoom": 10,
     "geometry":   {
     "type": "Point",
     "coordinates": [
@@ -1303,7 +1303,7 @@
     "num_dep": "976",
     "dep_name": "Mayotte",
     "insee_reg": "06",
-    "boundingZoom": 13,
+    "boundingZoom": 11,
     "geometry":   {
     "type": "Point",
     "coordinates": [
