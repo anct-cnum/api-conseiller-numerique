@@ -67,6 +67,26 @@ const patchApiMattermostLogin = ({ Sentry, logger, db, mattermost }) => ({ conse
   return patchLogin({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError })({ conseiller, userIdentity });
 };
 
+const validationEmailPrefet = Joi => async email => {
+  const schema = await Joi.object({
+    email: Joi.string().required().email().error(new Error('Le format de l\'email est invalide')),
+  }).validate({ email });
+  return schema;
+};
+const validationCodeRegion = Joi => niveau => {
+  const schema = Joi.object({
+    regionCode: Joi.string().max(3).error(new Error('Le code région est invalide'))
+  }).validate(niveau);
+  return schema;
+};
+
+const validationCodeDepartement = Joi => niveau => {
+  const schema = Joi.object({
+    departement: Joi.string().max(3).error(new Error('Le code département est invalide'))
+  }).validate(niveau);
+  return schema;
+};
+
 module.exports = {
   misesAJourMongo,
   misesAJourPg,
@@ -74,5 +94,8 @@ module.exports = {
   getConseiller,
   patchLoginMattermostMongo,
   patchLoginMattermostMongoError,
-  patchApiMattermostLogin
+  patchApiMattermostLogin,
+  validationEmailPrefet,
+  validationCodeRegion,
+  validationCodeDepartement
 };

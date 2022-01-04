@@ -10,7 +10,8 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-const { misesAJourPg, misesAJourMongo, historisationMongo, getConseiller, patchApiMattermostLogin } = require('./users.repository');
+const { misesAJourPg, misesAJourMongo, historisationMongo,
+  getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -277,12 +278,34 @@ exports.Users = class Users extends Service {
         }).toJSON());
         return;
       }
-      const { departement, regionCode } = req.body.niveau;
+      const { niveau, emails } = req.body;
+      const { departement, regionCode } = niveau;
       if (!departement && !regionCode) {
-        res.status(400).json(new BadRequest('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+        res.status(400).send(new BadRequest('Une erreur s\'est produite, veuillez réessayez plus tard !'));
         return;
+      } else {
+        if (departement) {
+          const schemaDeparetement = await validationCodeDepartement(Joi)(niveau);
+          if (schemaDeparetement.error) {
+            res.status(400).send(new BadRequest(schemaDeparetement.error));
+            return;
+          }
+        }
+        if (regionCode) {
+          const schemaRegion = await validationCodeRegion(Joi)(niveau);
+          if (schemaRegion.error) {
+            res.status(400).send(new BadRequest(schemaRegion.error));
+            return;
+          }
+        }
       }
-      req.body.emails.forEach(async email => {
+      await emails.forEach(async email => {
+        const schema = await validationEmailPrefet(Joi)(email);
+        if (schema.error) {
+          console.log('je suis dans lerreur');
+          res.status(400).send(new BadRequest(schema.error));
+          return;
+        }
         app.get('mongoClient').then(async db => {
           const verificationEmail = await db.collection('users').countDocuments({ name: email });
           if (verificationEmail !== 0) {
@@ -291,7 +314,7 @@ exports.Users = class Users extends Service {
           }
         });
       });
-      req.body.emails.forEach(async email => {
+      await emails.forEach(async email => {
         let userInfo = {
           name: email.toLowerCase(),
           roles: ['prefet'],
@@ -306,7 +329,7 @@ exports.Users = class Users extends Service {
           userInfo.region = regionCode;
         }
         await app.service('users').create(userInfo);
-        res.send({ status: 'compte créé' });
+        res.send({ status: 'compte créé' }).toJSON();
       });
     });
 
