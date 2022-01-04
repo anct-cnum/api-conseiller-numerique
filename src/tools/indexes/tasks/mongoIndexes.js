@@ -80,66 +80,6 @@ module.exports = {
       db.collection('stats_daily_cras').createIndex({ 'date': 1 }),
     ]);
   },
-  stats_filtres: db => {
-    return Promise.all([
-      db.collection('stats_filtres').createIndex({ 'codeDepartement': 1 }),
-      db.collection('stats_filtres').createIndex({ 'departement': 1 }),
-      db.collection('stats_filtres').createIndex({ 'region': 1 }),
-      db.collection('stats_filtres').createIndex({ 'data.numeroDepartement': 1 }),
-      db.collection('stats_filtres').createIndex({ 'data.departement': 1 }),
-      db.collection('stats_filtres').createIndex({ 'data.region': 1 })
-    ]);
-  },
-  stats_PostesValidesDepartement: db => {
-    return Promise.all([
-      db.collection('stats_PostesValidesDepartement').createIndex({ 'date': 1 }, { unique: true }),
-      db.collection('stats_PostesValidesDepartement').createIndex({ 'data.numeroDepartement': 1 }),
-      db.collection('stats_PostesValidesDepartement').createIndex({ 'data.region': 1 })
-    ]);
-  },
-  stats_ConseillersRecrutesDepartement: db => {
-    return Promise.all([
-      db.collection('stats_ConseillersRecrutesDepartement').createIndex({ 'date': 1 }, { unique: true }),
-      db.collection('stats_ConseillersRecrutesDepartement').createIndex({ 'data.numeroDepartement': 1 }),
-      db.collection('stats_ConseillersRecrutesDepartement').createIndex({ 'data.region': 1 })
-    ]);
-  },
-  stats_ConseillersFinalisesDepartement: db => {
-    return Promise.all([
-      db.collection('stats_ConseillersFinalisesDepartement').createIndex({ 'date': 1 }, { unique: true }),
-      db.collection('stats_ConseillersFinalisesDepartement').createIndex({ 'data.numeroDepartement': 1 }),
-      db.collection('stats_ConseillersFinalisesDepartement').createIndex({ 'data.region': 1 })
-    ]);
-  },
-  stats_ConseillersEnPosteDepartement: db => {
-    return Promise.all([
-      db.collection('stats_ConseillersEnPosteDepartement').createIndex({ 'date': 1 }, { unique: true }),
-      db.collection('stats_ConseillersEnPosteDepartement').createIndex({ 'data.numeroDepartement': 1 }),
-      db.collection('stats_ConseillersEnPosteDepartement').createIndex({ 'data.region': 1 })
-    ]);
-  },
-  stats_Candidats: db => {
-    return Promise.all([
-      db.collection('stats_Candidats').createIndex({ 'date': 1 }, { unique: true }),
-      db.collection('stats_Candidats').createIndex({ 'data.numeroDepartement': 1 }),
-      db.collection('stats_Candidats').createIndex({ 'data.region': 1 })
-    ]);
-  },
-  stats_StructuresCandidates: db => {
-    return Promise.all([
-      db.collection('stats_StructuresCandidates').createIndex({ 'date': 1 }, { unique: true }),
-      db.collection('stats_StructuresCandidates').createIndex({ 'data.numeroDepartement': 1 }),
-      db.collection('stats_StructuresCandidates').createIndex({ 'data.region': 1 })
-    ]);
-  },
-  stats_StructuresValidees: db => {
-    return Promise.all([
-      db.collection('stats_StructuresValidees').createIndex({ 'idStructure': 1 }, { unique: true }),
-      db.collection('stats_StructuresValidees').createIndex({ 'estGrandReseau': 1 }),
-      db.collection('stats_StructuresValidees').createIndex({ 'codeDepartement': 1 }),
-      db.collection('stats_StructuresValidees').createIndex({ 'region': 1 })
-    ]);
-  },
   stats_Territoires: db => {
     return Promise.all([
       db.collection('stats_Territoires').createIndex({ 'date': 1 }),
