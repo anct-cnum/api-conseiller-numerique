@@ -2,7 +2,7 @@
 'use strict';
 
 const { execute } = require('../../utils');
-const { loginAPI, joinChannel, joinTeam } = require('../../../utils/mattermost');
+const { loginAPI, joinChannel, joinTeam, createChannel } = require('../../../utils/mattermost');
 const { findDepartement } = require('../../../utils/geo');
 
 execute(__filename, async ({ app, db, logger, Sentry }) => {
@@ -10,13 +10,15 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
   const token = await loginAPI({ mattermost });
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  /*const hubs = require('../../../../data/imports/hubs.json');
-  await deleteArchivedChannels(mattermost, token);
+  const hubs = require('../../../../data/imports/hubs.json');
   for (const hub of hubs) {
-    const result = await createChannel(mattermost, token, hub.name);
-    hub.channelId = result.data.id;
-    await db.collection('hubs').insertOne(hub);
-  }*/
+    const hubCount = await db.collection('hubs').countDocuments({ name: hub.name });
+    if (hubCount === 0) {
+      const result = await createChannel(mattermost, token, mattermost.hubTeamId, hub.name);
+      hub.channelId = result.data.id;
+      await db.collection('hubs').insertOne(hub);
+    }
+  }
 
   let count = 0;
   const conseillers = await db.collection('conseillers').find({
@@ -56,7 +58,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       logger.error(e);
     }
 
-    // To avoid overload Mattermost API
+    //To avoid overload Mattermost API
     await sleep(500);
   }
 
