@@ -28,14 +28,16 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           'contact.email': user.name
         });
         if (nombreMiseEnRelation > 0) {
-          //condition pour changer uniquement les passwordCreated des users principal (on ignore les users multicompte)
-          if (structureEmailContact > 0) {
-            await db.collection('users').updateOne(
-              { _id: user._id },
-              { $set: { passwordCreated: true } }
-            );
-            logger.info(`La structure id=${user.entity.oid} est considéré comme "faux fantôme"`);
-            countCorrection++;
+          await db.collection('users').updateOne(
+            { _id: user._id },
+            { $set: { passwordCreated: true } }
+          );
+          countCorrection++;
+          //condition pour logger les users qui sont considéré 'multicompte' ou compte 'principal'
+          if (structureEmailContact === 0) {
+            logger.info(`La structure id=${user.entity.oid} avec le compte user id=${user._id} est considéré comme "faux fantôme" (Multicompte)`);
+          } else {
+            logger.info(`La structure id=${user.entity.oid} avec le compte user id=${user._id} est considéré comme "faux fantôme" (Principal)`);
           }
         } else {
           countOk++;
