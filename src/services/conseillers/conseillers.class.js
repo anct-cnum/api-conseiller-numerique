@@ -50,7 +50,7 @@ const { geolocatedConseillers } = require('./geolocalisation/core/geolocalisatio
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
 const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
-const { createHorairesAdresseToSchema, validateCreateHorairesAdresseSchema } = require('./create-horaires-adresse/utils/create-horaires-adresse.util');
+const { createHorairesAdresseToSchema, validateCreateHorairesAdresseSchema } = require('./create-horaires-adresse/utils/create-horaires-adresse.utils');
 const { setConseillerHorairesAndAdresse } = require('./create-horaires-adresse/repositories/conseiller.repository');
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
@@ -655,6 +655,5 @@ exports.Conseillers = class Conseillers extends Service {
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
-
   }
 };
