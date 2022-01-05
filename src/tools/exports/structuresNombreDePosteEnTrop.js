@@ -7,12 +7,12 @@ const { execute } = require('../utils');
 const utils = require('../../utils/index');
 
 execute(__filename, async ({ logger, db }) => {
-  const users = await db.collection('users').find({ roles: { $elemMatch: { $eq: 'structure' } } }).limit(5).toArray();
+  const users = await db.collection('users').find({ roles: { $in: ['structure'] } }).toArray();
   let promises = [];
   let countInvalide = 0;
   let countOk = 0;
   logger.info(`Generating CSV file...`);
-  let csvFile = path.join(__dirname, '../../../data/exports', 'structures_nombre_de_post_en_trop.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'sa_nombre_de_poste.csv');
 
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
@@ -22,7 +22,7 @@ execute(__filename, async ({ logger, db }) => {
   users.forEach(user => {
     promises.push(new Promise(async resolve => {
       const structure = await db.collection('structures').findOne({ _id: user.entity.oid });
-      let dernierCoselec = utils.getCoselec(structure);
+      const dernierCoselec = utils.getCoselec(structure);
       const nombreMiseEnRelation = await db.collection('misesEnRelation').countDocuments({
         'structure.$id': user.entity.oid,
         'statut': { $in: ['recrutee', 'finalisee']
@@ -38,6 +38,6 @@ execute(__filename, async ({ logger, db }) => {
     }));
   });
   await Promise.all(promises);
-  logger.info(`${countInvalide} structure(s) ont un anomalie et ${countOk} où tout est ok`);
+  logger.info(`${countInvalide} ont dépassé le quota de postes attribués et ${countOk} structures sont OK`);
   file.close();
 });
