@@ -12,7 +12,7 @@ execute(__filename, async ({ logger, db }) => {
   let countInvalide = 0;
   let countOk = 0;
   logger.info(`Generating CSV file...`);
-  let csvFile = path.join(__dirname, '../../../data/exports', 'sa_nombre_de_poste.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'sa_quota_depasse.csv');
 
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
