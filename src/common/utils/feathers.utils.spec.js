@@ -1,4 +1,4 @@
-const { Forbidden, NotAuthenticated, Unprocessable, NotFound} = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, Unprocessable, NotFound } = require('@feathersjs/errors');
 const {
   authenticationGuard,
   rolesGuard,

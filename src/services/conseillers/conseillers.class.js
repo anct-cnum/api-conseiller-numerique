@@ -53,7 +53,7 @@ const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
-const {permanenceDetails} = require("./permanence/core/permanence-details.core");
+const { permanenceDetails } = require('./permanence/core/permanence-details.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {

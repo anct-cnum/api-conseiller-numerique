@@ -68,7 +68,7 @@ describe('détails de la permanence', () => {
     expect(details).toStrictEqual(expectedPermanenceDetails);
   });
 
-  it('devrait retourner le détail de la permanence correspondant à l\'identifiant de la structure sans information insee', async () => {
+  it('devrait retourner le détail de la permanence correspondant à l\'identifiant de la structure sans information de contact', async () => {
     const permanenceRepository = {
       getPermanenceByStructureId: () => ({
         nom: 'Aide rurale',
