@@ -23,13 +23,20 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           'statut': { $in: ['interessee', 'recrutee', 'finalisee', 'nonInteressee', 'finalisee_rupture']
           } }
         );
+        const structureEmailContact = await db.collection('structures').countDocuments({
+          '_id': user.entity.oid,
+          'contact.email': user.name
+        });
         if (nombreMiseEnRelation > 0) {
-          await db.collection('users').updateOne(
-            { _id: user._id },
-            { $set: { passwordCreated: true } }
-          );
-          logger.info(`La structure id=${user.entity.oid} est considéré comme "faux fantôme"`);
-          countCorrection++;
+          //condition pour changer uniquement les passwordCreated des users principal (on ignore les users multicompte)
+          if (structureEmailContact > 0) {
+            await db.collection('users').updateOne(
+              { _id: user._id },
+              { $set: { passwordCreated: true } }
+            );
+            logger.info(`La structure id=${user.entity.oid} est considéré comme "faux fantôme"`);
+            countCorrection++;
+          }
         } else {
           countOk++;
         }
