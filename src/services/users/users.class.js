@@ -300,25 +300,38 @@ exports.Users = class Users extends Service {
         }
       }
       let promises = [];
+      const errorConflict = email => res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
+      const errorBadRequestJoi = schema => res.status(400).send(new BadRequest(schema.error));
+      let emailForEach;
+      let emailMongoTrue = false;
+      let schemaJoi;
+      let errorValidationJoiTrue = false;
       await emails.forEach(async email => {
         await app.get('mongoClient').then(async db => {
           promises.push(new Promise(async resolve => {
             const schema = await validationEmailPrefet(Joi)(email);
             if (schema.error) {
-              console.log('je suis dans lerreur');
-              res.status(400).send(new BadRequest(schema.error));
+              schemaJoi = schema;
+              errorValidationJoiTrue = true;
               return;
             }
             const verificationEmail = await db.collection('users').countDocuments({ name: email });
             if (verificationEmail !== 0) {
-              res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
-              return;
+              emailForEach = email;
+              emailMongoTrue = true;
             }
             resolve();
           }));
         });
       });
       await Promise.all(promises);
+      if (errorValidationJoiTrue) {
+        errorBadRequestJoi(schemaJoi);
+        return;
+      } else if (emailMongoTrue) {
+        errorConflict(emailForEach);
+        return;
+      }
       await emails.forEach(async email => {
         let userInfo = {
           name: email.toLowerCase(),
