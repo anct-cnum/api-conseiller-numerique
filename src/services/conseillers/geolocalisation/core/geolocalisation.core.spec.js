@@ -12,16 +12,10 @@ describe('conseillers géolocalisés', () => {
             coordinates: [3.158667, 46.987344]
           },
           properties: {
-            conseiller: {
-              name: 'John Doe',
-              email: 'john.doe@conseiller-numerique.fr',
-            },
-            structure: {
-              name: 'Association pour la formation au numérique à Bessenay',
-              isLabeledFranceServices: true,
-              phone: '0474728936',
-              address: '6 rue de la Mairie, 69690 Bessenay'
-            }
+            id: '4c38ebc9a06fdd532bf9d7be',
+            name: 'Association pour la formation au numérique à Bessenay',
+            isLabeledFranceServices: true,
+            address: '6 rue de la Mairie, 69690 Bessenay'
           }
         },
         {
@@ -31,16 +25,10 @@ describe('conseillers géolocalisés', () => {
             coordinates: [1.963242, 48.622406]
           },
           properties: {
-            conseiller: {
-              name: 'Bob Doe',
-              email: 'bob.doe@conseiller-numerique.fr',
-            },
-            structure: {
-              name: 'Les artisans du numérique',
-              isLabeledFranceServices: false,
-              phone: '0116589632',
-              address: 'ZI les deux clochers, 62300 Lens'
-            }
+            id: '88bc36fb0db191928330b1e6',
+            name: 'Les artisans du numérique',
+            isLabeledFranceServices: false,
+            address: 'ZI les deux clochers, 62300 Lens'
           }
         }
       ]
@@ -48,17 +36,10 @@ describe('conseillers géolocalisés', () => {
 
     const getConseillerWithGeolocation = async () => [
       {
-        prenom: 'John',
-        nom: 'Doe',
-        emailCN: {
-          address: 'john.doe@conseiller-numerique.fr'
-        },
+        _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
           nom: 'Association pour la formation au numérique à Bessenay',
           estLabelliseFranceServices: 'OUI',
-          contact: {
-            telephone: '0474728936'
-          },
           coordonneesInsee: {
             type: 'Point',
             coordinates: [
@@ -90,17 +71,10 @@ describe('conseillers géolocalisés', () => {
         }
       },
       {
-        prenom: 'Bob',
-        nom: 'Doe',
-        emailCN: {
-          address: 'bob.doe@conseiller-numerique.fr'
-        },
+        _id: '88bc36fb0db191928330b1e6',
         structure: {
           nom: 'Les artisans du numérique',
           estLabelliseFranceServices: 'NON',
-          contact: {
-            telephone: '0116589632'
-          },
           coordonneesInsee: {
             type: 'Point',
             coordinates: [
@@ -134,128 +108,6 @@ describe('conseillers géolocalisés', () => {
     expect(conseillers).toStrictEqual(expectedConseillers);
   });
 
-  it('devrait retourner un conseiller dont la structure d\'accueil n\'a pas d\'information de contact', async () => {
-    const expectedConseillers = {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [3.158667, 46.987344]
-          },
-          properties: {
-            conseiller: {
-              name: 'John Doe',
-              email: 'john.doe@conseiller-numerique.fr',
-            },
-            structure: {
-              name: 'Association pour la formation au numérique à Bessenay',
-              isLabeledFranceServices: true,
-              address: '6 rue de la Mairie, 69690 Bessenay'
-            }
-          }
-        }
-      ]
-    };
-
-    const getConseillerWithGeolocation = async () => [
-      {
-        prenom: 'John',
-        nom: 'Doe',
-        emailCN: {
-          address: 'john.doe@conseiller-numerique.fr'
-        },
-        structure: {
-          nom: 'Association pour la formation au numérique à Bessenay',
-          estLabelliseFranceServices: 'OUI',
-          coordonneesInsee: {
-            type: 'Point',
-            coordinates: [
-              3.158667,
-              46.987344
-            ]
-          },
-          insee: {
-            etablissement: {
-              adresse: {
-                numero_voie: '6',
-                type_voie: 'rue',
-                nom_voie: 'de la Mairie',
-                code_postal: '69690',
-                localite: 'Bessenay',
-                code_insee_localite: '69194'
-              },
-            }
-          }
-        }
-      }
-    ];
-
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
-
-    expect(conseillers).toStrictEqual(expectedConseillers);
-  });
-
-  it('devrait retourner un conseiller qui n\'a pas d\'email cnfs', async () => {
-    const expectedConseillers = {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [3.158667, 46.987344]
-          },
-          properties: {
-            conseiller: {
-              name: 'John Doe',
-            },
-            structure: {
-              name: 'Association pour la formation au numérique à Bessenay',
-              isLabeledFranceServices: true,
-              address: '6 rue de la Mairie, 69690 Bessenay'
-            }
-          }
-        }
-      ]
-    };
-
-    const getConseillerWithGeolocation = async () => [
-      {
-        prenom: 'John',
-        nom: 'Doe',
-        structure: {
-          nom: 'Association pour la formation au numérique à Bessenay',
-          estLabelliseFranceServices: 'OUI',
-          coordonneesInsee: {
-            type: 'Point',
-            coordinates: [
-              3.158667,
-              46.987344
-            ]
-          },
-          insee: {
-            etablissement: {
-              adresse: {
-                numero_voie: '6',
-                type_voie: 'rue',
-                nom_voie: 'de la Mairie',
-                code_postal: '69690',
-                localite: 'Bessenay',
-                code_insee_localite: '69194'
-              },
-            }
-          }
-        }
-      }
-    ];
-
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
-
-    expect(conseillers).toStrictEqual(expectedConseillers);
-  });
-
   it('devrait retourner un conseiller dont la structure n\'a pas d\'informations insee', async () => {
     const expectedConseillers = {
       type: 'FeatureCollection',
@@ -267,15 +119,9 @@ describe('conseillers géolocalisés', () => {
             coordinates: [3.158667, 46.987344]
           },
           properties: {
-            conseiller: {
-              name: 'John Doe',
-              email: 'john.doe@conseiller-numerique.fr',
-            },
-            structure: {
-              name: 'Association pour la formation au numérique à Bessenay',
-              isLabeledFranceServices: true,
-              phone: '0474728936'
-            }
+            id: '4c38ebc9a06fdd532bf9d7be',
+            name: 'Association pour la formation au numérique à Bessenay',
+            isLabeledFranceServices: true,
           }
         }
       ]
@@ -283,17 +129,10 @@ describe('conseillers géolocalisés', () => {
 
     const getConseillerWithGeolocation = async () => [
       {
-        prenom: 'John',
-        nom: 'Doe',
-        emailCN: {
-          address: 'john.doe@conseiller-numerique.fr'
-        },
+        _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
           nom: 'Association pour la formation au numérique à Bessenay',
           estLabelliseFranceServices: 'OUI',
-          contact: {
-            telephone: '0474728936'
-          },
           coordonneesInsee: {
             type: 'Point',
             coordinates: [
