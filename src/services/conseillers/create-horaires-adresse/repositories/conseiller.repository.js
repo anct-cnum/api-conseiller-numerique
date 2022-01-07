@@ -1,8 +1,10 @@
-const setConseillerHorairesAndAdresse = db => async (conseillerId, informationsCarthographie) => {
+const { ObjectId } = require('mongodb');
+
+const setConseillerHorairesAndAdresse = db => async (conseillerId, informationsCartographie) => {
   await db.collection('conseillers').updateOne({
-    _id: conseillerId
+    _id: new ObjectId(conseillerId)
   }, {
-    $set: { informationsCarthographie }
+    $set: { informationsCartographie }
   });
 };
 

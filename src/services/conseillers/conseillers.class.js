@@ -637,9 +637,9 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.post('/conseillers/horaires-adresse', async (req, res) => {
       const db = await app.get('mongoClient');
-      const query = createHorairesAdresseToSchema(req.body);
+      const query = createHorairesAdresseToSchema(req.body.infoCartographie);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      const conseillerId = user.entity.oid;
+      const conseillerId = req.body.conseillerId;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
