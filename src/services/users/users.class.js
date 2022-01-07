@@ -313,7 +313,6 @@ exports.Users = class Users extends Service {
             if (schema.error) {
               schemaJoi = schema;
               errorValidationJoiTrue = true;
-              return;
             }
             const verificationEmail = await db.collection('users').countDocuments({ name: email });
             if (verificationEmail !== 0) {
