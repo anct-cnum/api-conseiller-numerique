@@ -34,11 +34,8 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           );
           countCorrection++;
           //condition pour logger les users qui sont considéré 'multicompte' ou compte 'principal'
-          if (structureEmailContact === 0) {
-            logger.info(`La structure id=${user.entity.oid} avec le compte user id=${user._id} est considéré comme "faux fantôme" (Multicompte)`);
-          } else {
-            logger.info(`La structure id=${user.entity.oid} avec le compte user id=${user._id} est considéré comme "faux fantôme" (Principal)`);
-          }
+          // eslint-disable-next-line max-len
+          logger.info(`La structure id=${user.entity.oid} avec le compte user id=${user._id} est considéré comme "faux fantôme" (${structureEmailContact === 0 ? 'Multicompte' : 'Principal'})`);
         } else {
           countOk++;
         }
