@@ -15,7 +15,7 @@ module.exports = {
     ],
     find: [
       checkPermissions({
-        roles: ['admin', 'structure', 'admin_coop', 'prefet'],
+        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop'],
         field: 'roles',
       }),
       context => {
@@ -136,7 +136,7 @@ module.exports = {
                     'structure.$id': context.params?.user.entity.oid,
                     'conseiller.$id': conseiller._id
                   });
-                if (miseEnRelationCount === 0) {
+                if (miseEnRelationCount === 0 || context.params.query.statut === 'RECRUTE') {
                   const dejaFinalisee = await db.collection('misesEnRelation').countDocuments(
                     {
                       'statut': 'finalisee',
