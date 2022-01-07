@@ -21,8 +21,7 @@ const getPermanenceByStructureId = db => async id => db.collection('structures')
     '_id': 0,
     'nom': 1,
     'insee.etablissement.adresse': 1,
-    'contact.telephone': 1,
-    'contact.email': 1,
+    'contact.telephone': 1
   }
 });
 
