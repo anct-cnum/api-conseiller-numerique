@@ -10,7 +10,8 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-const { misesAJourPg, misesAJourMongo, historisationMongo, getConseiller, patchApiMattermostLogin } = require('./users.repository');
+const { misesAJourPg, misesAJourMongo, historisationMongo,
+  getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -277,30 +278,77 @@ exports.Users = class Users extends Service {
         }).toJSON());
         return;
       }
-      req.body.emails.forEach(async email => {
-        app.get('mongoClient').then(async db => {
-          const verificationEmail = await db.collection('users').countDocuments({ name: email });
-          if (verificationEmail !== 0) {
-            res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
+      const { niveau, emails } = req.body;
+      const { departement, regionCode } = niveau;
+      if (!departement && !regionCode) {
+        res.status(400).send(new BadRequest('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+        return;
+      } else {
+        if (departement) {
+          const schemaDeparetement = await validationCodeDepartement(Joi)(niveau);
+          if (schemaDeparetement.error) {
+            res.status(400).send(new BadRequest(schemaDeparetement.error));
             return;
           }
+        }
+        if (regionCode) {
+          const schemaRegion = await validationCodeRegion(Joi)(niveau);
+          if (schemaRegion.error) {
+            res.status(400).send(new BadRequest(schemaRegion.error));
+            return;
+          }
+        }
+      }
+      let promises = [];
+      const errorConflict = email => res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
+      const errorBadRequestJoi = schema => res.status(400).send(new BadRequest(schema.error));
+      let emailForEach;
+      let emailMongoTrue = false;
+      let schemaJoi;
+      let errorValidationJoiTrue = false;
+      await emails.forEach(async email => {
+        await app.get('mongoClient').then(async db => {
+          promises.push(new Promise(async resolve => {
+            const schema = await validationEmailPrefet(Joi)(email);
+            if (schema.error) {
+              schemaJoi = schema;
+              errorValidationJoiTrue = true;
+            }
+            const verificationEmail = await db.collection('users').countDocuments({ name: email });
+            if (verificationEmail !== 0) {
+              emailForEach = email;
+              emailMongoTrue = true;
+            }
+            resolve();
+          }));
         });
       });
-      req.body.emails.forEach(async email => {
+      await Promise.all(promises);
+      if (errorValidationJoiTrue) {
+        errorBadRequestJoi(schemaJoi);
+        return;
+      } else if (emailMongoTrue) {
+        errorConflict(emailForEach);
+        return;
+      }
+      await emails.forEach(async email => {
         let userInfo = {
           name: email.toLowerCase(),
           roles: ['prefet'],
-          departement: req.body.departement,
           token: uuidv4(),
           tokenCreatedAt: new Date(),
           passwordCreated: false,
           createdAt: new Date()
         };
+        if (departement) {
+          userInfo.departement = departement;
+        } else {
+          userInfo.region = regionCode;
+        }
         await app.service('users').create(userInfo);
-        res.send({ status: 'compte créé' });
       });
+      res.send({ status: 'compte créé' });
     });
-
     app.post('/users/inviteStructure', async (req, res) => {
       const email = req.body.email;
       const structureId = req.body.structureId;
