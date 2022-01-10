@@ -8,10 +8,10 @@ const { execute } = require('../utils');
 execute(__filename, async ({ logger, db }) => {
   const users = await db.collection('users').find({ roles: { $in: ['conseiller'] } }).toArray();
   let promises = [];
-  let countSansStautRecrutee = 0;
+  let countSansStatutRecrute = 0;
   let countOk = 0;
   logger.info(`Generating CSV file...`);
-  let csvFile = path.join(__dirname, '../../../data/exports', 'cnfs_sans_satut_recrutee.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'cnfs_sans_statut_recrute.csv');
 
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
@@ -21,9 +21,9 @@ execute(__filename, async ({ logger, db }) => {
   users.forEach(user => {
     promises.push(new Promise(async resolve => {
       const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-      if (!conseiller?.statut) {
+      if (conseiller?.statut !== 'RECRUTE') {
         file.write(`${user?.name};${conseiller?.idPG}\n`);
-        countSansStautRecrutee++;
+        countSansStatutRecrute++;
       } else {
         countOk++;
       }
@@ -31,6 +31,6 @@ execute(__filename, async ({ logger, db }) => {
     }));
   });
   await Promise.all(promises);
-  logger.info(`${countSansStautRecrutee} conseiller(s) recrutée mais qui n'ont pas de statut RECRUTEE et ${countOk} conseillers sont OK`);
+  logger.info(`${countSansStatutRecrute} conseiller(s) récruté(s) mais qui n'ont pas de statut RECRUTE et ${countOk} conseillers sont OK`);
   file.close();
 });
