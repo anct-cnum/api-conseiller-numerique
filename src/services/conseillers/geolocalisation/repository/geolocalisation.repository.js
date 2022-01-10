@@ -25,14 +25,10 @@ const getConseillerWithGeolocation = db => async () =>
     },
     {
       $project: {
-        '_id': 0,
-        'prenom': 1,
-        'nom': 1,
-        'emailCN.address': 1,
+        '_id': 1,
         'structure.coordonneesInsee': 1,
         'structure.nom': 1,
         'structure.estLabelliseFranceServices': 1,
-        'structure.contact.telephone': 1,
         'structure.insee.etablissement.adresse': 1
       }
     }

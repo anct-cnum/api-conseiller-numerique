@@ -35,7 +35,7 @@ const {
   Role,
   schemaGuard,
   abort,
-  csvFileResponse
+  csvFileResponse, existGuard
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const statsCras = require('../stats/cras');
@@ -54,6 +54,8 @@ const { createHorairesAdresseToSchema, validateCreateHorairesAdresseSchema } = r
 const { setConseillerHorairesAndAdresse } = require('./create-horaires-adresse/repositories/conseiller.repository');
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
+const { permanenceRepository } = require('./permanence/repository/permanence.repository');
+const { permanenceDetails } = require('./permanence/core/permanence-details.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -653,6 +655,17 @@ exports.Conseillers = class Conseillers extends Service {
           logger.error(error);
           res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
         });
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+        
+    app.get('/conseillers/permanence/:id', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+
+      canActivate(
+        existGuard(conseiller),
+      ).then(async () => {
+        res.send(await permanenceDetails(conseiller.structureId, permanenceRepository(db)));
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
