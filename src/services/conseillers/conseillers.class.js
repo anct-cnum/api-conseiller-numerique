@@ -657,7 +657,7 @@ exports.Conseillers = class Conseillers extends Service {
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
-        
+
     app.get('/conseillers/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
