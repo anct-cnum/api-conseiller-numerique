@@ -17,7 +17,9 @@ const updateEmailCN = (db, gandi, logger) => async (login, conseiller, id) => {
 execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
 
   program.option('-i, --id <id>', 'id: id PG du conseiller');
-  program.option('-l, --login <login>', 'login: lequel à conserver, il faut choisir entre nouveau(-) ou ancien(.)');
+  // On doit choisir via la commande "--login" sois de garder le "nouveau" (il correspond au mail avec le tiret)
+  // ou alors l'ancien (il correspond au mail avec le point) email pro du conseiller
+  program.option('-l, --login <login>', 'login: nouveau ou ancien de l\'email pro');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -25,7 +27,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
   const loginCommander = program.login;
 
   if (id === 0 || !id || !['ancien', 'nouveau'].includes(loginCommander)) {
-    exit('Paramètres invalides. Veuillez préciser un id et un login en choisissant ancien ou login');
+    exit('Paramètres invalides. Veuillez préciser un id et un login en choisissant ancien ou nouveau');
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
