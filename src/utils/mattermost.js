@@ -340,6 +340,23 @@ const searchUser = async (mattermost, token, conseiller) => {
   });
 };
 
+const updateLogin = (mattermost, gandi, logger) => async (conseiller, login) => {
+  const token = await loginAPI({ mattermost });
+  const resultUpdateJustLogin = await axios({
+    method: 'put',
+    url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'username': login,
+      'email': `${login}@${gandi.domain}`
+    }
+  });
+  logger.info(resultUpdateJustLogin);
+};
+
 module.exports = {
   slugifyName,
   loginAPI,
@@ -353,4 +370,5 @@ module.exports = {
   deleteArchivedChannels,
   searchUser,
   patchLogin,
+  updateLogin
 };
