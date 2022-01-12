@@ -22,25 +22,20 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
   program.parse(process.argv);
 
   let id = ~~program.id;
-  const login = program.login;
+  const loginCommander = program.login;
 
-  if (id === 0 || !id || !['ancien', 'nouveau'].includes(login)) {
+  if (id === 0 || !id || !['ancien', 'nouveau'].includes(loginCommander)) {
     exit('Paramètres invalides. Veuillez préciser un id et un login en choisissant ancien ou login');
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
 
-  const ancien = value => slugify(`${value}`, { replacement: '.', lower: true, strict: true });
-  const nouveau = value => slugify(`${value}`, { replacement: '-', lower: true, strict: true });
+  const conversionLogin = (value, parametre) => slugify(`${value}`, { replacement: `${parametre}`, lower: true, strict: true });
+  const loginOptionNouveau = `${conversionLogin(conseiller.prenom, '-')}.${conversionLogin(conseiller.nom, '-')}`;
+  const loginOptionAncien = `${conversionLogin(conseiller.prenom, '.')}.${conversionLogin(conseiller.nom, '.')}`;
 
-  let prenomOption1 = nouveau(conseiller.prenom);
-  let nomOption1 = nouveau(conseiller.nom);
-  let prenomOption2 = ancien(conseiller.prenom);
-  let nomOption2 = ancien(conseiller.nom);
-  const loginOption1 = `${prenomOption1}.${nomOption1}`;
-  const loginOption2 = `${prenomOption2}.${nomOption2}`;
-  const loginSupprime = login === 'nouveau' ? loginOption2 : loginOption1;
-  const loginOk = login === 'ancien' ? loginOption2 : loginOption1;
+  const loginSupprime = loginCommander === 'nouveau' ? loginOptionAncien : loginOptionNouveau;
+  const loginOk = loginCommander === 'ancien' ? loginOptionAncien : loginOptionNouveau;
 
   try {
     await deleteMailBoxDoublon(gandi, logger)(loginSupprime);
