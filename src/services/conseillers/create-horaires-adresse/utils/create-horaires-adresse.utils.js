@@ -43,12 +43,12 @@ const createHorairesAdresseToSchema = body => ({
     } },
   ],
   itinerant: body.itinerant === 'true',
-  updateAt: new Date()
+  updatedAt: new Date()
 });
 
 const validateCreateHorairesAdresseSchema = createHorairesAdresseSchema => Joi.object({
   nomEnseigne: Joi.string().required().error(new Error('Le champ nom est obligatoire')),
-  numeroTelephone: Joi.string().required().error(new Error('Le champ numero de téléphone est obligatoire')),
+  numeroTelephone: Joi.string().required().error(new Error('Le champ numéro de téléphone est obligatoire')),
   email: Joi.string().required().error(new Error('Le champ email est obligatoire')),
   siret: Joi.number().error(new Error('Le champ SIRET doit être composé de 14 chiffres')),
   siteWeb: Joi.string().allow('').error(new Error('Le champ site web doit être un lien valide')),
