@@ -30,10 +30,13 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
 
-  const conversionLogin = (value, parametre) => slugify(`${value}`, { replacement: `${parametre}`, lower: true, strict: true });
-  const loginOptionNouveau = `${conversionLogin(conseiller.prenom, '-')}.${conversionLogin(conseiller.nom, '-')}`;
-  const loginOptionAncien = `${conversionLogin(conseiller.prenom, '.')}.${conversionLogin(conseiller.nom, '.')}`;
-
+  const remplacementEspace = () => {
+    const conversionLogin = (value, parametre) => slugify(`${value}`, { replacement: `${parametre}`, lower: true, strict: true });
+    const loginOptionNouveau = `${conversionLogin(conseiller.prenom, '-')}.${conversionLogin(conseiller.nom, '-')}`;
+    const loginOptionAncien = `${conversionLogin(conseiller.prenom, '.')}.${conversionLogin(conseiller.nom, '.')}`;
+    return { loginOptionAncien, loginOptionNouveau };
+  };
+  const { loginOptionAncien, loginOptionNouveau } = remplacementEspace();
   const loginSupprime = loginCommander === 'nouveau' ? loginOptionAncien : loginOptionNouveau;
   const loginOk = loginCommander === 'ancien' ? loginOptionAncien : loginOptionNouveau;
 
