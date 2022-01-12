@@ -138,4 +138,25 @@ const getMailBox = async ({ gandi, login }) => {
   });
 };
 
-module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox };
+const deleteMailBoxDoublon = (gandi, logger) => async loginSupprime => {
+  const mailbox = await axios({
+    method: 'get',
+    url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${loginSupprime}`,
+    headers: {
+      'Authorization': `Apikey ${gandi.token}`
+    }
+  });
+  if (mailbox?.data.length === 1) {
+    logger.info(`Suppression de ${loginSupprime}@${gandi.domain} ...`);
+    const resultDelete = await axios({
+      method: 'delete',
+      url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Apikey ${gandi.token}`
+      }
+    });
+    logger.info(resultDelete);
+  }
+};
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox, deleteMailBoxDoublon };

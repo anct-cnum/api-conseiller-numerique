@@ -1,57 +1,17 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { loginAPI } = require('../../../utils/mattermost');
+const { updateJustLoginMattermost } = require('../../../utils/mattermost');
+const { deleteMailBoxDoublon } = require('../../../utils/mailbox');
 const slugify = require('slugify');
-const axios = require('axios');
 
-const updateEmailCN = (db, gandi) => async (loginOk, conseiller, id) => {
-  await db.collection('conseillers').updateOne({ idPG: id }, { $set: { 'emailCN.address': `${loginOk}@${gandi.domain}` } });
-  await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { 'name': `${loginOk}@${gandi.domain}` } });
+const updateEmailCN = (db, gandi, logger) => async (login, conseiller, id) => {
+  await db.collection('conseillers').updateOne({ idPG: id }, { $set: { 'emailCN.address': `${login}@${gandi.domain}` } });
+  await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { 'name': `${login}@${gandi.domain}` } });
   await db.collection('misesEnRelation').updateMany(
     { 'conseiller.$id': conseiller._id },
-    { $set: { 'conseillerObj.emailCN.address': `${loginOk}@${gandi.domain}` }
+    { $set: { 'conseillerObj.emailCN.address': `${login}@${gandi.domain}` }
     });
-};
-const updateLoginMattermost = (mattermost, gandi, db) => async (conseiller, loginOk) => {
-  const token = await loginAPI({ mattermost });
-  await axios({
-    method: 'put',
-    url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    data: {
-      'username': loginOk,
-      'email': `${loginOk}@${gandi.domain}`
-    }
-  });
-  await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'mattermost.login': loginOk } });
-  await db.collection('misesEnRelation').updateMany(
-    { 'conseiller.$id': conseiller._id },
-    { $set: { 'conseillerObj.mattermost.login': loginOk }
-    });
-};
-
-const deleteMailBoxDoublon = (gandi, logger) => async loginSupprime => {
-  const mailbox = await axios({
-    method: 'get',
-    url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${loginSupprime}`,
-    headers: {
-      'Authorization': `Apikey ${gandi.token}`
-    }
-  });
-  if (mailbox?.data.length === 1) {
-    const resultDeleteMailbox = await axios({
-      method: 'delete',
-      url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Apikey ${gandi.token}`
-      }
-    });
-    logger.info(`le statut pour la suppression de ${loginSupprime}@${gandi.domain} est ${resultDeleteMailbox.status}`);
-  }
+  logger.info(`Mise à jour du login Coop ${login} pour le conseiller id=${conseiller._id}`);
 };
 
 execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
@@ -83,14 +43,29 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
   const loginOk = login === 'ancien' ? loginOption2 : loginOption1;
 
   try {
-    logger.info(`On conserve ${loginOk}@${gandi.domain} et on supprime ${loginSupprime}@${gandi.domain} ...`);
     await deleteMailBoxDoublon(gandi, logger)(loginSupprime);
-    await updateEmailCN(db, gandi)(loginOk, conseiller, id);
-    await updateLoginMattermost(mattermost, gandi, db)(conseiller, loginOk);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
+    return;
   }
-  logger.info(`Le login est bien => ${loginOk}@${gandi.domain} pour le conseiller id=${conseiller._id}`);
+
+  try {
+    await updateEmailCN(db, gandi, logger)(loginOk, conseiller, id);
+  } catch (error) {
+    logger.error(error);
+    Sentry.captureException(error);
+    return;
+  }
+
+  try {
+    await updateJustLoginMattermost(mattermost, gandi, db, logger)(conseiller, loginOk);
+  } catch (error) {
+    logger.error(error);
+    Sentry.captureException(error);
+    return;
+  }
+
+  logger.info(`Suppression de ${loginSupprime}@${gandi.domain} effectuée`);
   exit();
 });

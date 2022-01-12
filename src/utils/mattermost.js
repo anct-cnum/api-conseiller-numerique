@@ -340,6 +340,28 @@ const searchUser = async (mattermost, token, conseiller) => {
   });
 };
 
+const updateJustLoginMattermost = (mattermost, gandi, db, logger) => async (conseiller, login) => {
+  const token = await loginAPI({ mattermost });
+  const resultUpdateJustLogin = await axios({
+    method: 'put',
+    url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'username': login,
+      'email': `${login}@${gandi.domain}`
+    }
+  });
+  logger.info(resultUpdateJustLogin);
+  await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'mattermost.login': login } });
+  await db.collection('misesEnRelation').updateMany(
+    { 'conseiller.$id': conseiller._id },
+    { $set: { 'conseillerObj.mattermost.login': login }
+    });
+};
+
 module.exports = {
   slugifyName,
   loginAPI,
@@ -353,4 +375,5 @@ module.exports = {
   deleteArchivedChannels,
   searchUser,
   patchLogin,
+  updateJustLoginMattermost
 };
