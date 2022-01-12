@@ -26,7 +26,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
   const ancien = program.ancien;
   const nouveau = program.nouveau;
   if (id === 0 || !id || !(ancien ^ nouveau)) {
-    exit('Paramètres invalides. Veuillez préciser un id et mettre sois ancien ou nouveau');
+    exit('Paramètres invalides. Veuillez préciser un id et mettre soit ancien ou nouveau');
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
