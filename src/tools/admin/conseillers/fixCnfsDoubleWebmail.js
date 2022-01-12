@@ -1,7 +1,7 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { updateJustLoginMattermost } = require('../../../utils/mattermost');
-const { deleteMailBoxDoublon } = require('../../../utils/mailbox');
+const { updateLogin } = require('../../../utils/mattermost');
+const { deleteMailbox } = require('../../../utils/mailbox');
 const slugify = require('slugify');
 
 const updateEmailCN = (db, gandi, logger) => async (login, conseiller, id) => {
@@ -38,7 +38,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
   const loginOk = loginCommander === 'ancien' ? loginOptionAncien : loginOptionNouveau;
 
   try {
-    await deleteMailBoxDoublon(gandi, logger)(loginSupprime);
+    await deleteMailbox(gandi, db, logger, Sentry)(conseiller._id, loginSupprime);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
@@ -54,7 +54,12 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
   }
 
   try {
-    await updateJustLoginMattermost(mattermost, gandi, db, logger)(conseiller, loginOk);
+    await updateLogin(mattermost, gandi, logger)(conseiller, loginOk);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'mattermost.login': loginOk } });
+    await db.collection('misesEnRelation').updateMany(
+      { 'conseiller.$id': conseiller._id },
+      { $set: { 'conseillerObj.mattermost.login': loginOk }
+      });
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);

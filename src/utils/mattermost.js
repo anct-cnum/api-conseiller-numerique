@@ -340,7 +340,7 @@ const searchUser = async (mattermost, token, conseiller) => {
   });
 };
 
-const updateJustLoginMattermost = (mattermost, gandi, db, logger) => async (conseiller, login) => {
+const updateLogin = (mattermost, gandi, logger) => async (conseiller, login) => {
   const token = await loginAPI({ mattermost });
   const resultUpdateJustLogin = await axios({
     method: 'put',
@@ -355,11 +355,6 @@ const updateJustLoginMattermost = (mattermost, gandi, db, logger) => async (cons
     }
   });
   logger.info(resultUpdateJustLogin);
-  await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'mattermost.login': login } });
-  await db.collection('misesEnRelation').updateMany(
-    { 'conseiller.$id': conseiller._id },
-    { $set: { 'conseillerObj.mattermost.login': login }
-    });
 };
 
 module.exports = {
@@ -375,5 +370,5 @@ module.exports = {
   deleteArchivedChannels,
   searchUser,
   patchLogin,
-  updateJustLoginMattermost
+  updateLogin
 };
