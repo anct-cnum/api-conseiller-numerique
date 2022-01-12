@@ -91,7 +91,7 @@ const validateCreateHorairesAdresseSchema = createHorairesAdresseSchema => Joi.o
     }
   ),
   itinerant: Joi.boolean().required().error(new Error('Le champ accompagnements en itinérance est obligatoire')),
-  updateAt: Joi.date().required().error(new Error('La date de mise à jour doit être présente')),
+  updatedAt: Joi.date().required().error(new Error('La date de mise à jour doit être présente')),
 }).validate(createHorairesAdresseSchema);
 
 module.exports = {
