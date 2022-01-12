@@ -17,17 +17,16 @@ const updateEmailCN = (db, gandi, logger) => async (login, conseiller, id) => {
 execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
 
   program.option('-i, --id <id>', 'id: id PG du conseiller');
-  // On doit choisir via la commande "--login" sois de garder le "nouveau" (il correspond au mail avec le tiret)
-  // ou alors l'ancien (il correspond au mail avec le point) email pro du conseiller
-  program.option('-l, --login <login>', 'login: nouveau ou ancien de l\'email pro');
+  program.option('-a, --ancien', 'sauvegarde de l\'ancien login du conseiller');
+  program.option('-n, --nouveau', 'sauvegarde du nouveau login du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   let id = ~~program.id;
-  const loginCommander = program.login;
-
-  if (id === 0 || !id || !['ancien', 'nouveau'].includes(loginCommander)) {
-    exit('Paramètres invalides. Veuillez préciser un id et un login en choisissant ancien ou nouveau');
+  const ancien = program.ancien;
+  const nouveau = program.nouveau;
+  if (id === 0 || !id || !(ancien ^ nouveau)) {
+    exit('Paramètres invalides. Veuillez préciser un id et mettre sois ancien ou nouveau');
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
@@ -39,8 +38,8 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi, mattermost }) => {
     return { loginOptionAncien, loginOptionNouveau };
   };
   const { loginOptionAncien, loginOptionNouveau } = remplacementEspace();
-  const loginSupprime = loginCommander === 'nouveau' ? loginOptionAncien : loginOptionNouveau;
-  const loginOk = loginCommander === 'ancien' ? loginOptionAncien : loginOptionNouveau;
+  const loginSupprime = nouveau ? loginOptionAncien : loginOptionNouveau;
+  const loginOk = ancien ? loginOptionAncien : loginOptionNouveau;
 
   try {
     await deleteMailbox(gandi, db, logger, Sentry)(conseiller._id, loginSupprime);
