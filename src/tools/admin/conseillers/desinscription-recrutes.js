@@ -18,7 +18,7 @@ const configPG = {
 
 program
 .option('-c, --csv <path>', 'CSV file path')
-.option('-l, --ligne <ligne>', 'ligne: lire à partir de la ligne')
+.option('-l, --ligne <ligne>', 'ligne: lire à partir de la ligne par exemple si on veut que ça commence à partir de ligne 88 il faut mettre 86 donc number - 2')
 .option('-v, --verif', 'verif: verification si il y a des doublons');
 
 program.parse(process.argv);
@@ -27,7 +27,6 @@ const readCSV = async filePath => {
   try {
     // eslint-disable-next-line new-cap
     let users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
-    // si on veut que ça commence ligne 88 il faut mettre 86 donc number - 2
     users = users.slice(~~program.ligne ?? 0);
     return users;
   } catch (err) {
@@ -72,10 +71,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
       .slice(0, i)
       .concat(idDoublon.slice(i + 1, idDoublon.length));
     });
-    if (idDoublon.length >= 1) {
-      exit(`Le fichier comporte ${idDoublon.length} doublon(s) et concerne le(s) conseillers(s) => [${idDoublon}]`);
-      return;
-    }
+    return idDoublon;
   };
 
   logger.info('[DESINSCRIPTION COOP] Traitement des ruptures de contrat');
@@ -83,7 +79,10 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
       if (program.verif) {
-        await verificationDoublonFichier(conseillers);
+        const arrayDoublon = await verificationDoublonFichier(conseillers);
+        // eslint-disable-next-line max-len
+        exit(`Le fichier comporte ${arrayDoublon.length} doublon(s) ${arrayDoublon.length >= 1 ? ` et concerne le(s) conseillers(s) => [${arrayDoublon}]` : ''}`);
+        return;
       }
       const total = conseillers.length;
       let count = 0;
