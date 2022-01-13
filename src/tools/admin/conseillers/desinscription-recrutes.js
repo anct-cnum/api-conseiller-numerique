@@ -18,7 +18,8 @@ const configPG = {
 
 program
 .option('-c, --csv <path>', 'CSV file path')
-.option('-l, --ligne <ligne>', 'ligne: lire à partir de la ligne');
+.option('-l, --ligne <ligne>', 'ligne: lire à partir de la ligne')
+.option('-v, --verif', 'verif: verification si il y a des doublons');
 
 program.parse(process.argv);
 
@@ -60,23 +61,29 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
     return dayjs(date, 'YYYY-MM-DD').toDate();
   };
 
+  const verificationDoublonFichier = conseillers => {
+    // verification si dans le fichier contient des doublons
+    const arrayFichier = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']));
+    const arrFichierAvecDoublon = [...new Set(arrayFichier)];
+    let idDoublon = [...arrayFichier];
+    arrFichierAvecDoublon.forEach(item => {
+      const i = idDoublon.indexOf(item);
+      idDoublon = idDoublon
+      .slice(0, i)
+      .concat(idDoublon.slice(i + 1, idDoublon.length));
+    });
+    if (idDoublon.length >= 1) {
+      exit(`Le fichier comporte ${idDoublon.length} doublon(s) et concerne le(s) conseillers(s) => [${idDoublon}]`);
+      return;
+    }
+  };
+
   logger.info('[DESINSCRIPTION COOP] Traitement des ruptures de contrat');
   let promises = [];
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
-      // verification si dans le fichier contient des doublons
-      const arrayFichier = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']));
-      const arrFichierAvecDoublon = [...new Set(arrayFichier)];
-      let idDoublon = [...arrayFichier];
-      arrFichierAvecDoublon.forEach(item => {
-        const i = idDoublon.indexOf(item);
-        idDoublon = idDoublon
-        .slice(0, i)
-        .concat(idDoublon.slice(i + 1, idDoublon.length));
-      });
-      if (idDoublon.length >= 1) {
-        exit(`Le fichier comporte ${idDoublon.length} doublon(s) et concerne le(s) conseillers(s) => [${idDoublon}]`);
-        return;
+      if (program.verif) {
+        await verificationDoublonFichier(conseillers);
       }
       const total = conseillers.length;
       let count = 0;
