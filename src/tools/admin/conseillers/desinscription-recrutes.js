@@ -64,6 +64,20 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
   let promises = [];
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
+      // verification si dans le fichier contient des doublons
+      const arrayFichier = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']));
+      const arrFichierAvecDoublon = [...new Set(arrayFichier)];
+      let idDoublon = [...arrayFichier];
+      arrFichierAvecDoublon.forEach(item => {
+        const i = idDoublon.indexOf(item);
+        idDoublon = idDoublon
+        .slice(0, i)
+        .concat(idDoublon.slice(i + 1, idDoublon.length));
+      });
+      if (idDoublon.length >= 1) {
+        exit(`Le fichier comporte ${idDoublon.length} doublon(s) et concerne le(s) conseillers(s) => [${idDoublon}]`);
+        return;
+      }
       const total = conseillers.length;
       let count = 0;
       let ok = 0;
@@ -91,11 +105,11 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
             'structure.$id': conseillerCoop?.structureId,
             'statut': 'finalisee'
           });
-          // const userCoop = await db.collection('users').findOne({
-          //   'roles': { $in: ['conseiller'] },
-          //   'entity.$id': conseillerCoop?._id
-          // });
-          // const login = conseillerCoop?.emailCN?.address?.substring(0, conseillerCoop.emailCN?.address?.lastIndexOf('@'));
+          const userCoop = await db.collection('users').findOne({
+            'roles': { $in: ['conseiller'] },
+            'entity.$id': conseillerCoop?._id
+          });
+          const login = conseillerCoop?.emailCN?.address?.substring(0, conseillerCoop.emailCN?.address?.lastIndexOf('@'));
           if (conseillerCoop === null) {
             logger.error(`Aucun conseiller recruté entre la structure id ${structureId} et le conseiller id ${conseillerId}`);
             errors++;
@@ -114,160 +128,159 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
             errors++;
             reject();
           } else {
-            console.log('ok je suis dans rupture');
-            // const dateRupture = conseiller['Date de démission'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
-            // const motifRupture = conseiller['Motif de la sortie du dispositif (QCM)'];
+            const dateRupture = conseiller['Date de démission'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+            const motifRupture = conseiller['Motif de la sortie du dispositif (QCM)'];
 
-            // //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
-            // await updateConseillersPG(conseillerCoop.email, true);
+            //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
+            await updateConseillersPG(conseillerCoop.email, true);
 
-            // try {
-            //   //Historisation de la rupture
-            //   await db.collection('conseillersRuptures').insertOne({
-            //     conseillerId: conseillerCoop._id,
-            //     structureId: conseillerCoop.structureId,
-            //     dateRupture: formatDateDb(dateRupture),
-            //     motifRupture
-            //   });
+            try {
+              //Historisation de la rupture
+              await db.collection('conseillersRuptures').insertOne({
+                conseillerId: conseillerCoop._id,
+                structureId: conseillerCoop.structureId,
+                dateRupture: formatDateDb(dateRupture),
+                motifRupture
+              });
 
-            //   //Mise à jour du conseiller
-            //   await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
-            //     $set: {
-            //       disponible: true,
-            //       statut: 'RUPTURE'
-            //     },
-            //     $push: { ruptures: {
-            //       structureId: structure._id,
-            //       dateRupture: formatDateDb(dateRupture),
-            //       motifRupture
-            //     } },
-            //     $unset: {
-            //       estRecrute: '',
-            //       datePrisePoste: '',
-            //       dateFinFormation: '',
-            //       structureId: '',
-            //       emailCNError: '',
-            //       emailCN: '',
-            //       mattermost: '',
-            //       resetPasswordCNError: ''
-            //     }
-            //   });
-            //   const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerCoop._id });
+              //Mise à jour du conseiller
+              await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
+                $set: {
+                  disponible: true,
+                  statut: 'RUPTURE'
+                },
+                $push: { ruptures: {
+                  structureId: structure._id,
+                  dateRupture: formatDateDb(dateRupture),
+                  motifRupture
+                } },
+                $unset: {
+                  estRecrute: '',
+                  datePrisePoste: '',
+                  dateFinFormation: '',
+                  structureId: '',
+                  emailCNError: '',
+                  emailCN: '',
+                  mattermost: '',
+                  resetPasswordCNError: ''
+                }
+              });
+              const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerCoop._id });
 
-            //   //Mise à jour de la mise en relation avec la structure en rupture
-            //   await db.collection('misesEnRelation').updateOne(
-            //     { 'conseiller.$id': conseillerCoop._id,
-            //       'structure.$id': conseillerCoop.structureId,
-            //       'statut': 'finalisee'
-            //     },
-            //     {
-            //       $set: {
-            //         statut: 'finalisee_rupture',
-            //         dateRupture: formatDateDb(dateRupture),
-            //         motifRupture,
-            //         conseillerObj: conseillerUpdated
-            //       }
-            //     }
-            //   );
+              //Mise à jour de la mise en relation avec la structure en rupture
+              await db.collection('misesEnRelation').updateOne(
+                { 'conseiller.$id': conseillerCoop._id,
+                  'structure.$id': conseillerCoop.structureId,
+                  'statut': 'finalisee'
+                },
+                {
+                  $set: {
+                    statut: 'finalisee_rupture',
+                    dateRupture: formatDateDb(dateRupture),
+                    motifRupture,
+                    conseillerObj: conseillerUpdated
+                  }
+                }
+              );
 
-            //   //Mise à jour des autres mises en relation en candidature nouvelle
-            //   await db.collection('misesEnRelation').updateMany(
-            //     { 'conseiller.$id': conseillerCoop._id,
-            //       'statut': 'finalisee_non_disponible'
-            //     },
-            //     {
-            //       $set: {
-            //         statut: 'nouvelle',
-            //         conseillerObj: conseillerUpdated
-            //       }
-            //     }
-            //   );
+              //Mise à jour des autres mises en relation en candidature nouvelle
+              await db.collection('misesEnRelation').updateMany(
+                { 'conseiller.$id': conseillerCoop._id,
+                  'statut': 'finalisee_non_disponible'
+                },
+                {
+                  $set: {
+                    statut: 'nouvelle',
+                    conseillerObj: conseillerUpdated
+                  }
+                }
+              );
 
-            //   //Modification des doublons potentiels
-            //   await db.collection('conseillers').updateMany(
-            //     {
-            //       _id: { $ne: conseillerCoop._id },
-            //       email: conseillerCoop.email
-            //     },
-            //     {
-            //       $set: {
-            //         disponible: true,
-            //       }
-            //     }
-            //   );
-            //   await db.collection('misesEnRelation').updateMany(
-            //     { 'conseiller.$id': { $ne: conseillerCoop._id },
-            //       'statut': 'finalisee_non_disponible',
-            //       'conseillerObj.email': conseillerCoop.email
-            //     },
-            //     {
-            //       $set: {
-            //         'statut': 'nouvelle',
-            //         'conseillerObj.disponible': true
-            //       }
-            //     }
-            //   );
+              //Modification des doublons potentiels
+              await db.collection('conseillers').updateMany(
+                {
+                  _id: { $ne: conseillerCoop._id },
+                  email: conseillerCoop.email
+                },
+                {
+                  $set: {
+                    disponible: true,
+                  }
+                }
+              );
+              await db.collection('misesEnRelation').updateMany(
+                { 'conseiller.$id': { $ne: conseillerCoop._id },
+                  'statut': 'finalisee_non_disponible',
+                  'conseillerObj.email': conseillerCoop.email
+                },
+                {
+                  $set: {
+                    'statut': 'nouvelle',
+                    'conseillerObj.disponible': true
+                  }
+                }
+              );
 
-            //   //Passage en compte candidat avec email perso
-            //   let userToUpdate = {
-            //     name: conseillerCoop.email,
-            //     roles: ['candidat'],
-            //     token: uuidv4(),
-            //     tokenCreatedAt: new Date(),
-            //     mailSentDate: null, //pour le mécanisme de relance d'invitation candidat
-            //     passwordCreated: false,
-            //   };
-            //   if (userCoop !== null) {
-            //     //Maj name si le compte coop a été activé
-            //     if (conseillerCoop.email !== userCoop.name) {
-            //       await db.collection('users').updateOne({ _id: userCoop._id }, {
-            //         $set: { ...userToUpdate }
-            //       });
-            //     } else {
-            //       const { name: _, ...userWithoutName } = userToUpdate; //nécessaire pour ne pas avoir d'erreur de duplicate key
-            //       await db.collection('users').updateOne({ _id: userCoop._id }, {
-            //         $set: { ...userWithoutName }
-            //       });
-            //     }
-            //   }
+              //Passage en compte candidat avec email perso
+              let userToUpdate = {
+                name: conseillerCoop.email,
+                roles: ['candidat'],
+                token: uuidv4(),
+                tokenCreatedAt: new Date(),
+                mailSentDate: null, //pour le mécanisme de relance d'invitation candidat
+                passwordCreated: false,
+              };
+              if (userCoop !== null) {
+                //Maj name si le compte coop a été activé
+                if (conseillerCoop.email !== userCoop.name) {
+                  await db.collection('users').updateOne({ _id: userCoop._id }, {
+                    $set: { ...userToUpdate }
+                  });
+                } else {
+                  const { name: _, ...userWithoutName } = userToUpdate; //nécessaire pour ne pas avoir d'erreur de duplicate key
+                  await db.collection('users').updateOne({ _id: userCoop._id }, {
+                    $set: { ...userWithoutName }
+                  });
+                }
+              }
 
-            //   //Suppression compte Gandi
-            //   if (login !== undefined) {
-            //     await deleteMailbox(gandi, db, logger, Sentry)(conseillerCoop._id, login);
-            //   }
-            //   //Suppression compte Mattermost
-            //   if (conseillerCoop.mattermost?.id !== undefined) {
-            //     await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
-            //   }
+              //Suppression compte Gandi
+              if (login !== undefined) {
+                await deleteMailbox(gandi, db, logger, Sentry)(conseillerCoop._id, login);
+              }
+              //Suppression compte Mattermost
+              if (conseillerCoop.mattermost?.id !== undefined) {
+                await deleteAccount(mattermost, conseillerCoop, db, logger, Sentry);
+              }
 
-            //   //Envoi du mail d'information à la structure
-            //   if (conseillerslistPix.find(conseiller => conseiller['Structure id'] === conseillerCoop.structureId) === undefined) {
-            //     await messageStructure.send(miseEnRelation, structure.contact.email);
-            //   }
+              //Envoi du mail d'information à la structure
+              if (conseillerslistPix.find(conseiller => conseiller['Structure id'] === conseillerCoop.structureId) === undefined) {
+                await messageStructure.send(miseEnRelation, structure.contact.email);
+              }
 
-            //   conseillerslistPix.push({
-            //     'Prénom': conseillerCoop.prenom,
-            //     'Nom': conseillerCoop.nom,
-            //     'Email personnel': conseillerCoop.email,
-            //     'Email professionnel': conseillerCoop?.emailCN?.address ?? 'Non défini',
-            //     'Structure id': conseillerCoop.structureId //pour éviter d'envoyer le mail plusieurs fois à la même structure
-            //   });
-            // } catch (error) {
-            //   logger.error(error.message);
-            //   Sentry.captureException(error);
-            // }
+              conseillerslistPix.push({
+                'Prénom': conseillerCoop.prenom,
+                'Nom': conseillerCoop.nom,
+                'Email personnel': conseillerCoop.email,
+                'Email professionnel': conseillerCoop?.emailCN?.address ?? 'Non défini',
+                'Structure id': conseillerCoop.structureId //pour éviter d'envoyer le mail plusieurs fois à la même structure
+              });
+            } catch (error) {
+              logger.error(error.message);
+              Sentry.captureException(error);
+            }
             ok++;
           }
           count++;
-          // if (total === count) {
-          //   //Envoi du mail global à PIX
-          //   if (conseillerslistPix.length > 0) {
-          //     await messagePix.send(conseillerslistPix);
-          //   }
-          logger.info(`[DESINSCRIPTION COOP] Des conseillers ont été désinscrits :  ` +
+          if (total === count) {
+            //Envoi du mail global à PIX
+            if (conseillerslistPix.length > 0) {
+              await messagePix.send(conseillerslistPix);
+            }
+            logger.info(`[DESINSCRIPTION COOP] Des conseillers ont été désinscrits :  ` +
                 `${ok} désinscrit(s) / ${errors} erreur(s)`);
-          exit();
-          // }
+            exit();
+          }
         });
         promises.push(p);
       });
