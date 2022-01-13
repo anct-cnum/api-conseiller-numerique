@@ -13,34 +13,34 @@ const createHorairesAdresseToSchema = body => ({
     ville: body.ville
   },
   horaires: [
-    { lundi: {
-      matin: [body.lundiMatinDebut, body.lundiMatinFin],
-      apresMidi: [body.lundiApresMidiDebut, body.lundiApresMidiFin]
-    } },
-    { mardi: {
-      matin: [body.mardiMatinDebut, body.mardiMatinFin],
-      apresMidi: [body.mardiApresMidiDebut, body.mardiApresMidiFin]
-    } },
-    { mercredi: {
-      matin: [body.mercrediMatinDebut, body.mercrediMatinFin],
-      apresMidi: [body.mercrediApresMidiDebut, body.mercrediApresMidiFin]
-    } },
-    { jeudi: {
-      matin: [body.jeudiMatinDebut, body.jeudiMatinFin],
-      apresMidi: [body.jeudiApresMidiDebut, body.jeudiApresMidiFin]
-    } },
-    { vendredi: {
-      matin: [body.vendrediMatinDebut, body.vendrediMatinFin],
-      apresMidi: [body.vendrediApresMidiDebut, body.vendrediApresMidiFin]
-    } },
-    { samedi: {
-      matin: [body.samediMatinDebut, body.samediMatinFin],
-      apresMidi: [body.samediApresMidiDebut, body.samediApresMidiFin]
-    } },
-    { dimanche: {
-      matin: [body.dimancheMatinDebut, body.dimancheMatinFin],
-      apresMidi: [body.dimancheApresMidiDebut, body.dimancheApresMidiFin]
-    } },
+    {
+      matin: [body.horaires[0].matin[0], body.horaires[0].matin[1]],
+      apresMidi: [body.horaires[0].apresMidi[0], body.horaires[0].apresMidi[1]]
+    },
+    {
+      matin: [body.horaires[1].matin[0], body.horaires[1].matin[1]],
+      apresMidi: [body.horaires[1].apresMidi[0], body.horaires[1].apresMidi[1]]
+    },
+    {
+      matin: [body.horaires[2].matin[0], body.horaires[2].matin[1]],
+      apresMidi: [body.horaires[2].apresMidi[0], body.horaires[2].apresMidi[1]]
+    },
+    {
+      matin: [body.horaires[3].matin[0], body.horaires[3].matin[1]],
+      apresMidi: [body.horaires[3].apresMidi[0], body.horaires[3].apresMidi[1]]
+    },
+    {
+      matin: [body.horaires[4].matin[0], body.horaires[4].matin[1]],
+      apresMidi: [body.horaires[4].apresMidi[0], body.horaires[4].apresMidi[1]]
+    },
+    {
+      matin: [body.horaires[5].matin[0], body.horaires[5].matin[1]],
+      apresMidi: [body.horaires[5].apresMidi[0], body.horaires[5].apresMidi[1]]
+    },
+    {
+      matin: [body.horaires[6].matin[0], body.horaires[6].matin[1]],
+      apresMidi: [body.horaires[6].apresMidi[0], body.horaires[6].apresMidi[1]]
+    }
   ],
   itinerant: body.itinerant === 'true',
   updatedAt: new Date()
@@ -58,36 +58,34 @@ const validateCreateHorairesAdresseSchema = createHorairesAdresseSchema => Joi.o
     codePostal: Joi.number().required().error(new Error('Le champ code postal doit être composé de 5 chiffres')),
     ville: Joi.string().required().error(new Error('Le champ ville est obligatoire')),
   }),
-  horaires: Joi.array().items(
+  horaires: Joi.array().length(7).items(
     {
-      lundi: Joi.object({
-        matin: Joi.array().required().error(new Error('Le champ lundi matin est obligatoire')),
-        apresMidi: Joi.array().required().error(new Error('Le champ lundi après-midi est obligatoire')),
-      }),
-      mardi: Joi.object({
-        matin: Joi.array().required().error(new Error('Le champ mardi matin est obligatoire')),
-        apresMidi: Joi.array().required().error(new Error('Le champ mardi après-midi est obligatoire')),
-      }),
-      mercredi: Joi.object({
-        matin: Joi.array().required().error(new Error('Le champ mercredi matin est obligatoire')),
-        apresMidi: Joi.array().required().error(new Error('Le champ mercredi après-midi est obligatoire')),
-      }),
-      jeudi: Joi.object({
-        matin: Joi.array().required().error(new Error('Le champ jeudi matin est obligatoire')),
-        apresMidi: Joi.array().required().error(new Error('Le champ jeudi après-midi est obligatoire')),
-      }),
-      vendredi: Joi.object({
-        matin: Joi.array().required().error(new Error('Le champ vendredi matin est obligatoire')),
-        apresMidi: Joi.array().required().error(new Error('Le champ vendredi après-midi est obligatoire')),
-      }),
-      samedi: Joi.object({
-        matin: Joi.array().required().error(new Error('Le champ samedi matin est obligatoire')),
-        apresMidi: Joi.array().required().error(new Error('Le champ samedi après-midi est obligatoire')),
-      }),
-      dimanche: Joi.object({
-        matin: Joi.array().required().error(new Error('Le champ dimanche matin est obligatoire')),
-        apresMidi: Joi.array().required().error(new Error('Le champ dimanche après-midi est obligatoire')),
-      }),
+      matin: Joi.array().required().length(2).error(new Error('Le champ lundi matin est obligatoire')),
+      apresMidi: Joi.array().required().length(2).error(new Error('Le champ lundi après-midi est obligatoire')),
+    },
+    {
+      matin: Joi.array().required().length(2).error(new Error('Le champ mardi matin est obligatoire')),
+      apresMidi: Joi.array().required().length(2).error(new Error('Le champ mardi après-midi est obligatoire')),
+    },
+    {
+      matin: Joi.array().required().length(2).error(new Error('Le champ mercredi matin est obligatoire')),
+      apresMidi: Joi.array().required().length(2).error(new Error('Le champ mercredi après-midi est obligatoire')),
+    },
+    {
+      matin: Joi.array().required().length(2).error(new Error('Le champ jeudi matin est obligatoire')),
+      apresMidi: Joi.array().required().length(2).error(new Error('Le champ jeudi après-midi est obligatoire')),
+    },
+    {
+      matin: Joi.array().required().length(2).error(new Error('Le champ vendredi matin est obligatoire')),
+      apresMidi: Joi.array().required().length(2).error(new Error('Le champ vendredi après-midi est obligatoire')),
+    },
+    {
+      matin: Joi.array().required().length(2).error(new Error('Le champ samedi matin est obligatoire')),
+      apresMidi: Joi.array().required().length(2).error(new Error('Le champ samedi après-midi est obligatoire')),
+    },
+    {
+      matin: Joi.array().required().length(2).error(new Error('Le champ dimanche matin est obligatoire')),
+      apresMidi: Joi.array().required().length(2).error(new Error('Le champ dimanche après-midi est obligatoire')),
     }
   ),
   itinerant: Joi.boolean().required().error(new Error('Le champ accompagnements en itinérance est obligatoire')),
