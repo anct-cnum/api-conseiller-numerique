@@ -1,4 +1,4 @@
-const { Forbidden, NotAuthenticated, Unprocessable } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, Unprocessable, NotFound } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
 
 const Role = {
@@ -40,6 +40,11 @@ const schemaGuard = async schemaValidation =>
     await Promise.resolve() :
     await Promise.reject(new Unprocessable('Schema validation error', schemaValidation.error));
 
+const existGuard = async ressource =>
+  ressource !== null && ressource !== undefined ?
+    await Promise.resolve() :
+    await Promise.reject(new NotFound('This ressource does not exist'));
+
 const canActivate = (...activationChecks) => Promise.all(activationChecks);
 
 module.exports = {
@@ -51,5 +56,6 @@ module.exports = {
   authenticationGuard,
   rolesGuard,
   schemaGuard,
+  existGuard,
   canActivate
 };
