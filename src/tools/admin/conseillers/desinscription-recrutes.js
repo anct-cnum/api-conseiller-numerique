@@ -18,8 +18,8 @@ const configPG = {
 
 program
 .option('-c, --csv <path>', 'CSV file path')
-.option('-l, --ligne <ligne>', 'ligne: lire à partir de la ligne par exemple si on veut que ça commence à partir de ligne 88 il faut mettre 86 donc number - 2')
-.option('-v, --verif', 'verif: verification si il y a des doublons');
+.option('-l, --ligne <ligne>', 'ligne: lire à partir de telle ligne. Exemple, pour commencer à partir de ligne 88, il faut indiquer 86')
+.option('-v, --verif', 'verif: vérification si doublons de ligne');
 
 program.parse(process.argv);
 
@@ -61,10 +61,10 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
   };
 
   const verificationDoublonFichier = conseillers => {
-    // verification si dans le fichier contient des doublons
-    const arrayFichier = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']));
-    const arrFichierAvecDoublon = [...new Set(arrayFichier)];
-    let idDoublon = [...arrayFichier];
+    // verification si le fichier contient des doublons de ligne (même conseiller)
+    const arrayIds = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']));
+    const arrFichierAvecDoublon = [...new Set(arrayIds)];
+    let idDoublon = [...arrayIds];
     arrFichierAvecDoublon.forEach(item => {
       const i = idDoublon.indexOf(item);
       idDoublon = idDoublon
@@ -81,7 +81,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
       if (program.verif) {
         const arrayDoublon = await verificationDoublonFichier(conseillers);
         // eslint-disable-next-line max-len
-        exit(`Le fichier comporte ${arrayDoublon.length} doublon(s) ${arrayDoublon.length >= 1 ? ` et concerne le(s) conseillers(s) => [${arrayDoublon}]` : ''}`);
+        exit(`Le fichier comporte ${arrayDoublon.length} doublon(s). ${arrayDoublon.length > 0 ? ` Et concerne(nt) le(s) conseillers(s) => [${arrayDoublon}]` : ''}`);
         return;
       }
       const total = conseillers.length;
