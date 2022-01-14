@@ -19,7 +19,7 @@ const configPG = {
 program
 .option('-c, --csv <path>', 'CSV file path')
 .option('-l, --ligne <ligne>', 'ligne: lire à partir de telle ligne. Exemple, pour commencer à partir de ligne 88, il faut indiquer 86')
-.option('-v, --verif', 'verif: vérification si doublons de ligne');
+.option('-v, --verif', 'verif: vérification si doublons de ligne sans traitement');
 
 program.parse(process.argv);
 
