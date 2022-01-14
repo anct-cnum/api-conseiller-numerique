@@ -79,7 +79,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
       const arrayDoublon = await verificationDoublonFichier(conseillers);
-      if (program.verif) {
+      if (program.verif || arrayDoublon.length > 0) {
         // eslint-disable-next-line max-len
         exit(`Le fichier comporte ${arrayDoublon.length} doublon(s). ${arrayDoublon.length > 0 ? ` Et concerne(nt) le(s) conseillers(s) => [${arrayDoublon}]` : ''}`);
         return;
