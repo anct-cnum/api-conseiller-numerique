@@ -20,8 +20,7 @@ const getPermanenceByStructureId = db => async id => db.collection('structures')
   projection: {
     '_id': 0,
     'nom': 1,
-    'insee.etablissement.adresse': 1,
-    'contact.telephone': 1
+    'insee.etablissement.adresse': 1
   }
 });
 
