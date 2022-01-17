@@ -8,6 +8,7 @@ const dataExports = require('./data-exports/data-exports.service.js');
 const cras = require('./cras/cras.service.js');
 const sondages = require('./sondages/sondages.service.js');
 const ressources = require('./ressources/ressources.service.js');
+const geocode = require('./geocode/geocode.service.js');
 // eslint-disable-next-line no-unused-vars
 module.exports = function(app) {
   app.configure(users);
@@ -20,4 +21,5 @@ module.exports = function(app) {
   app.configure(cras);
   app.configure(sondages);
   app.configure(ressources);
+  app.configure(geocode);
 };

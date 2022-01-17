@@ -17,7 +17,7 @@ describe('conseillers géolocalisés par département', () => {
           properties: {
             codeDepartement: '01',
             nomDepartement: 'Ain',
-            boundingZoom: 13,
+            boundingZoom: 10,
             count: 72
           }
         },
@@ -33,7 +33,7 @@ describe('conseillers géolocalisés par département', () => {
           properties: {
             codeDepartement: '02',
             nomDepartement: 'Aisne',
-            boundingZoom: 13,
+            boundingZoom: 10,
             count: 44
           }
         },
@@ -49,7 +49,7 @@ describe('conseillers géolocalisés par département', () => {
           properties: {
             codeDepartement: '976',
             nomDepartement: 'Mayotte',
-            boundingZoom: 13,
+            boundingZoom: 11,
             count: 2
           }
         }

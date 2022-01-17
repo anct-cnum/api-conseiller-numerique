@@ -16,7 +16,7 @@ describe('conseillers géolocalisés par région', () => {
           },
           properties: {
             region: 'Auvergne-Rhône-Alpes',
-            boundingZoom: 8,
+            boundingZoom: 7,
             count: 72
           }
         }
@@ -47,7 +47,7 @@ describe('conseillers géolocalisés par région', () => {
           },
           properties: {
             region: 'Auvergne-Rhône-Alpes',
-            boundingZoom: 8,
+            boundingZoom: 7,
             count: 72
           }
         }
@@ -79,7 +79,7 @@ describe('conseillers géolocalisés par région', () => {
           },
           properties: {
             region: 'Auvergne-Rhône-Alpes',
-            boundingZoom: 8,
+            boundingZoom: 7,
             count: 72
           }
         },
@@ -94,7 +94,7 @@ describe('conseillers géolocalisés par région', () => {
           },
           properties: {
             region: 'Hauts-de-France',
-            boundingZoom: 8,
+            boundingZoom: 7,
             count: 11
           }
         }

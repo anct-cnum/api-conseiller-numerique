@@ -57,6 +57,12 @@
     "endPoint": "GANDI_ENDPOINT",
     "domain": "GANDI_DOMAIN"
   },
+  "open_cage_data": {
+    "token": "OPEN_CAGE_DATA_TOKEN",
+    "endPoint": "OPEN_CAGE_DATA_ENDPOINT",
+    "countryCode": "OPEN_CAGE_DATA_COUNTRY_CODE",
+    "limit": "OPEN_CAGE_DATA_LIMIT"
+  },
   "sentry": {
     "enabled": "SENTRY_ENABLED",
     "environment": "SENTRY_ENVIRONMENT",
