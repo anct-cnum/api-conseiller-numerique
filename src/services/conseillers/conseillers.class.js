@@ -50,8 +50,6 @@ const { geolocatedConseillers } = require('./geolocalisation/core/geolocalisatio
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
 const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
-const { createHorairesAdresseToSchema, validateCreateHorairesAdresseSchema } = require('./create-horaires-adresse/utils/create-horaires-adresse.utils');
-const { setConseillerHorairesAndAdresse } = require('./create-horaires-adresse/repositories/conseiller.repository');
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
@@ -635,27 +633,6 @@ exports.Conseillers = class Conseillers extends Service {
       const conseillersByDepartement = await geolocatedConseillersByDepartement(geolocationRepository(db));
 
       res.send(conseillersByDepartement);
-    });
-
-    app.post('/conseillers/horaires-adresse', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const query = createHorairesAdresseToSchema(req.body.infoCartographie);
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      const conseillerId = req.body.conseillerId;
-
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user),
-        schemaGuard(validateCreateHorairesAdresseSchema(query))
-      ).then(async () => {
-        await setConseillerHorairesAndAdresse(db)(conseillerId, query).then(() => {
-          res.send({ isUpdated: true });
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/conseillers/permanence/:id', async (req, res) => {
