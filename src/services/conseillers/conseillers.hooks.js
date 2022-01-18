@@ -176,7 +176,7 @@ module.exports = {
                 });
                 if (structure) {
                   conseiller.nomStructure = structure?.nom;
-                  conseiller.cra = nombreCra ?? 0;
+                  conseiller.craCount = nombreCra;
                 }
                 result.push(conseiller);
                 resolve();
