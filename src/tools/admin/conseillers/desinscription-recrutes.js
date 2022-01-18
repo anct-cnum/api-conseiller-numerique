@@ -17,14 +17,17 @@ const configPG = {
 };
 
 program
-.option('-c, --csv <path>', 'CSV file path');
+.option('-c, --csv <path>', 'CSV file path')
+.option('-l, --ligne <ligne>', 'ligne: lire à partir de telle ligne. Exemple, pour commencer à partir de ligne 88, il faut indiquer 86')
+.option('-v, --verif', 'verif: vérification si doublons de ligne sans traitement');
 
 program.parse(process.argv);
 
 const readCSV = async filePath => {
   try {
     // eslint-disable-next-line new-cap
-    const users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
+    let users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
+    users = users.slice(~~program.ligne ?? 0);
     return users;
   } catch (err) {
     throw err;
@@ -57,10 +60,30 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
     return dayjs(date, 'YYYY-MM-DD').toDate();
   };
 
+  const verificationDoublonFichier = conseillers => {
+    // verification si le fichier contient des doublons de ligne (même conseiller)
+    const arrayIds = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']));
+    const arrFichierAvecDoublon = [...new Set(arrayIds)];
+    let idDoublon = [...arrayIds];
+    arrFichierAvecDoublon.forEach(item => {
+      const i = idDoublon.indexOf(item);
+      idDoublon = idDoublon
+      .slice(0, i)
+      .concat(idDoublon.slice(i + 1, idDoublon.length));
+    });
+    return idDoublon;
+  };
+
   logger.info('[DESINSCRIPTION COOP] Traitement des ruptures de contrat');
   let promises = [];
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
+      const arrayDoublon = await verificationDoublonFichier(conseillers);
+      if (program.verif || arrayDoublon.length > 0) {
+        // eslint-disable-next-line max-len
+        exit(`Le fichier comporte ${arrayDoublon.length} doublon(s). ${arrayDoublon.length > 0 ? ` Et concerne(nt) le(s) conseillers(s) => [${arrayDoublon}]` : ''}`);
+        return;
+      }
       const total = conseillers.length;
       let count = 0;
       let ok = 0;

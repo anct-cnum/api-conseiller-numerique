@@ -71,6 +71,12 @@
     "endPoint": "https://api.gandi.net/v5/email",
     "domain": "conseiller-numerique.fr"
   },
+  "open_cage_data": {
+    "token": "1234",
+    "endPoint": "https://api.opencagedata.com/geocode/v1/geojson",
+    "countryCode": "fr,bl,gf,gp,mf,mq,nc,pf,pm,re,tf,wf,yt",
+    "limit": "1"
+  },
   "sentry": {
     "enabled": "false",
     "environment": "local",
