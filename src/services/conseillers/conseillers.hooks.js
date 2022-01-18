@@ -171,8 +171,12 @@ module.exports = {
                 const structure = await db.collection('structures').findOne({
                   '_id': conseiller.structureId
                 });
+                const nombreCra = await db.collection('cras').countDocuments({
+                  'conseiller.$id': conseiller._id
+                });
                 if (structure) {
                   conseiller.nomStructure = structure?.nom;
+                  conseiller.cra = nombreCra ?? 0;
                 }
                 result.push(conseiller);
                 resolve();
