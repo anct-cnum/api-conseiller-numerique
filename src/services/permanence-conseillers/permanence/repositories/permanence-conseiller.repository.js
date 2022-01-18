@@ -4,12 +4,12 @@ const getPermanenceByConseiller = db => async conseillerId => {
   return await db.collection('permanences').findOne({ 'conseiller.$id': new ObjectId(conseillerId) });
 };
 
-const createPermanence = db => async permanence => {
+const createPermanence = db => async (permanence, conseillerId) => {
   await db.collection('permanences').insertOne(
     permanence
   );
   await db.collection('conseillers').updateOne({
-    _id: new ObjectId(permanence.conseillerId)
+    _id: new ObjectId(conseillerId)
   }, {
     $set: { hasPermanence: true }
   });
