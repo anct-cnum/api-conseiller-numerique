@@ -49,14 +49,14 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const db = await app.get('mongoClient');
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
-      const query = updatePermanenceToSchema(req.body.permanence);
+      const query = updatePermanenceToSchema(req.body.permanence, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await createPermanence(db)(query, database).then(() => {
+        await createPermanence(db)(query).then(() => {
           res.send({ isCreated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -69,7 +69,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.patch('/permanence-conseillers/:id', async (req, res) => {
       const db = await app.get('mongoClient');
-      const query = updatePermanenceToSchema(req.body.permanence);
+      const connection = app.get('mongodb');
+      const database = connection.substr(connection.lastIndexOf('/') + 1);
+      const query = updatePermanenceToSchema(req.body.permanence, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const permanenceId = req.params.id;
 
