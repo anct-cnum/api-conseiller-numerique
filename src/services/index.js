@@ -9,7 +9,7 @@ const cras = require('./cras/cras.service.js');
 const sondages = require('./sondages/sondages.service.js');
 const ressources = require('./ressources/ressources.service.js');
 const permanenceConseillers = require('./permanence-conseillers/permanence-conseillers.service.js');
-// eslint-disable-next-line no-unused-vars
+
 module.exports = function(app) {
   app.configure(users);
   app.configure(siret);

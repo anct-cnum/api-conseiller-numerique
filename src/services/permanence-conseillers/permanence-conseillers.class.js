@@ -67,7 +67,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     });
 
-    app.post('/permanence-conseillers/:id', async (req, res) => {
+    app.patch('/permanence-conseillers/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const query = updatePermanenceToSchema(req.body.permanence);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
