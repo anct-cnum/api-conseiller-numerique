@@ -2,6 +2,7 @@ const { program } = require('commander');
 const { execute } = require('../../utils');
 const createEmails = require('../../../emails/emails');
 const createMailer = require('../../../mailer');
+const { v4: uuidv4 } = require('uuid');
 
 execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
 
@@ -22,14 +23,17 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     exit('id PG inconnu dans MongoDB');
     return;
   }
-  const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
+  const { roles, _id } = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
 
-  if (!user?.roles.includes('conseiller')) {
-    exit(`Ce conseiller à un rôle : ${user.roles}`);
+  if (!roles.includes('conseiller')) {
+    exit(`Ce conseiller à un rôle : ${roles}`);
     return;
+  } else {
+    await db.collection('users').updateOne({ _id }, { $set: { token: uuidv4() } });
   }
-  
+
   try {
+    const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
     let message = emails.getEmailMessageByTemplateName('creationCompteConseiller');
@@ -40,6 +44,6 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     return;
   }
 
-  logger.info(`invitation à l'epspace COOP envoyé au conseiller id:${conseiller._id}`);
+  logger.info(`invitation à l'espace COOP envoyé au conseiller id:${conseiller._id}`);
   exit();
 });
