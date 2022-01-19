@@ -61,7 +61,7 @@ module.exports = {
           nomCommune: Joi.string().required().error(new Error('Le nom de la commune est invalide')),
           canal: Joi.string().required().valid('rattachement', 'autre', 'distance', 'domicile').error(new Error('Le canal est invalide')),
           activite: Joi.string().required().valid('individuel', 'collectif', 'ponctuel').error(new Error('L\'activité est invalide')),
-          nbParticipants: Joi.number().integer().required().min(2).max(100).error(new Error('Le nombre de participants est invalide')),
+          nbParticipants: Joi.number().integer().required().min(1).max(100).error(new Error('Le nombre de participants est invalide')),
           age: Joi.string().required().valid('-12', '12-18', '18-35', '35-60', '+60').error(new Error('La catégorie d\'âge est invalide')),
           statut: Joi.string().required().valid('etudiant', 'sans emploi', 'en emploi', 'retraite', 'heterogene').error(new Error('Le statut est invalide')),
           // eslint-disable-next-line max-len
