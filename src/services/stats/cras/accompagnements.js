@@ -4,7 +4,7 @@ const getStatsAccompagnements = async (db, query) => {
     [
       { $unwind: '$cra.accompagnement' },
       { $match: { ...query } },
-      { $group: { _id: '$cra.accompagnement', count: '$cra.nbParticipants' } },
+      { $group: { _id: '$cra.accompagnement', count: { $sum: '$cra.nbParticipants' } } },
     ]
   ).toArray();
 
