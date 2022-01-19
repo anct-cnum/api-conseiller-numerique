@@ -12,9 +12,7 @@ const getStatsStatuts = async (db, query, totalParticipants) => {
     [
       { $unwind: '$cra.statut' },
       { $match: { ...query } },
-      { $group: { _id: '$cra.statut', count: { $sum: {
-        $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
-      } } } },
+      { $group: { _id: '$cra.statut', count: { $sum: '$cra.nbParticipants' } } },
       { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
     ]
   ).toArray();
