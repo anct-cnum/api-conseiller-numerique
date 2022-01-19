@@ -287,7 +287,7 @@ exports.Stats = class Stats extends Service {
         //Total accompagnement
         let nbAccompagnements = await db.collection('cras').aggregate(
           { $group:
-            { _id: null, count: { $sum: { $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] } } }
+            { _id: null, count: { $sum: '$cra.nbParticipants' } }
           },
           { $project: { 'valeur': '$count' } }
         ).toArray();
