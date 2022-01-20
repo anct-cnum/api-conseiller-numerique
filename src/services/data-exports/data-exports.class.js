@@ -138,18 +138,18 @@ exports.DataExports = class DataExports {
         if (adminUser?.departement) {
           miseEnrelations = await db.collection('misesEnRelation').find({
             'statut': { $eq: 'finalisee' },
-            'conseillerObj.codeDepartement': String(adminUser?.departement)
-          }).sort({ 'miseEnrelation.structure.oid': 1 }).limit(9).toArray();
+            'conseillerObj.codeDepartement': `${adminUser?.departement}`
+          }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
         } else {
           miseEnrelations = await db.collection('misesEnRelation').find({
             'statut': { $eq: 'finalisee' },
-            'conseillerObj.codeRegion': String(adminUser?.region)
-          }).sort({ 'miseEnrelation.structure.oid': 1 }).limit(9).toArray();
+            'conseillerObj.codeRegion': `${adminUser?.region}`
+          }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
         }
       } else {
         miseEnrelations = await db.collection('misesEnRelation').find({
           'statut': { $eq: 'finalisee' }
-        }).sort({ 'miseEnrelation.structure.oid': 1 }).limit(9).toArray();
+        }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       }
 
       let promises = [];
