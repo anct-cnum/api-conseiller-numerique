@@ -13,7 +13,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   let id = ~~program.id;
 
   if (id === 0) {
-    exit('Paramètres invalides. Veuillez préciser un id !');
+    exit('Paramètre invalide. Veuillez préciser un id !');
     return;
   }
 
@@ -28,9 +28,9 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   if (!roles.includes('conseiller')) {
     exit(`Ce conseiller à un rôle : ${roles}`);
     return;
-  } else {
-    await db.collection('users').updateOne({ _id }, { $set: { token: uuidv4() } });
   }
+
+  await db.collection('users').updateOne({ _id }, { $set: { token: uuidv4() } });
 
   try {
     const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
