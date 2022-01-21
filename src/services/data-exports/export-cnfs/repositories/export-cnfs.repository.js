@@ -1,4 +1,3 @@
-const { array } = require('joi');
 const { ObjectId } = require('mongodb');
 
 function filterUserActif(isUserActif) {
