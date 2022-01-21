@@ -148,4 +148,45 @@ describe('conseillers géolocalisés', () => {
 
     expect(conseillers).toStrictEqual(expectedConseillers);
   });
+
+  it('devrait utiliser les coordonnées gps de la commune lorsque les coordonnées de la structure ne sont pas disponibles', async () => {
+    const expectedConseillers = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [3.158667, 46.987344]
+          },
+          properties: {
+            id: '4c38ebc9a06fdd532bf9d7be',
+            name: 'Association pour la formation au numérique à Bessenay',
+            isLabeledFranceServices: true,
+          }
+        }
+      ]
+    };
+
+    const getConseillerWithGeolocation = async () => [
+      {
+        _id: '4c38ebc9a06fdd532bf9d7be',
+        structure: {
+          nom: 'Association pour la formation au numérique à Bessenay',
+          estLabelliseFranceServices: 'OUI',
+          location: {
+            type: 'Point',
+            coordinates: [
+              3.158667,
+              46.987344
+            ]
+          }
+        }
+      }
+    ];
+
+    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+
+    expect(conseillers).toStrictEqual(expectedConseillers);
+  });
 });

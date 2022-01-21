@@ -19,14 +19,10 @@ const getConseillerWithGeolocation = db => async () =>
     },
     { $unwind: '$structure' },
     {
-      $match: {
-        'structure.coordonneesInsee': { $ne: null }
-      }
-    },
-    {
       $project: {
         '_id': 1,
         'structure.coordonneesInsee': 1,
+        'structure.location': 1,
         'structure.nom': 1,
         'structure.estLabelliseFranceServices': 1,
         'structure.insee.etablissement.adresse': 1
