@@ -40,7 +40,7 @@ const getExportCnfsFileName = (dateDebut, dateFin) =>
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
-let fileHeaders = [
+const fileHeaders = [
   'Prénom',
   'Nom',
   'Email',
@@ -54,7 +54,6 @@ let fileHeaders = [
 ];
 
 const buildExportCnfsCsvFileContent = statsCnfs => [
-
   fileHeaders.join(csvCellSeparator),
   ...statsCnfs.map(statCnfs => [
     statCnfs.prenom,
