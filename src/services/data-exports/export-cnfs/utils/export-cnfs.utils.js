@@ -40,7 +40,7 @@ const getExportCnfsFileName = (dateDebut, dateFin) =>
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
-const fileHeaders = [
+let fileHeaders = [
   'Prénom',
   'Nom',
   'Email',
@@ -49,10 +49,12 @@ const fileHeaders = [
   'Date de recrutement',
   'Date de fin de formation',
   'Certification',
-  'Activé'
+  'Activé',
+  'CRA Saisis'
 ];
 
 const buildExportCnfsCsvFileContent = statsCnfs => [
+
   fileHeaders.join(csvCellSeparator),
   ...statsCnfs.map(statCnfs => [
     statCnfs.prenom,
@@ -64,6 +66,7 @@ const buildExportCnfsCsvFileContent = statsCnfs => [
     statCnfs.dateFinFormation,
     statCnfs.certifie,
     statCnfs.isUserActif,
+    statCnfs.craCount
   ].join(csvCellSeparator))
 ].join(csvLineSeparator);
 

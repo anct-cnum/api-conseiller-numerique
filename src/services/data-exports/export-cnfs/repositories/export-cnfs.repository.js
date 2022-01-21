@@ -1,3 +1,4 @@
+const { array } = require('joi');
 const { ObjectId } = require('mongodb');
 
 function filterUserActif(isUserActif) {
@@ -16,8 +17,10 @@ function filterUserActif(isUserActif) {
   return {};
 }
 
+const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
+
 const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif) => {
-  const conseillers = db.collection('conseillers').find({
+  let conseillers = db.collection('conseillers').find({
     statut: 'RECRUTE',
     datePrisePoste: {
       $gt: dateDebut,
@@ -27,7 +30,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     },
     ...filterUserActif(isUserActif)
   }).project({
-    _id: 0,
+    _id: 1,
     prenom: 1,
     nom: 1,
     email: 1,
@@ -38,14 +41,27 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     emailCNError: 1,
     mattermost: 1,
   });
+  const arrayConseillers = [];
 
   if (nomOrdre !== undefined && ordre !== undefined) {
-    return conseillers
+    const ordreResult = conseillers
     .sort({ [nomOrdre]: parseInt(ordre) })
     .toArray();
+    for (let conseiller of await ordreResult) {
+      const result = await getCraCount(db)(conseiller);
+      conseiller.craCount = result;
+      arrayConseillers.push(conseiller);
+    }
+    return await arrayConseillers;
   }
 
-  return conseillers.toArray();
+  for (let conseiller of await conseillers.toArray()) {
+    const result = await getCraCount(db)(conseiller);
+    conseiller.craCount = result;
+    arrayConseillers.push(conseiller);
+  }
+
+  return await arrayConseillers;
 };
 
 const getStructureNameFromId = db => async id => db.collection('structures')
