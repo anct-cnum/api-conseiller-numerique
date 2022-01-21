@@ -127,16 +127,31 @@ exports.DataExports = class DataExports {
       //verify user role admin
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-      if (!adminUser?.roles.includes('admin')) {
+      if (!adminUser?.roles.includes('admin') && !adminUser?.roles.includes('prefet')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: adminUser
         }).toJSON());
         return;
       }
+      let miseEnrelations;
+      if (adminUser?.roles.includes('prefet')) {
+        if (adminUser?.departement) {
+          miseEnrelations = await db.collection('misesEnRelation').find({
+            'statut': { $eq: 'finalisee' },
+            'conseillerObj.codeDepartement': `${adminUser?.departement}`
+          }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+        } else {
+          miseEnrelations = await db.collection('misesEnRelation').find({
+            'statut': { $eq: 'finalisee' },
+            'conseillerObj.codeRegion': `${adminUser?.region}`
+          }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+        }
+      } else {
+        miseEnrelations = await db.collection('misesEnRelation').find({
+          'statut': { $eq: 'finalisee' }
+        }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+      }
 
-      const miseEnrelations = await db.collection('misesEnRelation').find({
-        'statut': { $eq: 'finalisee' }
-      }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
 
       // eslint-disable-next-line max-len
