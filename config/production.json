@@ -5,6 +5,7 @@
   "backoffice_hostname": "BACKOFFICE_HOSTNAME",
   "espace_coop_hostname": "ESPACE_COOP_HOSTNAME",
   "espace_candidat_hostname": "ESPACE_CANDIDAT_HOSTNAME",
+  "metabase_public_url": "METABASE_PUBLIC_URL",
   "pix": {
     "hostname": "PIX_HOSTNAME",
     "contactMailing": "PIX_CONTACT_MAILING",

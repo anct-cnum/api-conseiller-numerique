@@ -5,6 +5,7 @@ const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
 const dayjs = require('dayjs');
+const axios = require('axios');
 const logger = require('../../logger');
 const statsPdf = require('./stats.pdf');
 const statsFct = require('./stats.function');
@@ -55,6 +56,43 @@ exports.Stats = class Stats extends Service {
         const conseillers = await db.collection('misesEnRelation').countDocuments({ statut: 'finalisee' });
         res.send({ conseillerTotalFinalisee: conseillers });
       });
+    });
+
+    app.get('/stats/metabase', async (req, res) => {
+      let stats = {};
+      const metabasePublicUrl = app.get('metabase_public_url');
+
+      const cards = [
+        {
+          name: 'nbStructures',
+          path: '/card/142'
+        },
+        {
+          name: 'nbAccompagnements',
+          path: '/card/116'
+        },
+      ];
+
+      for (const card of cards) {
+        try {
+          const result = await axios({
+            method: 'get',
+            url: `${metabasePublicUrl}${card.path}`,
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          stats[card.name] = result?.data?.data?.rows;
+        } catch (e) {
+          logger.error(e);
+          return false;
+        }
+      }
+
+      stats['nbStructures'] = stats['nbStructures'][0][0] + stats['nbStructures'][1][0];
+      stats['nbAccompagnements'] = stats['nbAccompagnements'][0][0];
+
+      res.send(stats);
     });
 
     app.get('/stats/dashboard', async (req, res) => {

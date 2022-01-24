@@ -6,11 +6,17 @@ const formatStructure = structure => ({
   ...structure.insee ? { address: formatAddress(structure.insee.etablissement.adresse) } : {}
 });
 
+const getGeometry = geolocatedConseiller =>
+  geolocatedConseiller.structure.coordonneesInsee ?
+    { ...geolocatedConseiller.structure.coordonneesInsee } :
+    { ...geolocatedConseiller.structure.location };
+
 const toGeoJson = geolocatedConseiller => ({
   type: 'Feature',
-  geometry: { ...geolocatedConseiller.structure.coordonneesInsee },
+  geometry: getGeometry(geolocatedConseiller),
   properties: {
     id: geolocatedConseiller._id,
+    structureId: geolocatedConseiller.structure._id,
     ...formatStructure(geolocatedConseiller.structure)
   }
 });
