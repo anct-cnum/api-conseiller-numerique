@@ -6,16 +6,17 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const { execute } = require('../utils');
 
+require('dotenv').config();
+
 program
 .option('-c, --csv <path>', 'CSV file path');
 program.parse(process.argv);
 
 const readCSV = async filePath => {
-  console.log('filePath:', filePath);
   try {
     // eslint-disable-next-line new-cap
-    const users = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
-    return users;
+    const conseillers = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
+    return conseillers;
   } catch (err) {
     throw err;
   }
