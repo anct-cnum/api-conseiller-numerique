@@ -49,7 +49,8 @@ const fileHeaders = [
   'Date de recrutement',
   'Date de fin de formation',
   'Certification',
-  'Activé'
+  'Activé',
+  'CRA Saisis'
 ];
 
 const buildExportCnfsCsvFileContent = statsCnfs => [
@@ -64,6 +65,7 @@ const buildExportCnfsCsvFileContent = statsCnfs => [
     statCnfs.dateFinFormation,
     statCnfs.certifie,
     statCnfs.isUserActif,
+    statCnfs.craCount
   ].join(csvCellSeparator))
 ].join(csvLineSeparator);
 
