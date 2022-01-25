@@ -50,24 +50,42 @@ const fileHeaders = [
   'Date de fin de formation',
   'Certification',
   'Activé',
-  'CRA Saisis'
 ];
 
-const buildExportCnfsCsvFileContent = statsCnfs => [
-  fileHeaders.join(csvCellSeparator),
-  ...statsCnfs.map(statCnfs => [
-    statCnfs.prenom,
-    statCnfs.nom,
-    statCnfs.email,
-    statCnfs.nomStructure,
-    statCnfs.codePostal,
-    statCnfs.datePrisePoste,
-    statCnfs.dateFinFormation,
-    statCnfs.certifie,
-    statCnfs.isUserActif,
-    statCnfs.craCount
-  ].join(csvCellSeparator))
-].join(csvLineSeparator);
+const buildExportCnfsCsvFileContent = (statsCnfs, user) => {
+  if (user.roles.includes('admin_coop')) {
+    csvCellSeparator.push('CRA Saisis');
+    return [
+      fileHeaders.join(csvCellSeparator),
+      ...statsCnfs.map(statCnfs => [
+        statCnfs.prenom,
+        statCnfs.nom,
+        statCnfs.email,
+        statCnfs.nomStructure,
+        statCnfs.codePostal,
+        statCnfs.datePrisePoste,
+        statCnfs.dateFinFormation,
+        statCnfs.certifie,
+        statCnfs.isUserActif,
+        statCnfs.craCount
+      ].join(csvCellSeparator))
+    ].join(csvLineSeparator);
+  }
+  return [
+    fileHeaders.join(csvCellSeparator),
+    ...statsCnfs.map(statCnfs => [
+      statCnfs.prenom,
+      statCnfs.nom,
+      statCnfs.email,
+      statCnfs.nomStructure,
+      statCnfs.codePostal,
+      statCnfs.datePrisePoste,
+      statCnfs.dateFinFormation,
+      statCnfs.certifie,
+      statCnfs.isUserActif
+    ].join(csvCellSeparator))
+  ].join(csvLineSeparator);
+};
 
 module.exports = {
   validateExportCnfsSchema,
