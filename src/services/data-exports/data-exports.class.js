@@ -360,7 +360,7 @@ exports.DataExports = class DataExports {
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
         const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
-        const statsCnfs = await getStatsCnfsFilterStructure(query, db)(statsCnfsNoFilter, user);
+        const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), buildExportCnfsCsvFileContent(statsCnfs, user));
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

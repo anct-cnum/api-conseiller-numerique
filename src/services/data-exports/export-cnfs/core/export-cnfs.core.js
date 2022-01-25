@@ -25,7 +25,7 @@ const getStatsCnfs = async (
     (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
   );
 };
-const getStatsCnfsFilterStructure = (query, db) => async (statsCnfsNoFilter, user) => {
+const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {
   if (user.roles.includes('admin_coop')) {
     return statsCnfsNoFilter;
   }

@@ -40,7 +40,7 @@ const getExportCnfsFileName = (dateDebut, dateFin) =>
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
-const fileHeaders = [
+let fileHeaders = [
   'Prénom',
   'Nom',
   'Email',
@@ -52,9 +52,10 @@ const fileHeaders = [
   'Activé',
 ];
 
-const buildExportCnfsCsvFileContent = (statsCnfs, user) => {
+
+const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
   if (user.roles.includes('admin_coop')) {
-    csvCellSeparator.push('CRA Saisis');
+    fileHeaders.push('CRA Saisis');
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
