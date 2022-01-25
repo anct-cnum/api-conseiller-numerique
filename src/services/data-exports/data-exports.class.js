@@ -361,7 +361,7 @@ exports.DataExports = class DataExports {
         const user = await userConnected(db, authentication);
         const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
         const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
-        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), buildExportCnfsCsvFileContent(statsCnfs, user));
+        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
