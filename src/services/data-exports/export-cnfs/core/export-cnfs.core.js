@@ -1,3 +1,4 @@
+const { ObjectID } = require('bson');
 const dayjs = require('dayjs');
 
 const formatDate = dateFin => dayjs(new Date(dateFin)).format('DD/MM/YYYY');
@@ -24,7 +25,17 @@ const getStatsCnfs = async (
     (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
   );
 };
-
+const getStatsCnfsFilterStructure = (query, db) => async (statsCnfsNoFilter, user) => {
+  if (user.roles.includes('admin_coop')) {
+    return statsCnfsNoFilter;
+  }
+  const structure = await db.collection('structures').findOne({ _id: user.entity.oid });
+  const filterCnfsByStructure = statsCnfsNoFilter.filter(cnfs => cnfs.nomStructure === structure.nom);
+  return filterCnfsByStructure;
+};
+const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
 module.exports = {
-  getStatsCnfs
+  getStatsCnfs,
+  getStatsCnfsFilterStructure,
+  userConnected
 };

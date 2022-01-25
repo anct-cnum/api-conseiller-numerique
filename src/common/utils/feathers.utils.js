@@ -32,7 +32,7 @@ const userHasAtLeastOneAuthorizedRole = async (userAuthenticationRepository, use
 
 const rolesGuard = async (userId, roles, userAuthenticationRepository) =>
   await userHasAtLeastOneAuthorizedRole(userAuthenticationRepository, userId, roles) ?
-    Promise.resolve() :
+    Promise.resolve(userId) :
     Promise.reject(new Forbidden('User not authorized', { userId }));
 
 const schemaGuard = async schemaValidation =>
