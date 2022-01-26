@@ -128,7 +128,7 @@ execute(__filename, async ({ db }) => {
     }
 
     if (work.length > 0) {
-      const result = await db.collection('misesEnRelation').bulkWrite(work);
+      await db.collection('misesEnRelation').bulkWrite(work);
     }
   };
 

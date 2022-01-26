@@ -61,7 +61,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
 
     const options = { upsert: true };
 
-    const result = await db.collection('structures').updateOne(filter, updateDoc, options);
+    await db.collection('structures').updateOne(filter, updateDoc, options);
 
   };
 
@@ -106,7 +106,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
     };
 
     const options = { upsert: true };
-    const result = await db.collection('conseillers').updateOne(filter, updateDoc, options);
+    await db.collection('conseillers').updateOne(filter, updateDoc, options);
   };
 
   // Récupère toutes les structures dans PG
