@@ -40,7 +40,7 @@ const getExportCnfsFileName = (dateDebut, dateFin) =>
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
-const fileHeaders = [
+let fileHeaders = [
   'Prénom',
   'Nom',
   'Email',
@@ -49,23 +49,44 @@ const fileHeaders = [
   'Date de recrutement',
   'Date de fin de formation',
   'Certification',
-  'Activé'
+  'Activé',
 ];
 
-const buildExportCnfsCsvFileContent = statsCnfs => [
-  fileHeaders.join(csvCellSeparator),
-  ...statsCnfs.map(statCnfs => [
-    statCnfs.prenom,
-    statCnfs.nom,
-    statCnfs.email,
-    statCnfs.nomStructure,
-    statCnfs.codePostal,
-    statCnfs.datePrisePoste,
-    statCnfs.dateFinFormation,
-    statCnfs.certifie,
-    statCnfs.isUserActif,
-  ].join(csvCellSeparator))
-].join(csvLineSeparator);
+
+const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
+  if (user.roles.includes('admin_coop')) {
+    fileHeaders.push('CRA Saisis');
+    return [
+      fileHeaders.join(csvCellSeparator),
+      ...statsCnfs.map(statCnfs => [
+        statCnfs.prenom,
+        statCnfs.nom,
+        statCnfs.email,
+        statCnfs.nomStructure,
+        statCnfs.codePostal,
+        statCnfs.datePrisePoste,
+        statCnfs.dateFinFormation,
+        statCnfs.certifie,
+        statCnfs.isUserActif,
+        statCnfs.craCount
+      ].join(csvCellSeparator))
+    ].join(csvLineSeparator);
+  }
+  return [
+    fileHeaders.join(csvCellSeparator),
+    ...statsCnfs.map(statCnfs => [
+      statCnfs.prenom,
+      statCnfs.nom,
+      statCnfs.email,
+      statCnfs.nomStructure,
+      statCnfs.codePostal,
+      statCnfs.datePrisePoste,
+      statCnfs.dateFinFormation,
+      statCnfs.certifie,
+      statCnfs.isUserActif
+    ].join(csvCellSeparator))
+  ].join(csvLineSeparator);
+};
 
 module.exports = {
   validateExportCnfsSchema,

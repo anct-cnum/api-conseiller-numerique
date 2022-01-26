@@ -25,7 +25,7 @@ const {
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
-const { getStatsCnfs } = require('./export-cnfs/core/export-cnfs.core');
+const { getStatsCnfs, getStatsCnfsFilterStructure, userConnected } = require('./export-cnfs/core/export-cnfs.core');
 const {
   buildExportCnfsCsvFileContent,
   validateExportCnfsSchema,
@@ -353,14 +353,15 @@ exports.DataExports = class DataExports {
     app.get('/exports/cnfs.csv', async (req, res) => {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportCnfsSchema(query))
-      ).then(async () => {
-        const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
-        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), buildExportCnfsCsvFileContent(statsCnfs));
+      ).then(async authentication => {
+        const user = await userConnected(db, authentication);
+        const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
+        const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
+        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }

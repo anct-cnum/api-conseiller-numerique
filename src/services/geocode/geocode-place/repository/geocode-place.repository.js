@@ -10,9 +10,9 @@ const toGeocodeTransfer = feature => ({
 });
 
 const geocodeRepository = openCageData => async place =>
-  (await axios.get(`${getUrl(openCageData)}&q=${place}&key=${openCageData.token}`)).data.features
-  .map(toGeocodeTransfer)
-;
+  (await axios.get(`${getUrl(openCageData)}&q=${encodeURI(place)}&key=${openCageData.token}`, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  })).data.features.map(toGeocodeTransfer);
 
 module.exports = {
   geocodeRepository
