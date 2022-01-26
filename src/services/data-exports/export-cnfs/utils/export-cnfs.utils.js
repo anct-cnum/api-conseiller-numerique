@@ -40,31 +40,28 @@ const getExportCnfsFileName = (dateDebut, dateFin) =>
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
-let fileHeaders = [
-  'Prénom',
-  'Nom',
-  'Email',
-  'Structure',
-  'Code Postal',
-  'Date de recrutement',
-  'Date de fin de formation',
-  'Certification',
-  'Activé',
-];
-
 
 const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
+  let fileHeaders = [
+    'Prénom',
+    'Nom',
+    'Email',
+    'Structure',
+    'Code Postal',
+    'Date de recrutement',
+    'Date de fin de formation',
+    'Certification',
+    'Activé',
+  ];
   if (user.roles.includes('admin_coop')) {
-    if (!fileHeaders.includes('CRA Saisis')) {
-      fileHeaders.push('CRA Saisis');
-    }
+    fileHeaders.push('CRA Saisis');
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
         statCnfs.prenom,
         statCnfs.nom,
         statCnfs.email,
-        statCnfs.nomStructure,
+        statCnfs.nomStructure.replace(/["',]/g, ''),
         statCnfs.codePostal,
         statCnfs.datePrisePoste,
         statCnfs.dateFinFormation,
@@ -80,7 +77,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
       statCnfs.prenom,
       statCnfs.nom,
       statCnfs.email,
-      statCnfs.nomStructure,
+      statCnfs.nomStructure.replace(/["',]/g, ''),
       statCnfs.codePostal,
       statCnfs.datePrisePoste,
       statCnfs.dateFinFormation,
