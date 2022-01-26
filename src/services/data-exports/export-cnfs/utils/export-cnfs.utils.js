@@ -55,7 +55,9 @@ let fileHeaders = [
 
 const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
   if (user.roles.includes('admin_coop')) {
-    fileHeaders.push('CRA Saisis');
+    if (!fileHeaders.includes('CRA Saisis')) {
+      fileHeaders.push('CRA Saisis');
+    }
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
