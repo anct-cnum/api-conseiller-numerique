@@ -138,12 +138,12 @@ exports.DataExports = class DataExports {
         if (adminUser?.departement) {
           miseEnrelations = await db.collection('misesEnRelation').find({
             'statut': { $eq: 'finalisee' },
-            'conseillerObj.codeDepartement': `${adminUser?.departement}`
+            'structureObj.codeDepartement': `${adminUser?.departement}`
           }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
         } else {
           miseEnrelations = await db.collection('misesEnRelation').find({
             'statut': { $eq: 'finalisee' },
-            'conseillerObj.codeRegion': `${adminUser?.region}`
+            'structureObj.codeRegion': `${adminUser?.region}`
           }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
         }
       } else {

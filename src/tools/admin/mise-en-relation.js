@@ -9,7 +9,7 @@ const feathers = require('@feathersjs/feathers');
 
 program.parse(process.argv);
 
-execute(__filename, async ({ db, logger }) => {
+execute(__filename, async ({ db }) => {
   const app = feathers().configure(configuration());
   const connection = app.get('mongodb');
   const database = connection.substr(connection.lastIndexOf('/') + 1);
@@ -23,10 +23,6 @@ execute(__filename, async ({ db, logger }) => {
     if (s.updatedAt < oneWeekAgo && c.updatedAt < oneWeekAgo) {
       // ... et Coselec ancien, on ne fait rien
       if (s.coselecAt < oneWeekAgo) {
-        logger.info(
-          `misesEnRelation,NC,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
-          `,nochange`
-        );
         return;
       }
       // ... si Coselec récent, on continue
@@ -34,10 +30,6 @@ execute(__filename, async ({ db, logger }) => {
 
     // Respecte la distance max du conseiller
     if (c.dist.calculated > c.distanceMax * 1000) {
-      logger.info(
-        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
-        `,distancefail,${c.distanceMax},${c.dist.calculated}`
-      );
       return;
     }
 
@@ -72,18 +64,10 @@ execute(__filename, async ({ db, logger }) => {
     const maintenant = new Date();
 
     if (s.dateDebutMission < maintenant && c.dateDisponibilite > maintenant) {
-      logger.info(
-        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
-        `,datefail1,${s.dateDebutMission},${c.dateDisponibilite}`
-      );
       return;
     }
 
     if (s.dateDebutMission >= maintenant && c.dateDisponibilite > s.dateDebutMission) {
-      logger.info(
-        `misesEnRelation,KO,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG}` +
-        `,datefail2,${s.dateDebutMission},${c.dateDisponibilite}`
-      );
       return;
     }
 
@@ -116,10 +100,6 @@ execute(__filename, async ({ db, logger }) => {
       }
     };
 
-    logger.info(
-      `misesEnRelation,OK,${s._id},${c._id},${s.nom},${c.nom},${c.prenom},${s.idPG},${c.idPG},`
-    );
-
     return u;
   };
 
@@ -138,8 +118,6 @@ execute(__filename, async ({ db, logger }) => {
       }
     }]).toArray();
 
-    logger.info(`${s.nom} ${match.length} found`);
-
     let work = [];
 
     for (const c of match) {
@@ -149,16 +127,8 @@ execute(__filename, async ({ db, logger }) => {
       }
     }
 
-    logger.info(`${s.nom} ${work.length} to upsert`);
-
     if (work.length > 0) {
-      const result = await db.collection('misesEnRelation').bulkWrite(work);
-
-      logger.info(
-        `misesEnRelation,BULK,${s._id},${s.nom},${s.idPG},` +
-        `${result.ok},${result.nMatched},${result.nInserted},${result.nUpserted}` +
-        `,${result.nModified}`
-      );
+      await db.collection('misesEnRelation').bulkWrite(work);
     }
   };
 
