@@ -25,15 +25,15 @@ const getRegion = db => async (date, nomRegion) =>
     } }
   ).toArray();
 
-const getDepartements = db => async (date, ordre, codeDepartement, page, limit) =>
-  await db.collection('stats_Territoires').find({ 'date': date, codeDepartement })
+const getDepartements = db => async (date, ordre, page, limit) =>
+  await db.collection('stats_Territoires').find({ 'date': date })
   .sort(ordre)
   .skip(page)
   .limit(limit).toArray();
 
-const getRegions = db => async (date, ordre, nomRegion, page, limit) =>
+const getRegions = db => async (date, ordre, page, limit) =>
   await db.collection('stats_Territoires').aggregate(
-    { $match: { date: date, nomRegion } },
+    { $match: { date: date } },
     { $group: {
       _id: {
         codeRegion: '$codeRegion',
