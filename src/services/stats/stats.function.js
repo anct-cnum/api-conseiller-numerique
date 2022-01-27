@@ -21,6 +21,16 @@ const checkSchema = req => {
   return schema;
 };
 
+const checkSchemaPrefet = req => {
+  const schema = Joi.object({
+    territoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
+    dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+    dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+  }).validate(req.query);
+
+  return schema;
+};
+
 const getTerritoires = async (type, date, ordre, page, limit, { getDepartements, getRegions }) => {
   if (type === 'codeDepartement') {
     return await getDepartements(date, ordre, page, limit);
@@ -41,11 +51,20 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
   return await getCodesPostauxStatistiquesCras(idConseiller);
 };
 
+const getTerritoiresPrefet = async (type, date, codeDepartement, nomRegion, { getDepartement, getRegion }) => {
+  if (type === 'codeDepartement') {
+    return await getDepartement(date, codeDepartement);
+  } else if (type === 'codeRegion') {
+    return await getRegion(date, nomRegion);
+  }
+};
 module.exports = {
   checkAuth,
   checkRole,
   checkSchema,
+  checkSchemaPrefet,
   getTerritoires,
   getTotalTerritoires,
-  getCodesPostauxCras
+  getCodesPostauxCras,
+  getTerritoiresPrefet
 };
