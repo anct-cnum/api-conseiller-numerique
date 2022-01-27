@@ -21,12 +21,10 @@ const getCraCount = db => async conseiller => await db.collection('cras').countD
 const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif) => {
   const conseillers = db.collection('conseillers').find({
     statut: 'RECRUTE',
-    datePrisePoste: {
-      $gt: dateDebut,
-    },
-    dateFinFormation: {
-      $lt: dateFin,
-    },
+    $and: [
+      { datePrisePoste: { $gt: dateDebut } },
+      { datePrisePoste: { $lt: dateFin } },
+    ],
     ...filterUserActif(isUserActif)
   }).project({
     _id: 1,
