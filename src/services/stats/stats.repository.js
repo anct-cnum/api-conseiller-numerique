@@ -3,7 +3,7 @@ const getDepartement = db => async (date, codeDepartement) =>
 
 const getRegion = db => async (date, nomRegion) =>
   await db.collection('stats_Territoires').aggregate(
-    { $match: { date: date, nomRegion: nomRegion } },
+    { $match: { date, nomRegion } },
     { $group: {
       _id: {
         codeRegion: '$codeRegion',
