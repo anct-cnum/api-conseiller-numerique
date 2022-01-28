@@ -642,7 +642,6 @@ exports.Stats = class Stats extends Service {
               }
               }
             ]).toArray();
-            console.log(territoire);
             res.send(territoire[0]);
           }
           return;

@@ -23,7 +23,7 @@ const checkSchema = req => {
 
 const checkSchemaPrefet = req => {
   const schema = Joi.object({
-    territoire: Joi.string().required().error(new Error('Le type de territoire est invalide')),
+    territoire: Joi.string().required().valid('codeDepartement', 'codeRegion').error(new Error('Le type de territoire est invalide')),
     dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
     dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
   }).validate(req.query);
