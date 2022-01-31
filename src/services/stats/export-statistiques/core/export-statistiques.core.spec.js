@@ -30,6 +30,10 @@ const statistiquesConseiller = {
       valeur: 8
     },
     {
+      nom: 'securite',
+      valeur: 4
+    },
+    {
       nom: 'smartphone',
       valeur: 2
     },
@@ -64,6 +68,14 @@ const statistiquesConseiller = {
     {
       nom: 'demarche en ligne',
       valeur: 21
+    },
+    {
+      nom: 'fraude et harcelement',
+      valeur: 20
+    },
+    {
+      nom: 'sante',
+      valeur: 15
     },
     {
       nom: 'autre',
@@ -211,6 +223,10 @@ const statistiquesNationales = {
       valeur: 80
     },
     {
+      nom: 'securite',
+      valeur: 40
+    },
+    {
       nom: 'smartphone',
       valeur: 20
     },
@@ -245,6 +261,14 @@ const statistiquesNationales = {
     {
       nom: 'demarche en ligne',
       valeur: 210
+    },
+    {
+      nom: 'fraude et harcelement',
+      valeur: 200
+    },
+    {
+      nom: 'sante',
+      valeur: 150
     },
     {
       nom: 'autre',
