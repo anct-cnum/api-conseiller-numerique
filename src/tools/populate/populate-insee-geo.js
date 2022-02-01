@@ -29,7 +29,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   };
 
   const getGeo = async adresse => {
-    const adressePostale = encodeURI(`${adresse.numero_voie === null ? '' : adresse.numero_voie} ${adresse.type_voie === null ? '' : adresse.type_voie} ${adresse.nom_voie}`);
+    const adressePostale = encodeURI(`${adresse.numero_voie === null ? '' : adresse.numero_voie} `
+      + `${adresse.type_voie === null ? '' : adresse.type_voie} ${adresse.nom_voie}`);
     const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}&citycode=${adresse.code_insee_localite}`;
 
     const params = {};
