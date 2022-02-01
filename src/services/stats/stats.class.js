@@ -30,6 +30,7 @@ const { buildExportStatistiquesCsvFileContent } = require('../../common/document
 const { getStatistiquesToExport } = require('./export-statistiques/core/export-statistiques.core');
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 const { statsRepository } = require('./stats.repository');
+const departementsRegion = require('../../../data/imports/departements-region.json');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -370,8 +371,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop') && !statsFct.checkRole(adminUser?.roles, 'structure_coop') &&
-            !statsFct.checkRole(adminUser?.roles, 'prefet')) {
+        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop') && !statsFct.checkRole(adminUser?.roles, 'structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -429,6 +429,74 @@ exports.Stats = class Stats extends Service {
         items.limit = options.paginate.default;
         items.skip = page;
 
+        res.send({ items: items });
+      });
+    });
+
+    app.get('/stats/prefet/territoires', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+
+      app.get('mongoClient').then(async db => {
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!statsFct.checkRole(adminUser?.roles, 'prefet')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        const schema = statsFct.checkSchemaPrefet(req);
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
+
+        const { territoire } = req.query;
+        const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
+        const dateDebutQuery = new Date(req.query.dateDebut);
+        const dateFinQuery = new Date(req.query.dateFin);
+        const codeDepartement = adminUser.departement;
+        //exception Saint-Martin 978
+        const nomRegion = codeDepartement !== '978' ?
+          departementsRegion.find(departement => departement.num_dep === codeDepartement)?.region_name :
+          'Saint-Martin';
+
+        //Construction des statistiques
+        let items = {};
+        let statsTerritoires = [];
+
+        statsTerritoires = await statsFct.getTerritoiresPrefet(
+          territoire,
+          dateFin,
+          codeDepartement,
+          nomRegion,
+          statsRepository(db)
+        );
+
+        await Promise.all(statsTerritoires.map(async ligneStats => {
+          ligneStats.personnesAccompagnees = 0;
+          ligneStats.CRAEnregistres = 0;
+          ligneStats.tauxActivation = ligneStats?.nombreConseillersCoselec > 0 ?
+            Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
+
+          if (ligneStats.conseillerIds.length > 0) {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+              '$gte': dateDebutQuery,
+              '$lte': dateFinQuery,
+            } };
+            const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
+          } else {
+            ligneStats.personnesAccompagnees = 0;
+            ligneStats.CRAEnregistres = 0;
+          }
+        }));
+        items.data = statsTerritoires;
         res.send({ items: items });
       });
     });
