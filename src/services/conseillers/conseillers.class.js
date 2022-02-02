@@ -422,13 +422,13 @@ exports.Conseillers = class Conseillers extends Service {
 
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
         };
         if (query.codePostal !== '') {
           statsQuery = {
             'conseiller.$id': conseiller._id,
             'cra.codePostal': req.query?.codePostal,
-            'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+            'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
           };
         }
 
