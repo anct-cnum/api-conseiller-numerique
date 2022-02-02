@@ -1,9 +1,18 @@
-const getDepartement = db => async (date, codeDepartement) =>
-  await db.collection('stats_Territoires').find({ 'date': date, 'codeDepartement': codeDepartement }).toArray();
+const getDepartement = db => async (date, codeDepartement, codeRegion) => {
+  if (codeDepartement) {
+    return await db.collection('stats_Territoires').find({ 'date': date, 'codeDepartement': codeDepartement }).toArray();
+  } else if (codeRegion) {
+    return await db.collection('stats_Territoires').find({ 'date': date, 'codeRegion': codeRegion }).toArray();
+  }
+};
 
-const getRegion = db => async (date, nomRegion) =>
-  await db.collection('stats_Territoires').aggregate(
-    { $match: { date, nomRegion } },
+const getRegion = db => async (date, nomRegion, codeRegion) => {
+  let match = { $match: { date, nomRegion } };
+  if (nomRegion === undefined) {
+    match = { $match: { date, codeRegion } };
+  }
+  return await db.collection('stats_Territoires').aggregate(
+    match,
     { $group: {
       _id: {
         codeRegion: '$codeRegion',
@@ -24,6 +33,7 @@ const getRegion = db => async (date, nomRegion) =>
       } }
     } }
   ).toArray();
+};
 
 const getDepartements = db => async (date, ordre, page, limit) =>
   await db.collection('stats_Territoires').find({ 'date': date })

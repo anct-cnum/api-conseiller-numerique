@@ -51,11 +51,11 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
   return await getCodesPostauxStatistiquesCras(idConseiller);
 };
 
-const getTerritoiresPrefet = async (type, date, codeDepartement, nomRegion, { getDepartement, getRegion }) => {
+const getTerritoiresPrefet = async (type, date, codeDepartement, codeRegion, nomRegion, { getDepartement, getRegion }) => {
   if (type === 'codeDepartement') {
-    return await getDepartement(date, codeDepartement);
+    return await getDepartement(date, codeDepartement, codeRegion);
   } else if (type === 'codeRegion') {
-    return await getRegion(date, nomRegion);
+    return await getRegion(date, nomRegion, codeRegion);
   }
 };
 module.exports = {
