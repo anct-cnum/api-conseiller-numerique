@@ -110,6 +110,10 @@ exports.Structures = class Structures extends Service {
         { '$sort': { '_id': 1 } }
       ]).toArray();
 
+      const statsDisponibles = stats.filter(item => {
+        return item._id !== 'non_disponible';
+      });
+
       /* ajout des candidats dont le recrutement est finalisé dans détails structure*/
       const misesEnRelationFinalise = await db.collection('misesEnRelation').find({ 'statut': 'finalisee', 'structure.$id': structureId }).toArray();
       const candidatsFinalise = misesEnRelationFinalise.map(item => {
@@ -121,7 +125,7 @@ exports.Structures = class Structures extends Service {
       const candidatsValide = misesEnRelationValide.map(item => {
         return item.conseillerObj;
       });
-      res.send(stats.map(item => {
+      res.send(statsDisponibles.map(item => {
         item.statut = item._id;
         if (item.statut === 'recrutee') {
           item.candidats = candidatsValide;
@@ -169,6 +173,8 @@ exports.Structures = class Structures extends Service {
         if (allowedFilters.includes(filter)) {
           if (filter !== 'toutes') {
             queryFilter = { statut: filter };
+          } else {
+            queryFilter = { statut: { '$ne': 'non_disponible' } };
           }
         } else {
           res.status(400).send(new BadRequest('Invalid filter', {
