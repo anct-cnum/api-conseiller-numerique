@@ -479,7 +479,7 @@ exports.Stats = class Stats extends Service {
           nomRegion,
           statsRepository(db)
         );
-console.log(statsTerritoires);
+
         await Promise.all(statsTerritoires.map(async ligneStats => {
           ligneStats.personnesAccompagnees = 0;
           ligneStats.CRAEnregistres = 0;
