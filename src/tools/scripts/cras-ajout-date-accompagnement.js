@@ -18,8 +18,7 @@ const updateCra = db => async (id, date) => {
   });
 };
 
-program
-.option('-l, --limit <limit>', 'Nombre de cras');
+program.option('-l, --limit <limit>', 'Nombre de cras', parseInt).parse(process.argv);
 
 execute(__filename, async ({ logger, db }) => {
   let { limit = 500 } = program;
