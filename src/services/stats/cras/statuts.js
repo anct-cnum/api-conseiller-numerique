@@ -10,19 +10,35 @@ const getStatsStatuts = async (db, query, totalParticipants) => {
 
   let statuts = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.statut' },
       { $match: { ...query } },
-      { $group: { _id: '$cra.statut', count: { $sum: '$cra.nbParticipants' } } },
-      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
+      { $group: {
+        _id: 'statut',
+        etudiant: { $sum: '$cra.statut.etudiant' },
+        sansEmploi: { $sum: '$cra.statut.sansEmploi' },
+        enEmploi: { $sum: '$cra.statut.enEmploi' },
+        retraite: { $sum: '$cra.statut.retraite' },
+        heterogene: { $sum: '$cra.statut.heterogene' },
+      } },
+      { $project: { '_id': 0, 'etudiant': '$etudiant',
+        'sansEmploi': '$sansEmploi', 'enEmploi': '$enEmploi',
+        'retraite': '$retraite', 'heterogene': '$heterogene'
+      } }
     ]
   ).toArray();
 
   if (statuts.length > 0) {
-    statsUsagers = statsUsagers.map(statut1 => statuts.find(statut2 => statut1.nom === statut2.nom) || statut1);
+    statsUsagers = [
+      { nom: 'etudiant', valeur: statuts[0].etudiant },
+      { nom: 'sans emploi', valeur: statuts[0].sansEmploi },
+      { nom: 'en emploi', valeur: statuts[0].enEmploi },
+      { nom: 'retraite', valeur: statuts[0].retraite },
+      { nom: 'heterogene', valeur: statuts[0].heterogene },
+    ];
   }
 
   //Conversion en % total
   statsUsagers = statsUsagers.map(statut => {
+    console.log(statut.valeur / totalParticipants * 100);
     statut.valeur = totalParticipants > 0 ? ~~(statut.valeur / totalParticipants * 100) : 0;
     return statut;
   });
