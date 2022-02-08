@@ -38,7 +38,6 @@ const getStatsStatuts = async (db, query, totalParticipants) => {
 
   //Conversion en % total
   statsUsagers = statsUsagers.map(statut => {
-    console.log(statut.valeur / totalParticipants * 100);
     statut.valeur = totalParticipants > 0 ? ~~(statut.valeur / totalParticipants * 100) : 0;
     return statut;
   });

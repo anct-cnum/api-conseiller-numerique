@@ -81,7 +81,6 @@ module.exports = {
             // eslint-disable-next-line max-len
             heterogene: Joi.number().integer().required().min(0).max(100).error(new Error('Le nombre de personnes non-renseignées ou groupe hétérogène est invalide')),
           }),
-          // age: Joi.string().required().valid('-12', '12-18', '18-35', '35-60', '+60').error(new Error('La catégorie d\'âge est invalide')),
           // eslint-disable-next-line max-len
           themes: Joi.array().required().min(1).max(13).items(Joi.string().required().valid('equipement informatique', 'vocabulaire', 'internet', 'securite', 'courriel', 'echanger', 'traitement texte', 'contenus numeriques', 'trouver emploi', 'tpe/pme', 'accompagner enfant', 'demarche en ligne', 'fraude et harcelement', 'sante', 'autre', 'smartphone')).error(new Error('Le thème est invalide')),
           duree: Joi.any().required().error(new Error('La durée est invalide')),
