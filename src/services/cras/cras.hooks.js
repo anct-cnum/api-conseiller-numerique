@@ -55,7 +55,7 @@ module.exports = {
         context.data.createdAt = new Date();
         delete context.data.cra.datePickerStatus;
         context.data.cra.dateAccompagnement = new Date(context.data.cra.dateAccompagnement);
-        console.log(context.data.cra.dateAccompagnement);
+
         //Validation des données cra
         const schema = Joi.object({
 
