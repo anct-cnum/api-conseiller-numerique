@@ -22,7 +22,6 @@ const statsThemes = statistiques => [
     'Équipement informatique',
     'Naviguer sur internet',
     'Courriels',
-    'Sécurité',
     'Applications smartphone',
     'Gestion de contenus numériques',
     'Env., vocab. Numérique',
@@ -32,7 +31,9 @@ const statsThemes = statistiques => [
     'Accompagner son enfant',
     'Numérique et TPE/PME',
     'Démarche en ligne',
-    /*'Fraude et harcèlement',
+    /*
+    'Sécurité',
+    'Fraude et harcèlement',
     'Santé',*/
     'Autre'
   ].map((statTheme, index) => `${statTheme};${statistiques.statsThemes[index].valeur}`),
