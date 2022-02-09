@@ -59,7 +59,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   }
 
   let query = {
-    'createdAt': {
+    'cra.dateAccompagnement': {
       $gte: dateDebut,
       $lt: dateFin,
     }
