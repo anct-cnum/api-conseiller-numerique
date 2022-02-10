@@ -9,7 +9,6 @@ const { program } = require('commander');
 
 const getCrasSansDateAccompagnement = db => async limit => {
   return await db.collection('cras').find({ 'cra.dateAccompagnement': { '$eq': null } }).limit(limit).toArray();
-
 };
 
 const updateCra = db => async (id, date) => {

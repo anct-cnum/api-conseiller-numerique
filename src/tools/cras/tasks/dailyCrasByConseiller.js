@@ -5,63 +5,62 @@ const app = feathers().configure(configuration());
 const connection = app.get('mongodb');
 const database = connection.substr(connection.lastIndexOf('/') + 1);
 
-const insertDailyCrasStatsByConseiller = async (db, query, logger, dateDebut, monthCalcul) => {
+const getStatsConseillerCras = db => async idConseiller => {
+  return await db.collection('stats_conseillers_cras').findOne({ 'conseiller.$id': idConseiller });
+};
 
-  let detailsCras = await db.collection('cras').aggregate(
-    [
-      { $match: { ...query } },
-      {
-        $addFields: {
-          'conseiller': {
-            $arrayElemAt: [{ $objectToArray: '$conseiller' }, 1] //Obligé de passer par objectToArray car dbref non supporté avec le aggregate
-          }
-        }
-      },
-      {
-        $addFields: {
-          'conseiller': '$conseiller.v'
-        }
-      },
-      { $group: { _id: '$conseiller', count: { $sum: 1 } } },
-      { $group: { _id: null, listConseiller: { $push: {
-        'idConseiller': '$_id',
-        'totalCras': '$count',
-      } } } },
-    ]
-  ).toArray();
+const insertDailyCrasStatsByConseiller = async (db, query, logger) => {
 
-  let year = dateDebut.getUTCFullYear();
-  let month = dateDebut.getMonth();
+  let detailsCras = await db.collection('cras').find(query).toArray();
   let promises = [];
+  let list = [];
 
-  detailsCras[0]?.listConseiller.forEach(conseiller => {
+  logger.info('Nombre de CRAs récupérés à traiter pour ce mois : ' + detailsCras.length);
+
+  detailsCras.forEach(detailsCra => {
+    let year = detailsCra.cra.dateAccompagnement.getUTCFullYear();
+    let month = detailsCra.cra.dateAccompagnement.getMonth();
+    let newSumCra = 1;
+
+    list?.forEach((statsConseiller, id) => {
+      if (String(statsConseiller.conseillerId) === String(detailsCra.conseiller.oid) && statsConseiller.mois === month && statsConseiller.annee === year) {
+        newSumCra = statsConseiller.sumCras + 1;
+        delete list[id];
+      }
+    });
+
+    list.push({ 'conseillerId': detailsCra.conseiller.oid, 'mois': month, 'annee': year, 'sumCras': newSumCra });
+  });
+
+  list?.forEach(statsToUpdate => {
     promises.push(new Promise(async resolve => {
-      //Recupere la nouvelle stat de cette date d'hier
-      let newStat = conseiller.totalCras;
-      //Regarde l'ancienne stat correpondante si présente (correpondante au mois et à l'annee)
-      // eslint-disable-next-line max-len
-      const queryUpd = { conseiller: new DBRef('conseillers', new ObjectId(conseiller.idConseiller), database) };
-      const remove = { $pull: { [year]: { 'mois': month } } };
+      const statsConseillerCras = await getStatsConseillerCras(db)(statsToUpdate.conseillerId);
+
+      const queryUpd = { conseiller: new DBRef('conseillers', new ObjectId(statsToUpdate.conseillerId), database) };
+      const remove = { $pull: { [String(statsToUpdate.annee)]: { 'mois': statsToUpdate.mois } } };
       const options = { upsert: true };
 
-      let conseillerStats = await db.collection('stats_conseillers_cras').findOne({ 'conseiller.$id': new ObjectId(conseiller.idConseiller) });
-      if (conseillerStats) {
-        let oldStat = conseillerStats[year]?.find(stat => stat.mois === month)?.totalCras;
-        //Si trouvé alors on additionne la nouvelle stat (seulement si on est pas dans le recalcul total d'un mois)
-        newStat = oldStat && !monthCalcul ? oldStat + conseiller.totalCras : conseiller.totalCras;
-        //On peut supprimer l'ancienne valeur (correpondante au mois et à l'annee)
-        await db.collection('stats_conseillers_cras').updateOne(queryUpd, remove, options);
+      let totalCras = statsToUpdate.sumCras;
+
+      if (statsConseillerCras) {
+        const oldtotalCras = statsConseillerCras[String(statsToUpdate.annee)]?.find(stat => stat.mois === statsToUpdate.mois)?.totalCras;
+        totalCras += oldtotalCras ?? 0;
       }
 
+      //On peut supprimer l'ancienne valeur (correpondante au mois et à l'annee)
+      await db.collection('stats_conseillers_cras').updateOne(queryUpd, remove, options);
+
       //Ajout ou mise à jour de la nouvelle stat correspondante au mois et à l'annee
-      const update = { $push: { [year]: { 'mois': month, 'totalCras': newStat } } };
-      await db.collection('stats_conseillers_cras').updateOne(queryUpd, update, options);
-      logger.info(`Statistiques CRAs du conseiller (id=${conseiller.idConseiller} totalCras=${conseiller.totalCras}) mis à jour`);
-      resolve();
+      const update = { $push: { [String(statsToUpdate.annee)]: { 'mois': statsToUpdate.mois, 'totalCras': totalCras } } };
+      const result = await db.collection('stats_conseillers_cras').updateOne(queryUpd, update, options);
+
+      logger.info(`Statistiques CRAs du conseiller (id=${statsToUpdate.conseillerId} totalCras=${totalCras}) mis à jour`);
+
+      resolve(result);
     }));
   });
-  await Promise.all(promises);
 
+  await Promise.all(promises);
 
 };
 
