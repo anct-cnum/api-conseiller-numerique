@@ -21,17 +21,19 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   dateFin.setDate(dateFin.getDate() - 1);
   dateFin.setUTCHours(23, 59, 59, 59);
 
-  if (isNaN(new Date(cli.month))) {
-    logger.error('Paramètre month invalide');
-    return;
-  } else {
-    logger.info('Recalcul des stats du mois des conseillers pour le mois ' + moment(new Date(cli.month)).format('MM'));
-    let monthCustom = new Date(cli.month);
-    dateDebut = new Date(monthCustom);
-    let lastDayOfMonth = new Date(dateDebut.getUTCFullYear(), dateDebut.getUTCMonth() + 1, 0).getDate();
-    dateFin = new Date(monthCustom);
-    dateFin.setDate(dateDebut.getDate() + lastDayOfMonth - 1);
-    dateFin.setUTCHours(23, 59, 59, 59);
+  if (cli.month) {
+    if (isNaN(new Date(cli.month))) {
+      logger.error('Paramètre month invalide');
+      return;
+    } else {
+      logger.info('Recalcul des stats du mois des conseillers pour le mois ' + moment(new Date(cli.month)).format('MM'));
+      let monthCustom = new Date(cli.month);
+      dateDebut = new Date(monthCustom);
+      let lastDayOfMonth = new Date(dateDebut.getUTCFullYear(), dateDebut.getUTCMonth() + 1, 0).getDate();
+      dateFin = new Date(monthCustom);
+      dateFin.setDate(dateDebut.getDate() + lastDayOfMonth - 1);
+      dateFin.setUTCHours(23, 59, 59, 59);
+    }
   }
 
   let query = {
