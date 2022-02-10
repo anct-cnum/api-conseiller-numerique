@@ -35,7 +35,6 @@ const statsThemes = statistiques => [
     'Sécurité',
     'Fraude et harcèlement',
     'Santé',*/
-    'Autre'
   ].map((statTheme, index) => `${statTheme};${statistiques.statsThemes[index].valeur}`),
   ''
 ];
