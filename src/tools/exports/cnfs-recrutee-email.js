@@ -7,7 +7,7 @@ const { execute } = require('../utils');
 
 execute(__filename, async ({ logger, db, exit }) => {
   program.option('-d, --departement <departement>', 'departement: le code departement');
-  program.option('-d, --region <region>', 'region: le code region');
+  program.option('-r, --region <region>', 'region: le code region');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -55,5 +55,5 @@ execute(__filename, async ({ logger, db, exit }) => {
   });
   await Promise.all(promises);
   file.close();
-  logger.info(`Export de ${cnfsFinalisee.length} conseiller(s) recruté pour le ${info}`);
+  logger.info(`Export de ${cnfsFinalisee.length} conseiller(s) recruté(s) pour le ${info}`);
 });
