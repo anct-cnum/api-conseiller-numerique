@@ -67,8 +67,8 @@ module.exports = {
           // eslint-disable-next-line max-len
           themes: Joi.array().required().min(1).max(13).items(Joi.string().required().valid('equipement informatique', 'vocabulaire', 'internet', 'securite', 'courriel', 'echanger', 'traitement texte', 'contenus numeriques', 'trouver emploi', 'tpe/pme', 'accompagner enfant', 'demarche en ligne', 'fraude et harcelement', 'sante', 'autre', 'smartphone')).error(new Error('Le thème est invalide')),
           duree: Joi.any().required().error(new Error('La durée est invalide')),
-          accompagnement: Joi.string().required().valid('individuel', 'atelier', 'redirection').allow(null).error(new Error('L\'accompagnement est invalide'))
-
+          accompagnement: Joi.string().required().valid('individuel', 'atelier', 'redirection').allow(null).error(new Error('L\'accompagnement est invalide')),
+          organisme: Joi.string().required().allow(null).error(new Error('L\'organisme de l\'accompagnement est invalide'))
         }).validate(context.data.cra);
 
         if (schema.error) {
