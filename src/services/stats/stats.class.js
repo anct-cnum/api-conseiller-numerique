@@ -460,6 +460,8 @@ exports.Stats = class Stats extends Service {
         const dateDebutQuery = new Date(req.query.dateDebut);
         const dateFinQuery = new Date(req.query.dateFin);
         const codeDepartement = adminUser.departement;
+        const codeRegion = adminUser.region;
+
         //exception Saint-Martin 978
         const nomRegion = codeDepartement !== '978' ?
           departementsRegion.find(departement => departement.num_dep === codeDepartement)?.region_name :
@@ -473,6 +475,7 @@ exports.Stats = class Stats extends Service {
           territoire,
           dateFin,
           codeDepartement,
+          codeRegion,
           nomRegion,
           statsRepository(db)
         );

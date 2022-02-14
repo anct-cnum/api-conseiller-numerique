@@ -4,7 +4,6 @@ const getStatsThemes = async (db, query) => {
     { nom: 'equipement informatique', valeur: 0 },
     { nom: 'internet', valeur: 0 },
     { nom: 'courriel', valeur: 0 },
-    { nom: 'securite', valeur: 0 },
     { nom: 'smartphone', valeur: 0 },
     { nom: 'contenus numeriques', valeur: 0 },
     { nom: 'vocabulaire', valeur: 0 },
@@ -14,8 +13,10 @@ const getStatsThemes = async (db, query) => {
     { nom: 'accompagner enfant', valeur: 0 },
     { nom: 'tpe/pme', valeur: 0 },
     { nom: 'demarche en ligne', valeur: 0 },
+    /*
+    { nom: 'securite', valeur: 0 },
     { nom: 'fraude et harcelement', valeur: 0 },
-    { nom: 'sante', valeur: 0 },
+    { nom: 'sante', valeur: 0 },*/
     { nom: 'autre', valeur: 0 },
   ];
 
