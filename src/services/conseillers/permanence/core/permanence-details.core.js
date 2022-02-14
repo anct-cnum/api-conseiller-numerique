@@ -39,9 +39,14 @@ const toPermanenceDetailsTransfer = permanence => ({
   ...permanenceContact(permanence)
 });
 
-const permanenceDetails = async (structureId, { getPermanenceByStructureId, getNombreCnfs }) => ({
+const cnfsDetails = cnfs => ({
+  cnfs,
+  nombreCnfs: cnfs.length,
+});
+
+const permanenceDetails = async (structureId, { getPermanenceByStructureId, getCnfs }) => ({
   ...toPermanenceDetailsTransfer(await getPermanenceByStructureId(structureId)),
-  nombreCnfs: await getNombreCnfs(structureId)
+  ...cnfsDetails(await getCnfs(structureId))
 });
 
 module.exports = {
