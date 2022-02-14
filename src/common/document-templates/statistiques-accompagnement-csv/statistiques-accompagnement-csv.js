@@ -31,10 +31,9 @@ const statsThemes = statistiques => [
     'Accompagner son enfant',
     'Numérique et TPE/PME',
     'Démarche en ligne',
-    /*
     'Sécurité',
     'Fraude et harcèlement',
-    'Santé',*/
+    'Santé'
   ].map((statTheme, index) => `${statTheme};${statistiques.statsThemes[index].valeur}`),
   ''
 ];
