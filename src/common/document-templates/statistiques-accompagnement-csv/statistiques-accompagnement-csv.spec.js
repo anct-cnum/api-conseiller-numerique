@@ -77,10 +77,6 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           nom: 'sante',
           valeur: 15
         },
-        {
-          nom: 'autre',
-          valeur: 13
-        }
       ],
       statsLieux: [
         {
@@ -230,7 +226,6 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Démarche en ligne;21\n' +
       'Fraude et harcèlement;20\n' +
       'Santé;15\n' +
-      'Autre;13\n' +
       '\n' +
       'Lieux des accompagnements\n' +
       'À domicile;0\n' +
