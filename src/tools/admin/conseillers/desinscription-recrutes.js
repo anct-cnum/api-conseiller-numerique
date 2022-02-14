@@ -275,6 +275,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               logger.error(error.message);
               Sentry.captureException(error);
             }
+            logger.info('conseiller traité en rupture : ' + conseillerId);
             ok++;
           }
           count++;
