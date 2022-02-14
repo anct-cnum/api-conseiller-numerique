@@ -68,7 +68,7 @@ const getRegions = db => async (date, ordre, page, limit) =>
     { $limit: limit },
   ).toArray();
 
-const getTotalDepartements = db => async (date, codeDepartement) => await db.collection('stats_Territoires').countDocuments({ 'date': date, codeDepartement });
+const getTotalDepartements = db => async date => await db.collection('stats_Territoires').countDocuments({ 'date': date });
 
 const getTotalRegions = db => async (date, nomRegion) => {
   const statsTotal = await db.collection('stats_Territoires').aggregate(

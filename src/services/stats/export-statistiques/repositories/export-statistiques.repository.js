@@ -6,13 +6,13 @@ const getStatsCra = async (db, statsQuery) =>
 
 const getStatsNationales = db => async (dateDebut, dateFin) =>
   await getStatsCra(db, {
-    createdAt: { $gte: dateDebut, $lt: dateFin }
+    'cra.dateAccompagnement': { $gte: dateDebut, $lt: dateFin }
   });
 
 const getStatsConseiller = db => async (dateDebut, dateFin, conseillerId) =>
   await getStatsCra(db, {
     'conseiller.$id': new ObjectID(conseillerId),
-    'createdAt': { $gte: dateDebut, $lt: dateFin }
+    'cra.dateAccompagnement': { $gte: dateDebut, $lt: dateFin }
   });
 
 const getConseillerById = db => async id =>
