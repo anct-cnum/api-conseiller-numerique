@@ -12,6 +12,7 @@ const statsCnfs = [
     datePrisePoste: '27/01/2021',
     dateFinFormation: '12/03/2021',
     certifie: 'Non',
+    craCount: 12,
     isUserActif: 'Non'
   }
 ];
@@ -197,12 +198,23 @@ describe('export cnfs utils', () => {
     expect(fileName).toEqual('export-cnfs_entre_2020-11-02_et_2020-11-17.csv');
   });
 
-  it('should build territoires csv file content for cnfs', () => {
-    const fileContent = buildExportCnfsCsvFileContent(statsCnfs);
+  it('should build territoires csv file content for cnfs when user has no admin_coop role', async () => {
+    const user = { roles: [] };
+    const fileContent = await buildExportCnfsCsvFileContent(statsCnfs, user);
 
     expect(fileContent).toEqual(
-      'Prénom;Nom;Email;Structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé\n' +
-      'John;Doe;john.doe@conseiller-numerique.fr;Association pour l\'accès au numérique;69005;27/01/2021;12/03/2021;Non;Non'
+      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé\n' +
+      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;Association pour laccès au numérique;69005;27/01/2021;12/03/2021;Non;Non'
+    );
+  });
+
+  it('should build territoires csv file content for cnfs when user admin_coop role', async () => {
+    const user = { roles: ['admin_coop'] };
+    const fileContent = await buildExportCnfsCsvFileContent(statsCnfs, user);
+
+    expect(fileContent).toEqual(
+      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé;CRA Saisis\n' +
+      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;Association pour laccès au numérique;69005;27/01/2021;12/03/2021;Non;Non;12'
     );
   });
 });
