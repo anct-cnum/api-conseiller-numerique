@@ -172,7 +172,7 @@ exports.Stats = class Stats extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
         let query = {
           'conseiller.$id': new ObjectID(conseiller._id),
-          'cra.dateAccompagnement': {
+          'createdAt': {
             $gte: dateDebut,
             $lt: dateFin,
           }
@@ -182,7 +182,7 @@ exports.Stats = class Stats extends Service {
           query = {
             'conseiller.$id': new ObjectID(conseiller._id),
             'cra.codePostal': req.query?.codePostal,
-            'cra.dateAccompagnement': {
+            'createdAt': {
               $gte: dateDebut,
               $lt: dateFin,
             }
@@ -290,14 +290,15 @@ exports.Stats = class Stats extends Service {
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
-        const { stats, type } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.idType, query.type,
+        let ids = [];
+        ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        const { stats, type, idType } = await getStatistiquesToExport(
+          query.dateDebut, query.dateFin, query.conseillerId, query.idType, query.type, ids,
           exportStatistiquesRepository(db)
         );
-
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type)
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -411,7 +412,7 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
@@ -487,7 +488,7 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
@@ -534,7 +535,7 @@ exports.Stats = class Stats extends Service {
           let ids = [];
           ids = conseillerIds.map(id => new ObjectID(id));
           let query = {
-            'cra.dateAccompagnement': {
+            'createdAt': {
               '$gte': dateDebut,
               '$lt': dateFin,
             },
@@ -573,7 +574,7 @@ exports.Stats = class Stats extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
 
         let query = {
-          'cra.dateAccompagnement': {
+          'createdAt': {
             '$gte': dateDebut,
             '$lt': dateFin,
           }

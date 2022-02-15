@@ -6,13 +6,19 @@ const getStatsCra = async (db, statsQuery) =>
 
 const getStatsNationales = db => async (dateDebut, dateFin) =>
   await getStatsCra(db, {
-    'cra.dateAccompagnement': { $gte: dateDebut, $lt: dateFin }
+    'createdAt': { $gte: dateDebut, $lt: dateFin }
+  });
+
+const getStatsDepartementalRegional = db => async (dateDebut, dateFin, ids) =>
+  await getStatsCra(db, {
+    'createdAt': { $gte: dateDebut, $lt: dateFin },
+    'conseiller.$id': { $in: ids }
   });
 
 const getStatsConseiller = db => async (dateDebut, dateFin, conseillerId) =>
   await getStatsCra(db, {
     'conseiller.$id': new ObjectID(conseillerId),
-    'cra.dateAccompagnement': { $gte: dateDebut, $lt: dateFin }
+    'createdAt': { $gte: dateDebut, $lt: dateFin }
   });
 
 const getConseillerById = db => async id =>
@@ -21,7 +27,8 @@ const getConseillerById = db => async id =>
 const exportStatistiquesRepository = db => ({
   getConseillerById: getConseillerById(db),
   getStatsNationales: getStatsNationales(db),
-  getStatsConseiller: getStatsConseiller(db)
+  getStatsConseiller: getStatsConseiller(db),
+  getStatsDepartementalRegional: getStatsDepartementalRegional(db)
 });
 
 module.exports = {
