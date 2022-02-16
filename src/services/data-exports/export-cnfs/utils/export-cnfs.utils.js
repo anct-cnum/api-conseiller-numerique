@@ -55,7 +55,9 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'Activé',
   ];
   if (user.roles.includes('admin_coop')) {
+    fileHeaders[5] = 'Code Postal du conseiller';
     fileHeaders.push('CRA Saisis');
+    fileHeaders.splice(5, 0, 'Code département de la structure');
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
@@ -64,6 +66,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.email,
         statCnfs?.emailCN?.address ?? 'compte COOP non créé',
         statCnfs.nomStructure.replace(/["',]/g, ''),
+        statCnfs.codeDepartement,
         statCnfs.codePostal,
         statCnfs.datePrisePoste,
         statCnfs.dateFinFormation,
