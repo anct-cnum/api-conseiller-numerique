@@ -97,8 +97,8 @@ const statsEvolutions = statistiques => [
   ]).flat()
 ];
 
-const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type) => [
-  `Statistiques ${type} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
+const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType) => [
+  `Statistiques ${type} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
   ...statsThemes(statistiques),
   ...statsLieux(statistiques),
