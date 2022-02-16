@@ -12,13 +12,13 @@ const statistiquesForConseiller = async (dateDebut, dateFin, conseillerId, { get
 
 const statistiquesNationales = async (dateDebut, dateFin, type, { getStatsNationales }) => ({
   stats: await getStatsNationales(dateDebut, dateFin),
-  type: type
+  type
 });
 
 const statistiquesDepartementalRegional = async (dateDebut, dateFin, idType, type, ids, { getStatsDepartementalRegional }) => ({
   stats: await getStatsDepartementalRegional(dateDebut, dateFin, ids),
-  type: type,
-  idType: idType
+  type,
+  idType
 });
 
 const getStatistiquesToExport = async (dateDebut, dateFin, conseillerId, idType, type, ids, exportStatistiquesRepository) => {

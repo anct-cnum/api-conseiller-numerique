@@ -17,7 +17,7 @@ const validateExportStatistiquesSchema = exportTerritoiresInput => Joi.object({
   dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
   type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
   idType: Joi.string().error(new Error('L\'id du territoire invalide')),
-  conseillerIds: Joi.string().error(new Error('Les ids des conseillers sont invalide')),
+  conseillerIds: Joi.string().error(new Error('Les ids des conseillers sont invalides')),
   conseillerId: Joi.string().error(new Error('L\' id du conseiller est invalide')),
 }).validate(exportTerritoiresInput);
 
