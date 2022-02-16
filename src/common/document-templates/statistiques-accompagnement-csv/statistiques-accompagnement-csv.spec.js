@@ -30,10 +30,6 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           valeur: 8
         },
         {
-          nom: 'securite',
-          valeur: 4
-        },
-        {
           nom: 'smartphone',
           valeur: 2
         },
@@ -68,6 +64,10 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
         {
           nom: 'demarche en ligne',
           valeur: 21
+        },
+        {
+          nom: 'securite',
+          valeur: 4
         },
         {
           nom: 'fraude et harcelement',
@@ -214,7 +214,6 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Équipement informatique;13\n' +
       'Naviguer sur internet;9\n' +
       'Courriels;8\n' +
-      'Sécurité;4\n' +
       'Applications smartphone;2\n' +
       'Gestion de contenus numériques;8\n' +
       'Env., vocab. Numérique;4\n' +
@@ -224,6 +223,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Accompagner son enfant;0\n' +
       'Numérique et TPE/PME;0\n' +
       'Démarche en ligne;21\n' +
+      'Sécurité;4\n' +
       'Fraude et harcèlement;20\n' +
       'Santé;15\n' +
       '\n' +
