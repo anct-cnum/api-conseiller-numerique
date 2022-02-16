@@ -172,7 +172,7 @@ exports.Stats = class Stats extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
         let query = {
           'conseiller.$id': new ObjectID(conseiller._id),
-          'createdAt': {
+          'cra.dateAccompagnement': {
             $gte: dateDebut,
             $lt: dateFin,
           }
@@ -182,7 +182,7 @@ exports.Stats = class Stats extends Service {
           query = {
             'conseiller.$id': new ObjectID(conseiller._id),
             'cra.codePostal': req.query?.codePostal,
-            'createdAt': {
+            'cra.dateAccompagnement': {
               $gte: dateDebut,
               $lt: dateFin,
             }
@@ -412,7 +412,7 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
@@ -488,7 +488,7 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
@@ -535,7 +535,7 @@ exports.Stats = class Stats extends Service {
           let ids = [];
           ids = conseillerIds.map(id => new ObjectID(id));
           let query = {
-            'createdAt': {
+            'cra.dateAccompagnement': {
               '$gte': dateDebut,
               '$lt': dateFin,
             },
@@ -574,7 +574,7 @@ exports.Stats = class Stats extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
 
         let query = {
-          'createdAt': {
+          'cra.dateAccompagnement': {
             '$gte': dateDebut,
             '$lt': dateFin,
           }
