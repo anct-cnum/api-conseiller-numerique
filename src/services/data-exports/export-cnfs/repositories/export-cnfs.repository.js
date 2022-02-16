@@ -64,7 +64,8 @@ const getStructureNameFromId = db => async id => db.collection('structures')
 }, {
   projection: {
     _id: 0,
-    nom: 1
+    nom: 1,
+    codeDepartement: 1
   }
 });
 

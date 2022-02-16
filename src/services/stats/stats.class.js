@@ -290,14 +290,15 @@ exports.Stats = class Stats extends Service {
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
-        const { stats, type } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.idType, query.type,
+        let ids = [];
+        ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        const { stats, type, idType } = await getStatistiquesToExport(
+          query.dateDebut, query.dateFin, query.conseillerId, query.idType, query.type, ids,
           exportStatistiquesRepository(db)
         );
-
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type)
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
