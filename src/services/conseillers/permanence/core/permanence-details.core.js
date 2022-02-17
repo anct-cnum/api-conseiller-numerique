@@ -33,10 +33,13 @@ const permanenceContact = permanence =>
     ...permanenceContactTelephone(permanence)
   } : {};
 
+const permanenceCoordinates = coordinates => coordinates ? { coordinates } : {};
+
 const toPermanenceDetailsTransfer = permanence => ({
   ...permanenceAddress(permanence),
   nom: permanence.nom,
-  ...permanenceContact(permanence)
+  ...permanenceContact(permanence),
+  ...permanenceCoordinates(permanence.coordonneesInsee?.coordinates)
 });
 
 const cnfsDetails = cnfs => ({
