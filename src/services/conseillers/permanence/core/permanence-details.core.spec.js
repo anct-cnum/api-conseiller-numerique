@@ -9,6 +9,13 @@ describe('détails de la permanence', () => {
           email: 'john.doe@aide-rurale.net',
           telephone: '0423456897'
         },
+        coordonneesInsee: {
+          type: 'Point',
+          coordinates: [
+            3.158667,
+            46.987344
+          ]
+        },
         insee: {
           etablissement: {
             adresse: {
@@ -43,6 +50,7 @@ describe('détails de la permanence', () => {
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
       telephone: '04 23 45 68 97',
+      coordinates: [3.158667, 46.987344],
       nombreCnfs: 2,
       cnfs: [
         {
