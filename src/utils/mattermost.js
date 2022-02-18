@@ -150,6 +150,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
     }
     if (hub !== null) {
+      await joinTeam(mattermost, token, mattermost.hubTeamId, conseiller.mattermost.id);
       joinChannel(mattermost, token, hub.channelId, mattermostSet.id);
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
         $set: { 'mattermost.hubJoined': true }
@@ -236,9 +237,13 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 };
 
 const createChannel = async (mattermost, token, teamId, name) => {
+  console.log('mattermost:', mattermost);
+  console.log('teamId:', teamId);
+  console.log('name:', name);
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
+  console.log('token:', token);
 
   return await axios({
     method: 'post',

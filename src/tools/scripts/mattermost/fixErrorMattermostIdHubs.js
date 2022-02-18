@@ -47,6 +47,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
         hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
       }
       if (hub !== null) {
+        await joinTeam(mattermost, token, mattermost.hubTeamId, conseiller.mattermost.id);
         joinChannel(mattermost, token, hub.channelId, idUser);
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
           $set: { 'mattermost.hubJoined': true }
