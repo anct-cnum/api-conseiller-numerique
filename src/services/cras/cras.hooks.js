@@ -59,6 +59,8 @@ module.exports = {
         delete context.data.cra.cp;
         delete context.data.cra.nbParticipantsAge;
         delete context.data.cra.nbParticipantsStatut;
+        delete context.data.cra.nbParticipantsAccompagnement;
+        delete context.data.cra.showSelectRedirection;
 
         //Validation des données cra
         const schema = Joi.object({
@@ -86,7 +88,12 @@ module.exports = {
           // eslint-disable-next-line max-len
           themes: Joi.array().required().min(1).max(13).items(Joi.string().required().valid('equipement informatique', 'vocabulaire', 'internet', 'securite', 'courriel', 'echanger', 'traitement texte', 'contenus numeriques', 'trouver emploi', 'tpe/pme', 'accompagner enfant', 'demarche en ligne', 'fraude et harcelement', 'sante', 'smartphone')).error(new Error('Le thème est invalide')),
           duree: Joi.any().required().error(new Error('La durée est invalide')),
-          accompagnement: Joi.string().required().valid('individuel', 'atelier', 'redirection').allow(null).error(new Error('L\'accompagnement est invalide')),
+          accompagnement: Joi.object({
+            individuel: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements poursuivis en individuel est invalide')),
+            atelier: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements poursuivis en atelier est invalide')),
+            // eslint-disable-next-line max-len
+            redirection: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements redirigés vers un autre établissement est invalide')),
+          }),
           dateAccompagnement: Joi.date().min(new Date('2020-01-01T00:00:00.000Z')).max('now').required().error(new Error('La date est invalide')),
           organisme: Joi.string().required().allow(null).error(new Error('L\'organisme de l\'accompagnement est invalide'))
         }).validate(context.data.cra);

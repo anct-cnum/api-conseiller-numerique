@@ -11,11 +11,13 @@ const getCrasStatutAge = db => async limit => {
 
 };
 
-const updateCra = db => async (id, age, statut) => {
+const updateCra = db => async (id, age, statut, accompagnement) => {
   await db.collection('cras').updateOne({ '_id': id }, {
     $set: {
       'cra.age': age,
       'cra.statut': statut,
+      'cra.accompagnement': accompagnement,
+      'cra.organisme': null,
     }
   });
 };
@@ -33,6 +35,7 @@ execute(__filename, async ({ logger, db }) => {
     cras.forEach(cra => {
       let age = { moins12ans: 0, de12a18ans: 0, de18a35ans: 0, de35a60ans: 0, plus60ans: 0 };
       let statut = { etudiant: 0, sansEmploi: 0, enEmploi: 0, retraite: 0, heterogene: 0 };
+      let accompagnement = { individuel: 0, atelier: 0, redirection: 0 };
 
       switch (cra.cra.age) {
         case '-12':
@@ -72,8 +75,21 @@ execute(__filename, async ({ logger, db }) => {
         default:
           break;
       }
+      switch (cra.cra.accompagnement) {
+        case 'individuel':
+          accompagnement.individuel = cra.cra.nbParticipants ?? 1;
+          break;
+        case 'atelier':
+          accompagnement.atelier = cra.cra.nbParticipants ?? 1;
+          break;
+        case 'redirection':
+          accompagnement.redirection = cra.cra.nbParticipants ?? 1;
+          break;
+        default:
+          break;
+      }
       promises.push(new Promise(async resolve => {
-        updateCra(db)(cra._id, age, statut);
+        updateCra(db)(cra._id, age, statut, accompagnement);
         modifiedCount++;
         resolve();
       }));
