@@ -237,13 +237,9 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 };
 
 const createChannel = async (mattermost, token, teamId, name) => {
-  console.log('mattermost:', mattermost);
-  console.log('teamId:', teamId);
-  console.log('name:', name);
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
-  console.log('token:', token);
 
   return await axios({
     method: 'post',

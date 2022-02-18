@@ -61,6 +61,9 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
           'mattermost.errorMessage': '',
         }
       });
+      await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+        $set: { 'conseillerObj.mattermost.hubJoined': true }
+      });
       count++;
       logger.info(`Conseiller id=${conseiller._id} avec un id mattermost: ${idUser} est corrigé par le script fixErrorMattermostIdHubs.js`);
     } catch (e) {

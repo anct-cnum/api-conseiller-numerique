@@ -45,8 +45,11 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
         try {
           await joinTeam(mattermost, token, mattermost.hubTeamId, conseiller.mattermost.id);
           await joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
-          db.collection('conseillers').updateOne({ _id: conseiller._id }, {
+          await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
             $set: { 'mattermost.hubJoined': true }
+          });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+            $set: { 'conseillerObj.mattermost.hubJoined': true }
           });
           count++;
         } catch (e) {
