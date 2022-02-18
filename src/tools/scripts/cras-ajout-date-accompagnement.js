@@ -15,7 +15,6 @@ const updateCra = db => async (id, date) => {
   await db.collection('cras').updateOne({ '_id': new ObjectId(id) }, {
     $set: {
       'cra.dateAccompagnement': date,
-      'cra.organisme': null,
     }
   });
 };
