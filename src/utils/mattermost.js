@@ -155,6 +155,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
         $set: { 'mattermost.hubJoined': true }
       });
+      await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+        $set: { 'conseillerObj.mattermost.hubJoined': true }
+      });
     }
 
     logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${mattermostSet.id}`);
