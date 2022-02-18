@@ -57,10 +57,6 @@ module.exports = {
         //Suppression des champs en trop
         delete context.data.idConseiller;
         delete context.data.cra.cp;
-        delete context.data.cra.nbParticipantsAge;
-        delete context.data.cra.nbParticipantsStatut;
-        delete context.data.cra.nbParticipantsAccompagnement;
-        delete context.data.cra.showSelectRedirection;
 
         //Validation des données cra
         const schema = Joi.object({
