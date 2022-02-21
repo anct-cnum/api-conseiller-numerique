@@ -9,6 +9,7 @@ module.exports = {
   ...require('./statuts'),
   ...require('./evolutions'),
   ...require('./personnesAccompagnees'),
+  ...require('./personnesRecurrentes'),
   ...require('./totalParticipants'),
   ...require('./tauxAccompagnements'),
   ...require('./nombreCra'),

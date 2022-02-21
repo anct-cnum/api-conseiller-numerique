@@ -3,8 +3,9 @@ const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${
 
 const general = statistiques => [
   'Général',
-  `Personnes accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
-  `Accompagnements enregistrés;${statistiques.nbAccompagnement}`,
+  `Personnes accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
+    statistiques.nbDemandePonctuel - statistiques.nbParticipantsRecurrents}`,
+  `Accompagnements enregistrés;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
   `Ateliers réalisés;${statistiques.nbAteliers}`,
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
   `Accompagnements individuels;${statistiques.nbAccompagnementPerso}`,

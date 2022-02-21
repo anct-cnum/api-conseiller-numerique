@@ -417,11 +417,14 @@ exports.Stats = class Stats extends Service {
               '$lte': dateFinQuery,
             } };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.personnesRecurrentes = countRecurrentes.length > 0 ? countRecurrentes[0]?.count : 0;
             ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
           } else {
             ligneStats.personnesAccompagnees = 0;
             ligneStats.CRAEnregistres = 0;
+            ligneStats.personnesRecurrentes = 0;
           }
         }));
 
@@ -493,11 +496,14 @@ exports.Stats = class Stats extends Service {
               '$lte': dateFinQuery,
             } };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.personnesRecurrentes = countRecurrentes.length > 0 ? countRecurrentes[0]?.count : 0;
             ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
           } else {
             ligneStats.personnesAccompagnees = 0;
             ligneStats.CRAEnregistres = 0;
+            ligneStats.personnesRecurrentes = 0;
           }
         }));
         items.data = statsTerritoires;
