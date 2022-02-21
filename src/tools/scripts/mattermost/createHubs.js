@@ -4,6 +4,7 @@
 const { execute } = require('../../utils');
 const { loginAPI, joinChannel, joinTeam, createChannel } = require('../../../utils/mattermost');
 const { findDepartement } = require('../../../utils/geo');
+require('dotenv').config();
 
 execute(__filename, async ({ app, db, logger, Sentry }) => {
   const mattermost = app.get('mattermost');
@@ -23,7 +24,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
   let count = 0;
   const conseillers = await db.collection('conseillers').find({
     'statut': { $ne: 'RUPTURE' },
-    'mattermost': { $ne: null },
+    'mattermost.id': { $ne: null },
     'mattermost.error': { $ne: true },
     'mattermost.hubJoined': { $ne: true }
   }).toArray();
@@ -39,13 +40,16 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       if (hub === null) {
         hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
       }
-    
+
       if (hub !== null) {
         try {
           await joinTeam(mattermost, token, mattermost.hubTeamId, conseiller.mattermost.id);
           await joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
-          db.collection('conseillers').updateOne({ _id: conseiller._id }, {
+          await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
             $set: { 'mattermost.hubJoined': true }
+          });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+            $set: { 'conseillerObj.mattermost.hubJoined': true }
           });
           count++;
         } catch (e) {

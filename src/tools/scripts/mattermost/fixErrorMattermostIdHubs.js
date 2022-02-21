@@ -47,7 +47,8 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
         hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
       }
       if (hub !== null) {
-        joinChannel(mattermost, token, hub.channelId, idUser);
+        await joinTeam(mattermost, token, mattermost.hubTeamId, conseiller.mattermost.id);
+        await joinChannel(mattermost, token, hub.channelId, idUser);
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
           $set: { 'mattermost.hubJoined': true }
         });
@@ -59,6 +60,9 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
         $unset: {
           'mattermost.errorMessage': '',
         }
+      });
+      await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+        $set: { 'conseillerObj.mattermost.hubJoined': true }
       });
       count++;
       logger.info(`Conseiller id=${conseiller._id} avec un id mattermost: ${idUser} est corrigé par le script fixErrorMattermostIdHubs.js`);

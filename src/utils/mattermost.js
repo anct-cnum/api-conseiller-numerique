@@ -150,9 +150,13 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
     }
     if (hub !== null) {
-      joinChannel(mattermost, token, hub.channelId, mattermostSet.id);
+      await joinTeam(mattermost, token, mattermost.hubTeamId, mattermostSet.id);
+      await joinChannel(mattermost, token, hub.channelId, mattermostSet.id);
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
         $set: { 'mattermost.hubJoined': true }
+      });
+      await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+        $set: { 'conseillerObj.mattermost.hubJoined': true }
       });
     }
 
