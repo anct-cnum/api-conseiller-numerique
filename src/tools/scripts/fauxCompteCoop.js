@@ -10,12 +10,16 @@ const path = require('path');
 const fs = require('fs');
 const { program } = require('commander');
 
-execute(__filename, async ({ logger, db, app, Sentry }) => {
+execute(__filename, async ({ logger, db, app, Sentry, exit }) => {
   program.option('-c, --csv ', 'export des conseillers qui ont un faux compte activer en csv');
   program.option('-f, --fix ', 'correction des faux comptes activé');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
   const { csv, fix } = program;
+  if (!csv && !fix) {
+    exit('Paramètres invalides. Veuillez choisir entre --csv ou --fix');
+    return;
+  }
   let countConseiller = 0;
   let countNotGandi = 0;
   let countNotMattermost = 0;
