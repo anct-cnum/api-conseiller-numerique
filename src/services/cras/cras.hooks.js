@@ -66,6 +66,7 @@ module.exports = {
           canal: Joi.string().required().valid('rattachement', 'autre', 'distance', 'domicile').error(new Error('Le canal est invalide')),
           activite: Joi.string().required().valid('individuel', 'collectif', 'ponctuel').error(new Error('L\'activité est invalide')),
           nbParticipants: Joi.number().integer().required().min(1).max(100).error(new Error('Le nombre de participants est invalide')),
+          nbParticipantsRecurrents: Joi.number().integer().required().allow(null).min(1).max(100).error(new Error('Le nombre de participants est invalide')),
           age: Joi.object({
             moins12ans: Joi.number().integer().required().min(0).max(100).error(new Error('Le nombre de personnes de moins de 12 ans est invalide')),
             de12a18ans: Joi.number().integer().required().min(0).max(100).error(new Error('Le nombre de personnes entre 12 et 18 ans est invalide')),
