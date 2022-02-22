@@ -15,6 +15,7 @@ const getStatsGlobales = async (db, query, statsCras) => {
 
   //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
   let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
+  console.log(statsAccompagnements);
   statsGlobales.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
   statsGlobales.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
   statsGlobales.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
@@ -42,7 +43,7 @@ const getStatsGlobales = async (db, query, statsCras) => {
 
   //Statut des usagers (total de chaque catégorie en %)
   statsGlobales.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
-  
+
   //Lieux de Réorientation (total de chaque catégorie en %)
   statsGlobales.statsReorientations = await statsCras.getStatsReorientations(db, query, statsGlobales.nbReconduction);
 
