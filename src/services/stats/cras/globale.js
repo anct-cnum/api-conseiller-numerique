@@ -13,6 +13,10 @@ const getStatsGlobales = async (db, query, statsCras) => {
   statsGlobales.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
   statsGlobales.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
 
+  //Nombre de participants récurrents
+  const statsRecurrence = await statsCras.getPersonnesRecurrentes(db, query);
+  statsGlobales.nbParticipantsRecurrents = statsRecurrence[0]?.count ?? 0;
+
   //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
   let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
   console.log(statsAccompagnements);
