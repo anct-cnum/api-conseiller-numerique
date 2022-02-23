@@ -114,9 +114,9 @@ module.exports = {
         }
         const schema = Joi.object({
 
-          nom: Joi.string().min(2).required().error(new Error('Le champ nom est obligatoire')),
-          prenom: Joi.string().min(2).required().error(new Error('Le champ prénom est obligatoire')),
-          fonction: Joi.string().min(2).required().error(new Error('Le champ fonction est obligatoire')),
+          nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),
+          prenom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ prénom est obligatoire')),
+          fonction: Joi.string().trim().min(2).max(100).required().error(new Error('Le champ fonction est obligatoire')),
           // eslint-disable-next-line max-len
           email: Joi.string().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
           // eslint-disable-next-line max-len
