@@ -1,6 +1,7 @@
 const dayjs = require('dayjs');
+const { sortByValueThenName } = require('../export-statistiques/utils/export-statistiques.utils');
 
-const getStatsGlobales = async (db, query, statsCras) => {
+const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
 
   let statsGlobales = {};
   //Nombre total d'accompagnements
@@ -34,6 +35,8 @@ const getStatsGlobales = async (db, query, statsCras) => {
 
   //Thèmes (total de chaque catégorie)
   statsGlobales.statsThemes = await statsCras.getStatsThemes(db, query);
+  console.log(isAdminCoop);
+  statsGlobales.statsThemes = isAdminCoop ? statsGlobales.statsThemes.sort(sortByValueThenName) : statsGlobales.statsThemes;
 
   //Canaux (total de chaque catégorie)
   statsGlobales.statsLieux = await statsCras.getStatsCanaux(db, query);

@@ -16,6 +16,7 @@ const { v4: uuidv4 } = require('uuid');
 const {
   checkAuth,
   checkRoleCandidat,
+  checkRoleAdminCoop,
   checkConseillerExist,
   checkConseillerHaveCV,
   verificationRoleUser,
@@ -432,7 +433,7 @@ exports.Conseillers = class Conseillers extends Service {
           };
         }
 
-        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, checkRoleAdminCoop(await getUserById(userId)));
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,

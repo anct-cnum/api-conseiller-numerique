@@ -6,7 +6,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
     const dateDebut = new Date('2021-01-01T00:00:00.000Z');
     const dateFin = new Date('2021-11-15T00:00:00.000Z');
     const statistiques = {
-      nbAccompagnement: 23,
+      nbParticipantsRecurrents: 3,
       nbAteliers: 0,
       nbTotalParticipant: 0,
       nbAccompagnementPerso: 10,
@@ -195,10 +195,10 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
     };
 
     const expectedFileContent =
-      'Statistiques John Doe 01/01/2021-15/11/2021\n' +
+      'Statistiques John Doe  01/01/2021-15/11/2021\n' +
       '\n' +
       'Général\n' +
-      'Personnes accompagnées durant cette période;23\n' +
+      'Personnes accompagnées durant cette période;20\n' +
       'Accompagnements enregistrés;23\n' +
       'Ateliers réalisés;0\n' +
       'Total des participants aux ateliers;0\n' +
@@ -211,19 +211,19 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Redirections vers une autre structure agréée;10\n' +
       '\n' +
       'Thèmes des accompagnements\n' +
-      'Équipement informatique;13\n' +
-      'Naviguer sur internet;9\n' +
+      'Prendre en main un équipement;13\n' +
+      'Naviguer sur Internet;9\n' +
       'Courriels;8\n' +
       'Applications smartphone;2\n' +
       'Gestion de contenus numériques;8\n' +
-      'Env., vocab. Numérique;4\n' +
+      'Connaître le vocabulaire numérique;4\n' +
       'Traitement de texte;8\n' +
       'Échanger avec ses proches;0\n' +
-      'Emploi, formation;21\n' +
+      'Emploi et formation;21\n' +
       'Accompagner son enfant;0\n' +
       'Numérique et TPE/PME;0\n' +
       'Démarche en ligne;21\n' +
-      'Sécurité;4\n' +
+      'Sécuriser un équipement;4\n' +
       'Fraude et harcèlement;20\n' +
       'Santé;15\n' +
       '\n' +
