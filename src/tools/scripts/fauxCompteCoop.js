@@ -9,10 +9,11 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
 const { program } = require('commander');
+require('dotenv').config();
 
 execute(__filename, async ({ logger, db, app, Sentry, exit }) => {
-  program.option('-c, --csv ', 'export des conseillers qui ont un faux compte activer en csv');
-  program.option('-f, --fix ', 'correction des faux comptes activé');
+  program.option('-c, --csv ', 'export des conseillers qui ont un faux compte activé en csv');
+  program.option('-f, --fix ', 'correction des faux comptes activés');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
   const { csv, fix } = program;
@@ -40,14 +41,14 @@ execute(__filename, async ({ logger, db, app, Sentry, exit }) => {
   for (const cnfs of passwordcreatedTrue) {
     try {
       const conseiller = await db.collection('conseillers').findOne({
-        _id: cnfs.entity.oid,
-        statut: 'RECRUTE',
-        mattermost: { $exists: false },
-        emailCN: { $exists: false }
+        '_id': cnfs.entity.oid,
+        'statut': 'RECRUTE',
+        'mattermost.id': { $exists: false },
+        'emailCN.address': { $exists: false }
       });
       if (conseiller) {
         if (csv) {
-          file.write(`${conseiller?.nom};${conseiller?.prenom};${conseiller?.email}\n`);
+          file.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email}\n`);
         }
         if (fix) {
           const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
@@ -82,7 +83,7 @@ execute(__filename, async ({ logger, db, app, Sentry, exit }) => {
     // To avoid overload Gandi API
     await sleep(500);
   }
-  logger.info(`${countConseiller} conseillers qui n'ont pas activer leurs espace via l'email d'invit COOP`);
+  logger.info(`${countConseiller} conseillers qui n'ont pas activés leur espace via l'email d'invit COOP`);
   logger.info(`${countNotGandi} email @conseiller-numerique.fr corrigé(s)`);
   logger.info(`${countNotMattermost} compte mattermost corrigé(s)`);
   if (csv) {
