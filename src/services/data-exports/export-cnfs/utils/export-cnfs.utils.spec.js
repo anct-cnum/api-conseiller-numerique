@@ -17,6 +17,22 @@ const statsCnfs = [
   }
 ];
 
+const statsCnfsForAdminCoop = [
+  {
+    prenom: 'John',
+    nom: 'Doe',
+    email: 'john.doe@conseiller-numerique.fr',
+    nomStructure: 'Association pour l\'accès au numérique',
+    codeDepartement: 69000,
+    codePostal: 69005,
+    datePrisePoste: '27/01/2021',
+    dateFinFormation: '12/03/2021',
+    certifie: 'Non',
+    craCount: 12,
+    isUserActif: 'Non'
+  }
+];
+
 describe('export cnfs utils', () => {
   it('should get error when an empty input is provided to export cnfs schema', () => {
     const schemaValidation = validateExportCnfsSchema({});
@@ -210,11 +226,12 @@ describe('export cnfs utils', () => {
 
   it('should build territoires csv file content for cnfs when user admin_coop role', async () => {
     const user = { roles: ['admin_coop'] };
-    const fileContent = await buildExportCnfsCsvFileContent(statsCnfs, user);
+    const fileContent = await buildExportCnfsCsvFileContent(statsCnfsForAdminCoop, user);
 
     expect(fileContent).toEqual(
-      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé;CRA Saisis\n' +
-      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;Association pour laccès au numérique;69005;27/01/2021;12/03/2021;Non;Non;12'
+      // eslint-disable-next-line max-len
+      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Structure;Code département de la structure;Code Postal du conseiller;Date de recrutement;Date de fin de formation;Certification;Activé;CRA Saisis\n' +
+      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;Association pour laccès au numérique;69000;69005;27/01/2021;12/03/2021;Non;Non;12'
     );
   });
 });

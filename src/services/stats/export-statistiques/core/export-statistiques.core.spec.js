@@ -401,15 +401,13 @@ describe('export statistiques core', () => {
   it('devrait exporter les statistiques d\'un conseiller', async () => {
     const dateDebut = new Date('2021-01-01T00:00:00.000Z');
     const dateFin = new Date('2021-11-18T00:00:00.000Z');
-    const conseillerId = '4a9bc1489ac8ba4c891b9a1c';
+    const idType = '4a9bc1489ac8ba4c891b9a1c';
     const type = 'user';
+    const ids = undefined;
+    const isAdminCoop = false;
 
     const statistiques = await getStatistiquesToExport(
-      dateDebut, dateFin, conseillerId, type, {
-        getConseillerById,
-        getStatsConseiller,
-        getStatsNationales
-      }
+      dateDebut, dateFin, idType, type, ids, { getConseillerById, getStatsConseiller }, isAdminCoop
     );
 
     expect(statistiques).toStrictEqual({
@@ -421,20 +419,23 @@ describe('export statistiques core', () => {
   it('devrait exporter les statistiques nationales', async () => {
     const dateDebut = new Date('2021-01-01T00:00:00.000Z');
     const dateFin = new Date('2021-11-18T00:00:00.000Z');
-    const conseillerId = undefined;
-    const type = 'nationale';
+    const type = 'nationales';
+    const idType = undefined;
+    const ids = undefined;
+    const isAdminCoop = true;
 
     const statistiques = await getStatistiquesToExport(
-      dateDebut, dateFin, conseillerId, type, {
+      dateDebut, dateFin, idType, type, ids, {
         getConseillerById,
         getStatsConseiller,
-        getStatsNationales
+        getStatsNationales,
+        isAdminCoop
       }
     );
 
     expect(statistiques).toStrictEqual({
       stats: statistiquesNationales,
-      type: 'nationale'
+      type: 'nationales'
     });
   });
 });
