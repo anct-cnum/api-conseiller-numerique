@@ -190,7 +190,7 @@ exports.Stats = class Stats extends Service {
         }
 
         //Construction des statistiques
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(conseillerUser.roles, Role.AdminCoop));
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(conseillerUser.roles, Role.AdminCoop));
 
         res.send(stats);
       });
@@ -588,7 +588,7 @@ exports.Stats = class Stats extends Service {
           }
         };
 
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
 
         res.send(stats);
       });

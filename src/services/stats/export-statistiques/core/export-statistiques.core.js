@@ -29,9 +29,6 @@ const getStatistiquesToExport = async (
   ids,
   { getConseillerById, getStatsConseiller, getStatsNationales, getStatsDepartementalRegional },
   isAdminCoop) => {
-  console.log(type);
-  console.log(idType);
-  console.log(ids);
   if (type === 'user' && isStatistiquesForConseiller(idType)) {
     return await statistiquesForConseiller(dateDebut, dateFin, idType, { getConseillerById, getStatsConseiller }, isAdminCoop);
   }
