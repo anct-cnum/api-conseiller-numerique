@@ -194,6 +194,9 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       }
     };
 
+    const idType = undefined;
+    const isAdminCoop = false;
+
     const expectedFileContent =
       'Statistiques John Doe  01/01/2021-15/11/2021\n' +
       '\n' +
@@ -260,7 +263,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Septembre;4022\n' +
       'Octobre;8438\n' +
       'Novembre;430\n';
-    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName);
+    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName, idType, isAdminCoop);
 
     expect(fileContent).toEqual(expectedFileContent);
   });
