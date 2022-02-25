@@ -5,18 +5,17 @@ const getStatsReorientations = async (db, query, totalReorientations) => {
       { $unwind: '$cra.accompagnement' },
       { $match: { ...query, 'cra.organisme': { '$ne': null } } },
       { $group: { _id: '$cra.organisme', redirection: { $sum: '$cra.accompagnement.redirection' } } },
-      { $project: { '_id': 0, 'organisme': '$_id', 'redirection': '$redirection' } }
+      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$redirection' } }
     ]
   ).toArray();
 
   //Conversion en % total
-  console.log(totalReorientations);
-  console.log(statsReorientations);
-  statsReorientations = statsReorientations.map(lieu => {
-    lieu.redirection = totalReorientations > 0 ? ~~(lieu.redirection / totalReorientations * 100) : 0;
-    return lieu;
-  });
-  console.log(statsReorientations);
+  if (statsReorientations.length > 0) {
+    statsReorientations = statsReorientations.map(lieu => {
+      lieu.valeur = totalReorientations > 0 ? ~~(lieu.valeur / totalReorientations * 100) : 0;
+      return lieu;
+    });
+  }
   return statsReorientations;
 
 };
