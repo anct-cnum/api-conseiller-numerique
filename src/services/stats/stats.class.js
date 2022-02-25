@@ -190,7 +190,7 @@ exports.Stats = class Stats extends Service {
         }
 
         //Construction des statistiques
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(conseillerUser.roles, Role.AdminCoop));
 
         res.send(stats);
       });
@@ -292,13 +292,15 @@ exports.Stats = class Stats extends Service {
       ).then(async () => {
         let ids = [];
         ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
         const { stats, type, idType } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.conseillerId, query.idType, query.type, ids,
-          exportStatistiquesRepository(db)
+          query.dateDebut, query.dateFin, query.idType, query.type, ids,
+          exportStatistiquesRepository(db),
+          statsFct.checkRole(user?.roles, Role.AdminCoop)
         );
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, statsFct.checkRole(user?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -548,7 +550,7 @@ exports.Stats = class Stats extends Service {
             'conseiller.$id': { $in: ids },
           };
 
-          stats = await statsCras.getStatsGlobales(db, query, statsCras);
+          stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
         }
 
         res.send(stats);
@@ -586,7 +588,7 @@ exports.Stats = class Stats extends Service {
           }
         };
 
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
 
         res.send(stats);
       });

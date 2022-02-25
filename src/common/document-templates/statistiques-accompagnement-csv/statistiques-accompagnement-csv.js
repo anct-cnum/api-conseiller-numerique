@@ -1,5 +1,6 @@
 const dayjs = require('dayjs');
 const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${separator}MM${separator}YYYY`);
+const labelsCorrespondance = require('../../../services/stats/data/themesCorrespondances.json');
 
 const general = statistiques => [
   'Général',
@@ -19,28 +20,12 @@ const general = statistiques => [
 
 const statsThemes = statistiques => [
   'Thèmes des accompagnements',
-  ...[
-    'Équipement informatique',
-    'Naviguer sur internet',
-    'Courriels',
-    'Applications smartphone',
-    'Gestion de contenus numériques',
-    'Env., vocab. Numérique',
-    'Traitement de texte',
-    'Échanger avec ses proches',
-    'Emploi, formation',
-    'Accompagner son enfant',
-    'Numérique et TPE/PME',
-    'Démarche en ligne',
-    'Sécurité',
-    'Fraude et harcèlement',
-    'Santé'
-  ].map((statTheme, index) => `${statTheme};${statistiques.statsThemes[index].valeur}`),
+  ...statistiques.statsThemes.map(theme => `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur}`),
   ''
 ];
 
-const statsLieux = statistiques => [
-  'Lieux des accompagnements',
+const statsLieux = (statistiques, isAdminCoop) => [
+  `Lieux des accompagnements${isAdminCoop === true ? ' (en %)' : ''}`,
   ...[
     'À domicile',
     'À distance',
@@ -104,11 +89,12 @@ const statsReorientations = statistiques => [
   .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur};`),
 ];
 
-const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType) => [
+
+const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, isAdminCoop) => [
   `Statistiques ${type} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
   ...statsThemes(statistiques),
-  ...statsLieux(statistiques),
+  ...statsLieux(statistiques, isAdminCoop),
   ...statsDurees(statistiques),
   ...statsAges(statistiques),
   ...statsUsagers(statistiques),

@@ -1,6 +1,7 @@
 const dayjs = require('dayjs');
+const { sortByValueThenName } = require('../export-statistiques/utils/export-statistiques.utils');
 
-const getStatsGlobales = async (db, query, statsCras) => {
+const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
 
   let statsGlobales = {};
   //Nombre total d'accompagnements
@@ -34,9 +35,17 @@ const getStatsGlobales = async (db, query, statsCras) => {
 
   //Thèmes (total de chaque catégorie)
   statsGlobales.statsThemes = await statsCras.getStatsThemes(db, query);
+  statsGlobales.statsThemes = isAdminCoop ? statsGlobales.statsThemes.sort(sortByValueThenName) : statsGlobales.statsThemes;
 
   //Canaux (total de chaque catégorie)
   statsGlobales.statsLieux = await statsCras.getStatsCanaux(db, query);
+  if (isAdminCoop === true) {
+    //Conversion en %
+    statsGlobales.statsLieux = statsGlobales.statsLieux.map(lieu => {
+      lieu.valeur = statsGlobales.nbAccompagnement > 0 ? Math.round(lieu.valeur / statsGlobales.nbAccompagnement * 100) : 0;
+      return lieu;
+    });
+  }
 
   //Duree (total de chaque catégorie)
   statsGlobales.statsDurees = await statsCras.getStatsDurees(db, query);

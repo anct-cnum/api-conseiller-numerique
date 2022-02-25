@@ -105,6 +105,7 @@ describe('export cnfs core', () => {
         prenom: 'John',
         nom: 'Doe',
         nomStructure: '',
+        codeDepartement: '',
         codePostal: 69005,
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
