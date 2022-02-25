@@ -83,6 +83,13 @@ const statsEvolutions = statistiques => [
   ]).flat()
 ];
 
+const statsReorientations = statistiques => [
+  'Usager.ères réorienté.es',
+  ...statistiques.statsReorientations
+  .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur};`),
+];
+
+
 const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, isAdminCoop) => [
   `Statistiques ${type} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
@@ -91,7 +98,8 @@ const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin,
   ...statsDurees(statistiques),
   ...statsAges(statistiques),
   ...statsUsagers(statistiques),
-  ...statsEvolutions(statistiques)
+  ...statsEvolutions(statistiques),
+  ...statsReorientations(statistiques),
 ].join('\n');
 
 module.exports = {

@@ -7,6 +7,7 @@ module.exports = {
   ...require('./durees'),
   ...require('./ages'),
   ...require('./statuts'),
+  ...require('./reorientations'),
   ...require('./evolutions'),
   ...require('./personnesAccompagnees'),
   ...require('./personnesRecurrentes'),
