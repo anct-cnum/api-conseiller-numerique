@@ -11,13 +11,11 @@ const getStatsReorientations = async (db, query, totalReorientations) => {
 
   //Conversion en % total
   if (statsReorientations.length > 0) {
-    statsReorientations = statsReorientations.map(lieu => {
+    return statsReorientations.map(lieu => {
       lieu.valeur = totalReorientations > 0 ? ~~(lieu.valeur / totalReorientations * 100) : 0;
       return lieu;
     });
   }
-  return statsReorientations;
-
 };
 
 module.exports = { getStatsReorientations };
