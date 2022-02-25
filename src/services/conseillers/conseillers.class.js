@@ -433,11 +433,12 @@ exports.Conseillers = class Conseillers extends Service {
           };
         }
 
-        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, checkRoleAdminCoop(await getUserById(userId)));
+        const isAdminCoop = checkRoleAdminCoop(await getUserById(userId));
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

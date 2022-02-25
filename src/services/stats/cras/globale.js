@@ -39,6 +39,13 @@ const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
 
   //Canaux (total de chaque catégorie)
   statsGlobales.statsLieux = await statsCras.getStatsCanaux(db, query);
+  if (isAdminCoop === true) {
+    //Conversion en %
+    statsGlobales.statsLieux = statsGlobales.statsLieux.map(lieu => {
+      lieu.valeur = statsGlobales.nbAccompagnement > 0 ? Math.round(lieu.valeur / statsGlobales.nbAccompagnement * 100) : 0;
+      return lieu;
+    });
+  }
 
   //Duree (total de chaque catégorie)
   statsGlobales.statsDurees = await statsCras.getStatsDurees(db, query);
