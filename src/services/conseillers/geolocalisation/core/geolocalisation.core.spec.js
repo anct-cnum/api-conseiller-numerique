@@ -1,4 +1,4 @@
-const { geolocatedConseillers } = require('./geolocalisation.core');
+const { geolocatedConseillers, geolocatedStructure } = require('./geolocalisation.core');
 
 describe('conseillers géolocalisés', () => {
   it('devrait retourner les conseillers localisé sur leur structure d\'accueil', async () => {
@@ -36,7 +36,7 @@ describe('conseillers géolocalisés', () => {
       ]
     };
 
-    const getConseillerWithGeolocation = async () => [
+    const getConseillersWithGeolocation = async () => [
       {
         _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
@@ -107,7 +107,7 @@ describe('conseillers géolocalisés', () => {
       }
     ];
 
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+    const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation });
 
     expect(conseillers).toStrictEqual(expectedConseillers);
   });
@@ -132,7 +132,7 @@ describe('conseillers géolocalisés', () => {
       ]
     };
 
-    const getConseillerWithGeolocation = async () => [
+    const getConseillersWithGeolocation = async () => [
       {
         _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
@@ -150,7 +150,7 @@ describe('conseillers géolocalisés', () => {
       }
     ];
 
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+    const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation });
 
     expect(conseillers).toStrictEqual(expectedConseillers);
   });
@@ -175,7 +175,7 @@ describe('conseillers géolocalisés', () => {
       ]
     };
 
-    const getConseillerWithGeolocation = async () => [
+    const getConseillersWithGeolocation = async () => [
       {
         _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
@@ -193,8 +193,37 @@ describe('conseillers géolocalisés', () => {
       }
     ];
 
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+    const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation });
 
     expect(conseillers).toStrictEqual(expectedConseillers);
+  });
+});
+
+describe('structure géolocalisée', () => {
+  it('devrait retourner la structure localisé correspondant à l\'id', async () => {
+    const structureId = '62a46ca2af2829d3cd298305';
+
+    const getStructureWithGeolocation = async () => ({
+      _id: '62a46ca2af2829d3cd298305',
+      coordonneesInsee: {
+        type: 'Point',
+        coordinates: [
+          3.158667,
+          46.987344
+        ]
+      }
+    });
+
+    const expectedStructure = {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [3.158667, 46.987344]
+      }
+    };
+
+    const structure = await geolocatedStructure(structureId, { getStructureWithGeolocation });
+
+    expect(structure).toStrictEqual(expectedStructure);
   });
 });

@@ -47,7 +47,7 @@ const {
   exportStatistiquesQueryToSchema
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
-const { geolocatedConseillers } = require('./geolocalisation/core/geolocalisation.core');
+const { geolocatedConseillers, geolocatedStructure } = require('./geolocalisation/core/geolocalisation.core');
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
 const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
@@ -645,6 +645,17 @@ exports.Conseillers = class Conseillers extends Service {
         existGuard(conseiller),
       ).then(async () => {
         res.send(await permanenceDetails(conseiller.structureId, permanenceRepository(db)));
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+
+      canActivate(
+        existGuard(conseiller),
+      ).then(async () => {
+        res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
