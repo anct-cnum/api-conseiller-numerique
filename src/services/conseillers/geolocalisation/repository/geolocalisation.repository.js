@@ -1,10 +1,9 @@
-const { ObjectId } = require('mongodb');
 const ConseillerStatut = {
   Recrute: 'RECRUTE'
 };
 
 const getStructureWithGeolocation = db => async id => db.collection('structures').findOne({
-  _id: new ObjectId(id),
+  _id: id,
 }, {
   projection: {
     _id: 0,
