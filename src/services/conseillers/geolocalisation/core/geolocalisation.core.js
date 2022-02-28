@@ -6,14 +6,14 @@ const formatStructure = structure => ({
   ...structure.insee ? { address: formatAddress(structure.insee.etablissement.adresse) } : {}
 });
 
-const getGeometry = geolocatedConseiller =>
-  geolocatedConseiller.structure.coordonneesInsee ?
-    { ...geolocatedConseiller.structure.coordonneesInsee } :
-    { ...geolocatedConseiller.structure.location };
+const getGeometry = structure =>
+  structure.coordonneesInsee ?
+    { ...structure.coordonneesInsee } :
+    { ...structure.location };
 
 const toGeoJson = geolocatedConseiller => ({
   type: 'Feature',
-  geometry: getGeometry(geolocatedConseiller),
+  geometry: getGeometry(geolocatedConseiller.structure),
   properties: {
     id: geolocatedConseiller._id,
     structureId: geolocatedConseiller.structure._id,
@@ -21,11 +21,17 @@ const toGeoJson = geolocatedConseiller => ({
   }
 });
 
-const geolocatedConseillers = async ({ getConseillerWithGeolocation }) => ({
+const geolocatedStructure = async (structureId, { getStructureWithGeolocation }) => ({
+  type: 'Feature',
+  geometry: getGeometry(await getStructureWithGeolocation(structureId))
+});
+
+const geolocatedConseillers = async ({ getConseillersWithGeolocation }) => ({
   type: 'FeatureCollection',
-  features: (await getConseillerWithGeolocation()).map(toGeoJson)
+  features: (await getConseillersWithGeolocation()).map(toGeoJson)
 });
 
 module.exports = {
+  geolocatedStructure,
   geolocatedConseillers
 };
