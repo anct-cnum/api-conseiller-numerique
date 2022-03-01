@@ -45,6 +45,29 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
 
     });
+
+    app.get('/permanence-conseillers/structure/:id', async (req, res) => {
+
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const structureId = req.params.id;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await getPermanencesByStructure(db)(structureId).then(permanence => {
+          res.send({ permanence });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(404).send(new Conflict('La recherche de permanence a échouée, veuillez réessayer.').toJSON());
+        });
+
+      }).catch(routeActivationError => abort(res, routeActivationError));
+
+    });
+
     app.post('/permanence-conseillers/conseiller/:id/create', async (req, res) => {
       const db = await app.get('mongoClient');
       const connection = app.get('mongodb');
@@ -52,7 +75,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const query = updatePermanenceToSchema(req.body.permanence, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const conseillerId = req.params.id;
-      
+
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
