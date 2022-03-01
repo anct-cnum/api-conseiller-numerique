@@ -14,7 +14,8 @@ const {
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { updatePermanenceToSchema } = require('./permanence/utils/update-permanence.utils');
-const { getPermanenceByConseiller, createPermanence, setPermanence } = require('./permanence/repositories/permanence-conseiller.repository');
+const { getPermanenceByConseiller, getPermanencesByStructure, createPermanence, setPermanence } =
+  require('./permanence/repositories/permanence-conseiller.repository');
 
 exports.PermanenceConseillers = class Sondages extends Service {
   constructor(options, app) {
@@ -56,8 +57,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await getPermanencesByStructure(db)(structureId).then(permanence => {
-          res.send({ permanence });
+        await getPermanencesByStructure(db)(structureId).then(permanences => {
+          res.send({ permanences });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
