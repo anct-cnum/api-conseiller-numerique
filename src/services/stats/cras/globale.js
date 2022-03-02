@@ -66,8 +66,14 @@ const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
 
   const dateDebutEvoYear = dateDebutEvo.getFullYear();
   const dateFinEvoYear = dateFinEvo.getFullYear();
-
+  let matchQuery = {};
+  // Cas des stats par territoire ou par conseiller
+  if (query.hasOwnProperty('conseiller.$id')) {
+    const cnfsIds = query['conseiller.$id'];
+    matchQuery = { 'conseiller.$id': cnfsIds };
+  }
   aggregateEvol = await db.collection('stats_conseillers_cras').aggregate(
+    { $match: { ...matchQuery } },
     { $unwind: '$' + dateFinEvoYear },
     { $group: { '_id': '$' + dateFinEvoYear + '.mois',
       'totalCras': { $sum: '$' + dateFinEvoYear + '.totalCras' } },
@@ -84,6 +90,7 @@ const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
   if (dateDebutEvoYear !== dateFinEvoYear) {
 
     const aggregateEvolLastYear = await db.collection('stats_conseillers_cras').aggregate(
+      { $match: { ...matchQuery } },
       { $unwind: '$' + dateDebutEvoYear },
       { $group: { '_id': '$' + dateDebutEvoYear + '.mois',
         'totalCras': { $sum: '$' + dateDebutEvoYear + '.totalCras' } },
