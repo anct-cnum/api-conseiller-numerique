@@ -191,7 +191,29 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
             annee: 2021
           }
         ]
-      }
+      },
+      statsReorientations: [
+        {
+          nom: 'CEFS',
+          valeur: 2
+        },
+        {
+          nom: 'Assistante sociale',
+          valeur: 9
+        },
+        {
+          nom: 'Sous-préfecture',
+          valeur: 2
+        },
+        {
+          nom: 'Pôle emploi',
+          valeur: 6
+        },
+        {
+          nom: 'Port maritime',
+          valeur: 11
+        },
+      ]
     };
 
     const idType = undefined;
@@ -250,7 +272,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Plus de 60 ans;4\n' +
       '\n' +
       'Statut des usagers (en %)\n' +
-      'Étudiant;4\n' +
+      'Scolarisé(e);4\n' +
       'Sans emploi;91\n' +
       'En emploi;0\n' +
       'Retraité;4\n' +
@@ -262,7 +284,16 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Août;1476\n' +
       'Septembre;4022\n' +
       'Octobre;8438\n' +
-      'Novembre;430\n';
+      'Novembre;430\n' +
+      '\n' +
+      'Usager.ères réorienté.es\n' +
+      'CEFS;2\n' +
+      'Assistante sociale;9\n' +
+      'Sous-préfecture;2\n' +
+      'Pôle emploi;6\n' +
+      'Port maritime;11';
+
+
     const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName, idType, isAdminCoop);
 
     expect(fileContent).toEqual(expectedFileContent);

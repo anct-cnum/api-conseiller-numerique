@@ -61,7 +61,7 @@ const statsAges = statistiques => [
 const statsUsagers = statistiques => [
   'Statut des usagers (en %)',
   ...[
-    'Étudiant',
+    'Scolarisé(e)',
     'Sans emploi',
     'En emploi',
     'Retraité',
@@ -86,7 +86,7 @@ const statsEvolutions = statistiques => [
 const statsReorientations = statistiques => [
   'Usager.ères réorienté.es',
   ...statistiques.statsReorientations
-  .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur};`),
+  .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur}`),
 ];
 
 
