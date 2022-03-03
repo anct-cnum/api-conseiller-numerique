@@ -5,7 +5,7 @@ const getPermanenceByConseiller = db => async conseillerId => {
 };
 
 const getPermanencesByStructure = db => async structureId => {
-  return await db.collection('permanences').find({ 'structure.$id': new ObjectId(structureId) }).array();
+  return await db.collection('permanences').find({ 'structure.$id': new ObjectId(structureId) }).toArray();
 };
 
 const createPermanence = db => async (permanence, conseillerId) => {
