@@ -57,7 +57,6 @@
     "eslint": "7.24.0",
     "excel4node": "1.7.2",
     "exceljs": "4.2.0",
-    "faker": "5.5.3",
     "feathers-mongodb": "6.3.0",
     "feathers-mongodb-fuzzy-search": "2.0.1",
     "feathers-permissions": "2.1.4",
@@ -86,6 +85,7 @@
     "node": ">= 14.15.3"
   },
   "devDependencies": {
+    "@faker-js/faker": "6.0.0-alpha.7",
     "axios": "0.21.1",
     "eslint": "7.24.0",
     "jest": "27.2.4",

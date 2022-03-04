@@ -16,7 +16,8 @@ const anonymisationConseiller = async (db, logger) => {
 
   for (let conseiller of cnfs) {
     const id = conseiller._id;
-    const data = await fakeData();
+    const idPG = conseiller.idPG;
+    const data = await fakeData({ idPG });
     let dataAnonyme = {
       nom: data.nom,
       prenom: data.prenom,

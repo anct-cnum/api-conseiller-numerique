@@ -15,7 +15,8 @@ const anonymisationStructure = async (db, logger) => {
   const getStructure = await getTotalStructures(db)(query);
   for (let str of getStructure) {
     const id = str._id;
-    const data = await fakeData();
+    const idPG = str.idPG;
+    const data = await fakeData({ idPG });
     let dataAnonyme = {
       contact: {
         nom: data.nom,
