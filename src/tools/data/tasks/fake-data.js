@@ -8,7 +8,7 @@ module.exports = async ({ idPG }) => {
   let prenom = name.firstName();
   let nom = name.lastName();
   let email = internet.exampleEmail(prenom, nom);
-  let tel = random.arrayElement(['06', '07', '01']);
+  let tel = random.arrayElement(['06', '07', '01', '02']);
   let telephone = helpers.replaceSymbolWithNumber(`${tel}########`);
   let token = datatype.uuid();
 

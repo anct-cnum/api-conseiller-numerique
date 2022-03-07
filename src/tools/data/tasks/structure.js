@@ -67,7 +67,7 @@ const updateMiseEnRelationAndUserStructure = async (db, logger) => {
     }
 
   }
-  logger.info(`${getStructureAnonyme.length} structures mis à jour dans les mises en raltion (VALIDATION_COSELEC)`);
+  logger.info(`${getStructureAnonyme.length} structures mis à jour dans les mis en relation (VALIDATION_COSELEC)`);
 };
 
 module.exports = {

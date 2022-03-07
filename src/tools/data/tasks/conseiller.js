@@ -45,9 +45,7 @@ const updateMiseEnRelationAndUserConseiller = async (db, logger) => {
     const countMiseEnRelation = await getMiseEnrelationConseiller(db)(id); // ok
     if (countMiseEnRelation >= 1) {
       const updateConseillerObj = {
-        'conseillerObj': {
-          ...conseillerObj
-        }
+        conseillerObj
       };
       await updateMiseEnRelationConseiller(db)(id, updateConseillerObj); //ok
     }
