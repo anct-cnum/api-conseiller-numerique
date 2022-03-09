@@ -10,7 +10,7 @@ const {
   loginAPI,
   joinChannel,
   getUsersChannel,
-  deleteUsersChannel } = require('../../../utils/mattermost');
+  deleteUserChannel } = require('../../../utils/mattermost');
 
 execute(__filename, async ({ logger, exit, app }) => {
 
@@ -24,26 +24,21 @@ execute(__filename, async ({ logger, exit, app }) => {
   const destination = program.destination;
   const suppression = program.suppression;
 
-  let idChannel;
   if (!origine || !destination) {
-    exit('Paramètres invalides');
+    exit('Paramètres invalides : veuillez renseigner le channel source et le channel de destination');
     return;
   }
-  idChannel = origine;
   const mattermost = app.get('mattermost');
   const token = await loginAPI({ mattermost });
-  const { data } = await getUsersChannel(mattermost, token, idChannel);
+  const { data } = await getUsersChannel(mattermost, token, origine);
 
   logger.info(`Migration de ${data.length} membres du channelId ${origine} vers channelId ${destination}`);
 
   if (data.length >= 1) {
-    for (let i of data) {
-      const idUser = i.user_id;
-      idChannel = destination;
-      await joinChannel(mattermost, token, idChannel, idUser);
+    for (const member of data) {
+      await joinChannel(mattermost, token, destination, member.user_id);
       if (suppression) {
-        idChannel = origine;
-        await deleteUsersChannel(mattermost, token, idChannel, idUser);
+        await deleteUserChannel(mattermost, token, origine, member.user_id);
       }
     }
   }

@@ -59,7 +59,6 @@ const getUsersChannel = async (mattermost, token, idChannel) => {
     token = await loginAPI({ mattermost });
   }
 
-  console.log('mattermost.endPoint:', mattermost.endPoint);
   return await axios({
     method: 'GET',
     url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members`,
@@ -70,7 +69,7 @@ const getUsersChannel = async (mattermost, token, idChannel) => {
   });
 };
 
-const deleteUsersChannel = async (mattermost, token, idChannel, idUser) => {
+const deleteUserChannel = async (mattermost, token, idChannel, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
@@ -401,7 +400,7 @@ module.exports = {
   createChannel,
   joinChannel,
   getUsersChannel,
-  deleteUsersChannel,
+  deleteUserChannel,
   joinTeam,
   deleteArchivedChannels,
   searchUser,
