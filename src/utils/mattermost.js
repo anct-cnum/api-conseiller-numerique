@@ -61,7 +61,7 @@ const getUsersChannel = async (mattermost, token, idChannel) => {
 
   return await axios({
     method: 'GET',
-    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members`,
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members?per_page=200`,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
