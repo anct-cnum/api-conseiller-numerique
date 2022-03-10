@@ -16,6 +16,7 @@ const { v4: uuidv4 } = require('uuid');
 const {
   checkAuth,
   checkRoleCandidat,
+  checkRoleAdminCoop,
   checkConseillerExist,
   checkConseillerHaveCV,
   verificationRoleUser,
@@ -46,7 +47,7 @@ const {
   exportStatistiquesQueryToSchema
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
-const { geolocatedConseillers } = require('./geolocalisation/core/geolocalisation.core');
+const { geolocatedConseillers, geolocatedStructure } = require('./geolocalisation/core/geolocalisation.core');
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
 const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
@@ -422,21 +423,22 @@ exports.Conseillers = class Conseillers extends Service {
 
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
         };
         if (query.codePostal !== '') {
           statsQuery = {
             'conseiller.$id': conseiller._id,
             'cra.codePostal': req.query?.codePostal,
-            'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+            'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
           };
         }
 
-        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
+        const isAdminCoop = checkRoleAdminCoop(await getUserById(userId));
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -643,6 +645,17 @@ exports.Conseillers = class Conseillers extends Service {
         existGuard(conseiller),
       ).then(async () => {
         res.send(await permanenceDetails(conseiller.structureId, permanenceRepository(db)));
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+
+      canActivate(
+        existGuard(conseiller),
+      ).then(async () => {
+        res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }

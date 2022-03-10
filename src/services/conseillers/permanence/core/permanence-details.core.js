@@ -33,15 +33,23 @@ const permanenceContact = permanence =>
     ...permanenceContactTelephone(permanence)
   } : {};
 
+const permanenceCoordinates = coordinates => coordinates ? { coordinates } : {};
+
 const toPermanenceDetailsTransfer = permanence => ({
   ...permanenceAddress(permanence),
   nom: permanence.nom,
-  ...permanenceContact(permanence)
+  ...permanenceContact(permanence),
+  ...permanenceCoordinates(permanence.coordonneesInsee?.coordinates)
 });
 
-const permanenceDetails = async (structureId, { getPermanenceByStructureId, getNombreCnfs }) => ({
+const cnfsDetails = cnfs => ({
+  cnfs,
+  nombreCnfs: cnfs.length,
+});
+
+const permanenceDetails = async (structureId, { getPermanenceByStructureId, getCnfs }) => ({
   ...toPermanenceDetailsTransfer(await getPermanenceByStructureId(structureId)),
-  nombreCnfs: await getNombreCnfs(structureId)
+  ...cnfsDetails(await getCnfs(structureId))
 });
 
 module.exports = {

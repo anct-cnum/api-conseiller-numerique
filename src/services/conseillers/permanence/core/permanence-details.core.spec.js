@@ -9,6 +9,13 @@ describe('détails de la permanence', () => {
           email: 'john.doe@aide-rurale.net',
           telephone: '0423456897'
         },
+        coordonneesInsee: {
+          type: 'Point',
+          coordinates: [
+            3.158667,
+            46.987344
+          ]
+        },
         insee: {
           etablissement: {
             adresse: {
@@ -24,7 +31,16 @@ describe('détails de la permanence', () => {
           }
         }
       }),
-      getNombreCnfs: () => 2
+      getCnfs: () => [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const structureId = '62a46ca2af2829d3cd298305';
@@ -34,7 +50,18 @@ describe('détails de la permanence', () => {
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
       telephone: '04 23 45 68 97',
-      nombreCnfs: 2
+      coordinates: [3.158667, 46.987344],
+      nombreCnfs: 2,
+      cnfs: [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const details = await permanenceDetails(structureId, permanenceRepository);
@@ -51,7 +78,16 @@ describe('détails de la permanence', () => {
           telephone: '04 23 45 68 97'
         }
       }),
-      getNombreCnfs: () => 2
+      getCnfs: () => [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const structureId = '62a46ca2af2829d3cd298305';
@@ -60,7 +96,17 @@ describe('détails de la permanence', () => {
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
       telephone: '04 23 45 68 97',
-      nombreCnfs: 2
+      nombreCnfs: 2,
+      cnfs: [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const details = await permanenceDetails(structureId, permanenceRepository);
@@ -87,7 +133,16 @@ describe('détails de la permanence', () => {
           }
         }
       }),
-      getNombreCnfs: () => 2
+      getCnfs: () => [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const structureId = '62a46ca2af2829d3cd298305';
@@ -95,7 +150,17 @@ describe('détails de la permanence', () => {
     const expectedPermanenceDetails = {
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
-      nombreCnfs: 2
+      nombreCnfs: 2,
+      cnfs: [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const details = await permanenceDetails(structureId, permanenceRepository);
@@ -125,7 +190,16 @@ describe('détails de la permanence', () => {
           }
         }
       }),
-      getNombreCnfs: () => 2
+      getCnfs: () => [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const structureId = '62a46ca2af2829d3cd298305';
@@ -134,7 +208,17 @@ describe('détails de la permanence', () => {
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
-      nombreCnfs: 2
+      nombreCnfs: 2,
+      cnfs: [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        }
+      ]
     };
 
     const details = await permanenceDetails(structureId, permanenceRepository);
@@ -164,7 +248,20 @@ describe('détails de la permanence', () => {
           }
         }
       }),
-      getNombreCnfs: () => 3
+      getCnfs: () => [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        },
+        {
+          prenom: 'Amélie',
+          nom: 'Dumont',
+        }
+      ]
     };
 
     const structureId = '62a46ca2af2829d3cd298305';
@@ -173,7 +270,21 @@ describe('détails de la permanence', () => {
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
       telephone: '04 23 45 68 97',
-      nombreCnfs: 3
+      nombreCnfs: 3,
+      cnfs: [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        },
+        {
+          prenom: 'Charles',
+          nom: 'Desmoulins',
+        },
+        {
+          prenom: 'Amélie',
+          nom: 'Dumont',
+        }
+      ]
     };
 
     const details = await permanenceDetails(structureId, permanenceRepository);

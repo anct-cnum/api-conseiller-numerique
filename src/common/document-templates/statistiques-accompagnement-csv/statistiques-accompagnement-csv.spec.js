@@ -6,7 +6,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
     const dateDebut = new Date('2021-01-01T00:00:00.000Z');
     const dateFin = new Date('2021-11-15T00:00:00.000Z');
     const statistiques = {
-      nbAccompagnement: 23,
+      nbParticipantsRecurrents: 3,
       nbAteliers: 0,
       nbTotalParticipant: 0,
       nbAccompagnementPerso: 10,
@@ -28,10 +28,6 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
         {
           nom: 'courriel',
           valeur: 8
-        },
-        {
-          nom: 'securite',
-          valeur: 4
         },
         {
           nom: 'smartphone',
@@ -70,6 +66,10 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           valeur: 21
         },
         {
+          nom: 'securite',
+          valeur: 4
+        },
+        {
           nom: 'fraude et harcelement',
           valeur: 20
         },
@@ -77,10 +77,6 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           nom: 'sante',
           valeur: 15
         },
-        {
-          nom: 'autre',
-          valeur: 13
-        }
       ],
       statsLieux: [
         {
@@ -195,14 +191,39 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
             annee: 2021
           }
         ]
-      }
+      },
+      statsReorientations: [
+        {
+          nom: 'CEFS',
+          valeur: 2
+        },
+        {
+          nom: 'Assistante sociale',
+          valeur: 9
+        },
+        {
+          nom: 'Sous-préfecture',
+          valeur: 2
+        },
+        {
+          nom: 'Pôle emploi',
+          valeur: 6
+        },
+        {
+          nom: 'Port maritime',
+          valeur: 11
+        },
+      ]
     };
 
+    const idType = undefined;
+    const isAdminCoop = false;
+
     const expectedFileContent =
-      'Statistiques John Doe 01/01/2021-15/11/2021\n' +
+      'Statistiques John Doe  01/01/2021-15/11/2021\n' +
       '\n' +
       'Général\n' +
-      'Personnes accompagnées durant cette période;23\n' +
+      'Personnes accompagnées durant cette période;20\n' +
       'Accompagnements enregistrés;23\n' +
       'Ateliers réalisés;0\n' +
       'Total des participants aux ateliers;0\n' +
@@ -215,22 +236,21 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Redirections vers une autre structure agréée;10\n' +
       '\n' +
       'Thèmes des accompagnements\n' +
-      'Équipement informatique;13\n' +
-      'Naviguer sur internet;9\n' +
+      'Prendre en main un équipement;13\n' +
+      'Naviguer sur Internet;9\n' +
       'Courriels;8\n' +
-      'Sécurité;4\n' +
       'Applications smartphone;2\n' +
       'Gestion de contenus numériques;8\n' +
-      'Env., vocab. Numérique;4\n' +
+      'Connaître le vocabulaire numérique;4\n' +
       'Traitement de texte;8\n' +
       'Échanger avec ses proches;0\n' +
-      'Emploi, formation;21\n' +
+      'Emploi et formation;21\n' +
       'Accompagner son enfant;0\n' +
       'Numérique et TPE/PME;0\n' +
       'Démarche en ligne;21\n' +
+      'Sécuriser un équipement;4\n' +
       'Fraude et harcèlement;20\n' +
       'Santé;15\n' +
-      'Autre;13\n' +
       '\n' +
       'Lieux des accompagnements\n' +
       'À domicile;0\n' +
@@ -252,7 +272,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Plus de 60 ans;4\n' +
       '\n' +
       'Statut des usagers (en %)\n' +
-      'Étudiant;4\n' +
+      'Scolarisé(e);4\n' +
       'Sans emploi;91\n' +
       'En emploi;0\n' +
       'Retraité;4\n' +
@@ -264,8 +284,17 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Août;1476\n' +
       'Septembre;4022\n' +
       'Octobre;8438\n' +
-      'Novembre;430\n';
-    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName);
+      'Novembre;430\n' +
+      '\n' +
+      'Usager.ères réorienté.es\n' +
+      'CEFS;2\n' +
+      'Assistante sociale;9\n' +
+      'Sous-préfecture;2\n' +
+      'Pôle emploi;6\n' +
+      'Port maritime;11';
+
+
+    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName, idType, isAdminCoop);
 
     expect(fileContent).toEqual(expectedFileContent);
   });

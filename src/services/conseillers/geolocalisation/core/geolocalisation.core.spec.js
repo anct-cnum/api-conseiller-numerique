@@ -1,4 +1,4 @@
-const { geolocatedConseillers } = require('./geolocalisation.core');
+const { geolocatedConseillers, geolocatedStructure } = require('./geolocalisation.core');
 
 describe('conseillers géolocalisés', () => {
   it('devrait retourner les conseillers localisé sur leur structure d\'accueil', async () => {
@@ -14,6 +14,7 @@ describe('conseillers géolocalisés', () => {
           properties: {
             id: '4c38ebc9a06fdd532bf9d7be',
             name: 'Association pour la formation au numérique à Bessenay',
+            structureId: '98b3ca349340250d5d9a144e',
             isLabeledFranceServices: true,
             address: '6 rue de la Mairie, 69690 Bessenay'
           }
@@ -27,6 +28,7 @@ describe('conseillers géolocalisés', () => {
           properties: {
             id: '88bc36fb0db191928330b1e6',
             name: 'Les artisans du numérique',
+            structureId: '6980ac85bc8c5c4c1bca7abd',
             isLabeledFranceServices: false,
             address: 'ZI les deux clochers, 62300 Lens'
           }
@@ -34,10 +36,11 @@ describe('conseillers géolocalisés', () => {
       ]
     };
 
-    const getConseillerWithGeolocation = async () => [
+    const getConseillersWithGeolocation = async () => [
       {
         _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
+          _id: '98b3ca349340250d5d9a144e',
           nom: 'Association pour la formation au numérique à Bessenay',
           estLabelliseFranceServices: 'OUI',
           coordonneesInsee: {
@@ -73,6 +76,7 @@ describe('conseillers géolocalisés', () => {
       {
         _id: '88bc36fb0db191928330b1e6',
         structure: {
+          _id: '6980ac85bc8c5c4c1bca7abd',
           nom: 'Les artisans du numérique',
           estLabelliseFranceServices: 'NON',
           coordonneesInsee: {
@@ -103,7 +107,7 @@ describe('conseillers géolocalisés', () => {
       }
     ];
 
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+    const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation });
 
     expect(conseillers).toStrictEqual(expectedConseillers);
   });
@@ -121,16 +125,18 @@ describe('conseillers géolocalisés', () => {
           properties: {
             id: '4c38ebc9a06fdd532bf9d7be',
             name: 'Association pour la formation au numérique à Bessenay',
+            structureId: '98b3ca349340250d5d9a144e',
             isLabeledFranceServices: true,
           }
         }
       ]
     };
 
-    const getConseillerWithGeolocation = async () => [
+    const getConseillersWithGeolocation = async () => [
       {
         _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
+          _id: '98b3ca349340250d5d9a144e',
           nom: 'Association pour la formation au numérique à Bessenay',
           estLabelliseFranceServices: 'OUI',
           coordonneesInsee: {
@@ -144,7 +150,7 @@ describe('conseillers géolocalisés', () => {
       }
     ];
 
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+    const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation });
 
     expect(conseillers).toStrictEqual(expectedConseillers);
   });
@@ -162,16 +168,18 @@ describe('conseillers géolocalisés', () => {
           properties: {
             id: '4c38ebc9a06fdd532bf9d7be',
             name: 'Association pour la formation au numérique à Bessenay',
+            structureId: '98b3ca349340250d5d9a144e',
             isLabeledFranceServices: true,
           }
         }
       ]
     };
 
-    const getConseillerWithGeolocation = async () => [
+    const getConseillersWithGeolocation = async () => [
       {
         _id: '4c38ebc9a06fdd532bf9d7be',
         structure: {
+          _id: '98b3ca349340250d5d9a144e',
           nom: 'Association pour la formation au numérique à Bessenay',
           estLabelliseFranceServices: 'OUI',
           location: {
@@ -185,8 +193,37 @@ describe('conseillers géolocalisés', () => {
       }
     ];
 
-    const conseillers = await geolocatedConseillers({ getConseillerWithGeolocation });
+    const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation });
 
     expect(conseillers).toStrictEqual(expectedConseillers);
+  });
+});
+
+describe('structure géolocalisée', () => {
+  it('devrait retourner la structure localisé correspondant à l\'id', async () => {
+    const structureId = '62a46ca2af2829d3cd298305';
+
+    const getStructureWithGeolocation = async () => ({
+      _id: '62a46ca2af2829d3cd298305',
+      coordonneesInsee: {
+        type: 'Point',
+        coordinates: [
+          3.158667,
+          46.987344
+        ]
+      }
+    });
+
+    const expectedStructure = {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [3.158667, 46.987344]
+      }
+    };
+
+    const structure = await geolocatedStructure(structureId, { getStructureWithGeolocation });
+
+    expect(structure).toStrictEqual(expectedStructure);
   });
 });

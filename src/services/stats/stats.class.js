@@ -172,7 +172,7 @@ exports.Stats = class Stats extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
         let query = {
           'conseiller.$id': new ObjectID(conseiller._id),
-          'createdAt': {
+          'cra.dateAccompagnement': {
             $gte: dateDebut,
             $lt: dateFin,
           }
@@ -182,7 +182,7 @@ exports.Stats = class Stats extends Service {
           query = {
             'conseiller.$id': new ObjectID(conseiller._id),
             'cra.codePostal': req.query?.codePostal,
-            'createdAt': {
+            'cra.dateAccompagnement': {
               $gte: dateDebut,
               $lt: dateFin,
             }
@@ -190,7 +190,7 @@ exports.Stats = class Stats extends Service {
         }
 
         //Construction des statistiques
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(conseillerUser.roles, Role.AdminCoop));
 
         res.send(stats);
       });
@@ -292,13 +292,15 @@ exports.Stats = class Stats extends Service {
       ).then(async () => {
         let ids = [];
         ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
         const { stats, type, idType } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.conseillerId, query.idType, query.type, ids,
-          exportStatistiquesRepository(db)
+          query.dateDebut, query.dateFin, query.idType, query.type, ids,
+          exportStatistiquesRepository(db),
+          statsFct.checkRole(user?.roles, Role.AdminCoop)
         );
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, statsFct.checkRole(user?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -412,16 +414,19 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.personnesRecurrentes = countRecurrentes.length > 0 ? countRecurrentes[0]?.count : 0;
             ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
           } else {
             ligneStats.personnesAccompagnees = 0;
             ligneStats.CRAEnregistres = 0;
+            ligneStats.personnesRecurrentes = 0;
           }
         }));
 
@@ -488,16 +493,19 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.personnesRecurrentes = countRecurrentes.length > 0 ? countRecurrentes[0]?.count : 0;
             ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
           } else {
             ligneStats.personnesAccompagnees = 0;
             ligneStats.CRAEnregistres = 0;
+            ligneStats.personnesRecurrentes = 0;
           }
         }));
         items.data = statsTerritoires;
@@ -535,14 +543,14 @@ exports.Stats = class Stats extends Service {
           let ids = [];
           ids = conseillerIds.map(id => new ObjectID(id));
           let query = {
-            'createdAt': {
+            'cra.dateAccompagnement': {
               '$gte': dateDebut,
               '$lt': dateFin,
             },
             'conseiller.$id': { $in: ids },
           };
 
-          stats = await statsCras.getStatsGlobales(db, query, statsCras);
+          stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
         }
 
         res.send(stats);
@@ -574,13 +582,13 @@ exports.Stats = class Stats extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
 
         let query = {
-          'createdAt': {
+          'cra.dateAccompagnement': {
             '$gte': dateDebut,
             '$lt': dateFin,
           }
         };
 
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
 
         res.send(stats);
       });

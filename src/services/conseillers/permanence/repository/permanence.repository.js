@@ -20,19 +20,27 @@ const getPermanenceByStructureId = db => async id => db.collection('structures')
   projection: {
     '_id': 0,
     'nom': 1,
-    'insee.etablissement.adresse': 1
+    'insee.etablissement.adresse': 1,
+    'coordonneesInsee.coordinates': 1
   }
 });
 
-const getNombreCnfs = db => async structureId => db.collection('conseillers').find({
+const getCnfs = db => async structureId => db.collection('conseillers').find({
   statut: ConseillerStatut.Recrute,
   structureId: new ObjectId(structureId)
-}).count();
+}, {
+  projection: {
+    '_id': 0,
+    'prenom': 1,
+    'nom': 1
+  }
+}).toArray();
+
 
 const permanenceRepository = db => ({
   getConseillerById: getConseillerById(db),
   getPermanenceByStructureId: getPermanenceByStructureId(db),
-  getNombreCnfs: getNombreCnfs(db),
+  getCnfs: getCnfs(db),
 });
 
 module.exports = {

@@ -1,6 +1,7 @@
 const dayjs = require('dayjs');
+const { sortByValueThenName } = require('../export-statistiques/utils/export-statistiques.utils');
 
-const getStatsGlobales = async (db, query, statsCras) => {
+const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
 
   let statsGlobales = {};
   //Nombre total d'accompagnements
@@ -13,11 +14,15 @@ const getStatsGlobales = async (db, query, statsCras) => {
   statsGlobales.nbAccompagnementPerso = statsActivites?.find(activite => activite._id === 'individuel')?.count ?? 0;
   statsGlobales.nbDemandePonctuel = statsActivites?.find(activite => activite._id === 'ponctuel')?.count ?? 0;
 
+  //Nombre de participants récurrents
+  const statsRecurrence = await statsCras.getPersonnesRecurrentes(db, query);
+  statsGlobales.nbParticipantsRecurrents = statsRecurrence[0]?.count ?? 0;
+
   //Accompagnement poursuivi en individuel + en aterlier collectif + redirigé
   let statsAccompagnements = await statsCras.getStatsAccompagnements(db, query);
-  statsGlobales.nbUsagersAccompagnementIndividuel = statsAccompagnements?.find(accompagnement => accompagnement._id === 'individuel')?.count ?? 0;
-  statsGlobales.nbUsagersAtelierCollectif = statsAccompagnements?.find(accompagnement => accompagnement._id === 'atelier')?.count ?? 0;
-  statsGlobales.nbReconduction = statsAccompagnements?.find(accompagnement => accompagnement._id === 'redirection')?.count ?? 0;
+  statsGlobales.nbUsagersAccompagnementIndividuel = statsAccompagnements[0]?.individuel ?? 0;
+  statsGlobales.nbUsagersAtelierCollectif = statsAccompagnements[0]?.atelier ?? 0;
+  statsGlobales.nbReconduction = statsAccompagnements[0]?.redirection ?? 0;
 
   //Total accompagnés
   statsGlobales.nbUsagersBeneficiantSuivi = statsGlobales.nbUsagersAccompagnementIndividuel +
@@ -30,9 +35,17 @@ const getStatsGlobales = async (db, query, statsCras) => {
 
   //Thèmes (total de chaque catégorie)
   statsGlobales.statsThemes = await statsCras.getStatsThemes(db, query);
+  statsGlobales.statsThemes = isAdminCoop ? statsGlobales.statsThemes.sort(sortByValueThenName) : statsGlobales.statsThemes;
 
   //Canaux (total de chaque catégorie)
   statsGlobales.statsLieux = await statsCras.getStatsCanaux(db, query);
+  if (isAdminCoop === true) {
+    //Conversion en %
+    statsGlobales.statsLieux = statsGlobales.statsLieux.map(lieu => {
+      lieu.valeur = statsGlobales.nbAccompagnement > 0 ? Math.round(lieu.valeur / statsGlobales.nbAccompagnement * 100) : 0;
+      return lieu;
+    });
+  }
 
   //Duree (total de chaque catégorie)
   statsGlobales.statsDurees = await statsCras.getStatsDurees(db, query);
@@ -42,6 +55,9 @@ const getStatsGlobales = async (db, query, statsCras) => {
 
   //Statut des usagers (total de chaque catégorie en %)
   statsGlobales.statsUsagers = await statsCras.getStatsStatuts(db, query, totalParticipants);
+
+  //Lieux de Réorientation (total de chaque catégorie en %)
+  statsGlobales.statsReorientations = await statsCras.getStatsReorientations(db, query, statsGlobales.nbReconduction);
 
   //Evolutions du nb de cras sur les 4 derniers mois.
   let aggregateEvol = [];

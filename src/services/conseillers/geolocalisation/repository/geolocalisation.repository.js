@@ -2,7 +2,17 @@ const ConseillerStatut = {
   Recrute: 'RECRUTE'
 };
 
-const getConseillerWithGeolocation = db => async () =>
+const getStructureWithGeolocation = db => async id => db.collection('structures').findOne({
+  _id: id,
+}, {
+  projection: {
+    _id: 0,
+    coordonneesInsee: 1,
+    location: 1
+  }
+});
+
+const getConseillersWithGeolocation = db => async () =>
   db.collection('conseillers').aggregate([
     {
       $match: {
@@ -46,7 +56,8 @@ const getConseillersByCodeDepartement = db => async () => db.collection('conseil
 ]).toArray();
 
 const geolocationRepository = db => ({
-  getConseillerWithGeolocation: getConseillerWithGeolocation(db),
+  getStructureWithGeolocation: getStructureWithGeolocation(db),
+  getConseillersWithGeolocation: getConseillersWithGeolocation(db),
   getConseillersByCodeDepartement: getConseillersByCodeDepartement(db)
 });
 

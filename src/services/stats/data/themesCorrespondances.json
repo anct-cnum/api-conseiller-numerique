@@ -1,0 +1,61 @@
+[
+  {
+    "nom": "equipement informatique",
+    "correspondance": "Prendre en main un équipement"
+  },
+  {
+    "nom": "vocabulaire",
+    "correspondance": "Connaître le vocabulaire numérique"
+  },
+  {
+    "nom": "internet",
+    "correspondance": "Naviguer sur Internet"
+  },
+  {
+    "nom": "courriel",
+    "correspondance": "Courriels"
+  },
+  {
+    "nom": "securite",
+    "correspondance" : "Sécuriser un équipement" },
+  {
+    "nom": "smartphone",
+    "correspondance": "Applications smartphone"
+  },
+  {
+    "nom": "contenus numeriques",
+    "correspondance": "Gestion de contenus numériques"
+  },
+  {
+    "nom": "traitement texte",
+    "correspondance": "Traitement de texte"
+  },
+  {
+    "nom": "echanger",
+    "correspondance": "Échanger avec ses proches"
+  },
+  {
+    "nom": "trouver emploi",
+    "correspondance": "Emploi et formation"
+  },
+  {
+    "nom": "accompagner enfant",
+    "correspondance": "Accompagner son enfant"
+  },
+  {
+    "nom": "tpe/pme",
+    "correspondance": "Numérique et TPE/PME"
+  },
+  {
+    "nom": "demarche en ligne",
+    "correspondance": "Démarche en ligne"
+  },
+  {
+    "nom": "fraude et harcelement",
+    "correspondance": "Fraude et harcèlement"
+  },
+  {
+    "nom": "sante",
+    "correspondance": "Santé"
+  }
+]

@@ -5,6 +5,7 @@
 
 const {
   checkRoleCandidat,
+  checkRoleAdminCoop,
   checkConseillerHaveCV,
   checkFormulaire } = require('./conseillers.function');
 
@@ -86,6 +87,41 @@ describe('Vérification du role candidat', () => {
     const userWithoutRoleCandidat = checkRoleCandidat(userNotCandidat, req);
 
     expect(userWithoutRoleCandidat).toBe(false);
+  });
+});
+
+describe('Vérification du role admin coop', () => {
+  it('devrait être considérée comme faux lorsque l\'utilisateur ne contient pas admin_coop parmi ses roles', () => {
+    const userNotAdminCoop = {
+      name: 'conseiller@test.fr',
+      roles: [
+        'conseiller'
+      ],
+      mailSentDate: null,
+      resend: false,
+      token: null,
+      tokenCreatedAt: null
+    };
+
+    const result = checkRoleAdminCoop(userNotAdminCoop);
+    expect(result).toBe(false);
+  });
+
+  it('devrait être considérée comme vrai lorsque l\'utilisateur contient admin_coop parmi ses roles', () => {
+    const userAdminCoop = {
+      name: 'admin@test.fr',
+      roles: [
+        'admin',
+        'admin_coop'
+      ],
+      mailSentDate: null,
+      resend: false,
+      token: null,
+      tokenCreatedAt: null
+    };
+
+    const result = checkRoleAdminCoop(userAdminCoop);
+    expect(result).toBe(true);
   });
 });
 
