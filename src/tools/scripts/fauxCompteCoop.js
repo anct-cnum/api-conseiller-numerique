@@ -29,11 +29,12 @@ execute(__filename, async ({ logger, db, app, Sentry, exit }) => {
   const token = await loginAPI({ mattermost });
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const passwordcreatedTrue = await db.collection('users').find({ 'roles': { $in: ['conseiller'] }, 'passwordCreated': true }).toArray();
-  let csvFile = path.join(__dirname, '../../../data/exports', 'faux_compte_coop_activer.csv');
-  let file = fs.createWriteStream(csvFile, {
-    flags: 'w'
-  });
+  let file;
   if (csv) {
+    let csvFile = path.join(__dirname, '../../../data/exports', 'faux_compte_coop_activer.csv');
+    file = fs.createWriteStream(csvFile, {
+      flags: 'w'
+    });
     logger.info(`Generating CSV file...`);
     file.write('Nom; Prénom; Email Personnelle des conseillers\n');
   }

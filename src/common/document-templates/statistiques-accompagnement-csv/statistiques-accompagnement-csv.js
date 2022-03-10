@@ -89,7 +89,6 @@ const statsReorientations = statistiques => [
   .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur}`),
 ];
 
-
 const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, isAdminCoop) => [
   `Statistiques ${type} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
