@@ -24,6 +24,8 @@ execute(__filename, async ({ logger, exit, app }) => {
   const destination = program.destination;
   const suppression = program.suppression;
 
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
   if (!origine || !destination) {
     exit('Paramètres invalides : veuillez renseigner le channel source et le channel de destination');
     return;
@@ -41,6 +43,8 @@ execute(__filename, async ({ logger, exit, app }) => {
         await deleteUserChannel(mattermost, token, origine, member.user_id);
       }
     }
+    //To avoid overload Mattermost API
+    await sleep(1000);
   }
   exit();
 });
