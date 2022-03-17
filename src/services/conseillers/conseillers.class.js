@@ -604,7 +604,15 @@ exports.Conseillers = class Conseillers extends Service {
           let message = emails.getEmailMessageByTemplateName('creationCompteCandidat');
           await message.send(user);
           res.send({ emailEnvoyer: true });
-        } else {
+        } else if (user.roles[0] === 'conseiller' && !user.passwordCreated) {
+          // conseiller qui n'a pas encore activé son compte Coop
+          let mailer = createMailer(app);
+          const emails = createEmails(db, mailer, app);
+          let message = emails.getEmailMessageByTemplateName('creationCompteConseiller');
+          await message.send(user);
+          res.send({ emailEnvoyer: true });
+        } else if (user.roles[0] === 'conseiller' && user.passwordCreated) {
+          // conseiller qui a activé son compte Coop
           res.status(409).send(new Conflict(`${conseiller.prenom} ${conseiller.nom} est déjà recruté donc a un compte COOP existant`));
           return;
         }
