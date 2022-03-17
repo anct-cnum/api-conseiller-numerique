@@ -258,6 +258,7 @@ exports.Structures = class Structures extends Service {
 
       try {
         const structureUser = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structureId) });
+        // xxx maintenant qu'on a du multi user, ça récupère un des multicomptes au hasard, pas bon...
         if (structureUser === null) {
           res.status(404).send(new NotFound('User associated to structure not found', {
             id: req.params.id
@@ -266,7 +267,7 @@ exports.Structures = class Structures extends Service {
         }
         //Met à jour le token possiblement expiré
         await db.collection('users').updateOne({ _id: structureUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
-        const structureUserUpdated = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structureId) });
+        const structureUserUpdated = await db.collection('users').findOne({ _id: structureUser._id });
         let mailer = createMailer(app);
         const emails = createEmails(db, mailer, app);
         let message = emails.getEmailMessageByTemplateName('creationCompteStructure');
