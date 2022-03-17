@@ -266,11 +266,12 @@ exports.Structures = class Structures extends Service {
         }
         //Met à jour le token possiblement expiré
         await db.collection('users').updateOne({ _id: structureUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
+        const structureUserUpdated = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structureId) });
         let mailer = createMailer(app);
         const emails = createEmails(db, mailer, app);
         let message = emails.getEmailMessageByTemplateName('creationCompteStructure');
-        await message.send(structureUser);
-        res.send(structureUser);
+        await message.send(structureUserUpdated);
+        res.send(structureUserUpdated);
 
       } catch (error) {
         app.get('sentry').captureException(error);
