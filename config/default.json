@@ -5,6 +5,7 @@
   "backoffice_hostname":  "https://admin.conseiller-numerique.gouv.fr",
   "espace_coop_hostname": "https://beta.coop.conseiller-numerique.gouv.fr",
   "espace_candidat_hostname": "https://beta.candidat.conseiller-numerique.gouv.fr",
+  "metabase_public_url": "https://metabase.conseiller-numerique.gouv.fr/api/public/dashboard/446208c4-cae2-4c0c-be19-44cb14ce7d06",
   "pix": {
     "hostname": "https://pix.fr/abc-pix-cnfs/",
     "contactMailing": "PIX_CONTACT_MAILING",
@@ -12,7 +13,7 @@
   },
   "port": 8080,
   "paginate": {
-    "default": 20,
+    "default": 50,
     "max": 100
   },
   "paginate_resourcerie": {
@@ -71,10 +72,11 @@
     "endPoint": "https://api.gandi.net/v5/email",
     "domain": "conseiller-numerique.fr"
   },
-  "metabase_pix": {
-    "endPoint": "PIX_METABASE_ENDPOINT",
-    "login": "PIX_METABASE_LOGIN",
-    "password": "PIX_METABASE_PASSWORD"
+  "open_cage_data": {
+    "token": "1234",
+    "endPoint": "https://api.opencagedata.com/geocode/v1/geojson",
+    "countryCode": "fr,bl,gf,gp,mf,mq,nc,pf,pm,re,tf,wf,yt",
+    "limit": "1"
   },
   "sentry": {
     "enabled": "false",

@@ -61,11 +61,8 @@ execute(__filename, async ({ db, logger, Sentry }) => {
 
     const options = { upsert: true };
 
-    const result = await db.collection('structures').updateOne(filter, updateDoc, options);
+    await db.collection('structures').updateOne(filter, updateDoc, options);
 
-    logger.info(
-      `structure,${s.id},${s.siret},${result.matchedCount},${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},${result.modifiedCount}`
-    );
   };
 
   const moveCandidat = async c => {
@@ -109,13 +106,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
     };
 
     const options = { upsert: true };
-    const result = await db.collection('conseillers').updateOne(filter, updateDoc, options);
-
-    logger.info(
-      `candidat,${c.id},${c.first_name},${c.last_name},${result.matchedCount},` +
-      `${result.upsertedCount},${result.upsertedId ? result.upsertedId._id : null},` +
-      `${result.modifiedCount}`
-    );
+    await db.collection('conseillers').updateOne(filter, updateDoc, options);
   };
 
   // Récupère toutes les structures dans PG
@@ -154,7 +145,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
       [program.limit]);
       return rows;
     } catch (error) {
-      logger.info(`Erreur DB : ${error.message}`);
+      logger.error(`Erreur DB : ${error.message}`);
     }
   };
 
@@ -196,18 +187,16 @@ execute(__filename, async ({ db, logger, Sentry }) => {
       return rows;
     } catch (error) {
       Sentry.captureException(error);
-      logger.info(`Erreur DB : ${error.message}`);
+      logger.error(`Erreur DB : ${error.message}`);
     }
   };
 
   const structures = await getStructures();
-  await logger.info(structures.length);
   for (let s of structures) {
     await moveStructure(s);
   }
 
   const candidats = await getCandidats();
-  await logger.info(candidats.length);
   for (let c of candidats) {
     await moveCandidat(c);
   }

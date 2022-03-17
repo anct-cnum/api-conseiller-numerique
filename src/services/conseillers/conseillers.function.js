@@ -9,6 +9,7 @@ const Joi = require('joi');
 const decode = require('jwt-decode');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
+const { Role } = require('../../common/utils/feathers.utils');
 
 const checkAuth = (req, res) => {
   if (req.feathers?.authentication === undefined) {
@@ -19,6 +20,10 @@ const checkAuth = (req, res) => {
 
 const checkRoleCandidat = (user, req) => {
   return user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString();
+};
+
+const checkRoleAdminCoop = user => {
+  return user?.roles.includes(Role.AdminCoop);
 };
 
 const checkConseillerExist = async (db, id, user, res) => {
@@ -260,6 +265,7 @@ const candidatSupprimeEmailPix = (db, app) => async candidat => {
 module.exports = {
   checkAuth,
   checkRoleCandidat,
+  checkRoleAdminCoop,
   checkConseillerExist,
   checkConseillerHaveCV,
   suppressionCVConseiller,

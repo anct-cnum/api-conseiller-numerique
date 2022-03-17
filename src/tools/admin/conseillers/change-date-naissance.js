@@ -28,12 +28,19 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
   try {
-    await db.collection('conseillers').updateOne({ idPG: id }, { $set: { dateDeNaissance: date } });
-    await db.collection('misesEnRelation').updateMany(
-      { 'conseiller.$id': conseiller._id },
-      { $set: { 'conseillerObj.dateDeNaissance': date }
-      });
+    const conseiller = await db.collection('conseillers').findOne({ idPG: id });
+    const conseillerIds = await db.collection('conseillers').find({ email: conseiller.email }).map(conseiller => conseiller._id).toArray();
 
+    await db.collection('conseillers').updateMany(
+      { _id: { $in: conseillerIds } },
+      { $set: { dateDeNaissance: date } }
+    );
+
+    await db.collection('misesEnRelation').updateMany({
+      'conseiller.$id': { $in: conseillerIds }
+    }, {
+      $set: { 'conseillerObj.dateDeNaissance': date }
+    });
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);

@@ -1,10 +1,12 @@
 const dayjs = require('dayjs');
 const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${separator}MM${separator}YYYY`);
+const labelsCorrespondance = require('../../../services/stats/data/themesCorrespondances.json');
 
 const general = statistiques => [
   'Général',
-  `Personnes accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
-  `Accompagnements enregistrés;${statistiques.nbAccompagnement}`,
+  `Personnes accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
+    statistiques.nbDemandePonctuel - statistiques.nbParticipantsRecurrents}`,
+  `Accompagnements enregistrés;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
   `Ateliers réalisés;${statistiques.nbAteliers}`,
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
   `Accompagnements individuels;${statistiques.nbAccompagnementPerso}`,
@@ -18,26 +20,12 @@ const general = statistiques => [
 
 const statsThemes = statistiques => [
   'Thèmes des accompagnements',
-  ...[
-    'Équipement informatique',
-    'Naviguer sur internet',
-    'Courriels',
-    'Applications smartphone',
-    'Gestion de contenus numériques',
-    'Env., vocab. Numérique',
-    'Traitement de texte',
-    'Échanger avec ses proches',
-    'Emploi, formation',
-    'Accompagner son enfant',
-    'Numérique et TPE/PME',
-    'Démarche en ligne',
-    'Autre'
-  ].map((statTheme, index) => `${statTheme};${statistiques.statsThemes[index].valeur}`),
+  ...statistiques.statsThemes.map(theme => `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur}`),
   ''
 ];
 
-const statsLieux = statistiques => [
-  'Lieux des accompagnements',
+const statsLieux = (statistiques, isAdminCoop) => [
+  `Lieux des accompagnements${isAdminCoop === true ? ' (en %)' : ''}`,
   ...[
     'À domicile',
     'À distance',
@@ -73,7 +61,7 @@ const statsAges = statistiques => [
 const statsUsagers = statistiques => [
   'Statut des usagers (en %)',
   ...[
-    'Étudiant',
+    'Scolarisé(e)',
     'Sans emploi',
     'En emploi',
     'Retraité',
@@ -95,15 +83,22 @@ const statsEvolutions = statistiques => [
   ]).flat()
 ];
 
-const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type) => [
-  `Statistiques ${type} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
+const statsReorientations = statistiques => [
+  'Usager.ères réorienté.es',
+  ...statistiques.statsReorientations
+  .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur}`),
+];
+
+const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, isAdminCoop) => [
+  `Statistiques ${type} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
   ...statsThemes(statistiques),
-  ...statsLieux(statistiques),
+  ...statsLieux(statistiques, isAdminCoop),
   ...statsDurees(statistiques),
   ...statsAges(statistiques),
   ...statsUsagers(statistiques),
-  ...statsEvolutions(statistiques)
+  ...statsEvolutions(statistiques),
+  ...statsReorientations(statistiques),
 ].join('\n');
 
 module.exports = {

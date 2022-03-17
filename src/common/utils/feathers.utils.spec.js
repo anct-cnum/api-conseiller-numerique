@@ -1,8 +1,9 @@
-const { Forbidden, NotAuthenticated, Unprocessable } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, Unprocessable, NotFound } = require('@feathersjs/errors');
 const {
   authenticationGuard,
   rolesGuard,
   schemaGuard,
+  existGuard,
   canActivate,
   Role,
   authenticationFromRequest,
@@ -190,6 +191,39 @@ describe('can activate route checks', () => {
         schemaGuard(schemaValidation)
       );
     })()).rejects.toThrowError(new Unprocessable('Schema validation error', schemaValidation.error));
+  });
+
+  it('should not get not found error when the given ressource is not null', async () => {
+    const ressource = {
+      id: '1',
+      name: 'John Doe'
+    };
+
+    await expect((async () => {
+      await canActivate(
+        existGuard(ressource)
+      );
+    })()).resolves.toBeUndefined();
+  });
+
+  it('should get not found error when the given ressource is null', async () => {
+    const ressource = null;
+
+    await expect((async () => {
+      await canActivate(
+        existGuard(ressource)
+      );
+    })()).rejects.toThrowError(new NotFound('This ressource does not exist'));
+  });
+
+  it('should get not found error when the given ressource is undefined', async () => {
+    const ressource = undefined;
+
+    await expect((async () => {
+      await canActivate(
+        existGuard(ressource)
+      );
+    })()).rejects.toThrowError(new NotFound('This ressource does not exist'));
   });
 
   it('should get forbidden error when the right user roles are not provided but all other activation functions are valid', async () => {

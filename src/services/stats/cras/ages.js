@@ -10,17 +10,30 @@ const getStatsAges = async (db, query, totalParticipants) => {
 
   let ages = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.age' },
       { $match: { ...query } },
-      { $group: { _id: '$cra.age', count: { $sum: {
-        $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
-      } } } },
-      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
+      { $group: {
+        _id: 'age',
+        moins12ans: { $sum: '$cra.age.moins12ans' },
+        de12a18ans: { $sum: '$cra.age.de12a18ans' },
+        de18a35ans: { $sum: '$cra.age.de18a35ans' },
+        de35a60ans: { $sum: '$cra.age.de35a60ans' },
+        plus60ans: { $sum: '$cra.age.plus60ans' },
+      } },
+      { $project: { '_id': 0, 'moins12ans': '$moins12ans',
+        'de12a18ans': '$de12a18ans', 'de18a35ans': '$de18a35ans',
+        'de35a60ans': '$de35a60ans', 'plus60ans': '$plus60ans'
+      } }
     ]
   ).toArray();
 
   if (ages.length > 0) {
-    statsAges = statsAges.map(age1 => ages.find(age2 => age1.nom === age2.nom) || age1);
+    statsAges = [
+      { nom: '-12', valeur: ages[0].moins12ans },
+      { nom: '12-18', valeur: ages[0].de12a18ans },
+      { nom: '18-35', valeur: ages[0].de18a35ans },
+      { nom: '35-60', valeur: ages[0].de35a60ans },
+      { nom: '+60', valeur: ages[0].plus60ans },
+    ];
   }
 
   //Conversion en % total

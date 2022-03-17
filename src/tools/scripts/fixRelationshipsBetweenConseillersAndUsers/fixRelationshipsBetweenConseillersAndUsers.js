@@ -142,7 +142,8 @@ const setAllMisesEnRelationsFinaliseeToNouvelleExceptStructureId = async (db, co
 });
 
 const setAllMisesEnRelationsToFinaliseeNonDisponible = async (db, conseillerId) => await db.collection('misesEnRelation').updateMany({
-  'conseiller.$id': new ObjectId(conseillerId)
+  'conseiller.$id': new ObjectId(conseillerId),
+  'statut': { $ne: MisesEnRelationStatut.FinaliseeRupture }
 }, {
   $set: { statut: MisesEnRelationStatut.FinaliseeNonDisponible }
 });
@@ -369,7 +370,7 @@ const rollbackBeforeImport = async (db, conseillers, conseillerRecrute) => {
     await getStructureById(db, conseillerRecrute.structureId));
 };
 
-const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates = async (db, misesEnRelations) => {
+const fixmisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithoutDuplicates = async (db, misesEnRelations) => {
   await Promise.all(misesEnRelations.map(async misesEnRelation => {
     if (!isRecrute(await getConseillerById(db, misesEnRelation.conseiller))) {
       return;
@@ -496,9 +497,9 @@ const fix = async (
   await fixConseillersWithInvalidDisponible(db, conseillersWithInvalidDisponibleWithoutDuplicates);
 
   const {
-    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithoutDuplicates
   } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates;
-  await fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates(db, misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates);
+  await fixmisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithoutDuplicates(db, misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithoutDuplicates);
 
   const conseillersWithDuplicatesToReimport = [
     ...await fixConseillersRecrutesUsersAndMiseEnRelations(db, conseillersWithStatutFinaliseeAndDuplicatesWithStatutRecrutee),
@@ -565,14 +566,14 @@ const printReport = async (
   } = conseillersWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
 
   const {
-    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithoutDuplicates
   } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithoutDuplicates;
 
   console.log('Données sur les mises en relation en lien avec des conseillers qui ont le statut RECRUTE **sans doublons**\n');
   logIfAny('- Nombre de conseillers qui ne sont pas associés à une mise en relation :', conseillersWithoutAssociatedMiseEnRelation.length);
   logIfAny('- Nombre de conseillers qui sont associés à plusieurs mises en relations :', conseillersAssociatedToMoreThanOneMiseEnRelation.length);
   logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee :', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatus.length);
-  logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :\n', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithoutDuplicates.length);
+  logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible ou finalisee_rupture :\n', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithoutDuplicates.length);
 
   const {
     conseillersWithInvalidDateFinFormation: conseillersWithInvalidDateFinFormationWithoutDuplicates,
@@ -619,7 +620,7 @@ const printReport = async (
   } = conseillersWithDuplicatesWithMatchingMiseEnRelationsOnStructureIdInspectionResult;
 
   const {
-    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates
+    misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatus: misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithDuplicates
   } = conseillersWithMatchingMiseEnRelationsExceptStructureIdInspectionResultWithDuplicates;
 
   const {
@@ -663,7 +664,7 @@ const printReport = async (
   logIfAny('  - dont un conseiller doublon est associé avec au moins un utilisateur qui a le rôle conseiller :', conseillersDuplicatesWithAConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult.length);
   logIfAny('  - dont aucun conseiller recruté ou doublon n\'est associé avec un utilisateur qui a le rôle conseiller :', noConseillerUserForConseillersWithStatutRecruteeAndNoDuplicateWithStatutFinaliseeInspectionResult.length);
   logIfAny('- Nombre de conseillers et doublons associés a des mises en relations qui n\'ont ni le statut finalisee ni le statut recrutee :', conseillersWithoutStatutFinaliseeOrStatutRecrutee.length);
-  logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible :\n', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleStatusWithDuplicates.length);
+  logIfAny('- Nombre de mises en relations qui n\'ont pas le statut finalisee_non_disponible ou finalisee_rupture :\n', misesEnRelationsAssociatedWithAConseillerWithoutFinaliseeNonDisponibleOrFinaliseeRuptureStatusWithDuplicates.length);
 
   const {
     conseillersWithInvalidDateFinFormation: conseillersWithInvalidDateFinFormationWithDuplicates,

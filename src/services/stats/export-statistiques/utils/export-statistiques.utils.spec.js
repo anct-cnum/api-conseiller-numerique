@@ -2,7 +2,8 @@ const { ValidationError } = require('joi');
 const {
   validateExportStatistiquesSchema,
   exportStatistiquesQueryToSchema,
-  getExportStatistiquesFileName
+  getExportStatistiquesFileName,
+  sortByValueThenName
 } = require('./export-statistiques.utils');
 
 describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le backoffice coop', () => {
@@ -21,7 +22,8 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
         dateDebut: new Date('2021-01-01T00:00:00.000Z'),
         dateFin: new Date('2021-11-18T11:00:00.000Z'),
         type: 'user',
-        idType: '4a9bc1489ac8ba4c891b9a1c'
+        idType: '4a9bc1489ac8ba4c891b9a1c',
+        conseillerIds: undefined,
       });
     });
   });
@@ -100,6 +102,115 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
       const fileName = getExportStatistiquesFileName(dateDebut, dateFin, 'John_Doe');
 
       expect(fileName).toBe('Statistiques_John_Doe_01-01-2021_18-11-2021');
+    });
+  });
+
+  describe('Ordre d\'affichage des themes', () => {
+
+    it('devrait retourner les thèmes par ordre décroissant selon la valeur', () => {
+
+      const themes = [
+        {
+          'nom': 'echanger',
+          'valeur': 0
+        },
+        {
+          'nom': 'demarche en ligne',
+          'valeur': 4
+        },
+        {
+          'nom': 'securite',
+          'valeur': 1
+        },
+        {
+          'nom': 'fraude et harcelement',
+          'valeur': 8
+        },
+        {
+          'nom': 'sante',
+          'valeur': 3
+        }
+      ];
+
+      const expectedResult = [
+        {
+          'nom': 'fraude et harcelement',
+          'valeur': 8
+        },
+        {
+          'nom': 'demarche en ligne',
+          'valeur': 4
+        },
+        {
+          'nom': 'sante',
+          'valeur': 3
+        },
+        {
+          'nom': 'securite',
+          'valeur': 1
+        },
+        {
+          'nom': 'echanger',
+          'valeur': 0
+        }
+      ];
+
+      const result = themes.sort(sortByValueThenName);
+
+      expect(result).toStrictEqual(expectedResult);
+    });
+
+    it('devrait retourner les thèmes par ordre décroissant selon le libellé associé au nom si la valeur est identique', () => {
+
+      const themes = [
+        {
+          'nom': 'equipement informatique',
+          'valeur': 4
+        },
+        {
+          'nom': 'internet',
+          'valeur': 4
+        },
+        {
+          'nom': 'trouver emploi',
+          'valeur': 4
+        },
+        {
+          'nom': 'accompagner enfant',
+          'valeur': 4
+        },
+        {
+          'nom': 'demarche en ligne',
+          'valeur': 4
+        }
+      ];
+
+      const expectedResult = [
+        {
+          'nom': 'accompagner enfant', //Correpondance : Accompagner son enfant
+          'valeur': 4
+        },
+        {
+          'nom': 'demarche en ligne', //Correpondance : Démarche en ligne
+          'valeur': 4
+        },
+        {
+          'nom': 'trouver emploi', //Correpondance : Emploi, formation
+          'valeur': 4
+        },
+        {
+          'nom': 'internet', //Correpondance : Naviguer sur Internet
+          'valeur': 4
+        },
+        {
+          'nom': 'equipement informatique', //Correpondance : Prendre en main un équipement
+          'valeur': 4
+        },
+      ];
+
+      const result = themes.sort(sortByValueThenName);
+
+      expect(result).toStrictEqual(expectedResult);
     });
   });
 });

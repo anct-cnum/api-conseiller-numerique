@@ -21,6 +21,21 @@ const loginAPI = async ({ mattermost }) => {
   return resultLogin.request.res.headers.token;
 };
 
+const getChannel = async (mattermost, token, channelName) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'get',
+    url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/channels/name/${channelName}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 const joinChannel = async (mattermost, token, idChannel, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
@@ -35,6 +50,35 @@ const joinChannel = async (mattermost, token, idChannel, idUser) => {
     },
     data: {
       'user_id': idUser
+    }
+  });
+};
+
+const getUsersChannel = async (mattermost, token, idChannel) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'GET',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members?per_page=200`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+const deleteUserChannel = async (mattermost, token, idChannel, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'DELETE',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members/${idUser}`,
+    headers: {
+      'Authorization': `Bearer ${token}`
     }
   });
 };
@@ -58,8 +102,7 @@ const joinTeam = async (mattermost, token, idTeam, idUser) => {
   });
 };
 
-const createAccount = async ({ mattermost, conseiller, email, login, password, db, logger, Sentry }) => {
-
+const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom, password, db, logger, Sentry }) => {
   try {
     const token = await loginAPI({ mattermost });
 
@@ -70,19 +113,17 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      data: { 'email': email, 'username': login, 'password': password }
+      data: { 'email': email, 'username': login, 'first_name': nom, 'last_name': prenom, 'password': password }
     });
     logger.info(resultCreation);
-
+    const mattermostSet = {
+      error: false,
+      login: login,
+      id: resultCreation.data.id
+    };
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
-        { mattermost:
-          {
-            error: false,
-            login: login,
-            id: resultCreation.data.id
-          }
-        }
+        { mattermost: mattermostSet }
       });
 
     slugify.extend({ '-': ' ' });
@@ -138,10 +179,17 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
       hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
     }
     if (hub !== null) {
-      joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
+      await joinTeam(mattermost, token, mattermost.hubTeamId, mattermostSet.id);
+      await joinChannel(mattermost, token, hub.channelId, mattermostSet.id);
+      await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
+        $set: { 'mattermost.hubJoined': true }
+      });
+      await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+        $set: { 'conseillerObj.mattermost.hubJoined': true }
+      });
     }
 
-    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id}`);
+    logger.info(`Compte Mattermost créé ${login} pour le conseiller id=${conseiller._id} avec un id mattermost: ${mattermostSet.id}`);
     return true;
   } catch (e) {
     Sentry.captureException(e);
@@ -154,7 +202,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, password, d
   }
 };
 
-const updateAccountPassword = async (mattermost, conseiller, newPassword, db, logger, Sentry) => {
+const updateAccountPassword = (mattermost, db, logger, Sentry) => async (conseiller, newPassword) => {
 
   try {
     const token = await loginAPI({ mattermost });
@@ -169,7 +217,7 @@ const updateAccountPassword = async (mattermost, conseiller, newPassword, db, lo
       data: { 'new_password': newPassword }
     });
     logger.info(resultUpdatePassword);
-    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id}`);
+    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorResetPassword': false }
@@ -202,7 +250,7 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
       }
     });
     logger.info(resultDeleteAccount);
-    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id}`);
+    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorDeleteAccount': false }
@@ -220,7 +268,7 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
 
 };
 
-const createChannel = async (mattermost, token, name) => {
+const createChannel = async (mattermost, token, teamId, name) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
@@ -233,7 +281,7 @@ const createChannel = async (mattermost, token, name) => {
       'Authorization': `Bearer ${token}`
     },
     data: {
-      'team_id': mattermost.teamId,
+      'team_id': teamId,
       'name': slugifyName(name),
       'display_name': name,
       'type': 'P'
@@ -271,4 +319,91 @@ const deleteArchivedChannels = async (mattermost, token) => {
   return Promise.all(promises);
 };
 
-module.exports = { slugifyName, loginAPI, createAccount, updateAccountPassword, deleteAccount, createChannel, joinChannel, joinTeam, deleteArchivedChannels };
+
+// eslint-disable-next-line max-len
+const patchLogin = ({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError }) => async ({ conseiller, userIdentity }) => {
+
+  const token = await loginAPI({ mattermost });
+
+  try {
+    const { login, nom, prenom, email } = userIdentity;
+    const resultUpdateLogin = await axios({
+      method: 'put',
+      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        'username': login,
+        'first_name': nom,
+        'last_name': prenom,
+        'email': email
+      }
+    });
+    logger.info(resultUpdateLogin);
+    logger.info(`Login Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
+    await patchLoginMattermostMongo(db)(conseiller, login);
+    return true;
+  } catch (e) {
+    Sentry.captureException(e);
+    logger.error(e);
+    await patchLoginMattermostMongoError(db)(conseiller);
+    return false;
+  }
+};
+
+const searchUser = async (mattermost, token, conseiller) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+  const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+  const login = `${prenom}.${nom}`;
+
+  return await axios({
+    method: 'post',
+    url: `${mattermost.endPoint}/api/v4/users/usernames`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: [login]
+  });
+};
+
+const updateLogin = (mattermost, gandi, logger) => async (conseiller, login) => {
+  const token = await loginAPI({ mattermost });
+  const resultUpdateJustLogin = await axios({
+    method: 'put',
+    url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/patch`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: {
+      'username': login,
+      'email': `${login}@${gandi.domain}`
+    }
+  });
+  logger.info(resultUpdateJustLogin);
+};
+
+module.exports = {
+  slugifyName,
+  loginAPI,
+  getChannel,
+  createAccount,
+  updateAccountPassword,
+  deleteAccount,
+  createChannel,
+  joinChannel,
+  getUsersChannel,
+  deleteUserChannel,
+  joinTeam,
+  deleteArchivedChannels,
+  searchUser,
+  patchLogin,
+  updateLogin
+};

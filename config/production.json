@@ -5,12 +5,21 @@
   "backoffice_hostname": "BACKOFFICE_HOSTNAME",
   "espace_coop_hostname": "ESPACE_COOP_HOSTNAME",
   "espace_candidat_hostname": "ESPACE_CANDIDAT_HOSTNAME",
+  "metabase_public_url": "METABASE_PUBLIC_URL",
   "pix": {
     "hostname": "PIX_HOSTNAME",
     "contactMailing": "PIX_CONTACT_MAILING",
     "supportMailing": "PIX_SUPPORT_MAILING"
   },
   "port": "PORT",
+  "paginate": {
+    "default": "PAGINATE_DEFAULT",
+    "max": "PAGINATE_MAX"
+  },
+  "paginate_resourcerie": {
+    "default": "PAGINATE_RESOURCERIE_DEFAULT",
+    "max": "PAGINATE_RESOURCERIE_MAX"
+  },
   "authentication": {
     "secret": "AUTHENTICATION_SECRET",
     "jwtOptions": {
@@ -48,6 +57,12 @@
     "token": "GANDI_TOKEN",
     "endPoint": "GANDI_ENDPOINT",
     "domain": "GANDI_DOMAIN"
+  },
+  "open_cage_data": {
+    "token": "OPEN_CAGE_DATA_TOKEN",
+    "endPoint": "OPEN_CAGE_DATA_ENDPOINT",
+    "countryCode": "OPEN_CAGE_DATA_COUNTRY_CODE",
+    "limit": "OPEN_CAGE_DATA_LIMIT"
   },
   "sentry": {
     "enabled": "SENTRY_ENABLED",

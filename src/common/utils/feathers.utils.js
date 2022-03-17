@@ -1,10 +1,12 @@
-const { Forbidden, NotAuthenticated, Unprocessable } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, Unprocessable, NotFound } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
 
 const Role = {
   Admin: 'admin',
   AdminCoop: 'admin_coop',
-  Conseiller: 'conseiller'
+  StructureCoop: 'structure_coop',
+  Conseiller: 'conseiller',
+  Candidat: 'candidat'
 };
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
@@ -30,13 +32,18 @@ const userHasAtLeastOneAuthorizedRole = async (userAuthenticationRepository, use
 
 const rolesGuard = async (userId, roles, userAuthenticationRepository) =>
   await userHasAtLeastOneAuthorizedRole(userAuthenticationRepository, userId, roles) ?
-    Promise.resolve() :
+    Promise.resolve(userId) :
     Promise.reject(new Forbidden('User not authorized', { userId }));
 
 const schemaGuard = async schemaValidation =>
   schemaValidation.error === undefined ?
     await Promise.resolve() :
     await Promise.reject(new Unprocessable('Schema validation error', schemaValidation.error));
+
+const existGuard = async ressource =>
+  ressource !== null && ressource !== undefined ?
+    await Promise.resolve() :
+    await Promise.reject(new NotFound('This ressource does not exist'));
 
 const canActivate = (...activationChecks) => Promise.all(activationChecks);
 
@@ -49,5 +56,6 @@ module.exports = {
   authenticationGuard,
   rolesGuard,
   schemaGuard,
+  existGuard,
   canActivate
 };

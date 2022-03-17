@@ -25,7 +25,7 @@ const {
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
-const { getStatsCnfs } = require('./export-cnfs/core/export-cnfs.core');
+const { getStatsCnfs, getStatsCnfsFilterStructure, userConnected } = require('./export-cnfs/core/export-cnfs.core');
 const {
   buildExportCnfsCsvFileContent,
   validateExportCnfsSchema,
@@ -127,28 +127,43 @@ exports.DataExports = class DataExports {
       //verify user role admin
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-      if (!adminUser?.roles.includes('admin')) {
+      if (!adminUser?.roles.includes('admin') && !adminUser?.roles.includes('prefet')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: adminUser
         }).toJSON());
         return;
       }
+      let miseEnrelations;
+      if (adminUser?.roles.includes('prefet')) {
+        if (adminUser?.departement) {
+          miseEnrelations = await db.collection('misesEnRelation').find({
+            'statut': { $eq: 'finalisee' },
+            'structureObj.codeDepartement': `${adminUser?.departement}`
+          }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+        } else {
+          miseEnrelations = await db.collection('misesEnRelation').find({
+            'statut': { $eq: 'finalisee' },
+            'structureObj.codeRegion': `${adminUser?.region}`
+          }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+        }
+      } else {
+        miseEnrelations = await db.collection('misesEnRelation').find({
+          'statut': { $eq: 'finalisee' }
+        }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
+      }
 
-      const miseEnrelations = await db.collection('misesEnRelation').find({
-        'statut': { $eq: 'finalisee' }
-      }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
 
       // eslint-disable-next-line max-len
-      res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
-
+      res.write('Date candidature;Date prévisionnelle de recrutement;Date d’entrée en formation;Date de sortie de formation;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
+      const formatDate = date => dayjs(date).format('DD/MM/YYYY');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
           // eslint-disable-next-line max-len
-          res.write(`${dayjs(conseiller.createdAt).format('DD/MM/YYYY')};${miseEnrelation.dateRecrutement === null ? 'non renseignée' : dayjs(miseEnrelation.dateRecrutement).format('DD/MM/YYYY')};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
+          res.write(`${formatDate(conseiller.createdAt)};${formatDate(miseEnrelation.dateRecrutement) ?? 'non renseignée'};${formatDate(conseiller.datePrisePoste) ?? 'non renseignée'};${formatDate(conseiller.dateFinFormation) ?? 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
           resolve();
         }));
       });
@@ -185,13 +200,13 @@ exports.DataExports = class DataExports {
       }
 
       // eslint-disable-next-line max-len
-      const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': new ObjectID(structureUser.entity.oid) }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
+      const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': structureUser.entity.oid, 'statut': { $ne: 'finalisee_non_disponible' } }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
       let promises = [];
 
       res.write('Nom;Prénom;Email;Code postal;Expérience;Test PIX;CV\n');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
-          let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
+          let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
           // eslint-disable-next-line max-len
           res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};${conseiller.codePostal};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.pix === undefined ? 'non' : 'oui'};${conseiller.cv === undefined ? 'non' : 'oui'}\n`);
           resolve();
@@ -338,14 +353,15 @@ exports.DataExports = class DataExports {
     app.get('/exports/cnfs.csv', async (req, res) => {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportCnfsSchema(query))
-      ).then(async () => {
-        const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
-        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), buildExportCnfsCsvFileContent(statsCnfs));
+      ).then(async authentication => {
+        const user = await userConnected(db, authentication);
+        const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
+        const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
+        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }

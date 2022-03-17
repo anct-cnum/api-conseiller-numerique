@@ -36,7 +36,27 @@
         "region_names": ["Île-de-France"]
     },
     {
-        "name": "Hub Conumm",
+        "name": "CONUMM",
         "region_names": ["Pays de la Loire"]
+    },
+    {
+        "name": "Hub Bretagne",
+        "region_names": ["Bretagne"]
+    },
+    {
+        "name": "Hub Corse",
+        "region_names": ["Corse"]
+    },
+    {
+        "name": "HubEst",
+        "region_names": ["Grand Est"]
+    },
+    {
+        "name": "Hub-Lo",
+        "region_names": ["Centre-Val de Loire"]
+    },
+    {
+        "name": "Hub Normandie",
+        "region_names": ["Normandie"]
     }
 ]

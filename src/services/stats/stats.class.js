@@ -5,6 +5,7 @@ const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
 const dayjs = require('dayjs');
+const axios = require('axios');
 const logger = require('../../logger');
 const statsPdf = require('./stats.pdf');
 const statsFct = require('./stats.function');
@@ -29,6 +30,7 @@ const { buildExportStatistiquesCsvFileContent } = require('../../common/document
 const { getStatistiquesToExport } = require('./export-statistiques/core/export-statistiques.core');
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 const { statsRepository } = require('./stats.repository');
+const departementsRegion = require('../../../data/imports/departements-region.json');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -55,6 +57,43 @@ exports.Stats = class Stats extends Service {
         const conseillers = await db.collection('misesEnRelation').countDocuments({ statut: 'finalisee' });
         res.send({ conseillerTotalFinalisee: conseillers });
       });
+    });
+
+    app.get('/stats/metabase', async (req, res) => {
+      let stats = {};
+      const metabasePublicUrl = app.get('metabase_public_url');
+
+      const cards = [
+        {
+          name: 'nbStructures',
+          path: '/card/142'
+        },
+        {
+          name: 'nbAccompagnements',
+          path: '/card/116'
+        },
+      ];
+
+      for (const card of cards) {
+        try {
+          const result = await axios({
+            method: 'get',
+            url: `${metabasePublicUrl}${card.path}`,
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          stats[card.name] = result?.data?.data?.rows;
+        } catch (e) {
+          logger.error(e);
+          return false;
+        }
+      }
+
+      stats['nbStructures'] = stats['nbStructures'][0][0] + stats['nbStructures'][1][0];
+      stats['nbAccompagnements'] = stats['nbAccompagnements'][0][0];
+
+      res.send(stats);
     });
 
     app.get('/stats/dashboard', async (req, res) => {
@@ -94,17 +133,18 @@ exports.Stats = class Stats extends Service {
     });
 
     //Statistiques CRA du conseiller
-    app.post('/stats/cra', async (req, res) => {
+    app.get('/stats/cra', async (req, res) => {
       app.get('mongoClient').then(async db => {
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
+        if (!statsFct.checkAuth(req)) {
+          res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
           return;
         }
+
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-
-        if (!conseillerUser?.roles.includes('conseiller') && !conseillerUser?.roles.includes('admin_coop')) {
+        const rolesAllowed = ['conseiller', 'admin_coop', 'structure_coop'];
+        if (rolesAllowed.filter(role => conseillerUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -112,34 +152,76 @@ exports.Stats = class Stats extends Service {
         }
 
         //Verification du conseiller associé à l'utilisateur correspondant
-        const id = conseillerUser?.roles.includes('admin_coop') ? req.body.idConseiller : conseillerUser.entity.oid;
+        const id = ['admin_coop', 'structure_coop'].filter(role => conseillerUser?.roles.includes(role)).length > 0 ?
+          req.query.idConseiller : conseillerUser.entity.oid;
 
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
-        if (conseiller?._id.toString() !== req.body?.idConseiller.toString()) {
+
+        if (conseiller?._id.toString() !== req.query?.idConseiller.toString()) {
           res.status(403).send(new Forbidden('User not authorized', {
-            conseillerId: req.body.idConseiller
+            conseillerId: req.query.idConseiller
           }).toJSON());
           return;
         }
 
         //Composition de la partie query en formattant la date
-        let dateDebut = new Date(req.body?.dateDebut);
+        let dateDebut = new Date(req.query?.dateDebut);
         dateDebut.setUTCHours(0, 0, 0, 0);
 
-        let dateFin = new Date(req.body?.dateFin);
+        let dateFin = new Date(req.query?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
         let query = {
           'conseiller.$id': new ObjectID(conseiller._id),
-          'createdAt': {
+          'cra.dateAccompagnement': {
             $gte: dateDebut,
             $lt: dateFin,
           }
         };
 
+        if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
+          query = {
+            'conseiller.$id': new ObjectID(conseiller._id),
+            'cra.codePostal': req.query?.codePostal,
+            'cra.dateAccompagnement': {
+              $gte: dateDebut,
+              $lt: dateFin,
+            }
+          };
+        }
+
         //Construction des statistiques
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(conseillerUser.roles, Role.AdminCoop));
 
         res.send(stats);
+      });
+    });
+
+    app.get('/stats/cra/codesPostaux/conseiller/:id', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
+        return;
+      }
+      const userId = decode(req.feathers.authentication.accessToken).sub;
+      const idConseiller = new ObjectID(req.params.id);
+
+      app.get('mongoClient').then(async db => {
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!statsFct.checkRole(user?.roles, 'conseiller')) {
+          res.status(403).send(new Forbidden('Utilisateur non autorisé', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        try {
+          const listCodePostaux = await statsFct.getCodesPostauxCras(idConseiller, statsRepository(db));
+          res.send(listCodePostaux);
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('Une erreur est survenue lors de la génération de la liste des codes postaux.').toJSON());
+          return;
+        }
       });
     });
 
@@ -154,7 +236,7 @@ exports.Stats = class Stats extends Service {
         try {
           let userId = decode(accessToken).sub;
           const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-          if (!user?.roles.includes('admin_coop')) {
+          if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
             res.status(403).send(new Forbidden('User not authorized', {
               userId: userId
             }).toJSON());
@@ -164,6 +246,7 @@ exports.Stats = class Stats extends Service {
           const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
           const type = req.query.type;
           const idType = req.query.idType === 'undefined' ? '' : req.query.idType + '/';
+          const codePostalNull = idType === '' ? '' : '/null';
 
           const schema = Joi.object({
             dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
@@ -177,7 +260,8 @@ exports.Stats = class Stats extends Service {
             return;
           }
 
-          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin;
+          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostalNull;
+
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
             await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
@@ -203,17 +287,20 @@ exports.Stats = class Stats extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
-        const { stats, type } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.idType, query.type,
-          exportStatistiquesRepository(db)
+        let ids = [];
+        ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const { stats, type, idType } = await getStatistiquesToExport(
+          query.dateDebut, query.dateFin, query.idType, query.type, ids,
+          exportStatistiquesRepository(db),
+          statsFct.checkRole(user?.roles, Role.AdminCoop)
         );
-
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type)
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, statsFct.checkRole(user?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -242,7 +329,7 @@ exports.Stats = class Stats extends Service {
         //Total accompagnement
         let nbAccompagnements = await db.collection('cras').aggregate(
           { $group:
-            { _id: null, count: { $sum: { $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] } } }
+            { _id: null, count: { $sum: '$cra.nbParticipants' } }
           },
           { $project: { 'valeur': '$count' } }
         ).toArray();
@@ -287,7 +374,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop')) {
+        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop') && !statsFct.checkRole(adminUser?.roles, 'structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -315,8 +402,8 @@ exports.Stats = class Stats extends Service {
           territoire,
           dateFin,
           ordreColonne,
-          page > 0 ? ((page - 1) * options.paginate.default) : 0,
-          options.paginate.default,
+          page > 0 ? ((page - 1) * Number(options.paginate.default)) : 0,
+          Number(options.paginate.default),
           statsRepository(db)
         );
 
@@ -327,16 +414,19 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'createdAt': {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
               '$gte': dateDebutQuery,
               '$lte': dateFinQuery,
             } };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.personnesRecurrentes = countRecurrentes.length > 0 ? countRecurrentes[0]?.count : 0;
             ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
           } else {
             ligneStats.personnesAccompagnees = 0;
             ligneStats.CRAEnregistres = 0;
+            ligneStats.personnesRecurrentes = 0;
           }
         }));
 
@@ -345,6 +435,80 @@ exports.Stats = class Stats extends Service {
         items.limit = options.paginate.default;
         items.skip = page;
 
+        res.send({ items: items });
+      });
+    });
+
+    app.get('/stats/prefet/territoires', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+
+      app.get('mongoClient').then(async db => {
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!statsFct.checkRole(adminUser?.roles, 'prefet')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        const schema = statsFct.checkSchemaPrefet(req);
+        if (schema.error) {
+          res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+          return;
+        }
+
+        const { territoire } = req.query;
+        const dateFin = dayjs(new Date(req.query.dateFin)).format('DD/MM/YYYY');
+        const dateDebutQuery = new Date(req.query.dateDebut);
+        const dateFinQuery = new Date(req.query.dateFin);
+        const codeDepartement = adminUser.departement;
+        const codeRegion = adminUser.region;
+
+        //exception Saint-Martin 978
+        const nomRegion = codeDepartement !== '978' ?
+          departementsRegion.find(departement => departement.num_dep === codeDepartement)?.region_name :
+          'Saint-Martin';
+
+        //Construction des statistiques
+        let items = {};
+        let statsTerritoires = [];
+
+        statsTerritoires = await statsFct.getTerritoiresPrefet(
+          territoire,
+          dateFin,
+          codeDepartement,
+          codeRegion,
+          nomRegion,
+          statsRepository(db)
+        );
+
+        await Promise.all(statsTerritoires.map(async ligneStats => {
+          ligneStats.personnesAccompagnees = 0;
+          ligneStats.CRAEnregistres = 0;
+          ligneStats.tauxActivation = ligneStats?.nombreConseillersCoselec > 0 ?
+            Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
+
+          if (ligneStats.conseillerIds.length > 0) {
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
+              '$gte': dateDebutQuery,
+              '$lte': dateFinQuery,
+            } };
+            const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+            const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
+            ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
+            ligneStats.personnesRecurrentes = countRecurrentes.length > 0 ? countRecurrentes[0]?.count : 0;
+            ligneStats.CRAEnregistres = await statsCras.getNombreCra(db)(query);
+          } else {
+            ligneStats.personnesAccompagnees = 0;
+            ligneStats.CRAEnregistres = 0;
+            ligneStats.personnesRecurrentes = 0;
+          }
+        }));
+        items.data = statsTerritoires;
         res.send({ items: items });
       });
     });
@@ -359,7 +523,7 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop')) {
+        if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -379,14 +543,14 @@ exports.Stats = class Stats extends Service {
           let ids = [];
           ids = conseillerIds.map(id => new ObjectID(id));
           let query = {
-            'createdAt': {
+            'cra.dateAccompagnement': {
               '$gte': dateDebut,
               '$lt': dateFin,
             },
             'conseiller.$id': { $in: ids },
           };
 
-          stats = await statsCras.getStatsGlobales(db, query, statsCras);
+          stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
         }
 
         res.send(stats);
@@ -404,7 +568,7 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop')) {
+        if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -418,13 +582,13 @@ exports.Stats = class Stats extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
 
         let query = {
-          'createdAt': {
+          'cra.dateAccompagnement': {
             '$gte': dateDebut,
             '$lt': dateFin,
           }
         };
 
-        let stats = await statsCras.getStatsGlobales(db, query, statsCras);
+        const stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
 
         res.send(stats);
       });
@@ -438,7 +602,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!adminUser?.roles.includes('admin_coop')) {
+        if (!adminUser?.roles.includes('admin_coop') && !adminUser?.roles.includes('structure_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());

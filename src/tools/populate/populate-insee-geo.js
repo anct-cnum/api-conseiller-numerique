@@ -29,7 +29,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   };
 
   const getGeo = async adresse => {
-    const adressePostale = encodeURI(`${adresse.numero_voie} ${adresse.nom_voie} ${adresse.code_postal} ${adresse.localite}`);
+    const adressePostale = encodeURI(`${adresse.numero_voie === null ? '' : adresse.numero_voie} ` +
+      `${adresse.type_voie === null ? '' : adresse.type_voie} ${adresse.nom_voie}`);
     const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}&citycode=${adresse.code_insee_localite}`;
 
     const params = {};
@@ -38,7 +39,7 @@ execute(__filename, async ({ db, logger, exit }) => {
       const result = await axios.get(urlAPI, { params: params });
       return result.data;
     } catch (e) {
-      throw new Error(`API Error : ${e}`);
+      throw new Error(`API Error : ${e} ${urlAPI}`);
     }
   };
 
@@ -58,7 +59,7 @@ execute(__filename, async ({ db, logger, exit }) => {
       let adresse = await getGeo(s.insee.etablissement.adresse);
       await store(s, adresse);
     } catch (e) {
-      logger.info(`geo,KOAPI,${s._id},${s.idPG},${s.nom},${s.siret},`);
+      logger.error(`geo,KOAPI,${s._id},${s.idPG},${s.nom},${s.siret},${e.message}`);
     }
   }
 

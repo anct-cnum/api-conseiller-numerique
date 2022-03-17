@@ -4,13 +4,14 @@ const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const slugify = require('slugify');
-const { createMailbox, updateMailboxPassword } = require('../../utils/mailbox');
+const { createMailbox, updateMailboxPassword, deleteMailbox } = require('../../utils/mailbox');
 const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
 const decode = require('jwt-decode');
-
+const { misesAJourPg, misesAJourMongo, historisationMongo,
+  getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -52,7 +53,8 @@ exports.Users = class Users extends Service {
           'conseillerObj.nom': nom,
           'conseillerObj.prenom': prenom,
           'conseillerObj.telephone': telephone,
-          'conseillerObj.dateDisponibilite': dateDisponibilite };
+          'conseillerObj.dateDisponibilite': dateDisponibilite
+        };
         try {
           await app.service('conseillers').patch(id, changeInfos);
           await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id }, { $set: changeInfosMisesEnRelation });
@@ -246,14 +248,15 @@ exports.Users = class Users extends Service {
         return;
       }
 
-      //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
-      if (users.data[0].roles[0] === 'conseiller') {
-        let conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
+      // eslint-disable-next-line camelcase
+      const { roles, name, persoEmail, nom, prenom, support_cnfs } = users.data[0];
+      if (roles.includes('conseiller')) {
+        //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
+        const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
         users.data[0].persoEmail = conseiller.email;
-        res.send({ roles: users.data[0].roles,
-          name: users.data[0].name, persoEmail: users.data[0].persoEmail, nom: conseiller.nom, prenom: conseiller.prenom });
+        res.send({ roles, name, persoEmail, nom, prenom, support_cnfs });
       } else {
-        res.send({ roles: users.data[0].roles, name: users.data[0].name });
+        res.send({ roles, name });
       }
     });
 
@@ -275,30 +278,77 @@ exports.Users = class Users extends Service {
         }).toJSON());
         return;
       }
-      req.body.emails.forEach(async email => {
-        app.get('mongoClient').then(async db => {
-          const verificationEmail = await db.collection('users').countDocuments({ name: email });
-          if (verificationEmail !== 0) {
-            res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
+      const { niveau, emails } = req.body;
+      const { departement, regionCode } = niveau;
+      if (!departement && !regionCode) {
+        res.status(400).send(new BadRequest('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+        return;
+      } else {
+        if (departement) {
+          const schemaDeparetement = await validationCodeDepartement(Joi)(niveau);
+          if (schemaDeparetement.error) {
+            res.status(400).send(new BadRequest(schemaDeparetement.error));
             return;
           }
+        }
+        if (regionCode) {
+          const schemaRegion = await validationCodeRegion(Joi)(niveau);
+          if (schemaRegion.error) {
+            res.status(400).send(new BadRequest(schemaRegion.error));
+            return;
+          }
+        }
+      }
+      let promises = [];
+      const errorConflict = email => res.status(409).send(new Conflict(`Compte déjà existant pour l'email : ${email}, veuillez le retirer de la liste`));
+      const errorBadRequestJoi = schema => res.status(400).send(new BadRequest(schema.error));
+      let emailForEach;
+      let emailMongoTrue = false;
+      let schemaJoi;
+      let errorValidationJoiTrue = false;
+      await emails.forEach(async email => {
+        await app.get('mongoClient').then(async db => {
+          promises.push(new Promise(async resolve => {
+            const schema = await validationEmailPrefet(Joi)(email);
+            if (schema.error) {
+              schemaJoi = schema;
+              errorValidationJoiTrue = true;
+            }
+            const verificationEmail = await db.collection('users').countDocuments({ name: email });
+            if (verificationEmail !== 0) {
+              emailForEach = email;
+              emailMongoTrue = true;
+            }
+            resolve();
+          }));
         });
       });
-      req.body.emails.forEach(async email => {
+      await Promise.all(promises);
+      if (errorValidationJoiTrue) {
+        errorBadRequestJoi(schemaJoi);
+        return;
+      } else if (emailMongoTrue) {
+        errorConflict(emailForEach);
+        return;
+      }
+      await emails.forEach(async email => {
         let userInfo = {
           name: email.toLowerCase(),
           roles: ['prefet'],
-          departement: req.body.departement,
           token: uuidv4(),
           tokenCreatedAt: new Date(),
           passwordCreated: false,
           createdAt: new Date()
         };
+        if (departement) {
+          userInfo.departement = departement;
+        } else {
+          userInfo.region = regionCode;
+        }
         await app.service('users').create(userInfo);
-        res.send({ status: 'compte créé' });
       });
+      res.send({ status: 'compte créé' });
     });
-
     app.post('/users/inviteStructure', async (req, res) => {
       const email = req.body.email;
       const structureId = req.body.structureId;
@@ -315,7 +365,7 @@ exports.Users = class Users extends Service {
           const database = connection.substr(connection.lastIndexOf('/') + 1);
           const newUser = {
             name: email.toLowerCase(),
-            roles: ['structure'],
+            roles: ['structure', 'structure_coop'],
             entity: new DBRef('structures', new ObjectId(structureId), database),
             token: uuidv4(),
             tokenCreatedAt: new Date(),
@@ -329,6 +379,8 @@ exports.Users = class Users extends Service {
           const emails = createEmails(db, mailer);
           let message = emails.getEmailMessageByTemplateName('invitationCompteStructure');
           await message.send(newUser, email);
+          let messageCoop = emails.getEmailMessageByTemplateName('invitationStructureEspaceCoop');
+          await messageCoop.send(newUser);
 
           res.send({ status: 'Invitation à rejoindre la structure envoyée !' });
         } catch (error) {
@@ -387,20 +439,14 @@ exports.Users = class Users extends Service {
             }
           });
           user.name = email;
-          createMailbox({
-            gandi,
-            conseillerId: user.entity.oid,
-            login,
-            password,
-            db,
-            logger,
-            Sentry: app.get('sentry')
-          });
+          createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: user.entity.oid, login, password });
           createAccount({
             mattermost,
             conseiller,
             email,
             login,
+            nom,
+            prenom,
             password,
             db,
             logger,
@@ -458,7 +504,7 @@ exports.Users = class Users extends Service {
             const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
             app.get('mongoClient').then(async db => {
               await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
-              await updateAccountPassword(app.get('mattermost'), conseiller, password, db, logger, app.get('sentry'));
+              await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
             });
             //Renouvellement conseiller => envoi email perso
             user.persoEmail = conseiller.email;
@@ -493,7 +539,13 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       let hiddenEmail = '';
-
+      if (user.roles.includes('conseiller') && user.passwordCreated === false) {
+        // eslint-disable-next-line max-len
+        res.status(409).send(new Conflict(`Vous n'avez pas encore activé votre compte. Pour cela, cliquez sur le lien d'activation fourni dans le mail ayant pour objet "Activer votre compte Coop des Conseillers numériques France Services"`, {
+          username
+        }).toJSON());
+        return;
+      }
       //Si le user est un conseiller, on renvoie l'email obscurci
       if (user.roles[0] === 'conseiller') {
         const hide = t => {
@@ -573,6 +625,82 @@ exports.Users = class Users extends Service {
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
       }
+    });
+
+    app.patch('/users/changement-email-pro/:token', async (req, res) => {
+
+      const { total, data } = await this.find({
+        query: {
+          token: req.params.token,
+          $limit: 1,
+        }
+      });
+      const user = data[0];
+      if (total === 0) {
+        res.status(404).send(new NotFound('Compte non trouvé', {
+          id: user._id
+        }).toJSON());
+        return;
+      }
+      if (!user?.roles.includes('conseiller') || !user?.support_cnfs) {
+        res.status(409).send(new Conflict('Vous n\'avez pas l\'autorisation', {
+          id: user._id
+        }).toJSON());
+        return;
+      }
+      const password = req.body.password;
+      const conseillerId = user?.entity?.oid;
+      const gandi = app.get('gandi');
+      const Sentry = app.get('sentry');
+      const mattermost = app.get('mattermost');
+
+      app.get('mongoClient').then(async db => {
+        const conseiller = await getConseiller(db)(conseillerId);
+        const lastLogin = conseiller?.emailCN?.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@'));
+        const email = `${user.support_cnfs.login}@${gandi.domain}`;
+        const userIdentity = {
+          email: user?.support_cnfs?.nouveauEmail,
+          nom: user?.support_cnfs?.nom,
+          prenom: user?.support_cnfs?.prenom,
+          login: user?.support_cnfs?.login
+        };
+        conseiller.message_email = {
+          email_future: user?.support_cnfs?.nouveauEmail
+        };
+        const login = user?.support_cnfs?.login;
+        const mailer = createMailer(app);
+        const emails = createEmails(db, mailer, app, logger);
+        const message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
+
+        if (conseiller?.emailCN?.address) {
+          await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
+            // eslint-disable-next-line max-len
+            return patchApiMattermostLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
+          }).then(() => {
+            return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
+          }).then(async () => {
+            await misesAJourPg(pool)(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
+            return await misesAJourMongo(db, app)(conseillerId, email, userIdentity, password);
+          }).then(async () => {
+            try {
+              await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password });
+              await message.send(conseiller);
+              await historisationMongo(db)(conseillerId, conseiller, user);
+              return res.status(200).send({ messageCreationMail: 'Votre nouvel email a été créé avec succès' });
+            } catch (error) {
+              logger.error(error);
+              app.get('sentry').captureException(error);
+              res.status(500).send(new GeneralError('Erreur lors de la création de la boîte mail, veuillez contacter le support'));
+              return;
+            }
+          }).catch(error => {
+            logger.error(error);
+            app.get('sentry').captureException(error);
+            res.status(500).send(new GeneralError('Une erreur s\'est produite., veuillez réessayer plus tard.'));
+            return;
+          });
+        }
+      });
     });
   }
 };

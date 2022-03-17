@@ -40,30 +40,58 @@ const getExportCnfsFileName = (dateDebut, dateFin) =>
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
-const fileHeaders = [
-  'Prénom',
-  'Nom',
-  'Structure',
-  'Code Postal',
-  'Date de recrutement',
-  'Date de fin de formation',
-  'Certification',
-  'Activé'
-];
 
-const buildExportCnfsCsvFileContent = statsCnfs => [
-  fileHeaders.join(csvCellSeparator),
-  ...statsCnfs.map(statCnfs => [
-    statCnfs.prenom,
-    statCnfs.nom,
-    statCnfs.nomStructure,
-    statCnfs.codePostal,
-    statCnfs.datePrisePoste,
-    statCnfs.dateFinFormation,
-    statCnfs.certifie,
-    statCnfs.isUserActif,
-  ].join(csvCellSeparator))
-].join(csvLineSeparator);
+const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
+  let fileHeaders = [
+    'Prénom',
+    'Nom',
+    'Email',
+    'Email @conseiller-numerique.fr',
+    'Structure',
+    'Code Postal',
+    'Date de recrutement',
+    'Date de fin de formation',
+    'Certification',
+    'Activé',
+  ];
+  if (user.roles.includes('admin_coop')) {
+    fileHeaders[5] = 'Code Postal du conseiller';
+    fileHeaders.push('CRA Saisis');
+    fileHeaders.splice(5, 0, 'Code département de la structure');
+    return [
+      fileHeaders.join(csvCellSeparator),
+      ...statsCnfs.map(statCnfs => [
+        statCnfs.prenom,
+        statCnfs.nom,
+        statCnfs.email,
+        statCnfs?.emailCN?.address ?? 'compte COOP non créé',
+        statCnfs.nomStructure.replace(/["',]/g, ''),
+        statCnfs.codeDepartement,
+        statCnfs.codePostal,
+        statCnfs.datePrisePoste,
+        statCnfs.dateFinFormation,
+        statCnfs.certifie,
+        statCnfs.isUserActif,
+        statCnfs.craCount
+      ].join(csvCellSeparator))
+    ].join(csvLineSeparator);
+  }
+  return [
+    fileHeaders.join(csvCellSeparator),
+    ...statsCnfs.map(statCnfs => [
+      statCnfs.prenom,
+      statCnfs.nom,
+      statCnfs.email,
+      statCnfs?.emailCN?.address ?? 'compte COOP non créé',
+      statCnfs.nomStructure.replace(/["',]/g, ''),
+      statCnfs.codePostal,
+      statCnfs.datePrisePoste,
+      statCnfs.dateFinFormation,
+      statCnfs.certifie,
+      statCnfs.isUserActif
+    ].join(csvCellSeparator))
+  ].join(csvLineSeparator);
+};
 
 module.exports = {
   validateExportCnfsSchema,

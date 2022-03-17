@@ -7,6 +7,7 @@ const { ObjectID } = require('mongodb');
 const { Pool } = require('pg');
 const pool = new Pool();
 const logger = require('../../logger');
+const { isStructureDuplicate } = require('./get-strucures/utils/get-structure.utils');
 
 module.exports = {
   before: {
@@ -111,7 +112,6 @@ module.exports = {
       })
     ]
   },
-
   after: {
     all: [],
     find: [async context => {
@@ -121,30 +121,19 @@ module.exports = {
           Object.assign(structure, { dernierCoselec: utils.getCoselec(structure) });
         });
 
+        context.result.data = context.result.data.filter(structure => !isStructureDuplicate(structure));
+
+        const db = await context.app.get('mongoClient');
         //Compter le nombre de candidats dont le recrutement est finalisé
-        const p = new Promise(resolve => {
-          context.app.get('mongoClient').then(async db => {
-            let promises = [];
-            let result = [];
-            context.result.data.filter(async structure => {
-              const p = new Promise(async resolve => {
-                let candidatsRecrutes = await db.collection('misesEnRelation').countDocuments(
-                  {
-                    'statut': 'finalisee',
-                    'structure.$id': new ObjectID(structure._id)
-                  });
-                resolve();
-                Object.assign(structure, { nbCandidatsRecrutes: candidatsRecrutes });
-                result.push(structure);
-              });
-              promises.push(p);
-            });
-            await Promise.all(promises);
-            context.result.data = result;
-            resolve();
+        context.result.data = await Promise.all(context.result.data.map(async structure => {
+          const candidatsRecrutes = await db.collection('misesEnRelation')
+          .countDocuments({
+            'statut': 'finalisee',
+            'structure.$id': structure._id
           });
-        });
-        await p;
+
+          return { ...structure, nbCandidatsRecrutes: candidatsRecrutes };
+        }));
       }
 
       return context;
@@ -158,7 +147,6 @@ module.exports = {
     patch: [],
     remove: []
   },
-
   error: {
     all: [],
     find: [],

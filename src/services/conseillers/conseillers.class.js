@@ -16,6 +16,7 @@ const { v4: uuidv4 } = require('uuid');
 const {
   checkAuth,
   checkRoleCandidat,
+  checkRoleAdminCoop,
   checkConseillerExist,
   checkConseillerHaveCV,
   verificationRoleUser,
@@ -24,7 +25,6 @@ const {
   suppressionTotalCandidat,
   suppressionCv,
   suppressionCVConseiller,
-  checkFormulaire,
   checkRoleAdmin,
   candidatSupprimeEmailPix } = require('./conseillers.function');
 const {
@@ -36,7 +36,7 @@ const {
   Role,
   schemaGuard,
   abort,
-  csvFileResponse
+  csvFileResponse, existGuard
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const statsCras = require('../stats/cras');
@@ -47,8 +47,14 @@ const {
   exportStatistiquesQueryToSchema
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
-const { geolocatedConseillers } = require('./geolocalisation/core/geolocalisation.core');
+const { geolocatedConseillers, geolocatedStructure } = require('./geolocalisation/core/geolocalisation.core');
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
+const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
+const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
+const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
+const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
+const { permanenceRepository } = require('./permanence/repository/permanence.repository');
+const { permanenceDetails } = require('./permanence/core/permanence-details.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -124,62 +130,25 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.post('/conseillers/createSexeAge', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = createSexeAgeBodyToSchema(req.body);
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const conseillerId = user.entity.oid;
 
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
-
-      let userId = decode(req.feathers.authentication.accessToken).sub;
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-
-      if (!user?.roles.includes('conseiller') && !user?.roles.includes('candidat')) {
-        res.status(403).send(new Forbidden('User not authorized', {
-          userId: userId
-        }).toJSON());
-        return;
-      }
-
-      let conseiller = await this.find({
-        query: {
-          _id: new ObjectId(user.entity.oid),
-          $limit: 1,
-        }
-      });
-
-      if (conseiller.total === 0) {
-        res.status(404).send(new NotFound('Ce compte n\'existe pas ! Vous allez être déconnecté.').toJSON());
-        return;
-      }
-
-      const sexe = req.body.sexe;
-      const dateDeNaissance = new Date(req.body.dateDeNaissance);
-
-      const schema = checkFormulaire(req.body);
-
-      if (schema.error) {
-        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
-        return;
-      }
-
-      if (sexe === '' || dateDeNaissance === '') {
-        res.status(400).send(new BadRequest('Erreur : veuillez remplir tous les champs obligatoires (*) du formulaire.').toJSON());
-        return;
-      }
-
-      try {
-        await this.patch(new ObjectId(user.entity.oid),
-          { $set: {
-            sexe: sexe,
-            dateDeNaissance: dateDeNaissance
-          } });
-      } catch (error) {
-        app.get('sentry').captureException(error);
-        logger.error(error);
-        res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
-      }
-
-      res.send({ isUpdated: true });
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller, Role.Candidat], () => user),
+        schemaGuard(validateCreateSexeAgeSchema(query)),
+        conseillerGuard(conseillerId, countConseillersDoubles(db))
+      ).then(async () => {
+        await setConseillerSexeAndDateDeNaissance(db)(conseillerId, query.sexe, query.dateDeNaissance).then(() => {
+          res.send({ isUpdated: true });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(409).send(new Conflict('La mise à jour a échoué, veuillez réessayer.').toJSON());
+        });
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.post('/conseillers/cv', upload.single('file'), async (req, res) => {
@@ -396,7 +365,8 @@ exports.Conseillers = class Conseillers extends Service {
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        if (!user?.roles.includes('conseiller') && !user?.roles.includes('admin_coop')) {
+        const rolesAllowed = ['conseiller', 'admin_coop', 'structure_coop'];
+        if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -405,6 +375,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
         const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
+        const codePostal = req.query?.codePostal ? req.query.codePostal : 'null';
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
@@ -413,6 +384,7 @@ exports.Conseillers = class Conseillers extends Service {
         const schema = Joi.object({
           dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
           dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+          codePostal: Joi.required().error(new Error('Le code postal est invalide')),
         }).validate(req.query);
 
         if (schema.error) {
@@ -420,7 +392,7 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        let finUrl = '/conseiller/' + user.entity.oid + '/' + dateDebut + '/' + dateFin;
+        let finUrl = '/conseiller/' + user.entity.oid + '/' + dateDebut + '/' + dateFin + '/' + codePostal;
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
@@ -449,16 +421,24 @@ exports.Conseillers = class Conseillers extends Service {
         const { getConseillerAssociatedWithUser } = exportStatistiquesRepository(db);
         const conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
 
-        const statsQuery = {
+        let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'createdAt': { $gte: query.dateDebut, $lt: query.dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
         };
+        if (query.codePostal !== '') {
+          statsQuery = {
+            'conseiller.$id': conseiller._id,
+            'cra.codePostal': req.query?.codePostal,
+            'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
+          };
+        }
 
-        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras);
+        const isAdminCoop = checkRoleAdminCoop(await getUserById(userId));
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -641,6 +621,44 @@ exports.Conseillers = class Conseillers extends Service {
       const conseillers = await geolocatedConseillers(geolocationRepository(db));
 
       res.send(conseillers);
+    });
+
+    app.get('/conseillers/geolocalisation/par-region', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      const conseillersByRegion = await geolocatedConseillersByRegion(geolocationRepository(db));
+
+      res.send(conseillersByRegion);
+    });
+
+    app.get('/conseillers/geolocalisation/par-departement', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      const conseillersByDepartement = await geolocatedConseillersByDepartement(geolocationRepository(db));
+
+      res.send(conseillersByDepartement);
+    });
+
+    app.get('/conseillers/permanence/:id', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+
+      canActivate(
+        existGuard(conseiller),
+      ).then(async () => {
+        res.send(await permanenceDetails(conseiller.structureId, permanenceRepository(db)));
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+
+      canActivate(
+        existGuard(conseiller),
+      ).then(async () => {
+        res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
 };

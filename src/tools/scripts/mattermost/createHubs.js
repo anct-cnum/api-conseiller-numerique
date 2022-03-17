@@ -2,25 +2,29 @@
 'use strict';
 
 const { execute } = require('../../utils');
-const { loginAPI, joinChannel, joinTeam } = require('../../../utils/mattermost');
+const { loginAPI, joinChannel, joinTeam, createChannel } = require('../../../utils/mattermost');
 const { findDepartement } = require('../../../utils/geo');
+require('dotenv').config();
 
 execute(__filename, async ({ app, db, logger, Sentry }) => {
   const mattermost = app.get('mattermost');
   const token = await loginAPI({ mattermost });
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  /*const hubs = require('../../../../data/imports/hubs.json');
-  await deleteArchivedChannels(mattermost, token);
+  const hubs = require('../../../../data/imports/hubs.json');
   for (const hub of hubs) {
-    const result = await createChannel(mattermost, token, hub.name);
-    hub.channelId = result.data.id;
-    await db.collection('hubs').insertOne(hub);
-  }*/
+    const hubCount = await db.collection('hubs').countDocuments({ name: hub.name });
+    if (hubCount === 0) {
+      const result = await createChannel(mattermost, token, mattermost.hubTeamId, hub.name);
+      hub.channelId = result.data.id;
+      await db.collection('hubs').insertOne(hub);
+    }
+  }
 
   let count = 0;
   const conseillers = await db.collection('conseillers').find({
-    'mattermost': { $ne: null },
+    'statut': { $ne: 'RUPTURE' },
+    'mattermost.id': { $ne: null },
     'mattermost.error': { $ne: true },
     'mattermost.hubJoined': { $ne: true }
   }).toArray();
@@ -36,13 +40,16 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       if (hub === null) {
         hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
       }
-    
+
       if (hub !== null) {
         try {
           await joinTeam(mattermost, token, mattermost.hubTeamId, conseiller.mattermost.id);
           await joinChannel(mattermost, token, hub.channelId, conseiller.mattermost.id);
-          db.collection('conseillers').updateOne({ _id: conseiller._id }, {
+          await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
             $set: { 'mattermost.hubJoined': true }
+          });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+            $set: { 'conseillerObj.mattermost.hubJoined': true }
           });
           count++;
         } catch (e) {
@@ -55,7 +62,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       logger.error(e);
     }
 
-    // To avoid overload Mattermost API
+    //To avoid overload Mattermost API
     await sleep(500);
   }
 

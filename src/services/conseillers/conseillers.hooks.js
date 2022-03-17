@@ -1,19 +1,36 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
-const { Forbidden } = require('@feathersjs/errors');
+const { Forbidden, BadRequest } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
+const { ObjectID } = require('mongodb');
+const Joi = require('joi');
 
 module.exports = {
   before: {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'candidat'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
         field: 'roles',
       })
     ],
     find: [
+      checkPermissions({
+        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop'],
+        field: 'roles',
+      }),
       context => {
+        if (context.params?.user?.roles.includes('prefet')) {
+          const departement = context.params?.user.departement;
+          const region = context.params?.user.region;
+
+          context.params.query = {
+            ...context.params.query,
+            ...(departement ? { codeDepartement: departement.toString() } : {}),
+            ...(region ? { codeRegion: region.toString() } : {})
+          };
+        }
+
         if (context.params.query.$skip) {
           const paginate = context.app.get('paginate');
           const page = context.params.query.$skip;
@@ -42,6 +59,10 @@ module.exports = {
           delete context.params.query.isUserActif;
         }
 
+        if (context.params.query.structureId) {
+          context.params.query.structureId = new ObjectID(context.params.query.structureId);
+        }
+
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
         }
@@ -67,7 +88,7 @@ module.exports = {
     ],
     update: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -81,7 +102,7 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -90,6 +111,22 @@ module.exports = {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
+        }
+        const schema = Joi.object({
+
+          nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),
+          prenom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ prénom est obligatoire')),
+          fonction: Joi.string().trim().min(2).max(100).required().error(new Error('Le champ fonction est obligatoire')),
+          // eslint-disable-next-line max-len
+          email: Joi.string().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
+          // eslint-disable-next-line max-len
+          numeroTelephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone est invalide')),
+        }).validate(context.data.supHierarchique);
+
+        if (schema.error) {
+          throw new BadRequest(schema.error);
+        } else {
+          return context;
         }
       }
     ],
@@ -116,7 +153,7 @@ module.exports = {
                     'structure.$id': context.params?.user.entity.oid,
                     'conseiller.$id': conseiller._id
                   });
-                if (miseEnRelationCount === 0) {
+                if (miseEnRelationCount === 0 || context.params.query.statut === 'RECRUTE') {
                   const dejaFinalisee = await db.collection('misesEnRelation').countDocuments(
                     {
                       'statut': 'finalisee',
@@ -151,8 +188,12 @@ module.exports = {
                 const structure = await db.collection('structures').findOne({
                   '_id': conseiller.structureId
                 });
+                const nombreCra = await db.collection('cras').countDocuments({
+                  'conseiller.$id': conseiller._id
+                });
                 if (structure) {
                   conseiller.nomStructure = structure?.nom;
+                  conseiller.craCount = nombreCra;
                 }
                 result.push(conseiller);
                 resolve();
@@ -166,11 +207,10 @@ module.exports = {
         });
         return await p;
       }
-
     }],
     get: [async context => {
       if (context.params?.user?.roles.includes('structure') || context.params?.user?.roles.includes('prefet') ||
-          context.params?.user?.roles.includes('admin')) {
+        context.params?.user?.roles.includes('admin')) {
         const p = new Promise(resolve => {
           const result = context.app.get('mongoClient').then(async db => {
 

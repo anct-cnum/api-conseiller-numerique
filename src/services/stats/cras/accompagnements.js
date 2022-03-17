@@ -4,9 +4,14 @@ const getStatsAccompagnements = async (db, query) => {
     [
       { $unwind: '$cra.accompagnement' },
       { $match: { ...query } },
-      { $group: { _id: '$cra.accompagnement', count: { $sum: {
-        $cond: [{ '$gt': ['$cra.nbParticipants', 0] }, '$cra.nbParticipants', 1] //Si nbParticipants alors c'est collectif sinon 1
-      } } } },
+      { $group: {
+        _id: 'accompagnement',
+        individuel: { $sum: '$cra.accompagnement.individuel' },
+        atelier: { $sum: '$cra.accompagnement.atelier' },
+        redirection: { $sum: {
+          $cond: [{ '$ne': ['$cra.organisme', null] }, '$cra.accompagnement.redirection', 0]
+        } }
+      } },
     ]
   ).toArray();
 

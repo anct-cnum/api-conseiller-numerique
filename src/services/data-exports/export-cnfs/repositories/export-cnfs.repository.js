@@ -16,20 +16,22 @@ function filterUserActif(isUserActif) {
   return {};
 }
 
+const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
+
 const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif) => {
   const conseillers = db.collection('conseillers').find({
     statut: 'RECRUTE',
-    datePrisePoste: {
-      $gt: dateDebut,
-    },
-    dateFinFormation: {
-      $lt: dateFin,
-    },
+    $and: [
+      { datePrisePoste: { $gt: dateDebut } },
+      { datePrisePoste: { $lt: dateFin } },
+    ],
     ...filterUserActif(isUserActif)
   }).project({
-    _id: 0,
+    _id: 1,
     prenom: 1,
     nom: 1,
+    email: 1,
+    emailCN: 1,
     structureId: 1,
     codePostal: 1,
     datePrisePoste: 1,
@@ -37,14 +39,23 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     emailCNError: 1,
     mattermost: 1,
   });
-
+  let arrayConseillers = [];
+  const functionCraCount = db => async conseillers => {
+    for (let conseiller of conseillers) {
+      const result = await getCraCount(db)(conseiller);
+      conseiller.craCount = result;
+      arrayConseillers.push(conseiller);
+    }
+  };
   if (nomOrdre !== undefined && ordre !== undefined) {
-    return conseillers
+    const ordreResult = await conseillers
     .sort({ [nomOrdre]: parseInt(ordre) })
     .toArray();
+    await functionCraCount(db)(ordreResult);
+    return arrayConseillers;
   }
-
-  return conseillers.toArray();
+  await functionCraCount(db)(await conseillers.toArray());
+  return arrayConseillers;
 };
 
 const getStructureNameFromId = db => async id => db.collection('structures')
@@ -53,7 +64,8 @@ const getStructureNameFromId = db => async id => db.collection('structures')
 }, {
   projection: {
     _id: 0,
-    nom: 1
+    nom: 1,
+    codeDepartement: 1
   }
 });
 
