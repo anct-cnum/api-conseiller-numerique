@@ -594,7 +594,6 @@ exports.Users = class Users extends Service {
 
     app.post('/users/sendForgottenPasswordEmail', async (req, res) => {
       const username = req.body.username.toLowerCase().trim();
-      const espace = req.body.espace;
       const users = await this.find({
         query: {
           name: username,
@@ -609,18 +608,13 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
-      if (espace === 'candidat' && !user.roles.includes(espace)) {
-        res.status(409).send(new Conflict('Error access forgottenPassword espace candidat', {
+      if (user.passwordCreated === false) {
+        res.status(409).send(new Conflict('Error authorization forgottenPassword', {
           username
         }).toJSON());
         return;
       }
-      if (espace === 'backoffice' && !user.roles.includes('prefet') && !user.roles.includes('structure') && !user.roles.includes('admin')) {
-        res.status(409).send(new Conflict('Error access forgottenPassword espace backoffice', {
-          username
-        }).toJSON());
-        return;
-      }
+     
       user.token = uuidv4();
 
       //Si le user est un conseiller, envoyer le mail sur son email perso
