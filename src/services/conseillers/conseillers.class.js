@@ -668,5 +668,101 @@ exports.Conseillers = class Conseillers extends Service {
         res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
+
+    app.patch('/conseillers/updateInfosConseiller/:id', async (req, res) => {
+      app.get('mongoClient').then(async db => {
+        const nouveauEmail = req.body.email.toLowerCase();
+        let initModifMailPersoConseiller = false;
+        const { telephone, telephonePro, email } = req.body;
+        const body = { telephone, telephonePro, email };
+        const schema = Joi.object({
+          // eslint-disable-next-line max-len
+          email: Joi.string().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
+          // eslint-disable-next-line max-len
+          telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
+          // eslint-disable-next-line max-len
+          telephonePro: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
+        }).validate(body);
+
+        if (schema.error) {
+          res.status(400).json(new BadRequest(schema.error));
+          return;
+        }
+        const idConseiller = req.params.id;
+        const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+        const changeInfos = { telephone, telephonePro };
+        try {
+          await app.service('conseillers').patch(idConseiller, changeInfos);
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+          return;
+        }
+
+        if (nouveauEmail !== conseiller.email) {
+
+          const verificationEmail = await db.collection('conseillers').countDocuments({ email: nouveauEmail });
+          if (verificationEmail !== 0) {
+            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
+            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
+          try {
+            await this.patch(idConseiller, { $set: { tokenChangementMail: uuidv4(), tokenChangementMailCreatedAt: new Date(), mailAModifier: nouveauEmail } });
+            const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+            conseiller.nouveauEmail = nouveauEmail;
+            let mailer = createMailer(app, nouveauEmail);
+            const emails = createEmails(db, mailer);
+            let message = emails.getEmailMessageByTemplateName('conseillersConfirmeNouveauEmail');
+            await message.send(conseiller);
+            initModifMailPersoConseiller = true;
+          } catch (error) {
+            context.app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+            return;
+          }
+        }
+        res.send({ 'conseiller': conseiller, 'initModifMailPersoConseiller': initModifMailPersoConseiller });
+      });
+
+    });
+
+    app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
+      const tokenChangementMail = req.params.token;
+      const conseiller = await db.collection('conseillers').findOne({ tokenChangementMail: tokenChangementMail });
+      if (!conseiller) {
+        logger.error(`Token inconnu: ${tokenChangementMail}`);
+        res.status(404).send(new NotFound('Conseiller not found', {
+          tokenChangementMail
+        }).toJSON());
+        return;
+      }
+      if (!conseiller?.mailAModifier) {
+        res.status(404).send(new NotFound('mailAModifier not found').toJSON());
+        return;
+      }
+      try {
+        await this.patch(conseiller._id, { $set: { email: conseiller.mailAModifier } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      try {
+        await this.patch(conseiller._id, { $unset: {
+          mailAModifier: conseiller.mailAModifier,
+          tokenChangementMail: conseiller.tokenChangementMail,
+          tokenChangementMailCreatedAt: conseiller.tokenChangementMailCreatedAt
+        } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      const apresEmailConfirmer = await db.collection('conseillers').findOne({ _id: new ObjectId(conseiller._id) });
+      res.send(apresEmailConfirmer);
+    });
   }
 };

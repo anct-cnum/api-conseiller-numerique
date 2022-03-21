@@ -19,6 +19,7 @@ const invitationAdminEspaceCoopBDT = require('./admins/invitationAdminEspaceCoop
 const invitationStructureEspaceCoop = require('./structures/invitationStructureEspaceCoop');
 const ouvertureEspaceCoopStructure = require('./structures/ouvertureEspaceCoopStructure');
 const candidatConfirmeNouveauEmail = require('./confirmeChangeEmail/candidatConfirmeNouveauEmail');
+const conseillersConfirmeNouveauEmail = require('./confirmeChangeEmail/conseillersConfirmeNouveauEmail');
 const creationCompteCandidat = require('./candidats/creationCompteCandidat');
 const bienvenueCompteCandidat = require('./candidats/bienvenueCompteCandidat');
 const candidatSupprimePix = require('./pix/candidatSupprimePix');
@@ -51,13 +52,15 @@ module.exports = (db, mailer, app, logger) => {
     invitationAdminEspaceCoopBDT(db, mailer),
     invitationStructureEspaceCoop(db, mailer),
     candidatConfirmeNouveauEmail(db, mailer),
+    conseillersConfirmeNouveauEmail(db, mailer),
     creationCompteCandidat(db, mailer),
     bienvenueCompteCandidat(db, mailer),
     candidatSupprimePix(db, mailer, app, logger),
     conseillerRuptureStructure(db, mailer),
     conseillersRupturePix(db, mailer),
     conseillerChangeEmailCnfs(db, mailer, app, logger),
-    confirmationChangeEmailCnfs(db, mailer, app, logger)
+    confirmationChangeEmailCnfs(db, mailer, app, logger),
+
   ];
 
   return {
