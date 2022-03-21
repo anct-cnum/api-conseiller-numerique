@@ -227,6 +227,26 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 }
               );
 
+              //Cas spécifique : conseiller recruté s'est réinscrit sur le formulaire d'inscription => compte coop + compte candidat
+              const userCandidatAlreadyPresent = await db.collection('users').findOne({
+                'roles': { $in: ['candidat'] },
+                'name': conseillerCoop.email
+              });
+              if (userCandidatAlreadyPresent !== null) {
+                await db.collection('users').deleteOne({ _id: userCoop._id });
+                await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
+                  $set: {
+                    userCreated: false
+                  }
+                });
+                await db.collection('misesEnRelation').updateMany(
+                  { 'conseiller.$id': conseillerCoop._id },
+                  { $set: {
+                    'conseillerObj.userCreated': false
+                  } }
+                );
+              }
+
               //Passage en compte candidat avec email perso
               let userToUpdate = {
                 name: conseillerCoop.email,
@@ -236,7 +256,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 mailSentDate: null, //pour le mécanisme de relance d'invitation candidat
                 passwordCreated: false,
               };
-              if (userCoop !== null) {
+              if (userCoop !== null && userCandidatAlreadyPresent === null) {
                 //Maj name si le compte coop a été activé
                 if (conseillerCoop.email !== userCoop.name) {
                   await db.collection('users').updateOne({ _id: userCoop._id }, {
