@@ -90,6 +90,11 @@ module.exports = {
       }, { name: 'bo-search-fulltext' }),
     ]);
   },
+  ressourcesTags: db => {
+    return Promise.all([
+      db.collection('ressourcesTags').createIndex({ 'nom': 1 }, { unique: true })
+    ]);
+  },
   hubs: db => {
     return Promise.all([
       db.collection('hubs').createIndex({ 'region_name': 1 }),
