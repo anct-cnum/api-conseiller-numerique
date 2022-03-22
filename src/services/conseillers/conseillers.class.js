@@ -249,13 +249,17 @@ exports.Conseillers = class Conseillers extends Service {
             };
 
             db.collection('conseillers').updateMany({ email: conseiller.email },
-              { $set: {
-                cv: cv
-              } });
+              {
+                $set: {
+                  cv: cv
+                }
+              });
             db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
-              { $set: {
-                'conseillerObj.cv': cv
-              } });
+              {
+                $set: {
+                  'conseillerObj.cv': cv
+                }
+              });
           } catch (error) {
             app.get('sentry').captureException(error);
             logger.error(error);
@@ -675,21 +679,32 @@ exports.Conseillers = class Conseillers extends Service {
         let initModifMailPersoConseiller = false;
         const { telephone, telephonePro, email } = req.body;
         const body = { telephone, telephonePro, email };
+        const idConseiller = req.params.id;
+        const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
         const schema = Joi.object({
           // eslint-disable-next-line max-len
           email: Joi.string().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
           // eslint-disable-next-line max-len
-          telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
-          // eslint-disable-next-line max-len
           telephonePro: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
-        }).validate(body);
+        });
+        const regex = new RegExp('^((06)|(07))[0-9]{8}$');
+        let extended = '';
+        if (!regex.test(conseiller.telephone) || conseiller.telephone !== telephone) {
+          extended = schema.keys({
+            // eslint-disable-next-line max-len
+            telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
+          }).validate(body);
+        } else {
+          extended = schema.keys({
+            telephone: Joi.string().required().regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
+          }).validate(body);
+        }
 
-        if (schema.error) {
+        if (extended.error) {
           res.status(400).json(new BadRequest(schema.error));
           return;
         }
-        const idConseiller = req.params.id;
-        const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+
         const changeInfos = { telephone, telephonePro };
         try {
           await app.service('conseillers').patch(idConseiller, changeInfos);
@@ -752,11 +767,13 @@ exports.Conseillers = class Conseillers extends Service {
         logger.error(err);
       }
       try {
-        await this.patch(conseiller._id, { $unset: {
-          mailAModifier: conseiller.mailAModifier,
-          tokenChangementMail: conseiller.tokenChangementMail,
-          tokenChangementMailCreatedAt: conseiller.tokenChangementMailCreatedAt
-        } });
+        await this.patch(conseiller._id, {
+          $unset: {
+            mailAModifier: conseiller.mailAModifier,
+            tokenChangementMail: conseiller.tokenChangementMail,
+            tokenChangementMailCreatedAt: conseiller.tokenChangementMailCreatedAt
+          }
+        });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
