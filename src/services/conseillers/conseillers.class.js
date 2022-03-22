@@ -747,7 +747,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       const tokenChangementMail = req.params.token;
-      const conseiller = await db.collection('conseillers').findOne({ tokenChangementMail: tokenChangementMail });
+      const conseiller = await db.collection('conseillers').findOne({ tokenChangementMail });
       if (!conseiller) {
         logger.error(`Token inconnu: ${tokenChangementMail}`);
         res.status(404).send(new NotFound('Conseiller not found', {
