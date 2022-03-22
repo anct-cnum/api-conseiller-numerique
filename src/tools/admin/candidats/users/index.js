@@ -15,26 +15,35 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
   return new Promise(async (resolve, reject) => {
     const conseillerDoc = await db.collection('conseillers').findOne({ _id: _id });
     try {
-      await feathers.service('users').create({
-        name: conseillerDoc.email,
-        prenom: conseillerDoc.prenom,
-        nom: conseillerDoc.nom,
-        password: uuidv4(), // mandatory param
-        roles: Array('candidat'),
-        entity: {
-          '$ref': `conseillers`,
-          '$id': _id,
-          '$db': dbName
-        },
-        token: uuidv4(),
-        tokenCreatedAt: new Date(),
-        mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
-        passwordCreated: false,
-        createdAt: new Date(),
-      });
-      await db.collection('conseillers').updateOne({ _id }, { $set: {
-        userCreated: true
-      } });
+      //Bridage si doublon recruté => pas de création de compte candidat
+      const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: 'RECRUTE', email: conseillerDoc.email });
+
+      if (hasUserCoop === 0) {
+        await feathers.service('users').create({
+          name: conseillerDoc.email,
+          prenom: conseillerDoc.prenom,
+          nom: conseillerDoc.nom,
+          password: uuidv4(), // mandatory param
+          roles: Array('candidat'),
+          entity: {
+            '$ref': `conseillers`,
+            '$id': _id,
+            '$db': dbName
+          },
+          token: uuidv4(),
+          tokenCreatedAt: new Date(),
+          mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
+          passwordCreated: false,
+          createdAt: new Date(),
+        });
+        await db.collection('conseillers').updateOne({ _id }, { $set: {
+          userCreated: true
+        } });
+      } else {
+        await db.collection('conseillers').updateOne({ _id }, { $set: {
+          userCreationError: true
+        } });
+      }
       resolve();
     } catch (e) {
       Sentry.captureException(e);
