@@ -1,6 +1,6 @@
 module.exports = (db, mailer) => {
 
-  const templateName = 'conseillersConfirmeNouveauEmail';
+  const templateName = 'conseillerConfirmeNouveauEmail';
   const { utils } = mailer;
 
 
@@ -8,7 +8,7 @@ module.exports = (db, mailer) => {
 
     return mailer.render(__dirname, templateName, {
       conseiller,
-      link: utils.getPublicUrl(`/conseillers/confirmation-email/${(conseiller.tokenChangementMail)}`),
+      link: utils.getEspaceCoopUrl(`/conseillers/confirmation-email/${(conseiller.tokenChangementMail)}`),
     });
   };
 

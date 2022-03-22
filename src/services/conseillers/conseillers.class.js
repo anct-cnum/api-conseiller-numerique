@@ -675,7 +675,6 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.patch('/conseillers/updateInfosConseiller/:id', async (req, res) => {
       app.get('mongoClient').then(async db => {
-        const nouveauEmail = req.body.email.toLowerCase();
         let initModifMailPersoConseiller = false;
         const { telephone, telephonePro, email } = req.body;
         const body = { telephone, telephonePro, email };
@@ -687,9 +686,9 @@ exports.Conseillers = class Conseillers extends Service {
           // eslint-disable-next-line max-len
           telephonePro: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
         });
-        const regex = new RegExp('^((06)|(07))[0-9]{8}$');
+        const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
         let extended = '';
-        if (!regex.test(conseiller.telephone) || conseiller.telephone !== telephone) {
+        if (!regexOldTelephone.test(conseiller.telephone) || conseiller.telephone !== telephone) {
           extended = schema.keys({
             // eslint-disable-next-line max-len
             telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
@@ -715,23 +714,23 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        if (nouveauEmail !== conseiller.email) {
+        if (email !== conseiller.email) {
 
-          const verificationEmail = await db.collection('conseillers').countDocuments({ email: nouveauEmail });
+          const verificationEmail = await db.collection('conseillers').countDocuments({ email: email });
           if (verificationEmail !== 0) {
-            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
-            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
-              nouveauEmail
+            logger.error(`Erreur: l'email ${email} est déjà utilisé par un autre utilisateur`);
+            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par un autre utilisateur', {
+              email
             }).toJSON());
             return;
           }
           try {
-            await this.patch(idConseiller, { $set: { tokenChangementMail: uuidv4(), tokenChangementMailCreatedAt: new Date(), mailAModifier: nouveauEmail } });
+            await this.patch(idConseiller, { $set: { tokenChangementMail: uuidv4(), tokenChangementMailCreatedAt: new Date(), mailAModifier: email } });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-            conseiller.nouveauEmail = nouveauEmail;
-            let mailer = createMailer(app, nouveauEmail);
+            conseiller.nouveauEmail = email;
+            let mailer = createMailer(app, email);
             const emails = createEmails(db, mailer);
-            let message = emails.getEmailMessageByTemplateName('conseillersConfirmeNouveauEmail');
+            let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmail');
             await message.send(conseiller);
             initModifMailPersoConseiller = true;
           } catch (error) {
@@ -761,13 +760,8 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        await this.patch(conseiller._id, { $set: { email: conseiller.mailAModifier } });
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      try {
         await this.patch(conseiller._id, {
+          $set: { email: conseiller.mailAModifier },
           $unset: {
             mailAModifier: conseiller.mailAModifier,
             tokenChangementMail: conseiller.tokenChangementMail,
