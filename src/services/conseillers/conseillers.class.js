@@ -674,17 +674,20 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.patch('/conseillers/updateInfosConseiller/:id', async (req, res) => {
+      checkAuth(req, res);
       app.get('mongoClient').then(async db => {
         let initModifMailPersoConseiller = false;
-        const { telephone, telephonePro, email } = req.body;
-        const body = { telephone, telephonePro, email };
+        const { telephone, telephonePro, email, dateDeNaissance, sexe } = req.body;
+        const body = { telephone, telephonePro, email, dateDeNaissance, sexe };
         const idConseiller = req.params.id;
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
         const schema = Joi.object({
           // eslint-disable-next-line max-len
-          email: Joi.string().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
+          email: Joi.string().trim().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
           // eslint-disable-next-line max-len
-          telephonePro: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
+          telephonePro: Joi.string().optional().allow(null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
+          sexe: Joi.string().required().error(new Error('Le champ sexe est obligatoire')),
+          dateDeNaissance: Joi.date().required().error(new Error('Le champ date de naissance est obligatoire'))
         });
         const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
         let extended = '';
@@ -704,7 +707,7 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const changeInfos = { telephone, telephonePro };
+        const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
         try {
           await app.service('conseillers').patch(idConseiller, changeInfos);
         } catch (err) {
@@ -740,18 +743,28 @@ exports.Conseillers = class Conseillers extends Service {
             return;
           }
         }
-        res.send({ 'conseiller': conseiller, 'initModifMailPersoConseiller': initModifMailPersoConseiller });
+        res.send({ 'conseiller': changeInfos, 'initModifMailPersoConseiller': initModifMailPersoConseiller });
       });
 
     });
 
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      let userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const tokenChangementMail = req.params.token;
       const conseiller = await db.collection('conseillers').findOne({ tokenChangementMail });
       if (!conseiller) {
         logger.error(`Token inconnu: ${tokenChangementMail}`);
         res.status(404).send(new NotFound('Conseiller not found', {
           tokenChangementMail
+        }).toJSON());
+        return;
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
         }).toJSON());
         return;
       }
@@ -772,8 +785,7 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(err);
         logger.error(err);
       }
-      const apresEmailConfirmer = await db.collection('conseillers').findOne({ _id: new ObjectId(conseiller._id) });
-      res.send(apresEmailConfirmer);
+      res.send({ 'email': conseiller.mailAModifier });
     });
   }
 };
