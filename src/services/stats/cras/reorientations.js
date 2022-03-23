@@ -9,17 +9,10 @@ const getStatsReorientations = async (db, query) => {
     ]
   ).toArray();
 
-  let totalReorientations = await db.collection('cras').aggregate(
-    [
-      { $unwind: '$cra.accompagnement' },
-      { $match: { ...query, 'cra.organisme': { '$ne': null } } },
-      { $group: {
-        _id: 'accompagnement',
-        redirection: { $sum: '$cra.accompagnement.redirection' }
-      } },
-    ]
-  ).toArray();
-  totalReorientations = totalReorientations[0]?.redirection ?? 0;
+  const totalReorientations = statsReorientations.reduce(
+    (previousValue, currentValue) => previousValue + currentValue.valeur,
+    0
+  );
 
   //Conversion en % total
   if (statsReorientations.length > 0) {
