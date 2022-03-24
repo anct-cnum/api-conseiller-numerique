@@ -132,7 +132,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
       ).then(async () => {
         try {
           const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
