@@ -8,9 +8,10 @@ const assignPermanence = (body, database) => {
     permanence.conseillers.push(new ObjectId(conseiller));
   });
   permanence.conseillersItinerants = [];
-  body.conseillersItinerants.forEach(conseiller => {
+  body?.conseillersItinerants?.forEach(conseiller => {
     permanence.conseillersItinerants.push(new ObjectId(conseiller));
   });
+
   permanence.structure = new DBRef('structure', new ObjectId(body.structureId), database);
   permanence.updatedAt = new Date();
   permanence.updatedBy = new ObjectId(body.conseillerId);
@@ -22,10 +23,9 @@ const assignPermanence = (body, database) => {
   delete permanence.estCoordinateur;
   delete permanence.hasPermanence;
 
-  permanence.horaires.forEach(horaires => {
+  permanence?.horaires?.forEach(horaires => {
     delete horaires.fermeture;
   });
-
   return permanence;
 };
 
