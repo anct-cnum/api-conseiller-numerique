@@ -63,7 +63,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(404).send(new Conflict('La recherche de permanence a échouée, veuillez réessayer.').toJSON());
+          res.status(404).send(new Conflict('La recherche de permanence a échoué, veuillez réessayer.').toJSON());
         });
 
       }).catch(routeActivationError => abort(res, routeActivationError));
