@@ -56,7 +56,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await getPermanencesByStructure(db)(structureId).then(permanences => {
           res.send({ permanences });
