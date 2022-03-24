@@ -25,8 +25,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
 
       const login = `${prenom}.${nom}`;
       const password = uuidv4() + 'AZEdsf;+:'; // pour respecter la règle de complexité de mot de passe
-
-      createMailbox({ gandi, conseillerId: conseiller._id, login, password, db, logger, Sentry });
+      createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
 
       count++;
     } catch (e) {
