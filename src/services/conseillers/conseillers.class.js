@@ -783,8 +783,8 @@ exports.Conseillers = class Conseillers extends Service {
         }
         res.send({
           'conseiller': changeInfos,
-          'initModifMailPersoConseiller': initModifMailPersoConseiller,
-          'initModifMailProConseiller': initModifMailProConseiller
+          initModifMailPersoConseiller,
+          initModifMailProConseiller
         });
       });
 
