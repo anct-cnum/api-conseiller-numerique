@@ -4,4 +4,5 @@ cd ${APP_HOME}
 
 echo "Sending email to structures: START\n"
 node src/tools/admin/structures/account --limit 100
+node src/tools/admin/structures/structure-coop --limit 100
 echo "Sending email to structures: END\n"
