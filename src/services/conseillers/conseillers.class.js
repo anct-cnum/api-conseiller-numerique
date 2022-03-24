@@ -797,13 +797,13 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const tokenChangementMail = req.params.token;
       let conseiller = '';
-      const listConseillerConfirmationMail = await db.collection('conseillers').find({ 'tokenChangementMail': { '$exists': true } }).toArray();
-      const listConseillerConfirmationMailPro = await db.collection('conseillers').find({ 'tokenChangementMailPro': { '$exists': true } }).toArray();
-      if (listConseillerConfirmationMail) {
-        conseiller = listConseillerConfirmationMail.find(element => element.tokenChangementMail === tokenChangementMail);
+      const existTokenMailPro = await db.collection('conseillers').findOne({ 'tokenChangementMailPro': tokenChangementMail });
+      const existTokenMail = await db.collection('conseillers').findOne({ 'tokenChangementMail': tokenChangementMail });
+      if (existTokenMail) {
+        conseiller = existTokenMail;
       }
-      if (listConseillerConfirmationMailPro && !conseiller) {
-        conseiller = listConseillerConfirmationMailPro.find(element => element.tokenChangementMailPro === tokenChangementMail);
+      if (existTokenMailPro && !conseiller) {
+        conseiller = existTokenMailPro;
       }
       if (!conseiller) {
         logger.error(`Token inconnu: ${tokenChangementMail}`);
