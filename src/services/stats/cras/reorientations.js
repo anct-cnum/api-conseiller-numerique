@@ -1,4 +1,4 @@
-const getStatsReorientations = async (db, query, totalReorientations) => {
+const getStatsReorientations = async (db, query) => {
 
   let statsReorientations = await db.collection('cras').aggregate(
     [
@@ -8,6 +8,11 @@ const getStatsReorientations = async (db, query, totalReorientations) => {
       { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$redirection' } }
     ]
   ).toArray();
+
+  const totalReorientations = statsReorientations.reduce(
+    (previousValue, currentValue) => previousValue + currentValue.valeur,
+    0
+  );
 
   //Conversion en % total
   if (statsReorientations.length > 0) {
