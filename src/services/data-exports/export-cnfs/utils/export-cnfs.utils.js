@@ -51,7 +51,6 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'Nom',
     'Email',
     'Email @conseiller-numerique.fr',
-    'Id de la structure',
     'Nom de la structure',
     'Code Postal',
     'Date de recrutement',
@@ -60,11 +59,12 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'Activé',
   ];
   if (user.roles.includes('admin_coop')) {
-    fileHeaders[6] = 'Code Postal du conseiller';
-    fileHeaders.splice(9, 0, 'GroupeCRA');
+    fileHeaders[5] = 'Code Postal du conseiller';
     fileHeaders.push('CRA Saisis');
+    fileHeaders.splice(4, 0, 'Id de la structure');
     fileHeaders.splice(6, 0, 'Adresse de la structure');
     fileHeaders.splice(7, 0, 'Code département de la structure');
+    fileHeaders.splice(11, 0, 'GroupeCRA');
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
