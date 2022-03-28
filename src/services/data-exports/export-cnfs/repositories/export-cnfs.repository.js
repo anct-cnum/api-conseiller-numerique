@@ -75,7 +75,9 @@ const getStructureNameFromId = db => async id => db.collection('structures')
   projection: {
     _id: 0,
     nom: 1,
-    codeDepartement: 1
+    codeDepartement: 1,
+    adresse: '$insee.etablissement.adresse.l4',
+    adresseComplement: '$insee.etablissement.adresse.l5'
   }
 });
 

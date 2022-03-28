@@ -5,14 +5,24 @@ const formatDate = dateFin => dayjs(new Date(dateFin)).format('DD/MM/YYYY');
 
 const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined && emailCNError !== undefined ? 'Oui' : 'Non';
 
+const formatAdresseStructure = (adresse, adresseComplement) => {
+  if (adresseComplement) {
+    return adresse + ' ' + adresseComplement;
+  }
+
+  return adresse;
+};
+
 const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
   const { structureId, emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
-  
   return {
     ...nextStatCnfs,
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
+    structureId: structureId ? structureId : undefined,
     nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
+    // eslint-disable-next-line max-len
+    adresseStructure: structureId ? formatAdresseStructure((await getStructureNameFromId(structureId)).adresse, (await getStructureNameFromId(structureId)).adresseComplement) : '',
     codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
     certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ? nextStatCnfs.groupeCRA : undefined,
@@ -33,6 +43,7 @@ const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {
   }
   const structure = await db.collection('structures').findOne({ _id: user.entity.oid });
   const filterCnfsByStructure = statsCnfsNoFilter.filter(cnfs => cnfs.nomStructure === structure.nom);
+
   return filterCnfsByStructure;
 };
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
