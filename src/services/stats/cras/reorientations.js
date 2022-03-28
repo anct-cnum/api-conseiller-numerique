@@ -21,6 +21,7 @@ const getStatsReorientations = async (db, query) => {
       return lieu;
     });
   }
+  return statsReorientations;
 };
 
 module.exports = { getStatsReorientations };
