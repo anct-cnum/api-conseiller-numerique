@@ -8,11 +8,14 @@ const validateExportCnfsSchema = exportTerritoiresInput => Joi.object({
   ordre: Joi.number().error(new Error('L\'ordre est invalide')),
   isUserActif: Joi.boolean().error(new Error('Le filtre actif est invalide')),
   certifie: Joi.boolean().error(new Error('Le filtre certifie est invalide')),
+  groupeCRA: Joi.number().error(new Error('Le filtre groupe CRA est invalide'))
 }).validate(exportTerritoiresInput);
 
 const isUserActifIdDefined = isUserActif => isUserActif !== undefined ? { isUserActif } : {};
 
 const certifieIfDefined = certifie => certifie !== undefined ? { certifie } : {};
+
+const groupeCRAIfDefined = groupeCRA => groupeCRA !== undefined ? { groupeCRA } : {};
 
 const orderingDefined = sort => {
   if (sort === undefined) {
@@ -32,6 +35,7 @@ const exportCnfsQueryToSchema = query => {
     ...orderingDefined(query.$sort),
     ...isUserActifIdDefined(query.isUserActif),
     ...certifieIfDefined(query.certifie),
+    ...groupeCRAIfDefined(query.groupeCRA)
   };
 };
 
@@ -51,6 +55,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'Code Postal',
     'Date de recrutement',
     'Date de fin de formation',
+    'GroupeCRA',
     'Certification',
     'Activé',
   ];
@@ -70,6 +75,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.codePostal,
         statCnfs.datePrisePoste,
         statCnfs.dateFinFormation,
+        statCnfs?.groupeCRA,
         statCnfs.certifie,
         statCnfs.isUserActif,
         statCnfs.craCount
@@ -87,6 +93,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
       statCnfs.codePostal,
       statCnfs.datePrisePoste,
       statCnfs.dateFinFormation,
+      statCnfs?.groupeCRA,
       statCnfs.certifie,
       statCnfs.isUserActif
     ].join(csvCellSeparator))

@@ -7,7 +7,7 @@ const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined &
 
 const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
   const { structureId, emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
-
+  
   return {
     ...nextStatCnfs,
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
@@ -15,15 +15,16 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
     nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
     codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
     certifie: 'Non',
+    groupeCRA: nextStatCnfs.groupeCRA ? nextStatCnfs.groupeCRA : undefined,
     isUserActif: userActifStatus(mattermost, emailCNError)
   };
 };
 
 const getStatsCnfs = async (
-  { dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif },
+  { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif },
   { getStatsCnfs, getStructureNameFromId }) => {
   return Promise.all(
-    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
+    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
   );
 };
 const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {
