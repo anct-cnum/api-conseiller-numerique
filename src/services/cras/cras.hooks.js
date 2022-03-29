@@ -57,6 +57,7 @@ module.exports = {
         //Suppression des champs en trop
         delete context.data.idConseiller;
         delete context.data.cra.cp;
+        delete context.data.cra.printFlashbag;
 
         //Validation des données cra
         const schema = Joi.object({
