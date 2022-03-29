@@ -65,6 +65,12 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders.splice(6, 0, 'Adresse de la structure');
     fileHeaders.splice(7, 0, 'Code département de la structure');
     fileHeaders.splice(11, 0, 'GroupeCRA');
+    fileHeaders.push('Nom Supérieur hiérarchique');
+    fileHeaders.push('Prénom supérieur hiérarchique');
+    fileHeaders.push('Fonction supérieur hiérarchique');
+    fileHeaders.push('Email supérieur hiérarchique');
+    fileHeaders.push('Numéro téléphone supérieur hiérarchique');
+    fileHeaders.splice(5, 0, 'Code département de la structure');
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
@@ -82,7 +88,12 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs?.groupeCRA,
         statCnfs.certifie,
         statCnfs.isUserActif,
-        statCnfs.craCount
+        statCnfs.craCount,
+        statCnfs?.supHierarchique?.nom,
+        statCnfs?.supHierarchique?.prenom,
+        statCnfs?.supHierarchique?.fonction,
+        statCnfs?.supHierarchique?.email,
+        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`
       ].join(csvCellSeparator))
     ].join(csvLineSeparator);
   }

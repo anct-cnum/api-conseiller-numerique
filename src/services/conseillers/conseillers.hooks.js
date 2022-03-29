@@ -113,6 +113,7 @@ module.exports = {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
+
         const schema = Joi.object({
 
           nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),

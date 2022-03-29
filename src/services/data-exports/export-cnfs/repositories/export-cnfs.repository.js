@@ -48,6 +48,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     groupeCRA: 1,
     emailCNError: 1,
     mattermost: 1,
+    supHierarchique: 1,
   });
   let arrayConseillers = [];
   const functionCraCount = db => async conseillers => {
