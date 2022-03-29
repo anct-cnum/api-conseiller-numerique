@@ -70,7 +70,6 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders.push('Fonction supérieur hiérarchique');
     fileHeaders.push('Email supérieur hiérarchique');
     fileHeaders.push('Numéro téléphone supérieur hiérarchique');
-    fileHeaders.splice(5, 0, 'Code département de la structure');
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
