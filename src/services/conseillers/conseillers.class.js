@@ -822,7 +822,7 @@ exports.Conseillers = class Conseillers extends Service {
         res.status(404).send(new NotFound('mailAModifier not found').toJSON());
         return;
       }
-      if (conseiller?.mailAModifier) {
+      if (existTokenMail) {
         try {
           await this.patch(conseiller._id, {
             $set: { email: conseiller.mailAModifier },
