@@ -245,7 +245,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Traitement de texte;8\n' +
       'Échanger avec ses proches;0\n' +
       'Emploi et formation;21\n' +
-      'Accompagner son enfant;0\n' +
+      'Accompagner un aidant;0\n' +
       'Numérique et TPE/PME;0\n' +
       'Démarche en ligne;21\n' +
       'Sécuriser un équipement;4\n' +
