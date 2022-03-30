@@ -152,6 +152,28 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
 
     });
+    app.post('/permanences/verifyAdresse', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const adresse = req.body.adresse;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+
+        const adressePostale = encodeURI(`${adresse.numero} ${adresse.rue} ${adresse.ville} ${adresse.codePostal}`);
+        const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}`;
+
+        try {
+          const params = {};
+          const result = await axios.get(urlAPI, { params: params });
+          return res.send({ 'geocodeAdresse': result.data?.features });
+        } catch (e) {
+          return res.send({ 'geocodeAdresse': null });
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
   }
 };
 
