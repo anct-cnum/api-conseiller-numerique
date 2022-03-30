@@ -16,16 +16,25 @@ function filterUserActif(isUserActif) {
   return {};
 }
 
+function filterGroupeCRA(groupeCRA) {
+  if (groupeCRA) {
+    return {
+      groupeCRA: { $eq: parseInt(groupeCRA) }
+    };
+  }
+  return {};
+}
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
-const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif) => {
+const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif) => {
   const conseillers = db.collection('conseillers').find({
     statut: 'RECRUTE',
     $and: [
       { datePrisePoste: { $gt: dateDebut } },
       { datePrisePoste: { $lt: dateFin } },
     ],
-    ...filterUserActif(isUserActif)
+    ...filterUserActif(isUserActif),
+    ...filterGroupeCRA(groupeCRA)
   }).project({
     _id: 1,
     prenom: 1,
@@ -36,6 +45,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     codePostal: 1,
     datePrisePoste: 1,
     dateFinFormation: 1,
+    groupeCRA: 1,
     emailCNError: 1,
     mattermost: 1,
     supHierarchique: 1,
@@ -66,7 +76,9 @@ const getStructureNameFromId = db => async id => db.collection('structures')
   projection: {
     _id: 0,
     nom: 1,
-    codeDepartement: 1
+    codeDepartement: 1,
+    adresse: '$insee.etablissement.adresse.l4',
+    adresseComplement: '$insee.etablissement.adresse.l5'
   }
 });
 
