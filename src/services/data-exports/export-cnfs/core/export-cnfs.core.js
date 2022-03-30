@@ -25,7 +25,7 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
     adresseStructure: structureId ? formatAdresseStructure((await getStructureNameFromId(structureId)).adresse, (await getStructureNameFromId(structureId)).adresseComplement) : '',
     codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
     certifie: 'Non',
-    groupeCRA: nextStatCnfs.groupeCRA ? nextStatCnfs.groupeCRA : undefined,
+    groupeCRA: nextStatCnfs.groupeCRA ?? undefined,
     isUserActif: userActifStatus(mattermost, emailCNError)
   };
 };
