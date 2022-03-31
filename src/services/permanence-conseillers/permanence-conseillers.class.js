@@ -78,10 +78,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       const conseillerId = req.params.id;
-      const hasPermanence = req.body.permanence.hasPermanence;
-      const telephonePro = req.body.permanence.telephonePro;
-      const emailPro = req.body.permanence.emailPro;
-      const estCoordinateur = req.body.permanence.estCoordinateur;
+      const { hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -107,10 +104,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
       const conseillerId = req.params.id;
       const permanenceId = req.params.idPermanence;
-      const hasPermanence = req.body.permanence.hasPermanence;
-      const telephonePro = req.body.permanence.telephonePro;
-      const emailPro = req.body.permanence.emailPro;
-      const estCoordinateur = req.body.permanence.estCoordinateur;
+      const { hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
