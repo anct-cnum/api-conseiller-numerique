@@ -5,19 +5,25 @@ const {
   getUserStructure,
   updateUserStructure,
   getUserMulticompteStructure,
-  updateUserMulticompteStructure
+  updateUserMulticompteStructure,
+  updateIdMongoStructureMisesEnRelation,
+  updateIdMongoStructureUser,
+  updateIdMongoStructureConseillerRecrute
 } = require('./requete-mongo');
 const fakeData = require('./fake-data');
+const { ObjectId } = require('mongodb');
 
 const anonymisationStructure = async (db, logger) => {
   let query = {};
 
   const getStructure = await getTotalStructures(db)(query);
   for (let str of getStructure) {
-    const id = str._id;
+    const idOriginal = str._id;
     const idPG = str.idPG;
     const data = await fakeData({ idPG });
+    let newIdMongo = new ObjectId();
     let dataAnonyme = {
+      _id: newIdMongo,
       contact: {
         nom: data.nom,
         prenom: data.prenom,
@@ -27,7 +33,10 @@ const anonymisationStructure = async (db, logger) => {
       }
     };
     // update seulement nom, prenom, telephone, email
-    await updateStructure(db)(id, dataAnonyme);
+    await updateStructure(db)(idOriginal, dataAnonyme);
+    await updateIdMongoStructureMisesEnRelation(db)(idOriginal, newIdMongo);
+    await updateIdMongoStructureUser(db)(idOriginal, newIdMongo);
+    await updateIdMongoStructureConseillerRecrute(db)(idOriginal, newIdMongo);
   }
   logger.info(`${getStructure.length} structures anonymisers`);
 };

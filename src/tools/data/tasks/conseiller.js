@@ -4,10 +4,14 @@ const {
   getMiseEnrelationConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
-  updateUserConseiller
+  updateUserConseiller,
+  updateIdMongoConseillerMisesEnRelation,
+  updateIdMongoConseillerUser,
+  updateIdMongoConseillerCRAS
 } = require('./requete-mongo');
 
 const fakeData = require('./fake-data');
+const { ObjectId } = require('mongodb');
 
 const valueExists = (obj, value) => obj.hasOwnProperty(value);
 
@@ -15,24 +19,46 @@ const anonymisationConseiller = async (db, logger) => {
   const cnfs = await getTotalConseillers(db);
 
   for (let conseiller of cnfs) {
-    const id = conseiller._id;
+    const idOriginal = conseiller._id;
     const idPG = conseiller.idPG;
     const data = await fakeData({ idPG });
+    let newIdMongo = new ObjectId();
     let dataAnonyme = {
+      _id: newIdMongo,
       nom: data.nom,
       prenom: data.prenom,
       email: data.email,
       telephone: data.telephone
     };
-    // statut : RECRUTE avec le compte COOP activé
-    if (valueExists(conseiller, 'emailCNError') && valueExists(conseiller, 'mattermost') && conseiller.statut === 'RECRUTE') {
-      const login = `${dataAnonyme.prenom}.${dataAnonyme.nom}`;
-      dataAnonyme['mattermost.login'] = login;
-      // ici mattermost.id ?!
-      dataAnonyme['emailCN.address'] = `${login}@beta-coop-conseiller-numerique.fr`;
+
+    if (valueExists(conseiller, 'cv')) {
+      dataAnonyme['cv.file'] = `${newIdMongo.toString()}.pdf`;
     }
+    // statut : RECRUTE
+    if (conseiller.statut === 'RECRUTE') {
+      if (valueExists(conseiller, 'supHierarchique')) {
+        const dataFakeHierarchique = await fakeData();
+        dataAnonyme['supHierarchique'] = {
+          numeroTelephone: dataFakeHierarchique.telephone,
+          email: dataFakeHierarchique.email,
+          nom: dataFakeHierarchique.nom,
+          prenom: dataFakeHierarchique.prenom,
+          fonction: conseiller?.supHierarchique?.fonction ?? ''
+        };
+      }
+      if (valueExists(conseiller, 'emailCNError') && conseiller?.mattermost?.error === false) {
+        const login = `${dataAnonyme.prenom}.${dataAnonyme.nom}`;
+        dataAnonyme['mattermost.login'] = login;
+        dataAnonyme['mattermost.id'] = newIdMongo.toString();
+        dataAnonyme['emailCN.address'] = `${login}@beta-coop-conseiller-numerique.fr`;
+      }
+    }
+    console.log('dataAnonyme:', dataAnonyme);
     // update seulement nom, prenom, telephone, email
-    await updateConseiller(db)(id, dataAnonyme);
+    await updateConseiller(db)(idOriginal, dataAnonyme);
+    await updateIdMongoConseillerMisesEnRelation(db)(idOriginal, newIdMongo);
+    await updateIdMongoConseillerUser(db)(idOriginal, newIdMongo);
+    await updateIdMongoConseillerCRAS(db)(idOriginal, newIdMongo);
   }
   logger.info(`${cnfs.length} conseillers anonymisers`);
 };

@@ -22,11 +22,21 @@ const getUserMulticompteStructure = db => async (id, idMongoUserIgnore) =>
 const updateUserMulticompteStructure = db => async (id, idMongoUser, email, token) =>
   await db.collection('users').updateOne({ '_id': idMongoUser, 'entity.$id': id }, { $set: { name: email, token } });
 
+const updateIdMongoStructureMisesEnRelation = db => async (idOriginal, newIdMongo) =>
+  await db.collection('misesEnRelation').updateMany({ 'structure.$id': idOriginal }, { $set: { 'structure.$id': newIdMongo } });
+
+const updateIdMongoStructureUser = db => async (idOriginal, newIdMongo) =>
+  await db.collection('users').updateMany({ 'entity.$id': idOriginal }, { $set: { 'entity.$id': newIdMongo } });
+
+const updateIdMongoStructureConseillerRecrute = db => async (idOriginal, newIdMongo) =>
+  await db.collection('conseillers').updateMany({ 'structureId': idOriginal, 'statut': 'RECRUTE' }, { $set: { 'structureId': newIdMongo } });
+
+
 // ...............................................
 // Concernant les CONSEILLERS
 // ...............................................
 
-const getTotalConseillers = async db => await db.collection('conseillers').find({}).toArray();
+const getTotalConseillers = async db => await db.collection('conseillers').find({ idPG: 44 }).toArray();
 
 const updateConseiller = db => async (id, dataAnonyme) =>
   await db.collection('conseillers').updateOne({ _id: id }, { $set: { ...dataAnonyme } });
@@ -41,6 +51,14 @@ const getUserConseiller = db => async id => await db.collection('users').findOne
 const updateUserConseiller = db => async (idMongo, email, token, nom, prenom) =>
   await db.collection('users').updateOne({ _id: idMongo }, { $set: { name: email, token, nom, prenom } });
 
+const updateIdMongoConseillerMisesEnRelation = db => async (idOriginal, newIdMongo) =>
+  await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idOriginal }, { $set: { 'conseiller.$id': newIdMongo } });
+
+const updateIdMongoConseillerUser = db => async (idOriginal, newIdMongo) =>
+  await db.collection('users').updateMany({ 'entity.$id': idOriginal }, { $set: { 'entity.$id': newIdMongo } });
+
+const updateIdMongoConseillerCRAS = db => async (idOriginal, newIdMongo) =>
+  await db.collection('cras').updateMany({ 'conseiller.$id': idOriginal }, { $set: { 'conseiller.$id': newIdMongo } });
 
 module.exports = {
   // Structures
@@ -52,11 +70,17 @@ module.exports = {
   updateUserStructure,
   updateUserMulticompteStructure,
   getUserMulticompteStructure,
+  updateIdMongoStructureMisesEnRelation,
+  updateIdMongoStructureUser,
+  updateIdMongoStructureConseillerRecrute,
   // Conseillers
   getTotalConseillers,
   updateConseiller,
   getMiseEnrelationConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
-  updateUserConseiller
+  updateUserConseiller,
+  updateIdMongoConseillerMisesEnRelation,
+  updateIdMongoConseillerUser,
+  updateIdMongoConseillerCRAS
 };
