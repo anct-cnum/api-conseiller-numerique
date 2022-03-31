@@ -16,10 +16,10 @@ const createPermanence = db => async (permanence, conseillerId, hasPermanence, t
     _id: new ObjectId(conseillerId)
   }, {
     $set: {
-      hasPermanence: hasPermanence,
-      telephonePro: telephonePro,
-      emailPro: emailPro,
-      estCoordinateur: estCoordinateur,
+      hasPermanence,
+      telephonePro,
+      emailPro,
+      estCoordinateur,
     }
   });
 };
@@ -34,10 +34,10 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, hasPe
     _id: new ObjectId(conseillerId)
   }, {
     $set: {
-      hasPermanence: hasPermanence,
-      telephonePro: telephonePro,
-      emailPro: emailPro,
-      estCoordinateur: estCoordinateur,
+      hasPermanence,
+      telephonePro,
+      emailPro,
+      estCoordinateur,
     }
   });
 };
