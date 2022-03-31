@@ -5,12 +5,16 @@ const formatDate = dateFin => dayjs(new Date(dateFin)).format('DD/MM/YYYY');
 
 const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined && emailCNError !== undefined ? 'Oui' : 'Non';
 
-const formatAdresseStructure = (adresse, adresseComplement) => {
-  if (adresseComplement) {
-    return adresse + ' ' + adresseComplement;
-  }
+const formatAdresseStructure = insee => {
 
-  return adresse;
+  let adresse = (insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.nom_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.complement_adresse ? insee.etablissement.adresse.complement_adresse + ' ' : ' ') +
+  (insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.localite ?? '');
+
+  return adresse.replace(/["']/g, '');
 };
 
 const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
@@ -22,7 +26,7 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
     structureId: structureId ? structureId : undefined,
     nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
     // eslint-disable-next-line max-len
-    adresseStructure: structureId ? formatAdresseStructure((await getStructureNameFromId(structureId)).adresse, (await getStructureNameFromId(structureId)).adresseComplement) : '',
+    adresseStructure: structureId ? formatAdresseStructure((await getStructureNameFromId(structureId)).insee) : '',
     codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
     certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ?? undefined,
