@@ -28,6 +28,7 @@ const conseillerRuptureStructure = require('./structures/conseillerRuptureStruct
 const conseillersRupturePix = require('./pix/conseillersRupturePix');
 const conseillerChangeEmailCnfs = require('./support/conseillerChangeEmailCnfs');
 const confirmationChangeEmailCnfs = require('./support/confirmationChangeEmailCnfs');
+const invitationHubEspaceCoop = require('./hubs/creationCompteHub');
 
 module.exports = (db, mailer, app, logger) => {
 
@@ -61,7 +62,8 @@ module.exports = (db, mailer, app, logger) => {
     conseillerRuptureStructure(db, mailer),
     conseillersRupturePix(db, mailer),
     conseillerChangeEmailCnfs(db, mailer, app, logger),
-    confirmationChangeEmailCnfs(db, mailer, app, logger)
+    confirmationChangeEmailCnfs(db, mailer, app, logger),
+    invitationHubEspaceCoop(db, mailer),
   ];
 
   return {

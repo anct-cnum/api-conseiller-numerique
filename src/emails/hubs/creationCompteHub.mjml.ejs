@@ -1,0 +1,60 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <mj-text css-class="text-primary" font-weight="bold">
+              Activer votre espace administrateur coop numériques France Services.
+            </mj-text>
+            <mj-text align="left">
+              Madame, Monsieur,
+            </mj-text>
+            <mj-text align="left">
+              Un nouvel espace administrateur coop a spécialement été créé à destination des hubs. Cet outil vous permet de suivre et piloter l’activité des conseillers numériques à la maille nationale, régionale et départementale.
+            </mj-text>
+            <mj-text align="left">
+              <strong>Comment y accéder ?</strong>
+              <ol align="left">
+                <li>Nous vous invitons à créer votre mot de passe en cliquant sur le bouton ci-dessous</li>
+                <li>Une fois votre mot de passe créé, vous recevrez un second mail de bienvenue qui vous permettra d'accéder à votre espace administrateur coop via un lien direct dans le mail.</li>
+                <li>Pour vous connecter, il suffira de renseigner votre identifiant correspondant à votre adresse mail et votre mot de passe que vous aurez préalablement créé.</li>
+              </ol>
+            </mj-text>
+            <mj-text align="left">
+              Nous demeurons à votre disposition pour toute question.
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
+          <mj-column border="1px solid #C8CBCE">
+            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
+              Votre identifiant
+            </mj-text>
+            <mj-text font-size="14px" line-height="21px">
+              <%= userHub.name %>
+            </mj-text>
+            <mj-text padding="0" css-class="text-secondary">
+              Suivez ce lien pour créer votre mot de passe
+            </mj-text>
+            <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
+              text-transform="uppercase">
+              Activer mon espace
+            </mj-button>
+            <mj-text css-class="text-secondary">
+              <%= link %>
+            </mj-text>
+            <mj-text font-size="14px" line-height="21px">
+              (Ce lien expire dans 4 semaines)
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+  </mj-body>
+</mjml>
