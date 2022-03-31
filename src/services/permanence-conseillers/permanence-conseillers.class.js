@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { Conflict } = require('@feathersjs/errors');
+const { Conflict, GeneralError } = require('@feathersjs/errors');
 const logger = require('../../logger');
 
 const {
@@ -63,7 +63,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(404).send(new Conflict('La recherche de permanence a échoué, veuillez réessayer.').toJSON());
+          res.status(500).send(new GeneralError('La recherche de permanence a échoué, veuillez réessayer.').toJSON());
         });
 
       }).catch(routeActivationError => abort(res, routeActivationError));
@@ -126,7 +126,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.post('/permanences/verifySiret', async (req, res) => {
+    app.get('/permanences/verifySiret/:siret', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
@@ -135,7 +135,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user?._id, [Role.Conseiller], () => user)
       ).then(async () => {
         try {
-          const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
+          const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.params.siret}`;
           const params = {
             token: app.get('api_entreprise'),
             context: 'cnum',
@@ -152,10 +152,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
 
     });
-    app.post('/permanences/verifyAdresse', async (req, res) => {
+
+    app.get('/permanences/verifyAdresse/:adresse', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      const adresse = req.body.adresse;
+      const adresse = JSON.parse(req.params.adresse);
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
