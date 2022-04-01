@@ -1,4 +1,4 @@
-const { ObjectId } = require('mongodb');
+const { ObjectId, ObjectID } = require('mongodb');
 
 const ConseillerStatut = {
   Recrute: 'RECRUTE'
@@ -14,7 +14,106 @@ const getConseillerById = db => async id => db.collection('conseillers').findOne
   }
 });
 
-const getPermanenceByStructureId = db => async id => db.collection('structures').findOne({
+const getPermanenceById = () => async id => id === '620d22f5ad52e276a3dd68ae' ? {
+  nomEnseigne: 'CCAS des HERBIERS',
+  numeroTelephone: '0653658996',
+  email: 'structure@mailgenerique.com',
+  adresse: {
+    numeroRue: '6',
+    rue: 'RUE DU TOURNIQUET',
+    codePostal: '85500',
+    ville: 'LES HERBIERS'
+  },
+  location: {
+    type: 'Point',
+    coordinates: [
+      -1.0134,
+      46.8691
+    ],
+  },
+  horaires: [
+    {
+      matin: [
+        '8:00',
+        '12:30'
+      ],
+      apresMidi: [
+        '13:30',
+        '18:00'
+      ]
+    },
+    {
+      matin: [
+        '8:00',
+        '12:30'
+      ],
+      apresMidi: [
+        '13:30',
+        '18:00'
+      ]
+    },
+    {
+      matin: [
+        '8:00',
+        '12:30'
+      ],
+      apresMidi: [
+        '13:30',
+        '18:00'
+      ]
+    },
+    {
+      matin: [
+        '8:00',
+        '12:30'
+      ],
+      apresMidi: [
+        '13:30',
+        '18:00'
+      ]
+    },
+    {
+      matin: [
+        '8:00',
+        '12:30'
+      ],
+      apresMidi: [
+        '13:30',
+        '18:00'
+      ]
+    },
+    {
+      matin: [
+        'Fermé',
+        'Fermé'
+      ],
+      apresMidi: [
+        'Fermé',
+        'Fermé'
+      ]
+    },
+    {
+      matin: [
+        'Fermé',
+        'Fermé'
+      ],
+      apresMidi: [
+        'Fermé',
+        'Fermé'
+      ]
+    }
+  ],
+  typeAcces: 'libre',
+  conseillers: [
+    {
+      prenom: 'Christelle',
+      nom: 'Bateau',
+    }
+  ],
+  siteWeb: 'https://ccas-des-herbiers.com',
+} : {};
+
+const getStructureById = db => async id => db.collection('structures').findOne({
   _id: new ObjectId(id),
 }, {
   projection: {
@@ -39,7 +138,8 @@ const getCnfs = db => async structureId => db.collection('conseillers').find({
 
 const permanenceRepository = db => ({
   getConseillerById: getConseillerById(db),
-  getPermanenceByStructureId: getPermanenceByStructureId(db),
+  getPermanenceById: getPermanenceById(db),
+  getStructureById: getStructureById(db),
   getCnfs: getCnfs(db),
 });
 

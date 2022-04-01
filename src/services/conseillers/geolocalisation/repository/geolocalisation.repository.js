@@ -1,3 +1,5 @@
+const { ObjectID } = require('mongodb');
+
 const ConseillerStatut = {
   Recrute: 'RECRUTE'
 };
@@ -17,6 +19,7 @@ const getConseillersWithGeolocation = db => async () =>
     {
       $match: {
         statut: ConseillerStatut.Recrute
+        // todo: filtrer si le conseiller a rempli le questionnaire
       }
     },
     {
@@ -40,6 +43,100 @@ const getConseillersWithGeolocation = db => async () =>
     }
   ]).toArray();
 
+const getLieuxDePermanence = () => async () => {
+  return [
+    {
+      _id: new ObjectID('620d22f5ad52e276a3dd68ae'),
+      nomEnseigne: 'CCAS des HERBIERS',
+      adresse: {
+        numeroRue: '6',
+        rue: 'RUE DU TOURNIQUET',
+        codePostal: '85500',
+        ville: 'LES HERBIERS'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [
+          -1.0134,
+          46.8691
+        ],
+      },
+      horaires: [
+        {
+          matin: [
+            '8:00',
+            '12:30'
+          ],
+          apresMidi: [
+            '13:30',
+            '18:00'
+          ]
+        },
+        {
+          matin: [
+            '8:00',
+            '12:30'
+          ],
+          apresMidi: [
+            '13:30',
+            '18:00'
+          ]
+        },
+        {
+          matin: [
+            '8:00',
+            '12:30'
+          ],
+          apresMidi: [
+            '13:30',
+            '18:00'
+          ]
+        },
+        {
+          matin: [
+            '8:00',
+            '12:30'
+          ],
+          apresMidi: [
+            '13:30',
+            '18:00'
+          ]
+        },
+        {
+          matin: [
+            '8:00',
+            '12:30'
+          ],
+          apresMidi: [
+            '13:30',
+            '18:00'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        }
+      ]
+    }
+  ];
+};
+
 const getConseillersByCodeDepartement = db => async () => db.collection('conseillers').aggregate([
   {
     $match: {
@@ -58,7 +155,8 @@ const getConseillersByCodeDepartement = db => async () => db.collection('conseil
 const geolocationRepository = db => ({
   getStructureWithGeolocation: getStructureWithGeolocation(db),
   getConseillersWithGeolocation: getConseillersWithGeolocation(db),
-  getConseillersByCodeDepartement: getConseillersByCodeDepartement(db)
+  getConseillersByCodeDepartement: getConseillersByCodeDepartement(db),
+  getLieuxDePermanence: getLieuxDePermanence(db)
 });
 
 module.exports = {
