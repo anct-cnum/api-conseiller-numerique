@@ -215,7 +215,7 @@ exports.Conseillers = class Conseillers extends Service {
       if (conseiller.cv?.file) {
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
-        s3.deleteObject(paramsDelete, function(error, data) {
+        s3.deleteObject(paramsDelete, function (error, data) {
           if (error) {
             logger.error(error);
             app.get('sentry').captureException(error);
@@ -234,7 +234,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
       // eslint-disable-next-line no-unused-vars
-      s3.putObject(params, function(error, data) {
+      s3.putObject(params, function (error, data) {
         if (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
@@ -338,7 +338,7 @@ exports.Conseillers = class Conseillers extends Service {
       const s3 = new aws.S3({ endpoint: ep });
 
       let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };/*  */
-      s3.getObject(params, function(error, data) {
+      s3.getObject(params, function (error, data) {
         if (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
@@ -789,7 +789,36 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
     });
-
+    app.patch('/conseillers/desinscription/:id', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      let userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idConseiller = req.params.id;
+      const { disponible } = req.body;
+      console.log(disponible);
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+          idConseiller,
+        }).toJSON());
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: userId
+        }).toJSON());
+        return;
+      }
+      try {
+        await this.patch(conseiller._id, {
+          $set: { disponible: disponible, dateDisponibilite: null }
+        });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      res.send({ disponible, dateDisponibilite: new Date() });
+    });
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
