@@ -1,13 +1,17 @@
 const {
   getTotalConseillers,
-  updateConseiller,
+  updateIdMongoConseiller,
   getMiseEnrelationConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
   updateUserConseiller,
   updateIdMongoConseillerMisesEnRelation,
   updateIdMongoConseillerUser,
-  updateIdMongoConseillerCRAS
+  updateIdMongoConseillerCRAS,
+  updateIdMongoConseillerStatsTerritoires,
+  updateIdMongoStatsConseillersCras,
+  updateIdMongoConseillerRuptures,
+  updateIdMongoSondages
 } = require('./requete-mongo');
 
 const fakeData = require('./fake-data');
@@ -24,21 +28,20 @@ const anonymisationConseiller = async (db, logger) => {
     const data = await fakeData({ idPG });
     let newIdMongo = new ObjectId();
     let dataAnonyme = {
+      ...conseiller,
       _id: newIdMongo,
       nom: data.nom,
       prenom: data.prenom,
       email: data.email,
       telephone: data.telephone
     };
-
     if (valueExists(conseiller, 'cv')) {
-      dataAnonyme['cv.file'] = `${newIdMongo.toString()}.pdf`;
+      dataAnonyme.cv.file = `${newIdMongo.toString()}.pdf`;
     }
-    // statut : RECRUTE
     if (conseiller.statut === 'RECRUTE') {
       if (valueExists(conseiller, 'supHierarchique')) {
-        const dataFakeHierarchique = await fakeData();
-        dataAnonyme['supHierarchique'] = {
+        const dataFakeHierarchique = await fakeData({});
+        dataAnonyme.supHierarchique = {
           numeroTelephone: dataFakeHierarchique.telephone,
           email: dataFakeHierarchique.email,
           nom: dataFakeHierarchique.nom,
@@ -46,19 +49,21 @@ const anonymisationConseiller = async (db, logger) => {
           fonction: conseiller?.supHierarchique?.fonction ?? ''
         };
       }
-      if (valueExists(conseiller, 'emailCNError') && conseiller?.mattermost?.error === false) {
+      if (valueExists(conseiller, 'emailCN') && valueExists(conseiller, 'mattermost')) {
         const login = `${dataAnonyme.prenom}.${dataAnonyme.nom}`;
-        dataAnonyme['mattermost.login'] = login;
-        dataAnonyme['mattermost.id'] = newIdMongo.toString();
-        dataAnonyme['emailCN.address'] = `${login}@beta-coop-conseiller-numerique.fr`;
+        dataAnonyme.mattermost.login = login;
+        dataAnonyme.mattermost.id = newIdMongo.toString();
+        dataAnonyme.emailCN.address = `${login}@beta-coop-conseiller-numerique.fr`;
       }
     }
-    console.log('dataAnonyme:', dataAnonyme);
-    // update seulement nom, prenom, telephone, email
-    await updateConseiller(db)(idOriginal, dataAnonyme);
+    await updateIdMongoConseiller(db)(idOriginal, dataAnonyme);
     await updateIdMongoConseillerMisesEnRelation(db)(idOriginal, newIdMongo);
     await updateIdMongoConseillerUser(db)(idOriginal, newIdMongo);
     await updateIdMongoConseillerCRAS(db)(idOriginal, newIdMongo);
+    await updateIdMongoConseillerStatsTerritoires(db)(idOriginal, newIdMongo);
+    await updateIdMongoStatsConseillersCras(db)(idOriginal, newIdMongo);
+    await updateIdMongoConseillerRuptures(db)(idOriginal, newIdMongo);
+    await updateIdMongoSondages(db)(idOriginal, newIdMongo);
   }
   logger.info(`${cnfs.length} conseillers anonymisers`);
 };

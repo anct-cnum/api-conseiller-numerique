@@ -1,7 +1,7 @@
 const {
   getTotalStructures,
   updateMiseEnrelationStructure,
-  updateStructure,
+  updateIdMongoStructure,
   getUserStructure,
   updateUserStructure,
   getUserMulticompteStructure,
@@ -23,6 +23,7 @@ const anonymisationStructure = async (db, logger) => {
     const data = await fakeData({ idPG });
     let newIdMongo = new ObjectId();
     let dataAnonyme = {
+      ...str,
       _id: newIdMongo,
       contact: {
         nom: data.nom,
@@ -33,10 +34,10 @@ const anonymisationStructure = async (db, logger) => {
       }
     };
     // update seulement nom, prenom, telephone, email
-    await updateStructure(db)(idOriginal, dataAnonyme);
-    await updateIdMongoStructureMisesEnRelation(db)(idOriginal, newIdMongo);
-    await updateIdMongoStructureUser(db)(idOriginal, newIdMongo);
-    await updateIdMongoStructureConseillerRecrute(db)(idOriginal, newIdMongo);
+    await updateIdMongoStructure(db)(idOriginal, dataAnonyme); // ok
+    await updateIdMongoStructureMisesEnRelation(db)(idOriginal, newIdMongo);//ok
+    await updateIdMongoStructureUser(db)(idOriginal, newIdMongo);//ok
+    await updateIdMongoStructureConseillerRecrute(db)(idOriginal, newIdMongo); // ok
   }
   logger.info(`${getStructure.length} structures anonymisers`);
 };
