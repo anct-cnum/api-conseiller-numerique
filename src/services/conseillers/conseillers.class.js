@@ -794,7 +794,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
-      let userId = decode(accessToken).sub;
+      const userId = decode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { disponible } = req.body;
@@ -803,10 +803,11 @@ exports.Conseillers = class Conseillers extends Service {
         res.status(404).send(new NotFound('Conseiller n\'existe pas', {
           idConseiller,
         }).toJSON());
+        return;
       }
       if (String(conseiller._id) !== String(user.entity.oid)) {
         res.status(403).send(new Forbidden('User not authorized', {
-          userId: userId
+          userId
         }).toJSON());
         return;
       }
@@ -820,13 +821,13 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(err);
       }
       try {
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible: disponible } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
       }
-      if (disponible) {
-        try {
+      try {
+        if (disponible) {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
@@ -834,14 +835,12 @@ exports.Conseillers = class Conseillers extends Service {
             },
             {
               $set:
-                { 'statut': 'nouvelle' }
+                {
+                  'statut': 'nouvelle',
+                  'conseillerObj.disponible': disponible
+                }
             });
-        } catch (err) {
-          app.get('sentry').captureException(err);
-          logger.error(err);
-        }
-      } else {
-        try {
+        } else {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
@@ -849,12 +848,16 @@ exports.Conseillers = class Conseillers extends Service {
             },
             {
               $set:
-                { 'statut': 'non_disponible' }
+                {
+                  'statut': 'non_disponible',
+                  'conseillerObj.disponible': disponible
+                }
             });
-        } catch (err) {
-          app.get('sentry').captureException(err);
-          logger.error(err);
         }
+
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
       }
       res.send({ disponible });
     });
