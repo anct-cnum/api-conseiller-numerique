@@ -217,7 +217,7 @@ exports.Conseillers = class Conseillers extends Service {
       if (conseiller.cv?.file) {
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
-        s3.deleteObject(paramsDelete, function (error, data) {
+        s3.deleteObject(paramsDelete, function(error, data) {
           if (error) {
             logger.error(error);
             app.get('sentry').captureException(error);
@@ -236,7 +236,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
       // eslint-disable-next-line no-unused-vars
-      s3.putObject(params, function (error, data) {
+      s3.putObject(params, function(error, data) {
         if (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
@@ -340,7 +340,7 @@ exports.Conseillers = class Conseillers extends Service {
       const s3 = new aws.S3({ endpoint: ep });
 
       let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };/*  */
-      s3.getObject(params, function (error, data) {
+      s3.getObject(params, function(error, data) {
         if (error) {
           logger.error(error);
           app.get('sentry').captureException(error);
