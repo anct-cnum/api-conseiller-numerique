@@ -64,7 +64,7 @@ const updateIdMongoConseillerCRAS = db => async (idOriginal, newIdMongo) =>
   await db.collection('cras').updateMany({ 'conseiller.$id': idOriginal }, { $set: { 'conseiller.$id': newIdMongo } });
 
 const updateIdMongoConseillerStatsTerritoires = db => async (idOriginal, newIdMongo) =>
-  await db.collection('stats_Territoires').updateMany({ 'conseillerIds': { $in: [idOriginal] } }, { $set: { 'conseillerIds': newIdMongo } });
+  await db.collection('stats_Territoires').updateMany({ 'conseillerIds': { $in: [idOriginal] } }, { $set: { 'conseillerIds.$': newIdMongo } });
 
 const updateIdMongoStatsConseillersCras = db => async (idOriginal, newIdMongo) =>
   await db.collection('stats_conseillers_cras').updateMany({ 'conseiller.$id': idOriginal }, { $set: { 'conseiller.$id': newIdMongo } });
