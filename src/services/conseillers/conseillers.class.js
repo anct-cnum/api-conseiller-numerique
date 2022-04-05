@@ -836,8 +836,7 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'nouvelle',
-                  'conseillerObj.disponible': disponible
+                  'statut': 'nouvelle'
                 }
             });
         } else {
@@ -849,12 +848,19 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'non_disponible',
-                  'conseillerObj.disponible': disponible
+                  'statut': 'non_disponible'
                 }
             });
         }
 
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      try {
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+          $set: { 'conseillerObj.disponible': disponible }
+        });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
