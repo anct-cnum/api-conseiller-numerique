@@ -852,15 +852,10 @@ exports.Conseillers = class Conseillers extends Service {
                 }
             });
         }
-
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      try {
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: { 'conseillerObj.disponible': disponible }
         });
+
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
