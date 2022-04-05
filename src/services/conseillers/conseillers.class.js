@@ -6,6 +6,8 @@ const decode = require('jwt-decode');
 const aws = require('aws-sdk');
 const multer = require('multer');
 const fileType = require('file-type');
+const { Pool } = require('pg');
+const pool = new Pool();
 const crypto = require('crypto');
 const statsPdf = require('../stats/stats.pdf');
 const dayjs = require('dayjs');
@@ -789,7 +791,77 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
     });
+    app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idConseiller = req.params.id;
+      const { disponible } = req.body;
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+          idConseiller,
+        }).toJSON());
+        return;
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId
+        }).toJSON());
+        return;
+      }
+      try {
+        await pool.query(`UPDATE djapp_coach
+            SET disponible = $2 WHERE id = $1`,
+        [conseiller.idPG, disponible]);
 
+      } catch (err) {
+        logger.error(err);
+        app.get('sentry').captureException(err);
+      }
+      try {
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      try {
+        if (disponible) {
+          await db.collection('misesEnRelation').updateMany(
+            {
+              'conseiller.$id': conseiller._id,
+              'statut': 'non_disponible'
+            },
+            {
+              $set:
+                {
+                  'statut': 'nouvelle'
+                }
+            });
+        } else {
+          await db.collection('misesEnRelation').updateMany(
+            {
+              'conseiller.$id': conseiller._id,
+              'statut': 'nouvelle'
+            },
+            {
+              $set:
+                {
+                  'statut': 'non_disponible'
+                }
+            });
+        }
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+          $set: { 'conseillerObj.disponible': disponible }
+        });
+
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      res.send({ disponible });
+    });
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
