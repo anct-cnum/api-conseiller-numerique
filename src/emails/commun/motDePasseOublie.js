@@ -4,22 +4,19 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   let render = async user => {
-    if (user.roles[0] === 'conseiller') {
+    if (user.roles[0] === 'conseiller' || user.roles[0] === 'hub_coop') {
       return mailer.render(__dirname, templateName, {
         user,
-        //eslint-disable-next-line max-len
         link: utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`)
       });
     } else if (user.roles[0] === 'candidat') {
       return mailer.render(__dirname, templateName, {
         user,
-        //eslint-disable-next-line max-len
         link: utils.getEspaceCandidatUrl(`/renouveler-mot-de-passe/${(user.token)}`)
       });
     } else {
       return mailer.render(__dirname, templateName, {
         user,
-        //eslint-disable-next-line max-len
         link: utils.getBackofficeUrl(`/renouveler-mot-de-passe/${(user.token)}`)
       });
     }

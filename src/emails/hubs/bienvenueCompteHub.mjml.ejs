@@ -1,0 +1,71 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <mj-text css-class="text-primary" font-weight="bold">
+              Bienvenue sur votre espace Admin Coop.
+            </mj-text>
+            <mj-text align="left">
+              Bonjour,
+            </mj-text>
+            <mj-text align="left">
+              Nous avons le plaisir de vous annoncer que vous avez désormais accès à l’espace Admin Coop, qui vous permettra de suivre en temps réel l’activité des conseillers numériques de votre territoire.
+            </mj-text>
+            <mj-text align="left">
+              <strong>Cet espace est un véritable outil de mesure d’impact et de coordination des conseillers numériques sur votre territoire. Il vous permet notamment de :</strong>
+              <ol align="left">
+                <li>Consulter les statistiques nationales, régionales et départementales d’accompagnement liées à l’activité des CnFS.</li>
+                <li>Exporter les données issues des Comptes-Rendus d’Activités (CRA) au format PDF ou CSV.</li>
+                <li>Accéder à la Ressourcerie des conseillers numériques.</li>
+                <li>Consulter la foire aux questions.</li>
+              </ol>
+            </mj-text>
+            <mj-text align="left">
+              Votre tableau de bord rassemble ainsi de nombreuses statistiques, comme le nombre d’accompagnements réalisés, les thématiques, les lieux, les durées, ou encore l’âge et le statut des usagers.
+            </mj-text>
+            <mj-text align="left">
+              Cet outil vous permet de mesurer l’impact du dispositif sur votre territoire, de comprendre les besoins des usagers, et d’ajuster ainsi au mieux votre animation territoriale des conseillers et des structures, en proposant des contenus adaptés.
+            </mj-text>
+            <mj-text align="left">
+              Pour rappel, cet outil vient en complément du canal Mattermost ouvert pour votre Hub qui vous permet d’avoir un contact direct avec tous les conseillers de votre territoire. Si vous ne l’avez pas encore rejoint, <a href="https://discussion.conseiller-numerique.gouv.fr/signup_user_complete/?id=oqoq3pbmmibf7y4m8qwzc8tp3o">vous pouvez le faire ici</a>.
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
+          <mj-column border="1px solid #C8CBCE">
+            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
+              Comment accéder au tableau de bord ?
+            </mj-text>
+            <mj-text font-size="14px" line-height="21px">
+              <%= userHub.name %>
+            </mj-text>
+            <mj-text padding="0" css-class="text-secondary">
+              Suivez ce lien pour vous connecter
+            </mj-text>
+            <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
+              text-transform="uppercase">
+              Accéder à mon espace
+            </mj-button>
+            <mj-text css-class="text-secondary">
+              <%= link %>
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <%- include('../commun/signature.mjml.ejs'); %>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+  </mj-body>
+</mjml>

@@ -29,6 +29,7 @@ const conseillersRupturePix = require('./pix/conseillersRupturePix');
 const conseillerChangeEmailCnfs = require('./support/conseillerChangeEmailCnfs');
 const confirmationChangeEmailCnfs = require('./support/confirmationChangeEmailCnfs');
 const invitationHubEspaceCoop = require('./hubs/creationCompteHub');
+const bienvenueCompteHub = require('./hubs/bienvenueCompteHub');
 
 module.exports = (db, mailer, app, logger) => {
 
@@ -64,6 +65,7 @@ module.exports = (db, mailer, app, logger) => {
     conseillerChangeEmailCnfs(db, mailer, app, logger),
     confirmationChangeEmailCnfs(db, mailer, app, logger),
     invitationHubEspaceCoop(db, mailer),
+    bienvenueCompteHub(db, mailer)
   ];
 
   return {
