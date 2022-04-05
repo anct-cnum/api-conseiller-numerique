@@ -3,6 +3,7 @@ const { execute } = require('../../utils');
 const departements = require('../../../../data/imports/departements-region.json');
 const { loginAPI, joinChannel, getChannel } = require('../../../utils/mattermost');
 const slugify = require('slugify');
+require('dotenv').config();
 
 execute(__filename, async ({ logger, Sentry, exit, app }) => {
 
@@ -19,11 +20,10 @@ execute(__filename, async ({ logger, Sentry, exit, app }) => {
 
   try {
     const mattermost = app.get('mattermost');
-    for (let departement of departements) {
+    for (const departement of departements) {
       slugify.extend({ '-': ' ' });
       slugify.extend({ '\'': ' ' });
       const channelName = slugify(departement.dep_name, { replacement: '', lower: true });
-      console.log('channelName:', channelName);
       const token = await loginAPI({ mattermost });
       const resultChannel = await getChannel(mattermost, token, channelName);
       if (resultChannel) {
