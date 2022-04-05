@@ -30,6 +30,7 @@ execute(__filename, async ({ logger, Sentry, exit, app }) => {
         await joinChannel(mattermost, token, resultChannel.data.id, id);
       }
     }
+    logger.info(`user id: ${id} a bien été ajouté tout les canaux départementaux`);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
