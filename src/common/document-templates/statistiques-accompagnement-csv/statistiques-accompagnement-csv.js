@@ -6,7 +6,7 @@ const general = statistiques => [
   'Général',
   `Personnes totales accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
     statistiques.nbDemandePonctuel - statistiques.nbParticipantsRecurrents}`,
-  `Accompagnements total enregistrés (dont récurent);${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
+  `Accompagnements total enregistrés (dont récurrent);${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
   `Ateliers réalisés;${statistiques.nbAteliers}`,
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
   `Accompagnements individuels;${statistiques.nbAccompagnementPerso}`,
