@@ -20,7 +20,10 @@ execute(__filename, async ({ logger, Sentry, exit, app }) => {
   try {
     const mattermost = app.get('mattermost');
     for (let departement of departements) {
+      slugify.extend({ '-': ' ' });
+      slugify.extend({ '\'': ' ' });
       const channelName = slugify(departement.dep_name, { replacement: '', lower: true });
+      console.log('channelName:', channelName);
       const token = await loginAPI({ mattermost });
       const resultChannel = await getChannel(mattermost, token, channelName);
       if (resultChannel) {
