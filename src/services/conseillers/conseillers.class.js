@@ -369,7 +369,7 @@ exports.Conseillers = class Conseillers extends Service {
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        const rolesAllowed = ['conseiller', 'admin_coop', 'structure_coop'];
+        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId

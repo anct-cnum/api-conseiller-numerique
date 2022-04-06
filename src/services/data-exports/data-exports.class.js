@@ -338,7 +338,7 @@ exports.DataExports = class DataExports {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.HubCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportTerritoireSchema(req.query))
       ).then(async () => {
         const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
