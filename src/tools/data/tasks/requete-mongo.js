@@ -39,7 +39,7 @@ const updateIdMongoStructureConseillerRupture = db => async (idOriginal, newIdMo
 // Concernant les CONSEILLERS
 // ...............................................
 
-const getTotalConseillers = async db => await db.collection('conseillers').find({ }).toArray();
+const getTotalConseillers = async db => await db.collection('conseillers').find({}).toArray();
 
 const updateIdMongoConseiller = db => async (idOriginal, dataAnonyme) => {
   await db.collection('conseillers').insertOne({ ...dataAnonyme });
@@ -53,10 +53,10 @@ const updateMiseEnRelationConseiller = db => async (id, conseillerObj) =>
 
 const getUserConseiller = db => async id => await db.collection('users').findOne({ 'entity.$id': id });
 
-/// id mongodb update
 const updateUserConseiller = db => async (idMongo, email, token, nom, prenom, password) =>
   await db.collection('users').updateOne({ _id: idMongo }, { $set: { name: email, token, nom, prenom, password } });
 
+/// id mongodb update
 const updateIdMongoConseillerMisesEnRelation = db => async (idOriginal, newIdMongo) =>
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idOriginal }, { $set: { 'conseiller.$id': newIdMongo } });
 

@@ -17,6 +17,8 @@ const {
 const fakeData = require('./fake-data');
 const { ObjectId } = require('mongodb');
 const dayjs = require('dayjs');
+const dayOfYear = require('dayjs/plugin/dayOfYear');
+dayjs.extend(dayOfYear);
 
 const valueExists = (obj, value) => obj.hasOwnProperty(value);
 
@@ -53,10 +55,12 @@ const anonymisationConseiller = async (db, logger) => {
           fonction: conseiller?.supHierarchique?.fonction ?? ''
         };
       }
-      if (valueExists(conseiller, 'emailCN') && valueExists(conseiller, 'mattermost')) {
-        const login = `${dataAnonyme.prenom}.${dataAnonyme.nom}`;
+      const login = `${dataAnonyme.prenom}.${dataAnonyme.nom}`;
+      if (conseiller.mattermost.id) {
         dataAnonyme.mattermost.login = login;
         dataAnonyme.mattermost.id = newIdMongo.toString();
+      }
+      if (conseiller?.emailCN?.address) {
         dataAnonyme.emailCN.address = `${login}@beta-coop-conseiller-numerique.fr`;
       }
     }
