@@ -14,16 +14,20 @@ program.option('-u, --update', 'update: update de la collection user et mise en 
 program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
-execute(__filename, async ({ db, logger, Sentry, exit }) => {
+execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   await new Promise(async (resolve, reject) => {
     const anonymisation = program.anonymisation;
     const miseAjourUserANDMiseEnRelation = program.update;
-
-    if (!miseAjourUserANDMiseEnRelation && !anonymisation) {
-      exit('Veuillez choisir au moins une option');
+    const whiteList = ['local', 'recette'];
+    const mongodb = app.get('mongodb');
+    if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra'))) {
+      exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;
     }
-
+    if (!miseAjourUserANDMiseEnRelation && !anonymisation) {
+      exit('Veuillez choisir au moins une option entre --anonymisation ou --update');
+      return;
+    }
     try {
     // ETAPE 1 ANONYMISER LES CONSEILLERS ET LES STRUCTURES
       if (anonymisation) {
