@@ -64,6 +64,7 @@ const anonymisationConseiller = async (db, logger) => {
         dataAnonyme.emailCN.address = `${login}@beta-coop-conseiller-numerique.fr`;
       }
     }
+    // update conseiller + idMongo
     await updateIdMongoConseiller(db)(idOriginal, dataAnonyme);
     await updateIdMongoConseillerMisesEnRelation(db)(idOriginal, newIdMongo);
     await updateIdMongoConseillerUser(db)(idOriginal, newIdMongo);
@@ -81,22 +82,22 @@ const updateMiseEnRelationAndUserConseiller = async (db, logger) => {
   const cnfs = await getTotalConseillers(db);
   for (let conseillerObj of cnfs) {
     const id = conseillerObj._id;
-    const countMiseEnRelation = await getMiseEnrelationConseiller(db)(id); // ok
+    const countMiseEnRelation = await getMiseEnrelationConseiller(db)(id);
     if (countMiseEnRelation >= 1) {
       const updateConseillerObj = {
         conseillerObj
       };
-      await updateMiseEnRelationConseiller(db)(id, updateConseillerObj); //ok
+      await updateMiseEnRelationConseiller(db)(id, updateConseillerObj);
     }
     // mettre à jour son compte user
-    const getUserCandidatOrConseiller = await getUserConseiller(db)(id); //ok
+    const getUserCandidatOrConseiller = await getUserConseiller(db)(id);
     if (getUserCandidatOrConseiller) {
-      const { token, password } = await fakeData({});
+      const { token, password, tokenCreatedAt } = await fakeData({});
       const idMongo = getUserCandidatOrConseiller._id;
       const email = conseillerObj.emailCN?.address ?? conseillerObj.email;
       const nom = conseillerObj.nom.toUpperCase();
       const prenom = conseillerObj.prenom.toUpperCase();
-      await updateUserConseiller(db)(idMongo, email, token, nom, prenom, password); // ok
+      await updateUserConseiller(db)(idMongo, email, token, nom, prenom, password, tokenCreatedAt);
     }
   }
   logger.info(`${cnfs.length} conseillers mis à jour dans les mises en relation & dans les users (recruté et non recruté)`);

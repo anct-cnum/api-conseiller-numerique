@@ -35,11 +35,11 @@ const anonymisationStructure = async (db, logger) => {
         fonction: str.fonction ?? 'non renseigné'
       }
     };
-    // update seulement nom, prenom, telephone, email
-    await updateIdMongoStructure(db)(idOriginal, dataAnonyme); // ok
-    await updateIdMongoStructureMisesEnRelation(db)(idOriginal, newIdMongo);//ok
-    await updateIdMongoStructureUser(db)(idOriginal, newIdMongo);//ok
-    await updateIdMongoStructureConseillerRecrute(db)(idOriginal, newIdMongo); // ok
+    // update seulement nom, prenom, telephone, email + idMongo
+    await updateIdMongoStructure(db)(idOriginal, dataAnonyme);
+    await updateIdMongoStructureMisesEnRelation(db)(idOriginal, newIdMongo);
+    await updateIdMongoStructureUser(db)(idOriginal, newIdMongo);
+    await updateIdMongoStructureConseillerRecrute(db)(idOriginal, newIdMongo);
     await updateIdMongoStructureConseillerRupture(db)(idOriginal, newIdMongo);
   }
   logger.info(`${getStructure.length} structures anonymisers`);
@@ -57,24 +57,25 @@ const updateMiseEnRelationAndUserStructure = async (db, logger) => {
     const updateStructureObj = {
       structureObj
     };
-    // update seulement nom, prenom, telephone, email du contact
-    await updateMiseEnrelationStructure(db)(id, updateStructureObj); // ok
+    // update dans les structureObj
+    await updateMiseEnrelationStructure(db)(id, updateStructureObj);
 
     // findOne d'un compte user d'une structure
-    const resultUser = await getUserStructure(db)(id); // ok
+    const resultUser = await getUserStructure(db)(id);
     if (resultUser) {
+      // _id mongo doc user
       const idMongo = resultUser._id;
       const email = structureObj.contact.email;
-      const { token, password } = await fakeData({});
-      await updateUserStructure(db)(idMongo, email, token, password);
+      const { token, password, tokenCreatedAt } = await fakeData({});
+      await updateUserStructure(db)(idMongo, email, token, password, tokenCreatedAt);
     }
-    // ici on gère le multicompte , on change l'zemail + token des multicomptes uniquement
+    // ici on gère le multicompte , on change l'email + token des multicomptes uniquement
     const idMongoUserIgnore = resultUser._id;
-    const multicompte = await getUserMulticompteStructure(db)(id, idMongoUserIgnore); // ok
+    const multicompte = await getUserMulticompteStructure(db)(id, idMongoUserIgnore);
     for (let m of multicompte) {
-      const { email, token, password } = await fakeData({});
+      const { email, token, password, tokenCreatedAt } = await fakeData({});
       const idMongoUser = m._id;
-      await updateUserMulticompteStructure(db)(id, idMongoUser, email, token, password); // ok
+      await updateUserMulticompteStructure(db)(id, idMongoUser, email, token, password, tokenCreatedAt);
     }
 
   }

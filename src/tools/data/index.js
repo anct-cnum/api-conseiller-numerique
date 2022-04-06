@@ -28,18 +28,18 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     // ETAPE 1 ANONYMISER LES CONSEILLERS ET LES STRUCTURES
       if (anonymisation) {
         logger.info('Etape "Anonymisation" des collections conseillers & structures');
-        // PARTIE CONSEILLER   // TEST OK ICI
-        await anonymisationConseiller(db, logger);//....
-        // PARITE STRUCTURE // TEST OK ICI
-        await anonymisationStructure(db, logger);//....
+        // PARTIE CONSEILLER
+        await anonymisationConseiller(db, logger);
+        // PARITE STRUCTURE
+        await anonymisationStructure(db, logger);
       }
       // ETAPE 2 METTRE a jour les collections: MISESENRELATION & USERS !
       if (miseAjourUserANDMiseEnRelation) {
         logger.info('Etape "Mise à jour" des collections misesEnRelation & users');
-        // STRUCTURE // TEST OK
-        await updateMiseEnRelationAndUserStructure(db, logger);//....
-        // Conseiller TEST ok
-        await updateMiseEnRelationAndUserConseiller(db, logger);//....
+        // PARITE STRUCTURE
+        await updateMiseEnRelationAndUserStructure(db, logger);
+        // PARTIE CONSEILLER
+        await updateMiseEnRelationAndUserConseiller(db, logger);
       }
     } catch (error) {
       logger.error(error);

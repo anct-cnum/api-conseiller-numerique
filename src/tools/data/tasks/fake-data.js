@@ -13,6 +13,7 @@ module.exports = async ({ idPG }) => {
   let telephone = helpers.replaceSymbolWithNumber(`${tel}########`);
   let token = datatype.uuid();
   const password = uuidv4();
+  const tokenCreatedAt = new Date();
   nom = nom.toLowerCase();
   prenom = prenom.toLowerCase();
   email = email.toLowerCase();
@@ -23,6 +24,7 @@ module.exports = async ({ idPG }) => {
     email,
     telephone,
     token,
-    password
+    password,
+    tokenCreatedAt
   };
 };
