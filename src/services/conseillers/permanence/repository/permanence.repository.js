@@ -14,104 +14,50 @@ const getConseillerById = db => async id => db.collection('conseillers').findOne
   }
 });
 
-const getPermanenceById = () => async id => id === '620d22f5ad52e276a3dd68ae' ? {
-  nomEnseigne: 'CCAS des HERBIERS',
-  numeroTelephone: '0653658996',
-  email: 'structure@mailgenerique.com',
-  adresse: {
-    numeroRue: '6',
-    rue: 'RUE DU TOURNIQUET',
-    codePostal: '85500',
-    ville: 'LES HERBIERS'
-  },
-  location: {
-    type: 'Point',
-    coordinates: [
-      -1.0134,
-      46.8691
-    ],
-  },
-  horaires: [
-    {
-      matin: [
-        '8:00',
-        '12:30'
-      ],
-      apresMidi: [
-        '13:30',
-        '18:00'
-      ]
-    },
-    {
-      matin: [
-        '8:00',
-        '12:30'
-      ],
-      apresMidi: [
-        '13:30',
-        '18:00'
-      ]
-    },
-    {
-      matin: [
-        '8:00',
-        '12:30'
-      ],
-      apresMidi: [
-        '13:30',
-        '18:00'
-      ]
-    },
-    {
-      matin: [
-        '8:00',
-        '12:30'
-      ],
-      apresMidi: [
-        '13:30',
-        '18:00'
-      ]
-    },
-    {
-      matin: [
-        '8:00',
-        '12:30'
-      ],
-      apresMidi: [
-        '13:30',
-        '18:00'
-      ]
-    },
-    {
-      matin: [
-        'Fermé',
-        'Fermé'
-      ],
-      apresMidi: [
-        'Fermé',
-        'Fermé'
-      ]
-    },
-    {
-      matin: [
-        'Fermé',
-        'Fermé'
-      ],
-      apresMidi: [
-        'Fermé',
-        'Fermé'
-      ]
+const getPermanenceById = db => async id => db.collection('permanences').aggregate([
+  {
+    $match: {
+      _id: new ObjectId(id)
     }
-  ],
-  typeAcces: 'libre',
-  conseillers: [
-    {
-      prenom: 'Christelle',
-      nom: 'Bateau',
+  },
+  {
+    $lookup:
+      {
+        from: 'conseillers',
+        localField: 'conseillers',
+        foreignField: '_id',
+        as: 'conseillers'
+      }
+  },
+  {
+    $project: {
+      _id: 0,
+      nomEnseigne: 1,
+      numeroTelephone: 1,
+      email: 1,
+      siteWeb: 1,
+      adresse: 1,
+      location: 1,
+      horaires: 1,
+      typeAcces: 1,
+      conseillers: {
+        $map: {
+          input: '$conseillers',
+          as: 'conseiller',
+          in: {
+            prenom: '$$conseiller.prenom',
+            nom: '$$conseiller.nom',
+            email: '$$conseiller.emailPro',
+            phone: '$$conseiller.telephonePro',
+          }
+        }
+      }
     }
-  ],
-  siteWeb: 'https://ccas-des-herbiers.com',
-} : {};
+  },
+  {
+    $limit: 1
+  }
+]).toArray();
 
 const getStructureById = db => async id => db.collection('structures').findOne({
   _id: new ObjectId(id),
@@ -138,7 +84,6 @@ const getCnfs = db => async structureId => db.collection('conseillers').find({
     'emailPro': 1
   }
 }).toArray();
-
 
 const permanenceRepository = db => ({
   getConseillerById: getConseillerById(db),

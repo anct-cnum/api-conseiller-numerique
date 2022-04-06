@@ -656,7 +656,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
-      const permanence = await permanenceRepository(db).getPermanenceById(req.params.id);
+      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
 
       canActivate(
         existGuard(conseiller ?? permanence),
@@ -672,7 +672,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
-      const permanence = await permanenceRepository(db).getPermanenceById(req.params.id);
+      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
 
       canActivate(
         existGuard(conseiller ?? permanence),

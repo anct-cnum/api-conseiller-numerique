@@ -1,5 +1,4 @@
 const { permanenceDetailsFromStructureId, permanenceDetails } = require('./permanence-details.core');
-const { ObjectID } = require('mongodb');
 
 describe('détails de la permanence avec l\'identifiant de la structure', () => {
   it('devrait retourner le détail de la permanence', async () => {
