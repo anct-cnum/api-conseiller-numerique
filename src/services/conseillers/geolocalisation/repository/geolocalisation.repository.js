@@ -18,8 +18,9 @@ const getConseillersWithGeolocation = db => async () =>
   db.collection('conseillers').aggregate([
     {
       $match: {
-        statut: ConseillerStatut.Recrute
-        // todo: filtrer si le conseiller a rempli le questionnaire
+        statut: ConseillerStatut.Recrute,
+        estCoordinateur: { $ne: true },
+        hasPermanence: { $ne: true }
       }
     },
     {

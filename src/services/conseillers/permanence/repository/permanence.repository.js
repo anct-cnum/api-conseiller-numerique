@@ -1,4 +1,4 @@
-const { ObjectId, ObjectID } = require('mongodb');
+const { ObjectId } = require('mongodb');
 
 const ConseillerStatut = {
   Recrute: 'RECRUTE'
@@ -126,12 +126,16 @@ const getStructureById = db => async id => db.collection('structures').findOne({
 
 const getCnfs = db => async structureId => db.collection('conseillers').find({
   statut: ConseillerStatut.Recrute,
+  estCoordinateur: { $ne: true },
+  hasPermanence: { $ne: true },
   structureId: new ObjectId(structureId)
 }, {
   projection: {
     '_id': 0,
     'prenom': 1,
-    'nom': 1
+    'nom': 1,
+    'telephonePro': 1,
+    'emailPro': 1
   }
 }).toArray();
 
