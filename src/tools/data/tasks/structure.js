@@ -8,7 +8,8 @@ const {
   updateUserMulticompteStructure,
   updateIdMongoStructureMisesEnRelation,
   updateIdMongoStructureUser,
-  updateIdMongoStructureConseillerRecrute
+  updateIdMongoStructureConseillerRecrute,
+  updateIdMongoStructureConseillerRupture
 } = require('./requete-mongo');
 const fakeData = require('./fake-data');
 const { ObjectId } = require('mongodb');
@@ -22,6 +23,7 @@ const anonymisationStructure = async (db, logger) => {
     const idPG = str.idPG;
     const data = await fakeData({ idPG });
     let newIdMongo = new ObjectId();
+    delete str.historique;
     let dataAnonyme = {
       ...str,
       _id: newIdMongo,
@@ -38,42 +40,41 @@ const anonymisationStructure = async (db, logger) => {
     await updateIdMongoStructureMisesEnRelation(db)(idOriginal, newIdMongo);//ok
     await updateIdMongoStructureUser(db)(idOriginal, newIdMongo);//ok
     await updateIdMongoStructureConseillerRecrute(db)(idOriginal, newIdMongo); // ok
+    await updateIdMongoStructureConseillerRupture(db)(idOriginal, newIdMongo);
   }
   logger.info(`${getStructure.length} structures anonymisers`);
 };
 
 const updateMiseEnRelationAndUserStructure = async (db, logger) => {
   let query = {
-    'statut': 'VALIDATION_COSELEC'
+    'statut': 'VALIDATION_COSELEC',
+    'userCreated': true
   };
   const getStructureAnonyme = await getTotalStructures(db)(query);
-  for (let structureObj of getStructureAnonyme) {
-    const id = structureObj._id;
-    const { _id, ...structureObject } = structureObj;
+  for (let structureObjOriginal of getStructureAnonyme) {
+    const id = structureObjOriginal._id;
+    const { _id, ...structureObj } = structureObjOriginal;
     const updateStructureObj = {
-      'structureObj': {
-        ...structureObject
-      }
+      structureObj
     };
     // update seulement nom, prenom, telephone, email du contact
     await updateMiseEnrelationStructure(db)(id, updateStructureObj); // ok
-    // ......
-    // pour gérer le 1er document en anonyme dans le contact.email dans la collection structure
-    // ......
+
+    // findOne d'un compte user d'une structure
     const resultUser = await getUserStructure(db)(id); // ok
     if (resultUser) {
       const idMongo = resultUser._id;
-      const email = structureObject.contact.email;
-      const { token } = await fakeData();
-      await updateUserStructure(db)(idMongo, email, token);
+      const email = structureObj.contact.email;
+      const { token, password } = await fakeData({});
+      await updateUserStructure(db)(idMongo, email, token, password);
     }
-    // ici on gère le multicompte , on change tout sauf le 1er
+    // ici on gère le multicompte , on change l'zemail + token des multicomptes uniquement
     const idMongoUserIgnore = resultUser._id;
     const multicompte = await getUserMulticompteStructure(db)(id, idMongoUserIgnore); // ok
     for (let m of multicompte) {
-      const { email, token } = await fakeData();
+      const { email, token, password } = await fakeData({});
       const idMongoUser = m._id;
-      await updateUserMulticompteStructure(db)(id, idMongoUser, email, token); // ok
+      await updateUserMulticompteStructure(db)(id, idMongoUser, email, token, password); // ok
     }
 
   }

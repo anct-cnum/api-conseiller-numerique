@@ -16,6 +16,7 @@ const {
 
 const fakeData = require('./fake-data');
 const { ObjectId } = require('mongodb');
+const dayjs = require('dayjs');
 
 const valueExists = (obj, value) => obj.hasOwnProperty(value);
 
@@ -35,6 +36,9 @@ const anonymisationConseiller = async (db, logger) => {
       email: data.email,
       telephone: data.telephone
     };
+    if (conseiller.dateDeNaissance !== undefined) {
+      dataAnonyme.dateDeNaissance = dayjs(conseiller.dateDeNaissance).dayOfYear(1).toDate();
+    }
     if (valueExists(conseiller, 'cv')) {
       dataAnonyme.cv.file = `${newIdMongo.toString()}.pdf`;
     }
@@ -83,12 +87,12 @@ const updateMiseEnRelationAndUserConseiller = async (db, logger) => {
     // mettre à jour son compte user
     const getUserCandidatOrConseiller = await getUserConseiller(db)(id); //ok
     if (getUserCandidatOrConseiller) {
-      const { token } = await fakeData();
+      const { token, password } = await fakeData({});
       const idMongo = getUserCandidatOrConseiller._id;
-      let email = conseillerObj?.emailCN?.address ?? conseillerObj.email;
+      const email = conseillerObj.emailCN?.address ?? conseillerObj.email;
       const nom = conseillerObj.nom.toUpperCase();
       const prenom = conseillerObj.prenom.toUpperCase();
-      await updateUserConseiller(db)(idMongo, email, token, nom, prenom); // ok
+      await updateUserConseiller(db)(idMongo, email, token, nom, prenom, password); // ok
     }
   }
   logger.info(`${cnfs.length} conseillers mis à jour dans les mises en relation & dans les users (recruté et non recruté)`);
