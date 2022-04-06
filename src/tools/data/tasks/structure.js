@@ -15,14 +15,12 @@ const fakeData = require('./fake-data');
 const { ObjectId } = require('mongodb');
 
 const anonymisationStructure = async (db, logger) => {
-  let query = {};
-
-  const getStructure = await getTotalStructures(db)(query);
-  for (let str of getStructure) {
+  const getStructure = await getTotalStructures(db)({});
+  for (const str of getStructure) {
     const idOriginal = str._id;
     const idPG = str.idPG;
     const data = await fakeData({ idPG });
-    let newIdMongo = new ObjectId();
+    const newIdMongo = new ObjectId();
     delete str.historique;
     let dataAnonyme = {
       ...str,
@@ -32,7 +30,7 @@ const anonymisationStructure = async (db, logger) => {
         prenom: data.prenom,
         email: data.email,
         telephone: data.telephone,
-        fonction: str.fonction ?? 'non renseigné'
+        fonction: str.fonction ?? 'renseignée'
       }
     };
     // update seulement nom, prenom, telephone, email + idMongo
@@ -42,7 +40,7 @@ const anonymisationStructure = async (db, logger) => {
     await updateIdMongoStructureConseillerRecrute(db)(idOriginal, newIdMongo);
     await updateIdMongoStructureConseillerRupture(db)(idOriginal, newIdMongo);
   }
-  logger.info(`${getStructure.length} structures anonymisers`);
+  logger.info(`${getStructure.length} structures anonymisées`);
 };
 
 const updateMiseEnRelationAndUserStructure = async (db, logger) => {
@@ -51,7 +49,7 @@ const updateMiseEnRelationAndUserStructure = async (db, logger) => {
     'userCreated': true
   };
   const getStructureAnonyme = await getTotalStructures(db)(query);
-  for (let structureObjOriginal of getStructureAnonyme) {
+  for (const structureObjOriginal of getStructureAnonyme) {
     const id = structureObjOriginal._id;
     const { _id, ...structureObj } = structureObjOriginal;
     const updateStructureObj = {
@@ -72,14 +70,14 @@ const updateMiseEnRelationAndUserStructure = async (db, logger) => {
     // ici on gère le multicompte , on change l'email + token des multicomptes uniquement
     const idMongoUserIgnore = resultUser._id;
     const multicompte = await getUserMulticompteStructure(db)(id, idMongoUserIgnore);
-    for (let m of multicompte) {
+    for (const m of multicompte) {
       const { email, token, password, tokenCreatedAt } = await fakeData({});
       const idMongoUser = m._id;
       await updateUserMulticompteStructure(db)(id, idMongoUser, email, token, password, tokenCreatedAt);
     }
 
   }
-  logger.info(`${getStructureAnonyme.length} structures mis à jour dans les mis en relation (VALIDATION_COSELEC)`);
+  logger.info(`${getStructureAnonyme.length} structures mis à jour dans les mises en relation (VALIDATION_COSELEC)`);
 };
 
 module.exports = {

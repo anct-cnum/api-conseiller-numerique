@@ -9,7 +9,7 @@ const {
   updateMiseEnRelationAndUserStructure
 } = require('./tasks/structure');
 
-program.option('-a, --anonymisation', 'anonymisation de la bd de recette');
+program.option('-a, --anonymisation', 'anonymisation de la bdd de recette');
 program.option('-u, --update', 'update: update de la collection user et mise en relation');
 program.helpOption('-e', 'HELP command');
 program.parse(process.argv);

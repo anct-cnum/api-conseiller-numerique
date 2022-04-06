@@ -48,15 +48,13 @@ const updateIdMongoConseiller = db => async (idOriginal, dataAnonyme) => {
   return await db.collection(`conseillers${suffix}`).deleteOne({ _id: idOriginal });
 };
 
-const getMiseEnrelationConseiller = db => async id => await db.collection(`misesEnRelation${suffix}`).countDocuments({ 'conseiller.$id': id });
-
 const updateMiseEnRelationConseiller = db => async (id, conseillerObj) =>
-  await db.collection(`misesEnRelation${suffix}`).updateMany({ 'conseiller.$id': id }, { $set: { ...conseillerObj } });
+  await db.collection(`misesEnRelation${suffix}`).updateMany({ 'conseiller.$id': id }, { $set: { conseillerObj } });
 
 const getUserConseiller = db => async id => await db.collection(`users${suffix}`).findOne({ 'entity.$id': id });
 
-const updateUserConseiller = db => async (idMongo, email, token, nom, prenom, password, tokenCreatedAt) =>
-  await db.collection(`users${suffix}`).updateOne({ _id: idMongo }, { $set: { name: email, token, nom, prenom, password, tokenCreatedAt } });
+const updateUserConseiller = db => async (idMongo, name, token, nom, prenom, password, tokenCreatedAt) =>
+  await db.collection(`users${suffix}`).updateOne({ _id: idMongo }, { $set: { name, token, nom, prenom, password, tokenCreatedAt } });
 
 /// id mongodb update
 const updateIdMongoConseillerMisesEnRelation = db => async (idOriginal, newIdMongo) =>
@@ -97,7 +95,6 @@ module.exports = {
   // Conseillers
   getTotalConseillers,
   updateIdMongoConseiller,
-  getMiseEnrelationConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
   updateUserConseiller,

@@ -1,7 +1,6 @@
 const {
   getTotalConseillers,
   updateIdMongoConseiller,
-  getMiseEnrelationConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
   updateUserConseiller,
@@ -25,11 +24,11 @@ const valueExists = (obj, value) => obj.hasOwnProperty(value);
 const anonymisationConseiller = async (db, logger) => {
   const cnfs = await getTotalConseillers(db);
 
-  for (let conseiller of cnfs) {
+  for (const conseiller of cnfs) {
     const idOriginal = conseiller._id;
     const idPG = conseiller.idPG;
     const data = await fakeData({ idPG });
-    let newIdMongo = new ObjectId();
+    const newIdMongo = new ObjectId();
     let dataAnonyme = {
       ...conseiller,
       _id: newIdMongo,
@@ -38,7 +37,7 @@ const anonymisationConseiller = async (db, logger) => {
       email: data.email,
       telephone: data.telephone
     };
-    if (conseiller.dateDeNaissance !== undefined) {
+    if (valueExists(conseiller, 'dateDeNaissance')) {
       dataAnonyme.dateDeNaissance = dayjs(conseiller.dateDeNaissance).dayOfYear(1).toDate();
     }
     if (valueExists(conseiller, 'cv')) {
@@ -52,15 +51,15 @@ const anonymisationConseiller = async (db, logger) => {
           email: dataFakeHierarchique.email,
           nom: dataFakeHierarchique.nom,
           prenom: dataFakeHierarchique.prenom,
-          fonction: conseiller?.supHierarchique?.fonction ?? ''
+          fonction: conseiller.supHierarchique.fonction
         };
       }
       const login = `${dataAnonyme.prenom}.${dataAnonyme.nom}`;
-      if (conseiller.mattermost.id) {
+      if (conseiller.mattermost?.id) {
         dataAnonyme.mattermost.login = login;
         dataAnonyme.mattermost.id = newIdMongo.toString();
       }
-      if (conseiller?.emailCN?.address) {
+      if (conseiller.emailCN?.address) {
         dataAnonyme.emailCN.address = `${login}@beta-coop-conseiller-numerique.fr`;
       }
     }
@@ -80,24 +79,18 @@ const anonymisationConseiller = async (db, logger) => {
 
 const updateMiseEnRelationAndUserConseiller = async (db, logger) => {
   const cnfs = await getTotalConseillers(db);
-  for (let conseillerObj of cnfs) {
+  for (const conseillerObj of cnfs) {
     const id = conseillerObj._id;
-    const countMiseEnRelation = await getMiseEnrelationConseiller(db)(id);
-    if (countMiseEnRelation >= 1) {
-      const updateConseillerObj = {
-        conseillerObj
-      };
-      await updateMiseEnRelationConseiller(db)(id, updateConseillerObj);
-    }
+    await updateMiseEnRelationConseiller(db)(id, conseillerObj);
     // mettre à jour son compte user
     const getUserCandidatOrConseiller = await getUserConseiller(db)(id);
-    if (getUserCandidatOrConseiller) {
+    if (getUserCandidatOrConseiller !== null) {
       const { token, password, tokenCreatedAt } = await fakeData({});
       const idMongo = getUserCandidatOrConseiller._id;
-      const email = conseillerObj.emailCN?.address ?? conseillerObj.email;
+      const name = conseillerObj.emailCN?.address ?? conseillerObj.email;
       const nom = conseillerObj.nom.toUpperCase();
       const prenom = conseillerObj.prenom.toUpperCase();
-      await updateUserConseiller(db)(idMongo, email, token, nom, prenom, password, tokenCreatedAt);
+      await updateUserConseiller(db)(idMongo, name, token, nom, prenom, password, tokenCreatedAt);
     }
   }
   logger.info(`${cnfs.length} conseillers mis à jour dans les mises en relation & dans les users (recruté et non recruté)`);
