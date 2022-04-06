@@ -47,8 +47,12 @@ const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalR
   }
 };
 
-const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras }) => {
-  return await getCodesPostauxStatistiquesCras(idConseiller);
+const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras, getCodesPostauxStatistiquesCrasStructure }) => {
+  if (idConseiller instanceof Array) {
+    return await getCodesPostauxStatistiquesCrasStructure(idConseiller);
+  } else {
+    return await getCodesPostauxStatistiquesCras(idConseiller);
+  }
 };
 
 const getTerritoiresPrefet = async (type, date, codeDepartement, codeRegion, nomRegion, { getDepartement, getRegion }) => {

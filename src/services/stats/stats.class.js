@@ -1,6 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const decode = require('jwt-decode');
-const { Forbidden, NotAuthenticated, BadRequest, GeneralError } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, BadRequest, GeneralError, NotFound } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
@@ -215,6 +215,50 @@ exports.Stats = class Stats extends Service {
 
         try {
           const listCodePostaux = await statsFct.getCodesPostauxCras(idConseiller, statsRepository(db));
+          res.send(listCodePostaux);
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('Une erreur est survenue lors de la génération de la liste des codes postaux.').toJSON());
+          return;
+        }
+      });
+    });
+
+    app.get('/stats/cra/codesPostaux/structure/:id', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
+        return;
+      }
+      const userId = decode(req.feathers.authentication.accessToken).sub;
+      const idStructure = new ObjectID(req.params.id);
+
+      app.get('mongoClient').then(async db => {
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        const structureId = user.entity.oid;
+        if (!user?.roles.includes('structure_coop') && structureId !== idStructure) {
+          res.status(403).send(new Forbidden('Utilisateur non autorisé', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+        const miseEnRelations = await db.collection('misesEnRelation').find({
+          'structure.$id': new ObjectID(idStructure),
+          'statut': { $in: ['finalisee', 'finalisee_rupture'] }
+        }).toArray();
+        if (miseEnRelations === null) {
+          res.status(404).send(new NotFound('Structure not found', {
+            idStructure
+          }).toJSON());
+          return;
+        }
+        let conseillerIds = [];
+        miseEnRelations.forEach(miseEnRelation => {
+          conseillerIds.push(miseEnRelation?.conseillerObj._id);
+        });
+        try {
+          const listCodePostaux = await statsFct.getCodesPostauxCras(conseillerIds, statsRepository(db));
+          console.log(listCodePostaux);
           res.send(listCodePostaux);
         } catch (error) {
           app.get('sentry').captureException(error);
@@ -553,6 +597,66 @@ exports.Stats = class Stats extends Service {
           stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
         }
 
+        res.send(stats);
+      });
+    });
+
+    app.get('/stats/structure/cra', async (req, res) => {
+
+      app.get('mongoClient').then(async db => {
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
+        }
+        //Verification role admin_coop
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        const structureId = user.entity.oid;
+        if (!user?.roles.includes('structure_coop') && structureId !== req.query.idStructure) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+        const miseEnRelations = await db.collection('misesEnRelation').find({
+          'structure.$id': new ObjectID(structureId),
+          'statut': { $in: ['finalisee', 'finalisee_rupture'] }
+        }).toArray();
+        if (miseEnRelations === null) {
+          res.status(404).send(new NotFound('Structure not found', {
+            structureId
+          }).toJSON());
+          return;
+        }
+        let conseillerIds = [];
+        miseEnRelations.forEach(miseEnRelation => {
+          conseillerIds.push(miseEnRelation?.conseillerObj._id);
+        });
+        //Composition de la partie query en formattant la date
+        let dateDebut = new Date(req.query?.dateDebut);
+        dateDebut.setUTCHours(0, 0, 0, 0);
+        let dateFin = new Date(req.query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
+        //Construction des statistiques
+        let stats = {};
+        let query = {
+          'cra.dateAccompagnement': {
+            '$gte': dateDebut,
+            '$lt': dateFin,
+          },
+          'conseiller.$id': { $in: conseillerIds },
+        };
+        if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
+          query = {
+            'conseiller.$id': { $in: conseillerIds },
+            'cra.codePostal': req.query?.codePostal,
+            'cra.dateAccompagnement': {
+              $gte: dateDebut,
+              $lt: dateFin,
+            }
+          };
+        }
+        stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.StructureCoop));
         res.send(stats);
       });
     });
