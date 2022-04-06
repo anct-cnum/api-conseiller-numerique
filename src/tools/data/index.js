@@ -11,11 +11,13 @@ const {
 
 program.option('-a, --anonymisation', 'anonymisation de la bdd de recette');
 program.option('-u, --update', 'update: update de la collection user et mise en relation');
+program.option('-l, --limit <limit>', 'limit: définir un nombre');
 program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
 execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   await new Promise(async (resolve, reject) => {
+    const limit = ~~program.limit;
     const anonymisation = program.anonymisation;
     const miseAjourUserANDMiseEnRelation = program.update;
     const whiteList = ['local', 'recette'];
@@ -33,7 +35,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
       if (anonymisation) {
         logger.info('Etape "Anonymisation" des collections conseillers & structures');
         // PARTIE CONSEILLER
-        await anonymisationConseiller(db, logger);
+        await anonymisationConseiller(db, logger, limit);
         // PARITE STRUCTURE
         await anonymisationStructure(db, logger);
       }
@@ -43,7 +45,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
         // PARITE STRUCTURE
         await updateMiseEnRelationAndUserStructure(db, logger);
         // PARTIE CONSEILLER
-        await updateMiseEnRelationAndUserConseiller(db, logger);
+        await updateMiseEnRelationAndUserConseiller(db, logger, limit);
       }
     } catch (error) {
       logger.error(error);

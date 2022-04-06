@@ -21,8 +21,8 @@ dayjs.extend(dayOfYear);
 
 const valueExists = (obj, value) => obj.hasOwnProperty(value);
 
-const anonymisationConseiller = async (db, logger) => {
-  const cnfs = await getTotalConseillers(db);
+const anonymisationConseiller = async (db, logger, limit) => {
+  const cnfs = await getTotalConseillers(db, limit);
 
   for (const conseiller of cnfs) {
     const idOriginal = conseiller._id;
@@ -35,7 +35,8 @@ const anonymisationConseiller = async (db, logger) => {
       nom: data.nom,
       prenom: data.prenom,
       email: data.email,
-      telephone: data.telephone
+      telephone: data.telephone,
+      faker: true
     };
     if (valueExists(conseiller, 'dateDeNaissance')) {
       dataAnonyme.dateDeNaissance = dayjs(conseiller.dateDeNaissance).dayOfYear(1).toDate();
@@ -77,8 +78,8 @@ const anonymisationConseiller = async (db, logger) => {
 };
 
 
-const updateMiseEnRelationAndUserConseiller = async (db, logger) => {
-  const cnfs = await getTotalConseillers(db);
+const updateMiseEnRelationAndUserConseiller = async (db, logger, limit) => {
+  const cnfs = await getTotalConseillers(db, limit);
   for (const conseillerObj of cnfs) {
     const id = conseillerObj._id;
     await updateMiseEnRelationConseiller(db)(id, conseillerObj);

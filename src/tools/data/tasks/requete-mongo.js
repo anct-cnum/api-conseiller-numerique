@@ -3,7 +3,8 @@
 // ...............................................
 const suffix = '_faker';
 
-const getTotalStructures = db => async query => await db.collection(`structures${suffix}`).find({ ...query }).toArray();
+const getTotalStructures = (db, limit) => async query =>
+  await db.collection(`structures${suffix}`).find({ faker: { '$exists': false }, ...query }).limit(limit).toArray();
 
 const updateIdMongoStructure = db => async (id, dataAnonyme) => {
   await db.collection(`structures${suffix}`).insertOne({ ...dataAnonyme });
@@ -26,6 +27,7 @@ const updateUserMulticompteStructure = db => async (id, idMongoUser, email, toke
   await db.collection(`users${suffix}`).updateOne({ '_id': idMongoUser, 'entity.$id': id }, { $set: { name: email, token, password, tokenCreatedAt } });
 
 const updateIdMongoStructureMisesEnRelation = db => async (idOriginal, newIdMongo) =>
+  // eslint-disable-next-line max-len
   await db.collection(`misesEnRelation${suffix}`).updateMany({ 'structure.$id': idOriginal }, { $set: { 'structure.$id': newIdMongo, 'structureObj._id': newIdMongo } });
 
 const updateIdMongoStructureUser = db => async (idOriginal, newIdMongo) =>
@@ -41,7 +43,7 @@ const updateIdMongoStructureConseillerRupture = db => async (idOriginal, newIdMo
 // Concernant les CONSEILLERS
 // ...............................................
 
-const getTotalConseillers = async db => await db.collection(`conseillers${suffix}`).find({}).toArray();
+const getTotalConseillers = async (db, limit) => await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': false } }).limit(limit).toArray();
 
 const updateIdMongoConseiller = db => async (idOriginal, dataAnonyme) => {
   await db.collection(`conseillers${suffix}`).insertOne({ ...dataAnonyme });

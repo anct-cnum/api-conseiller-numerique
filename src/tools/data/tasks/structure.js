@@ -14,8 +14,8 @@ const {
 const fakeData = require('./fake-data');
 const { ObjectId } = require('mongodb');
 
-const anonymisationStructure = async (db, logger) => {
-  const getStructure = await getTotalStructures(db)({});
+const anonymisationStructure = async (db, logger, limit) => {
+  const getStructure = await getTotalStructures(db, limit)({});
   for (const str of getStructure) {
     const idOriginal = str._id;
     const idPG = str.idPG;
@@ -31,7 +31,8 @@ const anonymisationStructure = async (db, logger) => {
         email: data.email,
         telephone: data.telephone,
         fonction: str.fonction ?? 'renseignée'
-      }
+      },
+      faker: true
     };
     // update seulement nom, prenom, telephone, email + idMongo
     await updateIdMongoStructure(db)(idOriginal, dataAnonyme);
@@ -43,12 +44,12 @@ const anonymisationStructure = async (db, logger) => {
   logger.info(`${getStructure.length} structures anonymisées`);
 };
 
-const updateMiseEnRelationAndUserStructure = async (db, logger) => {
+const updateMiseEnRelationAndUserStructure = async (db, logger, limit) => {
   let query = {
     'statut': 'VALIDATION_COSELEC',
     'userCreated': true
   };
-  const getStructureAnonyme = await getTotalStructures(db)(query);
+  const getStructureAnonyme = await getTotalStructures(db, limit)(query);
   for (const structureObjOriginal of getStructureAnonyme) {
     const id = structureObjOriginal._id;
     const { _id, ...structureObj } = structureObjOriginal;
