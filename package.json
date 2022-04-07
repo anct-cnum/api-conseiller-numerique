@@ -84,7 +84,7 @@
     "node": ">= 14.15.3"
   },
   "devDependencies": {
-    "@faker-js/faker": "6.0.0-alpha.7",
+    "@faker-js/faker": "6.1.2",
     "axios": "0.21.1",
     "eslint": "7.24.0",
     "jest": "27.2.4",

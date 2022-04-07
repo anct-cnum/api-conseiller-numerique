@@ -30,7 +30,7 @@ const anonymisationStructure = async (db, logger, limit) => {
         prenom: data.prenom,
         email: data.email,
         telephone: data.telephone,
-        fonction: str.fonction ?? 'renseignée'
+        fonction: str.fonction ?? 'non renseignée'
       },
       faker: true
     };
