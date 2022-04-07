@@ -1,7 +1,9 @@
 const { formatAddressFromInsee, formatAddressFromPermanence, formatOpeningHours } = require('../../common');
 
+const emptyString = '';
+
 const permanenceFormattedAddress = formattedAddress =>
-  formattedAddress === '' ? {} : {
+  formattedAddress === emptyString ? {} : {
     adresse: formattedAddress
   };
 
@@ -15,10 +17,20 @@ const permanenceContactEmail = permanence =>
     email: permanence.contact.email
   } : {};
 
-const digitsPairsRegexp = /(\d\d(?!$))/g;
+const frenchCallingPhoneCodeRegexp = /(?:(\+(?:33|590|596|594|262|269))(\d))?/;
+const digitsPairsRegexp = /(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?/;
+const phoneRegexp = frenchCallingPhoneCodeRegexp.source + digitsPairsRegexp.source;
+const phoneSpace = ' ';
+const regexpMatchesToSkip = 1;
 
-const setPhoneSpaces = telephone => telephone.includes(' ') ?
-  telephone : telephone.replace(digitsPairsRegexp, '$1 ');
+const noUndefinedMatches = match => match !== undefined;
+
+const setPhoneSpaces = telephone => telephone
+.replaceAll(phoneSpace, emptyString)
+.match(phoneRegexp)
+?.slice(regexpMatchesToSkip)
+.filter(noUndefinedMatches)
+.join(phoneSpace);
 
 const permanenceContactTelephone = permanence =>
   permanence.contact.telephone ? {

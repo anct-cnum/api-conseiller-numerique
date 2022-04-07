@@ -7,7 +7,7 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
         nom: 'Aide rurale',
         contact: {
           email: 'john.doe@aide-rurale.net',
-          telephone: '0423456897'
+          telephone: '+33423456897'
         },
         coordonneesInsee: {
           type: 'Point',
@@ -49,7 +49,7 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
-      telephone: '04 23 45 68 97',
+      telephone: '+33 4 23 45 68 97',
       coordinates: [3.158667, 46.987344],
       nombreCnfs: 2,
       cnfs: [
@@ -75,7 +75,7 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
         nom: 'Aide rurale',
         contact: {
           email: 'john.doe@aide-rurale.net',
-          telephone: '04 23 45 68 97'
+          telephone: '+33 4 23 45 68 97'
         }
       }),
       getCnfs: () => [
@@ -95,7 +95,7 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
     const expectedPermanenceDetails = {
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
-      telephone: '04 23 45 68 97',
+      telephone: '+33 4 23 45 68 97',
       nombreCnfs: 2,
       cnfs: [
         {
@@ -231,7 +231,7 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
       getStructureById: () => ({
         nom: 'Aide rurale',
         contact: {
-          telephone: '0423456897'
+          telephone: '+33423456897'
         },
         insee: {
           etablissement: {
@@ -269,7 +269,7 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
     const expectedPermanenceDetails = {
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
-      telephone: '04 23 45 68 97',
+      telephone: '+33 4 23 45 68 97',
       nombreCnfs: 3,
       cnfs: [
         {
@@ -297,7 +297,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
   it('devrait retourner le détail de la permanence', async () => {
     const permanence = {
       nomEnseigne: 'CCAS des HERBIERS',
-      numeroTelephone: '0653658996',
+      numeroTelephone: '+33653658996',
       email: 'structure@mailgenerique.com',
       adresse: {
         numeroRue: '6',
@@ -402,7 +402,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       ],
       nom: 'CCAS des HERBIERS',
       email: 'structure@mailgenerique.com',
-      telephone: '06 53 65 89 96',
+      telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
       typeAcces: 'libre',
       openingHours: [
@@ -429,7 +429,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
   it('devrait retourner le détail de la permanence sans horaires', async () => {
     const permanence = {
       nomEnseigne: 'CCAS des HERBIERS',
-      numeroTelephone: '0653658996',
+      numeroTelephone: '+33653658996',
       email: 'structure@mailgenerique.com',
       adresse: {
         numeroRue: '6',
@@ -462,7 +462,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       ],
       nom: 'CCAS des HERBIERS',
       email: 'structure@mailgenerique.com',
-      telephone: '06 53 65 89 96',
+      telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
       typeAcces: 'libre',
       openingHours: [],
@@ -483,7 +483,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
   it('devrait retourner le détail de la permanence sans conseillers', async () => {
     const permanence = {
       nomEnseigne: 'CCAS des HERBIERS',
-      numeroTelephone: '0653658996',
+      numeroTelephone: '+33653658996',
       email: 'structure@mailgenerique.com',
       adresse: {
         numeroRue: '6',
@@ -510,7 +510,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       ],
       nom: 'CCAS des HERBIERS',
       email: 'structure@mailgenerique.com',
-      telephone: '06 53 65 89 96',
+      telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
       typeAcces: 'libre',
       openingHours: [],
