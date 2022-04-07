@@ -8,7 +8,7 @@ const getStatsAccompagnements = async (db, query) => {
         _id: 'accompagnement',
         individuel: { $sum: '$cra.accompagnement.individuel' },
         atelier: { $sum: '$cra.accompagnement.atelier' },
-        redirection: { $sum: '$cra.accompagnement.redirection' },
+        redirection: { $sum: '$cra.accompagnement.redirection' }
       } },
     ]
   ).toArray();

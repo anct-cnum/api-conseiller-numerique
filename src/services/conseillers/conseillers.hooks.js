@@ -30,7 +30,6 @@ module.exports = {
             ...(region ? { codeRegion: region.toString() } : {})
           };
         }
-
         if (context.params.query.$skip) {
           const paginate = context.app.get('paginate');
           const page = context.params.query.$skip;
@@ -47,6 +46,9 @@ module.exports = {
         }
         if (context.params.query.certifie) {
           context.params.query.certifie = context.params.query.certifie === 'false' ? null : true;
+        }
+        if (context.params.query.groupeCRA) {
+          context.params.query.groupeCRA = parseInt(context.params.query.groupeCRA);
         }
 
         if (context.params.query.isUserActif === 'true') {
@@ -66,7 +68,6 @@ module.exports = {
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
         }
-
         return context;
       }, search({ escape: false })
     ],
@@ -112,6 +113,7 @@ module.exports = {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
+
         const schema = Joi.object({
 
           nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),

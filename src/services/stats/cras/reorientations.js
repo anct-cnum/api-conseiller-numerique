@@ -1,4 +1,4 @@
-const getStatsReorientations = async (db, query, totalReorientations) => {
+const getStatsReorientations = async (db, query) => {
 
   let statsReorientations = await db.collection('cras').aggregate(
     [
@@ -9,6 +9,11 @@ const getStatsReorientations = async (db, query, totalReorientations) => {
     ]
   ).toArray();
 
+  const totalReorientations = statsReorientations.reduce(
+    (previousValue, currentValue) => previousValue + currentValue.valeur,
+    0
+  );
+
   //Conversion en % total
   if (statsReorientations.length > 0) {
     return statsReorientations.map(lieu => {
@@ -16,6 +21,7 @@ const getStatsReorientations = async (db, query, totalReorientations) => {
       return lieu;
     });
   }
+  return statsReorientations;
 };
 
 module.exports = { getStatsReorientations };

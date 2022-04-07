@@ -4,9 +4,9 @@ const labelsCorrespondance = require('../../../services/stats/data/themesCorresp
 
 const general = statistiques => [
   'Général',
-  `Personnes accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
+  `Personnes totales accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
     statistiques.nbDemandePonctuel - statistiques.nbParticipantsRecurrents}`,
-  `Accompagnements enregistrés;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
+  `Accompagnements total enregistrés (dont récurrent);${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
   `Ateliers réalisés;${statistiques.nbAteliers}`,
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
   `Accompagnements individuels;${statistiques.nbAccompagnementPerso}`,
@@ -61,7 +61,7 @@ const statsAges = statistiques => [
 const statsUsagers = statistiques => [
   'Statut des usagers (en %)',
   ...[
-    'Étudiant',
+    'Scolarisé(e)',
     'Sans emploi',
     'En emploi',
     'Retraité',
@@ -86,9 +86,8 @@ const statsEvolutions = statistiques => [
 const statsReorientations = statistiques => [
   'Usager.ères réorienté.es',
   ...statistiques.statsReorientations
-  .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur};`),
+  .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur}`),
 ];
-
 
 const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, isAdminCoop) => [
   `Statistiques ${type} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,

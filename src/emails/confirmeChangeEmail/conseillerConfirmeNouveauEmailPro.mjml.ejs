@@ -10,13 +10,7 @@
         <mj-section>
           <mj-column>
             <mj-text css-class="text-primary">
-              Créez votre compte structure Conseiller Numérique France Services.
-            </mj-text>
-            <mj-text>
-              Madame, Monsieur,
-            </mj-text>
-            <mj-text>
-              Vous avez été invité sur la plateforme www.conseiller-numerique.gouv.fr pour rejoindre l'espace de votre structure.
+              Confirmez votre nouvelle adresse mail professionnelle
             </mj-text>
           </mj-column>
         </mj-section>
@@ -24,38 +18,29 @@
         <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
           <mj-column border="1px solid #C8CBCE">
             <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
-              Votre identifiant
+              Votre nouvelle adresse mail professionnelle que vous avez saisie est :
             </mj-text>
             <mj-text font-size="14px" line-height="21px">
-              <%= user.name %>
+              <%= conseiller.nouveauEmailPro %>
             </mj-text>
 
             <mj-text padding="0" css-class="text-secondary">
-              Suivez ce lien pour créer votre mot de passe
+              Pour confirmer votre nouvelle adresse mail professionnelle, cliquez sur le bouton "confirmer"
             </mj-text>
 
             <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
               text-transform="uppercase">
-              Accéder à mon espace
+              Confirmer
             </mj-button>
-
-            <mj-text font-size="14px" line-height="21px">
-              (Ce lien expire dans 4 semaines)
-            </mj-text>
           </mj-column>
         </mj-section>
       </mj-wrapper>
       <mj-wrapper css-class="wrapper">
         <mj-section>
           <mj-column>
-
-      <mj-text>
-        Merci pour votre initiative qui porte le développement d’un numérique inclusif, partout, pour tous,
-      </mj-text>
-
-      <%- include('../commun/signature.mjml.ejs'); %>
-    </mj-column>
-  </mj-section>
-</mj-wrapper>
+            <%- include('../commun/signature.mjml.ejs'); %>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
   </mj-body>
 </mjml>

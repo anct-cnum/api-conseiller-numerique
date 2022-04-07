@@ -608,6 +608,12 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
+      if (user.passwordCreated === false) {
+        res.status(400).send(new BadRequest('Error authorization forgottenPassword', {
+          username
+        }).toJSON());
+        return;
+      }
       user.token = uuidv4();
 
       //Si le user est un conseiller, envoyer le mail sur son email perso

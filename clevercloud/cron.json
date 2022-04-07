@@ -9,6 +9,7 @@
   "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/create-account-candidats.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-candidats.sh",
-  "0 0 * * * $ROOT/src/tools/jobs/delete-cv-six-mois.sh"
+  "0 0 * * * $ROOT/src/tools/jobs/delete-cv-six-mois.sh",
+  "0 3 * * * $ROOT/src/tools/jobs/update-token-mot-de-passe.sh"
 ]
 

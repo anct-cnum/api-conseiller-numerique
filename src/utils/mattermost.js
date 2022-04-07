@@ -54,6 +54,35 @@ const joinChannel = async (mattermost, token, idChannel, idUser) => {
   });
 };
 
+const getUsersChannel = async (mattermost, token, idChannel) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'GET',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members?per_page=200`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+const deleteUserChannel = async (mattermost, token, idChannel, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'DELETE',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members/${idUser}`,
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 const joinTeam = async (mattermost, token, idTeam, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
@@ -370,6 +399,8 @@ module.exports = {
   deleteAccount,
   createChannel,
   joinChannel,
+  getUsersChannel,
+  deleteUserChannel,
   joinTeam,
   deleteArchivedChannels,
   searchUser,

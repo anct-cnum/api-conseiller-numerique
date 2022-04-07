@@ -9,52 +9,49 @@
       <mj-wrapper css-class="wrapper">
         <mj-section>
           <mj-column>
-            <mj-text css-class="text-primary">
-              Activer votre compte Coop des Conseillers numériques France Services.
+            <mj-text css-class="text-primary" font-weight="bold">
+              Activer votre compte Coop Conseiller numérique France Services
             </mj-text>
-            <mj-text>
+            <mj-text align="left">
               Madame, Monsieur,
             </mj-text>
-            <mj-text>
-              Nous avons le plaisir de vous accueillir au sein de la communauté des Conseillers numériques France services.
+            <mj-text align="left">
+              Nous avons le plaisir de vous accueillir au sein de la communauté des conseillers numériques France Services.
             </mj-text>
-            <mj-text>
-              Un espace Coop a spécialement été créé à destination des Conseillers numériques. Cet outil vise à créer un espace d'échange entre vous, à vous informer et vous outiller dans vos missions quotidiennes et à impulser une dynamique de projets entre conseillers.
+            <mj-text align="left">
+              L'<strong>espace Coop</strong> a été conçu spécialement pour vous, cette plateforme en ligne vous permettra :
+              <ul align="left">
+                <li>d'échanger avec la communauté et de créer des dynamiques de projets,</li>
+                <li>de vous outiller pour vos missions de médiation,</li>
+                <li>de suivre votre activité de médiation.</li>
+              </ul>  
             </mj-text>
-            <mj-text>
-              Afin de procéder à votre inscription sur l'espace Coop, vous devez créer votre adresse courriel @conseiller-numerique.fr.
+            <mj-text align="left" font-weight="bold">
+              Pour activer votre compte, nous allons créer votre adresse mail
+              prenom.nom@conseiller-numerique.fr 
             </mj-text>
-            <mj-text>
-              Une fois cette étape réalisée, activer votre espace Coop en cliquant sur le bouton "Activer mon espace Coop" ci-dessous.
-            </mj-text>
-            <mj-text>
-              L’inscription à votre espace Coop est obligatoire car il vous permettra de réaliser le suivi de votre activité en tant que Conseiller numérique France services.
-            </mj-text>
-            <mj-text>
-              Nous demeurons à votre disposition pour toute question.
+            <mj-text align="left">
+              En cliquant sur « Activer », vous choisirez votre mot de passe unique pour :
+              <ul align="left">
+                <li align="left">accéder à l'espace Coop,</li>
+                <li align="left">accéder à votre adresse mail prenom.nom@conseiller-numerique.fr.</li>
+              </ul>
             </mj-text>
           </mj-column>
         </mj-section>
 
         <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
           <mj-column border="1px solid #C8CBCE">
-            <mj-text font-size="18px" font-weight="bold" line-height="22px" padding-bottom="0">
-              Votre identifiant
-            </mj-text>
-            <mj-text font-size="14px" line-height="21px">
-              <%= conseiller.name %>
-            </mj-text>
-
-            <mj-text padding="0" css-class="text-secondary">
-              Suivez ce lien pour créer votre mot de passe
-            </mj-text>
-
             <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
               text-transform="uppercase">
               Activer mon espace Coop
             </mj-button>
             <mj-text css-class="text-secondary">
               <%= link %>
+            </mj-text>
+
+            <mj-text font-size="14px" line-height="21px">
+              (Ce lien expire dans 4 semaines)
             </mj-text>
           </mj-column>
         </mj-section>

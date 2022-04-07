@@ -2,13 +2,28 @@ const { DBRef, ObjectId } = require('mongodb');
 
 const assignPermanence = (body, database) => {
   let permanence = Object.assign({}, body);
-  permanence.conseiller = new DBRef('conseiller', new ObjectId(body.conseillerId), database);
+
+  permanence.conseillers = [];
+  body.conseillers.forEach(conseiller => {
+    permanence.conseillers.push(new ObjectId(conseiller));
+  });
+  permanence.conseillersItinerants = [];
+  body?.conseillersItinerants?.forEach(conseiller => {
+    permanence.conseillersItinerants.push(new ObjectId(conseiller));
+  });
+
   permanence.structure = new DBRef('structure', new ObjectId(body.structureId), database);
   permanence.updatedAt = new Date();
+  permanence.updatedBy = new ObjectId(body.conseillerId);
+
   delete permanence._id;
-  delete permanence.conseillerId;
   delete permanence.structureId;
-  permanence.horaires.forEach(horaires => {
+  delete permanence.telephonePro;
+  delete permanence.emailPro;
+  delete permanence.estCoordinateur;
+  delete permanence.hasPermanence;
+
+  permanence?.horaires?.forEach(horaires => {
     delete horaires.fermeture;
   });
   return permanence;

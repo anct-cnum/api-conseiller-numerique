@@ -191,7 +191,29 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
             annee: 2021
           }
         ]
-      }
+      },
+      statsReorientations: [
+        {
+          nom: 'CEFS',
+          valeur: 2
+        },
+        {
+          nom: 'Assistante sociale',
+          valeur: 9
+        },
+        {
+          nom: 'Sous-préfecture',
+          valeur: 2
+        },
+        {
+          nom: 'Pôle emploi',
+          valeur: 6
+        },
+        {
+          nom: 'Port maritime',
+          valeur: 11
+        },
+      ]
     };
 
     const idType = undefined;
@@ -201,8 +223,8 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Statistiques John Doe  01/01/2021-15/11/2021\n' +
       '\n' +
       'Général\n' +
-      'Personnes accompagnées durant cette période;20\n' +
-      'Accompagnements enregistrés;23\n' +
+      'Personnes totales accompagnées durant cette période;20\n' +
+      'Accompagnements total enregistrés (dont récurrent);23\n' +
       'Ateliers réalisés;0\n' +
       'Total des participants aux ateliers;0\n' +
       'Accompagnements individuels;10\n' +
@@ -223,7 +245,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Traitement de texte;8\n' +
       'Échanger avec ses proches;0\n' +
       'Emploi et formation;21\n' +
-      'Accompagner son enfant;0\n' +
+      'Accompagner un aidant;0\n' +
       'Numérique et TPE/PME;0\n' +
       'Démarche en ligne;21\n' +
       'Sécuriser un équipement;4\n' +
@@ -250,7 +272,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Plus de 60 ans;4\n' +
       '\n' +
       'Statut des usagers (en %)\n' +
-      'Étudiant;4\n' +
+      'Scolarisé(e);4\n' +
       'Sans emploi;91\n' +
       'En emploi;0\n' +
       'Retraité;4\n' +
@@ -262,7 +284,16 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Août;1476\n' +
       'Septembre;4022\n' +
       'Octobre;8438\n' +
-      'Novembre;430\n';
+      'Novembre;430\n' +
+      '\n' +
+      'Usager.ères réorienté.es\n' +
+      'CEFS;2\n' +
+      'Assistante sociale;9\n' +
+      'Sous-préfecture;2\n' +
+      'Pôle emploi;6\n' +
+      'Port maritime;11';
+
+
     const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName, idType, isAdminCoop);
 
     expect(fileContent).toEqual(expectedFileContent);

@@ -5,25 +5,40 @@ const formatDate = dateFin => dayjs(new Date(dateFin)).format('DD/MM/YYYY');
 
 const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined && emailCNError !== undefined ? 'Oui' : 'Non';
 
+const formatAdresseStructure = insee => {
+
+  let adresse = (insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.nom_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.complement_adresse ? insee.etablissement.adresse.complement_adresse + ' ' : ' ') +
+  (insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.localite ?? '');
+
+  return adresse.replace(/["']/g, '');
+};
+
 const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
   const { structureId, emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
-
   return {
     ...nextStatCnfs,
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
+    structureId: structureId ? structureId : undefined,
     nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
+    // eslint-disable-next-line max-len
+    adresseStructure: structureId ? formatAdresseStructure((await getStructureNameFromId(structureId)).insee) : '',
     codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
     certifie: 'Non',
+    groupeCRA: nextStatCnfs.groupeCRA ?? undefined,
     isUserActif: userActifStatus(mattermost, emailCNError)
   };
 };
 
 const getStatsCnfs = async (
-  { dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif },
+  { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif },
   { getStatsCnfs, getStructureNameFromId }) => {
   return Promise.all(
-    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
+    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
   );
 };
 const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {
@@ -32,6 +47,7 @@ const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {
   }
   const structure = await db.collection('structures').findOne({ _id: user.entity.oid });
   const filterCnfsByStructure = statsCnfsNoFilter.filter(cnfs => cnfs.nomStructure === structure.nom);
+
   return filterCnfsByStructure;
 };
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
