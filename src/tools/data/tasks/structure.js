@@ -1,5 +1,6 @@
 const {
   getTotalStructures,
+  getTotalStructuresAnonyme,
   updateMiseEnrelationStructure,
   updateIdMongoStructure,
   getUserStructure,
@@ -49,7 +50,7 @@ const updateMiseEnRelationAndUserStructure = async (db, logger, limit) => {
     'statut': 'VALIDATION_COSELEC',
     'userCreated': true
   };
-  const getStructureAnonyme = await getTotalStructures(db, limit)(query);
+  const getStructureAnonyme = await getTotalStructuresAnonyme(db, limit)(query);
   for (const structureObjOriginal of getStructureAnonyme) {
     const id = structureObjOriginal._id;
     const { _id, ...structureObj } = structureObjOriginal;

@@ -1,5 +1,6 @@
 const {
   getTotalConseillers,
+  getTotalConseillersAnonyme,
   updateIdMongoConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
@@ -79,7 +80,7 @@ const anonymisationConseiller = async (db, logger, limit) => {
 
 
 const updateMiseEnRelationAndUserConseiller = async (db, logger, limit) => {
-  const cnfs = await getTotalConseillers(db, limit);
+  const cnfs = await getTotalConseillersAnonyme(db, limit);
   for (const conseillerObj of cnfs) {
     const id = conseillerObj._id;
     await updateMiseEnRelationConseiller(db)(id, conseillerObj);

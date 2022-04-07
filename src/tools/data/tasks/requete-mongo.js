@@ -6,6 +6,9 @@ const suffix = '_faker';
 const getTotalStructures = (db, limit) => async query =>
   await db.collection(`structures${suffix}`).find({ faker: { '$exists': false }, ...query }).limit(limit).toArray();
 
+const getTotalStructuresAnonyme = (db, limit) => async query =>
+  await db.collection(`structures${suffix}`).find({ faker: { '$exists': true }, ...query }).limit(limit).toArray();
+
 const updateIdMongoStructure = db => async (id, dataAnonyme) => {
   await db.collection(`structures${suffix}`).insertOne({ ...dataAnonyme });
   return await db.collection(`structures${suffix}`).deleteOne({ _id: id });
@@ -45,6 +48,8 @@ const updateIdMongoStructureConseillerRupture = db => async (idOriginal, newIdMo
 
 const getTotalConseillers = async (db, limit) => await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': false } }).limit(limit).toArray();
 
+const getTotalConseillersAnonyme = async (db, limit) => await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': true } }).limit(limit).toArray();
+
 const updateIdMongoConseiller = db => async (idOriginal, dataAnonyme) => {
   await db.collection(`conseillers${suffix}`).insertOne({ ...dataAnonyme });
   return await db.collection(`conseillers${suffix}`).deleteOne({ _id: idOriginal });
@@ -83,6 +88,7 @@ const updateIdMongoSondages = db => async (idOriginal, newIdMongo) =>
 module.exports = {
   // Structures
   getTotalStructures,
+  getTotalStructuresAnonyme,
   updateIdMongoStructure,
   updateMiseEnrelationStructure,
   getStructure,
@@ -96,6 +102,7 @@ module.exports = {
   updateIdMongoStructureConseillerRupture,
   // Conseillers
   getTotalConseillers,
+  getTotalConseillersAnonyme,
   updateIdMongoConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
