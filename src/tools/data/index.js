@@ -9,43 +9,37 @@ const {
   updateMiseEnRelationAndUserStructure
 } = require('./tasks/structure');
 
-program.option('-a, --anonymisation', 'anonymisation de la bdd de recette');
-program.option('-u, --update', 'update: update de la collection user et mise en relation');
 program.option('-l, --limit <limit>', 'limit: définir un nombre');
+program.option('-c, --collection <collection>', 'collection: conseiller ou structure');
 program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
 execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   await new Promise(async (resolve, reject) => {
     const limit = ~~program.limit;
-    const anonymisation = program.anonymisation;
-    const miseAjourUserANDMiseEnRelation = program.update;
+    const collection = program.collection;
     const whiteList = ['local', 'recette'];
     const mongodb = app.get('mongodb');
     if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra'))) {
       exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;
     }
-    if (!miseAjourUserANDMiseEnRelation && !anonymisation) {
-      exit('Veuillez choisir au moins une option entre --anonymisation ou --update');
+    if (!['conseiller', 'structure'].includes(collection)) {
+      exit('Veuillez choisir au moins une option la collection: conseiller ou structure');
       return;
     }
     try {
-    // ETAPE 1 ANONYMISER LES CONSEILLERS ET LES STRUCTURES
-      if (anonymisation) {
-        logger.info('Etape "Anonymisation" des collections conseillers & structures');
-        // PARTIE CONSEILLER
+      if (collection === 'conseiller') {
+        // ETAPE 1 ANONYMISER LES CONSEILLERS
         await anonymisationConseiller(db, logger, limit);
-        // PARITE STRUCTURE
-        await anonymisationStructure(db, logger);
-      }
-      // ETAPE 2 METTRE a jour les collections: MISESENRELATION & USERS !
-      if (miseAjourUserANDMiseEnRelation) {
-        logger.info('Etape "Mise à jour" des collections misesEnRelation & users');
-        // PARITE STRUCTURE
-        await updateMiseEnRelationAndUserStructure(db, logger);
-        // PARTIE CONSEILLER
+        // ETAPE 2 METTRE a jour les collections: MISESENRELATION & USERS !
         await updateMiseEnRelationAndUserConseiller(db, logger, limit);
+      }
+      if (collection === 'structure') {
+        // ETAPE 1 ANONYMISER LES STRUCTURES
+        await anonymisationStructure(db, logger, limit);
+        // ETAPE 2 METTRE a jour les collections: MISESENRELATION & USERS !
+        await updateMiseEnRelationAndUserStructure(db, logger, limit);
       }
     } catch (error) {
       logger.error(error);
