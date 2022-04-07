@@ -1,13 +1,15 @@
-const { formatAddress } = require('../../common/format-address');
+const { formatAddressFromInsee, formatAddressFromPermanence, formatOpeningHours } = require('../../common');
+
+const emptyString = '';
 
 const permanenceFormattedAddress = formattedAddress =>
-  formattedAddress === '' ? {} : {
+  formattedAddress === emptyString ? {} : {
     adresse: formattedAddress
   };
 
 const permanenceAddress = permanence =>
   permanenceFormattedAddress(
-    formatAddress(permanence.insee?.etablissement.adresse ?? {})
+    formatAddressFromInsee(permanence.insee?.etablissement.adresse ?? {})
   );
 
 const permanenceContactEmail = permanence =>
@@ -15,16 +17,24 @@ const permanenceContactEmail = permanence =>
     email: permanence.contact.email
   } : {};
 
-const digitsPairsRegexp = /(\d\d(?!$))/g;
+const frenchCallingPhoneCodeRegexp = /(?:(\+(?:33|590|596|594|262|269))(\d))?/;
+const digitsPairsRegexp = /(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?/;
+const phoneRegexp = frenchCallingPhoneCodeRegexp.source + digitsPairsRegexp.source;
+const phoneSpace = ' ';
+const regexpMatchesToSkip = 1;
 
-const setSpaces = permanence => permanence.contact.telephone.includes(' ') ?
-  permanence.contact.telephone :
-  permanence.contact.telephone
-  .replace(digitsPairsRegexp, '$1 ');
+const noUndefinedMatches = match => match !== undefined;
+
+const setPhoneSpaces = telephone => telephone
+.replaceAll(phoneSpace, emptyString)
+.match(phoneRegexp)
+?.slice(regexpMatchesToSkip)
+.filter(noUndefinedMatches)
+.join(phoneSpace);
 
 const permanenceContactTelephone = permanence =>
   permanence.contact.telephone ? {
-    telephone: setSpaces(permanence)
+    telephone: setPhoneSpaces(permanence.contact.telephone)
   } : {};
 
 const permanenceContact = permanence =>
@@ -35,7 +45,7 @@ const permanenceContact = permanence =>
 
 const permanenceCoordinates = coordinates => coordinates ? { coordinates } : {};
 
-const toPermanenceDetailsTransfer = permanence => ({
+const structureToPermanenceDetailsTransfer = permanence => ({
   ...permanenceAddress(permanence),
   nom: permanence.nom,
   ...permanenceContact(permanence),
@@ -47,11 +57,25 @@ const cnfsDetails = cnfs => ({
   nombreCnfs: cnfs.length,
 });
 
-const permanenceDetails = async (structureId, { getPermanenceByStructureId, getCnfs }) => ({
-  ...toPermanenceDetailsTransfer(await getPermanenceByStructureId(structureId)),
+const permanenceDetailsFromStructureId = async (structureId, { getStructureById, getCnfs }) => ({
+  ...structureToPermanenceDetailsTransfer(await getStructureById(structureId)),
   ...cnfsDetails(await getCnfs(structureId))
 });
 
+const permanenceDetails = async permanence => ({
+  adresse: formatAddressFromPermanence(permanence.adresse),
+  coordinates: permanence.location.coordinates,
+  nom: permanence.nomEnseigne,
+  ...(permanence.email ? { email: permanence.email } : {}),
+  ...(permanence.numeroTelephone ? { telephone: setPhoneSpaces(permanence.numeroTelephone) } : {}),
+  ...(permanence.siteWeb ? { siteWeb: permanence.siteWeb } : {}),
+  typeAcces: permanence.typeAcces,
+  openingHours: formatOpeningHours(permanence.horaires ?? []),
+  nombreCnfs: permanence.conseillers?.length ?? 0,
+  cnfs: permanence.conseillers ?? []
+});
+
 module.exports = {
+  permanenceDetailsFromStructureId,
   permanenceDetails
 };

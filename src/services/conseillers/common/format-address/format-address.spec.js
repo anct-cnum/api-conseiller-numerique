@@ -1,4 +1,4 @@
-const { formatAddress } = require('./format-address');
+const { formatAddressFromInsee } = require('./format-address');
 
 describe('format address', () => {
   it('should convert a complete insee address to a human readable address', () => {
@@ -21,7 +21,7 @@ describe('format address', () => {
     };
     const expectedAddress = '6 rue de la Mairie, 69690 Bessenay';
 
-    const address = formatAddress(inseeAddress);
+    const address = formatAddressFromInsee(inseeAddress);
 
     expect(address).toStrictEqual(expectedAddress);
   });
@@ -42,7 +42,7 @@ describe('format address', () => {
     };
     const expectedAddress = 'ZI les deux clochers, 62300 Lens';
 
-    const address = formatAddress(inseeAddress);
+    const address = formatAddressFromInsee(inseeAddress);
 
     expect(address).toStrictEqual(expectedAddress);
   });

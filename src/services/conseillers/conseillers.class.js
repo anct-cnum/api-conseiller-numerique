@@ -49,14 +49,14 @@ const {
   exportStatistiquesQueryToSchema
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
-const { geolocatedConseillers, geolocatedStructure } = require('./geolocalisation/core/geolocalisation.core');
+const { geolocatedConseillers, geolocatedStructure, geolocatedPermanence } = require('./geolocalisation/core/geolocalisation.core');
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
 const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
-const { permanenceDetails } = require('./permanence/core/permanence-details.core');
+const { permanenceDetailsFromStructureId, permanenceDetails } = require('./permanence/core/permanence-details.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -656,22 +656,32 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
 
       canActivate(
-        existGuard(conseiller),
+        existGuard(conseiller ?? permanence),
       ).then(async () => {
-        res.send(await permanenceDetails(conseiller.structureId, permanenceRepository(db)));
+        if (conseiller !== null) {
+          res.send(await permanenceDetailsFromStructureId(conseiller.structureId, permanenceRepository(db)));
+        } else {
+          res.send(await permanenceDetails(permanence, permanenceRepository(db)));
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
 
       canActivate(
-        existGuard(conseiller),
+        existGuard(conseiller ?? permanence),
       ).then(async () => {
-        res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
+        if (conseiller !== null) {
+          res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
+        } else {
+          res.send(await geolocatedPermanence(permanence));
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
