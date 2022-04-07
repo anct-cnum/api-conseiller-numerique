@@ -110,10 +110,11 @@ execute(__filename, async ({ logger, db, exit }) => {
       usersByStructure = usersByStructure.filter(structure => structure.list.some(user => user.flag === true) === true && structure.count > 1);
       usersByStructure = usersByStructure.slice(0, limit);
       for (const structure of usersByStructure) {
+        const listWithoutFlag = structure.list.filter(user => user?.flag !== true);
         //Flag le second user
         await db.collection('users').updateOne(
           {
-            _id: structure.list[1].idUser
+            _id: listWithoutFlag[0].idUser
           },
           {
             $set: { showPermanenceForm: true }
