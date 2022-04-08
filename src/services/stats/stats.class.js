@@ -258,7 +258,6 @@ exports.Stats = class Stats extends Service {
         });
         try {
           const listCodePostaux = await statsFct.getCodesPostauxCras(conseillerIds, statsRepository(db));
-          console.log(listCodePostaux);
           res.send(listCodePostaux);
         } catch (error) {
           app.get('sentry').captureException(error);
