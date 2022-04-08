@@ -271,7 +271,6 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/admincoop/statistiques.pdf', async (req, res) => {
       app.get('mongoClient').then(async db => {
         const accessToken = req.feathers?.authentication?.accessToken;
-
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
@@ -285,17 +284,26 @@ exports.Stats = class Stats extends Service {
             }).toJSON());
             return;
           }
+          let codePostal = '/null';
           const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
           const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
+          let idType = '';
           const type = req.query.type;
-          const idType = req.query.idType === 'undefined' ? '' : req.query.idType + '/';
-          const codePostalNull = idType === '' ? '' : '/null';
-
+          if (type === 'structure') {
+            idType = user.entity.oid + '/';
+            if (req.query.codePostal) {
+              codePostal = '/' + req.query.codePostal;
+            }
+          } else {
+            idType = req.query.idType === 'undefined' ? '' : req.query.idType + '/';
+            codePostal = idType === '' ? '' : '/null';
+          }
           const schema = Joi.object({
             dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
             dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
             type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
             idType: Joi.required().error(new Error('L\'id du territoire invalide')),
+            codePostal: Joi.string().allow(null, '').error(new Error('Le code postal est invalide')),
           }).validate(req.query);
 
           if (schema.error) {
@@ -303,8 +311,7 @@ exports.Stats = class Stats extends Service {
             return;
           }
 
-          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostalNull;
-
+          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostal;
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
             await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
@@ -327,23 +334,43 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/admincoop/statistiques.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
-        ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
         const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        if (query.conseillerIds !== undefined) {
+          ids = query.conseillerIds.split(',').map(id => new ObjectID(id));
+        } else {
+          const getUserById = userAuthenticationRepository(db);
+          const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
+          const structure = await getStructureAssociatedWithUser(await getUserById(user._id));
+          const structureId = structure._id;
+          const miseEnRelations = await db.collection('misesEnRelation').find({
+            'structure.$id': new ObjectID(structureId),
+            'statut': { $in: ['finalisee', 'finalisee_rupture'] }
+          }).toArray();
+          if (miseEnRelations === null) {
+            res.status(404).send(new NotFound('Structure not found', {
+              structureId
+            }).toJSON());
+            return;
+          }
+          miseEnRelations.forEach(miseEnRelation => {
+            ids.push(miseEnRelation?.conseillerObj._id);
+          });
+        }
         const { stats, type, idType } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.idType, query.type, ids,
+          query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
           exportStatistiquesRepository(db),
-          statsFct.checkRole(user?.roles, Role.AdminCoop)
+          statsFct.checkRole(user?.roles, [Role.AdminCoop, Role.StructureCoop])
         );
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, statsFct.checkRole(user?.roles, Role.AdminCoop))
+          // eslint-disable-next-line max-len
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, statsFct.checkRole(user?.roles, [Role.AdminCoop, Role.StructureCoop]))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -371,8 +398,9 @@ exports.Stats = class Stats extends Service {
         stats.nbCras = await db.collection('cras').estimatedDocumentCount();
         //Total accompagnement
         let nbAccompagnements = await db.collection('cras').aggregate(
-          { $group:
-            { _id: null, count: { $sum: '$cra.nbParticipants' } }
+          {
+            $group:
+              { _id: null, count: { $sum: '$cra.nbParticipants' } }
           },
           { $project: { 'valeur': '$count' } }
         ).toArray();
@@ -457,10 +485,12 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
-              '$gte': dateDebutQuery,
-              '$lte': dateFinQuery,
-            } };
+            const query = {
+              'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
+                '$gte': dateDebutQuery,
+                '$lte': dateFinQuery,
+              }
+            };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
             const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
@@ -536,10 +566,12 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
-              '$gte': dateDebutQuery,
-              '$lte': dateFinQuery,
-            } };
+            const query = {
+              'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
+                '$gte': dateDebutQuery,
+                '$lte': dateFinQuery,
+              }
+            };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
             const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
@@ -735,26 +767,29 @@ exports.Stats = class Stats extends Service {
 
             territoire = await db.collection('stats_Territoires').aggregate([
               { $match: { date: dateFin, [typeTerritoire]: idTerritoire } },
-              { $group: {
-                _id: {
-                  codeRegion: '$codeRegion',
-                  nomRegion: '$nomRegion',
-                },
-                conseillerIds: { $push: '$conseillerIds' }
-              } },
+              {
+                $group: {
+                  _id: {
+                    codeRegion: '$codeRegion',
+                    nomRegion: '$nomRegion',
+                  },
+                  conseillerIds: { $push: '$conseillerIds' }
+                }
+              },
               { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
-              { $project: {
-                '_id': 0,
-                'codeRegion': 1,
-                'nomRegion': 1,
-                'conseillerIds': {
-                  $reduce: {
-                    input: '$conseillerIds',
-                    initialValue: [],
-                    in: { $concatArrays: ['$$value', '$$this'] }
+              {
+                $project: {
+                  '_id': 0,
+                  'codeRegion': 1,
+                  'nomRegion': 1,
+                  'conseillerIds': {
+                    $reduce: {
+                      input: '$conseillerIds',
+                      initialValue: [],
+                      in: { $concatArrays: ['$$value', '$$this'] }
+                    }
                   }
                 }
-              }
               }
             ]).toArray();
             res.send(territoire[0]);
