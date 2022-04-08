@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { Conflict } = require('@feathersjs/errors');
+const { Conflict, GeneralError } = require('@feathersjs/errors');
 const logger = require('../../logger');
 
 const {
@@ -14,7 +14,9 @@ const {
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { updatePermanenceToSchema } = require('./permanence/utils/update-permanence.utils');
-const { getPermanenceByConseiller, createPermanence, setPermanence } = require('./permanence/repositories/permanence-conseiller.repository');
+const { getPermanenceByConseiller, getPermanencesByStructure, createPermanence, setPermanence } =
+  require('./permanence/repositories/permanence-conseiller.repository');
+const axios = require('axios');
 
 exports.PermanenceConseillers = class Sondages extends Service {
   constructor(options, app) {
@@ -24,7 +26,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       this.Model = db.collection('permanences');
     });
 
-    app.get('/permanence-conseillers/conseiller/:id', async (req, res) => {
+    app.get('/permanences/conseiller/:id', async (req, res) => {
 
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
@@ -45,19 +47,44 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
 
     });
-    app.post('/permanence-conseillers/conseiller/:id/create', async (req, res) => {
+
+    app.get('/permanences/structure/:id', async (req, res) => {
+
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const structureId = req.params.id;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await getPermanencesByStructure(db)(structureId).then(permanences => {
+          res.send({ permanences });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('La recherche de permanence a échoué, veuillez réessayer.').toJSON());
+        });
+
+      }).catch(routeActivationError => abort(res, routeActivationError));
+
+    });
+
+    app.post('/permanences/conseiller/:id/create', async (req, res) => {
       const db = await app.get('mongoClient');
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
       const conseillerId = req.params.id;
-      
+      const { hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
+
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await createPermanence(db)(query, conseillerId).then(() => {
+        await createPermanence(db)(query, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
           res.send({ isCreated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -68,25 +95,78 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     });
 
-    app.patch('/permanence-conseillers/:id', async (req, res) => {
+    app.patch('/permanences/conseiller/:id/update/:idPermanence', async (req, res) => {
       const db = await app.get('mongoClient');
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      const permanenceId = req.params.id;
+
+      const conseillerId = req.params.id;
+      const permanenceId = req.params.idPermanence;
+      const { hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await setPermanence(db)(permanenceId, query).then(() => {
+        await setPermanence(db)(permanenceId, query, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
           res.send({ isUpdated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
           res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
         });
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/permanences/verifySiret/:siret', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        try {
+          const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.params.siret}`;
+          const params = {
+            token: app.get('api_entreprise'),
+            context: 'cnum',
+            recipient: 'cnum',
+            object: 'checkSiret',
+          };
+          const result = await axios.get(urlSiret, { params: params });
+          return res.send({ 'adresseParSiret': result.data.etablissement.adresse });
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          return res.send({ 'adresseParSiret': null });
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+
+    });
+
+    app.get('/permanences/verifyAdresse/:adresse', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const adresse = JSON.parse(req.params.adresse);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+
+        const adressePostale = encodeURI(`${adresse.numero} ${adresse.rue} ${adresse.ville} ${adresse.codePostal}`);
+        const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}`;
+
+        try {
+          const params = {};
+          const result = await axios.get(urlAPI, { params: params });
+          return res.send({ 'geocodeAdresse': result.data?.features });
+        } catch (e) {
+          return res.send({ 'geocodeAdresse': null });
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }

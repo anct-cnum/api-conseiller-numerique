@@ -5,7 +5,7 @@ const isValidAddressPart = addressPart => addressPart !== undefined && addressPa
 
 const addressGroup = addressParts => addressParts.filter(isValidAddressPart).join(addressGroupSeparator);
 
-const formatAddress = adresse => [
+const formatAddressFromInsee = adresse => [
   addressGroup([
     adresse.numero_voie,
     adresse.type_voie,
@@ -18,6 +18,18 @@ const formatAddress = adresse => [
   ]),
 ].filter(isValidAddressPart).join(addressPartSeparator);
 
+const formatAddressFromPermanence = adresse => [
+  addressGroup([
+    adresse.numeroRue,
+    adresse.rue
+  ]),
+  addressGroup([
+    adresse.codePostal,
+    adresse.ville
+  ]),
+].filter(isValidAddressPart).join(addressPartSeparator);
+
 module.exports = {
-  formatAddress
+  formatAddressFromInsee,
+  formatAddressFromPermanence
 };
