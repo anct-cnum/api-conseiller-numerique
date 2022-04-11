@@ -227,7 +227,7 @@ exports.Stats = class Stats extends Service {
 
     app.get('/stats/cra/codesPostaux/structure/:id', async (req, res) => {
       if (!statsFct.checkAuth(req)) {
-        res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
+        res.status(401).send(new NotAuthenticated('Utilisateur non authentifié'));
         return;
       }
       const userId = decode(req.feathers.authentication.accessToken).sub;
@@ -242,22 +242,9 @@ exports.Stats = class Stats extends Service {
           }).toJSON());
           return;
         }
-        const miseEnRelations = await db.collection('misesEnRelation').find({
-          'structure.$id': new ObjectID(idStructureParams),
-          'statut': { $in: ['finalisee', 'finalisee_rupture'] }
-        }).toArray();
-        if (miseEnRelations === null) {
-          res.status(404).send(new NotFound('Structure not found', {
-            idStructureParams
-          }).toJSON());
-          return;
-        }
-        let conseillerIds = [];
-        miseEnRelations.forEach(miseEnRelation => {
-          conseillerIds.push(miseEnRelation?.conseillerObj._id);
-        });
+        const conseillerIds = await statsFct.getConseillersIdsByStructure(idStructureParams, res, statsRepository(db));
         try {
-          const listCodePostaux = await statsFct.getCodesPostauxCras(conseillerIds, true, statsRepository(db));
+          const listCodePostaux = await statsFct.getCodesPostauxCrasStructure(conseillerIds, statsRepository(db));
           res.send(listCodePostaux);
         } catch (error) {
           app.get('sentry').captureException(error);
@@ -350,19 +337,7 @@ exports.Stats = class Stats extends Service {
           const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
           const structure = await getStructureAssociatedWithUser(await getUserById(user._id));
           const structureId = structure._id;
-          const miseEnRelations = await db.collection('misesEnRelation').find({
-            'structure.$id': new ObjectID(structureId),
-            'statut': { $in: ['finalisee', 'finalisee_rupture'] }
-          }).toArray();
-          if (miseEnRelations === null) {
-            res.status(404).send(new NotFound('Structure not found', {
-              structureId
-            }).toJSON());
-            return;
-          }
-          miseEnRelations.forEach(miseEnRelation => {
-            ids.push(miseEnRelation?.conseillerObj._id);
-          });
+          ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
         }
         const { stats, type, idType } = await getStatistiquesToExport(
           query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
@@ -646,20 +621,7 @@ exports.Stats = class Stats extends Service {
           }).toJSON());
           return;
         }
-        const miseEnRelations = await db.collection('misesEnRelation').find({
-          'structure.$id': new ObjectID(structureId),
-          'statut': { $in: ['finalisee', 'finalisee_rupture'] }
-        }).toArray();
-        if (miseEnRelations === null) {
-          res.status(404).send(new NotFound('Structure not found', {
-            structureId
-          }).toJSON());
-          return;
-        }
-        let conseillerIds = [];
-        miseEnRelations.forEach(miseEnRelation => {
-          conseillerIds.push(miseEnRelation?.conseillerObj._id);
-        });
+        const conseillerIds = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
         //Composition de la partie query en formattant la date
         let dateDebut = new Date(req.query?.dateDebut);
         dateDebut.setUTCHours(0, 0, 0, 0);
@@ -675,16 +637,9 @@ exports.Stats = class Stats extends Service {
           'conseiller.$id': { $in: conseillerIds },
         };
         if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
-          query = {
-            'conseiller.$id': { $in: conseillerIds },
-            'cra.codePostal': req.query?.codePostal,
-            'cra.dateAccompagnement': {
-              $gte: dateDebut,
-              $lt: dateFin,
-            }
-          };
+          query['cra.codePostal'] = req.query?.codePostal;
         }
-        stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.StructureCoop));
+        stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
         res.send(stats);
       });
     });

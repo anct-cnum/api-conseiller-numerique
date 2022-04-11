@@ -91,6 +91,13 @@ const getCodesPostauxStatistiquesCrasStructure = db => async conseillersId => aw
     }
   });
 
+const getConseillersIdsByStructure = db => async idStructure => {
+  return await db.collection('misesEnRelation').find({
+    'structure.$id': idStructure,
+    'statut': { $in: ['finalisee', 'finalisee_rupture'] }
+  }).toArray();
+};
+
 const statsRepository = db => ({
   getDepartement: getDepartement(db),
   getRegion: getRegion(db),
@@ -99,7 +106,8 @@ const statsRepository = db => ({
   getTotalDepartements: getTotalDepartements(db),
   getTotalRegions: getTotalRegions(db),
   getCodesPostauxStatistiquesCras: getCodesPostauxStatistiquesCras(db),
-  getCodesPostauxStatistiquesCrasStructure: getCodesPostauxStatistiquesCrasStructure(db)
+  getCodesPostauxStatistiquesCrasStructure: getCodesPostauxStatistiquesCrasStructure(db),
+  getConseillersIdsByStructure: getConseillersIdsByStructure(db)
 });
 
 module.exports = {
