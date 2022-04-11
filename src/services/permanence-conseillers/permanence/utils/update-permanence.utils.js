@@ -21,6 +21,7 @@ const assignPermanence = (body, database) => {
   delete permanence.telephonePro;
   delete permanence.emailPro;
   delete permanence.estCoordinateur;
+  delete permanence.showPermanenceForm;
   delete permanence.hasPermanence;
 
   permanence?.horaires?.forEach(horaires => {
