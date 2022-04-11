@@ -1,6 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const decode = require('jwt-decode');
-const { Forbidden, NotAuthenticated, BadRequest, GeneralError, NotFound } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, BadRequest, GeneralError } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
