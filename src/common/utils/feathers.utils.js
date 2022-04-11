@@ -5,6 +5,7 @@ const Role = {
   Admin: 'admin',
   AdminCoop: 'admin_coop',
   StructureCoop: 'structure_coop',
+  HubCoop: 'hub_coop',
   Conseiller: 'conseiller',
   Candidat: 'candidat'
 };
