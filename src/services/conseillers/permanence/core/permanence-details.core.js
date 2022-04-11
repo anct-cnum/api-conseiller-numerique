@@ -48,6 +48,8 @@ const permanenceCoordinates = coordinates => coordinates ? { coordinates } : {};
 const structureToPermanenceDetailsTransfer = permanence => ({
   ...permanenceAddress(permanence),
   nom: permanence.nom,
+  isLabeledAidantsConnect: permanence.estLabelliseAidantsConnect === 'OUI',
+  isLabeledFranceServices: permanence.estLabelliseFranceServices === 'OUI',
   ...permanenceContact(permanence),
   ...permanenceCoordinates(permanence.coordonneesInsee?.coordinates)
 });

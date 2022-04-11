@@ -36,6 +36,7 @@ const getConseillersWithGeolocation = db => async () =>
         'structure.coordonneesInsee': 1,
         'structure.location': 1,
         'structure.nom': 1,
+        'structure.estLabelliseAidantsConnect': 1,
         'structure.estLabelliseFranceServices': 1,
         'structure.insee.etablissement.adresse': 1
       }
