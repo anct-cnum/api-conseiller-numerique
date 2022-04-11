@@ -606,7 +606,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop];
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
         if (rolesAllowed.filter(role => adminUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
