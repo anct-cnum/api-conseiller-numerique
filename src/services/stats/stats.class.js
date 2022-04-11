@@ -271,6 +271,7 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/admincoop/statistiques.pdf', async (req, res) => {
       app.get('mongoClient').then(async db => {
         const accessToken = req.feathers?.authentication?.accessToken;
+
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
@@ -334,6 +335,7 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/admincoop/statistiques.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
+
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
@@ -398,9 +400,8 @@ exports.Stats = class Stats extends Service {
         stats.nbCras = await db.collection('cras').estimatedDocumentCount();
         //Total accompagnement
         let nbAccompagnements = await db.collection('cras').aggregate(
-          {
-            $group:
-              { _id: null, count: { $sum: '$cra.nbParticipants' } }
+          { $group:
+            { _id: null, count: { $sum: '$cra.nbParticipants' } }
           },
           { $project: { 'valeur': '$count' } }
         ).toArray();
@@ -635,7 +636,7 @@ exports.Stats = class Stats extends Service {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
         }
-        //Verification role admin_coop
+        //Verification role structure_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         const structureId = user.entity.oid;
