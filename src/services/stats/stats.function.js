@@ -47,8 +47,8 @@ const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalR
   }
 };
 
-const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras, getCodesPostauxStatistiquesCrasStructure }) => {
-  if (idConseiller instanceof Array) {
+const getCodesPostauxCras = async (idConseiller, structure = false, { getCodesPostauxStatistiquesCras, getCodesPostauxStatistiquesCrasStructure }) => {
+  if (structure) {
     return await getCodesPostauxStatistiquesCrasStructure(idConseiller);
   } else {
     return await getCodesPostauxStatistiquesCras(idConseiller);

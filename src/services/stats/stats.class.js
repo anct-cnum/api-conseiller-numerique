@@ -231,24 +231,24 @@ exports.Stats = class Stats extends Service {
         return;
       }
       const userId = decode(req.feathers.authentication.accessToken).sub;
-      const idStructure = new ObjectID(req.params.id);
+      const idStructureParams = new ObjectID(req.params.id);
 
       app.get('mongoClient').then(async db => {
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const structureId = user.entity.oid;
-        if (!user?.roles.includes('structure_coop') && structureId !== idStructure) {
+        const structureIdByUser = user.entity.oid;
+        if (!user?.roles.includes('structure_coop') && structureIdByUser !== idStructureParams) {
           res.status(403).send(new Forbidden('Utilisateur non autorisé', {
             userId: userId
           }).toJSON());
           return;
         }
         const miseEnRelations = await db.collection('misesEnRelation').find({
-          'structure.$id': new ObjectID(idStructure),
+          'structure.$id': new ObjectID(idStructureParams),
           'statut': { $in: ['finalisee', 'finalisee_rupture'] }
         }).toArray();
         if (miseEnRelations === null) {
           res.status(404).send(new NotFound('Structure not found', {
-            idStructure
+            idStructureParams
           }).toJSON());
           return;
         }
@@ -257,7 +257,7 @@ exports.Stats = class Stats extends Service {
           conseillerIds.push(miseEnRelation?.conseillerObj._id);
         });
         try {
-          const listCodePostaux = await statsFct.getCodesPostauxCras(conseillerIds, statsRepository(db));
+          const listCodePostaux = await statsFct.getCodesPostauxCras(conseillerIds, true, statsRepository(db));
           res.send(listCodePostaux);
         } catch (error) {
           app.get('sentry').captureException(error);
@@ -485,12 +485,10 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = {
-              'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
-                '$gte': dateDebutQuery,
-                '$lte': dateFinQuery,
-              }
-            };
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
+              '$gte': dateDebutQuery,
+              '$lte': dateFinQuery,
+            } };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
             const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
@@ -566,12 +564,10 @@ exports.Stats = class Stats extends Service {
             Math.round(ligneStats?.cnfsActives * 100 / (ligneStats?.nombreConseillersCoselec)) : 0;
 
           if (ligneStats.conseillerIds.length > 0) {
-            const query = {
-              'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
-                '$gte': dateDebutQuery,
-                '$lte': dateFinQuery,
-              }
-            };
+            const query = { 'conseiller.$id': { $in: ligneStats.conseillerIds }, 'cra.dateAccompagnement': {
+              '$gte': dateDebutQuery,
+              '$lte': dateFinQuery,
+            } };
             const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
             const countRecurrentes = await statsCras.getPersonnesRecurrentes(db, query);
             ligneStats.personnesAccompagnees = countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0;
@@ -767,30 +763,26 @@ exports.Stats = class Stats extends Service {
 
             territoire = await db.collection('stats_Territoires').aggregate([
               { $match: { date: dateFin, [typeTerritoire]: idTerritoire } },
-              {
-                $group: {
-                  _id: {
-                    codeRegion: '$codeRegion',
-                    nomRegion: '$nomRegion',
-                  },
-                  conseillerIds: { $push: '$conseillerIds' }
-                }
-              },
+              { $group: {
+                _id: {
+                  codeRegion: '$codeRegion',
+                  nomRegion: '$nomRegion',
+                },
+                conseillerIds: { $push: '$conseillerIds' }
+              } },
               { $addFields: { 'codeRegion': '$_id.codeRegion', 'nomRegion': '$_id.nomRegion' } },
-              {
-                $project: {
-                  '_id': 0,
-                  'codeRegion': 1,
-                  'nomRegion': 1,
-                  'conseillerIds': {
-                    $reduce: {
-                      input: '$conseillerIds',
-                      initialValue: [],
-                      in: { $concatArrays: ['$$value', '$$this'] }
-                    }
+              { $project: {
+                '_id': 0,
+                'codeRegion': 1,
+                'nomRegion': 1,
+                'conseillerIds': {
+                  $reduce: {
+                    input: '$conseillerIds',
+                    initialValue: [],
+                    in: { $concatArrays: ['$$value', '$$this'] }
                   }
                 }
-              }
+              } }
             ]).toArray();
             res.send(territoire[0]);
           }
