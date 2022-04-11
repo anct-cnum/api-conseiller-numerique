@@ -341,8 +341,8 @@ exports.Stats = class Stats extends Service {
       ).then(async () => {
         let ids = [];
         const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-        if (query.conseillerIds !== undefined) {
-          ids = query.conseillerIds.split(',').map(id => new ObjectID(id));
+        if (query.type !== 'structure') {
+          ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
         } else {
           const getUserById = userAuthenticationRepository(db);
           const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
