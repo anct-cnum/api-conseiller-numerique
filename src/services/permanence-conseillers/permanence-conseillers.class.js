@@ -84,7 +84,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await createPermanence(db)(query, conseillerId, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
           res.send({ isCreated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -110,7 +110,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await setPermanence(db)(permanenceId, query, conseillerId, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await setPermanence(db)(permanenceId, query, conseillerId, user._id, showPermanenceForm, hasPermanence,
+          telephonePro, emailPro, estCoordinateur).then(() => {
           res.send({ isUpdated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
