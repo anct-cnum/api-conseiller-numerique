@@ -336,7 +336,7 @@ exports.Structures = class Structures extends Service {
       }
       const emailExists = await db.collection('users').findOne({ name: email });
       if (emailExists !== null) {
-        return res.status(409).send(new Conflict('Email déjà prise', {
+        return res.status(409).send(new Conflict('L\'adresse email que vous avez renseigné existe déjà', {
           structureId
         }).toJSON());
       }
