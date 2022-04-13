@@ -71,7 +71,7 @@ const permanenceDetails = async permanence => ({
   ...(permanence.email ? { email: permanence.email } : {}),
   ...(permanence.numeroTelephone ? { telephone: setPhoneSpaces(permanence.numeroTelephone) } : {}),
   ...(permanence.siteWeb ? { siteWeb: permanence.siteWeb } : {}),
-  typeAcces: permanence.typeAcces,
+  typeAcces: permanence.typeAcces.join(', '),
   openingHours: formatOpeningHours(permanence.horaires ?? []),
   nombreCnfs: permanence.conseillers?.length ?? 0,
   cnfs: permanence.conseillers ?? []

@@ -474,7 +474,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           ]
         }
       ],
-      typeAcces: 'libre',
+      typeAcces: ['libre'],
       conseillers: [
         {
           prenom: 'Christelle',
@@ -534,7 +534,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           46.8691
         ],
       },
-      typeAcces: 'libre',
+      typeAcces: ['libre'],
       conseillers: [
         {
           prenom: 'Christelle',
@@ -588,7 +588,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           46.8691
         ],
       },
-      typeAcces: 'libre',
+      typeAcces: ['libre'],
       siteWeb: 'https://ccas-des-herbiers.com',
     };
 
@@ -629,7 +629,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           46.8691
         ],
       },
-      typeAcces: 'libre'
+      typeAcces: ['libre']
     };
 
     const expectedPermanenceDetails = {
@@ -640,6 +640,43 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       ],
       nom: 'CCAS des HERBIERS',
       typeAcces: 'libre',
+      openingHours: [],
+      nombreCnfs: 0,
+      cnfs: []
+    };
+
+    const details = await permanenceDetails(permanence);
+
+    expect(details).toStrictEqual(expectedPermanenceDetails);
+  });
+
+  it('devrait retourner le détail de la permanence avec plusieurs types d\'accès', async () => {
+    const permanence = {
+      nomEnseigne: 'CCAS des HERBIERS',
+      adresse: {
+        numeroRue: '6',
+        rue: 'RUE DU TOURNIQUET',
+        codePostal: '85500',
+        ville: 'LES HERBIERS'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [
+          -1.0134,
+          46.8691
+        ],
+      },
+      typeAcces: ['libre', 'rdv']
+    };
+
+    const expectedPermanenceDetails = {
+      adresse: '6 RUE DU TOURNIQUET, 85500 LES HERBIERS',
+      coordinates: [
+        -1.0134,
+        46.8691
+      ],
+      nom: 'CCAS des HERBIERS',
+      typeAcces: 'libre, rdv',
       openingHours: [],
       nombreCnfs: 0,
       cnfs: []
