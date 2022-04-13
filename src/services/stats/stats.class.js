@@ -345,9 +345,9 @@ exports.Stats = class Stats extends Service {
           statsFct.checkRole(user?.roles, [Role.AdminCoop, Role.StructureCoop])
         );
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, statsFct.checkRole(user?.roles, [Role.AdminCoop, Role.StructureCoop]))
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(user?.roles, [Role.AdminCoop, Role.StructureCoop]))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
