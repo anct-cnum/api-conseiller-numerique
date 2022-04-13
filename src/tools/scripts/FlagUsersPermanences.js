@@ -89,7 +89,7 @@ execute(__filename, async ({ logger, db, exit }) => {
       break;
     case 2:
       //Comme le lot 1 sauf qu'on exclut les structures ayant déjà un conseiller flaggué
-      usersByStructure = usersByStructure.filter(structure => structure.list.some(user => user.flag === true) === false);
+      usersByStructure = usersByStructure.filter(structure => structure.list.some(user => user.hasOwnProperty('flag')) === false);
       usersByStructure = usersByStructure.slice(0, limit);
       for (const structure of usersByStructure) {
         //Flag uniquement le premier user
@@ -107,10 +107,10 @@ execute(__filename, async ({ logger, db, exit }) => {
       break;
     case 3:
       //Comme le lot 2 sauf qu'on conserve les structures ayant déjà un conseiller flaggué avec un nombre de users > 1
-      usersByStructure = usersByStructure.filter(structure => structure.list.some(user => user.flag === true) === true && structure.count > 1);
+      usersByStructure = usersByStructure.filter(structure => structure.list.some(user => user.hasOwnProperty('flag')) === true && structure.count > 1);
       usersByStructure = usersByStructure.slice(0, limit);
       for (const structure of usersByStructure) {
-        const listWithoutFlag = structure.list.filter(user => user?.flag !== true);
+        const listWithoutFlag = structure.list.filter(user => !user.hasOwnProperty('flag'));
         //Flag le second user
         await db.collection('users').updateOne(
           {
@@ -142,7 +142,7 @@ execute(__filename, async ({ logger, db, exit }) => {
       const resultLot5 = await db.collection('users').updateMany(
         {
           roles: { $in: ['conseiller'] },
-          showPermanenceForm: true
+          showPermanenceForm: { $exists: true }
         },
         {
           $unset: { showPermanenceForm: '' }
