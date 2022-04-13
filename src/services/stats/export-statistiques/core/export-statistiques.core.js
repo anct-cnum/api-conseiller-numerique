@@ -21,13 +21,21 @@ const statistiquesDepartementalRegional = async (dateDebut, dateFin, idType, typ
   idType
 });
 
+// eslint-disable-next-line max-len
+const statistiquesDepartementalRegionalWithCodePostal = async (dateDebut, dateFin, idType, type, codePostal, ids, { getStatsDepartementalRegionalWithCodePostal }, isAdminCoop) => ({
+  stats: await getStatsDepartementalRegionalWithCodePostal(dateDebut, dateFin, codePostal, ids, isAdminCoop),
+  type,
+  idType
+});
+
 const getStatistiquesToExport = async (
   dateDebut,
   dateFin,
   idType,
   type,
+  codePostal,
   ids,
-  { getConseillerById, getStatsConseiller, getStatsNationales, getStatsDepartementalRegional },
+  { getConseillerById, getStatsConseiller, getStatsNationales, getStatsDepartementalRegional, getStatsDepartementalRegionalWithCodePostal },
   isAdminCoop) => {
   if (type === 'user' && isStatistiquesForConseiller(idType)) {
     return await statistiquesForConseiller(dateDebut, dateFin, idType, { getConseillerById, getStatsConseiller }, isAdminCoop);
@@ -36,7 +44,12 @@ const getStatistiquesToExport = async (
     return await statistiquesNationales(dateDebut, dateFin, type, { getStatsNationales }, isAdminCoop);
   }
   // ici c'est forcément de type codedepartement ou codeRegion
-  return await statistiquesDepartementalRegional(dateDebut, dateFin, idType, type, ids, { getStatsDepartementalRegional }, isAdminCoop);
+  if (codePostal) {
+    // eslint-disable-next-line max-len
+    return await statistiquesDepartementalRegionalWithCodePostal(dateDebut, dateFin, idType, type, codePostal, ids, { getStatsDepartementalRegionalWithCodePostal }, isAdminCoop);
+  } else {
+    return await statistiquesDepartementalRegional(dateDebut, dateFin, idType, type, ids, { getStatsDepartementalRegional }, isAdminCoop);
+  }
 };
 
 module.exports = {
