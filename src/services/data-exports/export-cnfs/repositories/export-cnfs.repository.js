@@ -77,7 +77,8 @@ const getStructureNameFromId = db => async id => db.collection('structures')
     _id: 0,
     nom: 1,
     codeDepartement: 1,
-    insee: 1
+    insee: 1,
+    contact: 1
   }
 });
 
