@@ -69,8 +69,8 @@ exports.Users = class Users extends Service {
 
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
-            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
-            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
+            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé.`);
+            res.status(409).send(new Conflict('Erreur: l\'email saisi est déjà utilisé', {
               nouveauEmail
             }).toJSON());
             return;
