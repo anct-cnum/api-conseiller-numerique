@@ -43,11 +43,11 @@ const getStatistiquesToExport = async (
   if (type === 'nationales') {
     return await statistiquesNationales(dateDebut, dateFin, type, { getStatsNationales }, isAdminCoop);
   }
+  // ici c'est forcément de type codedepartement ou codeRegion
   if (codePostal) {
     // eslint-disable-next-line max-len
     return await statistiquesDepartementalRegionalWithCodePostal(dateDebut, dateFin, idType, type, codePostal, ids, { getStatsDepartementalRegionalWithCodePostal }, isAdminCoop);
   } else {
-    // ici c'est forcément de type codedepartement ou codeRegion
     return await statistiquesDepartementalRegional(dateDebut, dateFin, idType, type, ids, { getStatsDepartementalRegional }, isAdminCoop);
   }
 };

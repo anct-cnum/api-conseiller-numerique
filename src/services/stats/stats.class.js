@@ -342,12 +342,12 @@ exports.Stats = class Stats extends Service {
         const { stats, type, idType } = await getStatistiquesToExport(
           query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
           exportStatistiquesRepository(db),
-          statsFct.checkRole(user?.roles, [Role.AdminCoop, Role.StructureCoop])
+          statsFct.checkRole(user?.roles, Role.AdminCoop)
         );
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(user?.roles, [Role.AdminCoop, Role.StructureCoop]))
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(user?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
