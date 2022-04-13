@@ -35,7 +35,7 @@ Se connecter au conteneur pour exécuter l'import de la base avec `mongorestore`
 docker exec mongo.recette-conseiller-numerique mongorestore --drop --nsInclude='${DATABASE}.*' --nsFrom='${DATABASE}.*' --nsTo='conseiller-numerique.*'
 ```
 
-Une fois l'import effectué, les données exportés peuvent être supprimées du conteneur de cette manière :
+Une fois l'import effectué, les données exportées peuvent être supprimées du conteneur de cette manière :
 
 ```shell
 docker exec mongo.recette-conseiller-numerique rm -rf dump
