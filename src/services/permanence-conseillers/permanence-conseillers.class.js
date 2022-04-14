@@ -78,13 +78,13 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       const conseillerId = req.params.id;
-      const { hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
+      const { showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await createPermanence(db)(query, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
           res.send({ isCreated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -104,13 +104,14 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
       const conseillerId = req.params.id;
       const permanenceId = req.params.idPermanence;
-      const { hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
+      const { showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await setPermanence(db)(permanenceId, query, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await setPermanence(db)(permanenceId, query, conseillerId, user._id, showPermanenceForm, hasPermanence,
+          telephonePro, emailPro, estCoordinateur).then(() => {
           res.send({ isUpdated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);

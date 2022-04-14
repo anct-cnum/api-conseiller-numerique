@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { NotFound } = require('@feathersjs/errors');
 
 const checkAuth = req => {
   return req.feathers?.authentication !== undefined;
@@ -51,6 +52,26 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
   return await getCodesPostauxStatistiquesCras(idConseiller);
 };
 
+const getCodesPostauxCrasStructure = async (idConseiller, { getCodesPostauxStatistiquesCrasStructure }) => {
+  return await getCodesPostauxStatistiquesCrasStructure(idConseiller);
+};
+
+const getConseillersIdsByStructure = async (idStructure, res, { getConseillersIdsByStructure }) => {
+  const miseEnRelations = await getConseillersIdsByStructure(idStructure);
+  if (miseEnRelations === null) {
+    res.status(404).send(new NotFound('no matchings', {
+      idStructure
+    }).toJSON());
+    return;
+  }
+  let conseillerIds = [];
+  miseEnRelations.forEach(miseEnRelation => {
+    conseillerIds.push(miseEnRelation?.conseillerObj._id);
+  });
+
+  return conseillerIds;
+};
+
 const getTerritoiresPrefet = async (type, date, codeDepartement, codeRegion, nomRegion, { getDepartement, getRegion }) => {
   if (type === 'codeDepartement') {
     return await getDepartement(date, codeDepartement, codeRegion);
@@ -66,5 +87,7 @@ module.exports = {
   getTerritoires,
   getTotalTerritoires,
   getCodesPostauxCras,
-  getTerritoiresPrefet
+  getCodesPostauxCrasStructure,
+  getTerritoiresPrefet,
+  getConseillersIdsByStructure
 };

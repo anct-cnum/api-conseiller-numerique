@@ -143,7 +143,7 @@ exports.Stats = class Stats extends Service {
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = ['conseiller', 'admin_coop', 'structure_coop'];
+        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop];
         if (rolesAllowed.filter(role => conseillerUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -152,7 +152,7 @@ exports.Stats = class Stats extends Service {
         }
 
         //Verification du conseiller associé à l'utilisateur correspondant
-        const id = ['admin_coop', 'structure_coop'].filter(role => conseillerUser?.roles.includes(role)).length > 0 ?
+        const id = [Role.AdminCoop, Role.StructureCoop].filter(role => conseillerUser?.roles.includes(role)).length > 0 ?
           req.query.idConseiller : conseillerUser.entity.oid;
 
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
@@ -225,6 +225,36 @@ exports.Stats = class Stats extends Service {
       });
     });
 
+    app.get('/stats/cra/codesPostaux/structure/:id', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('Utilisateur non authentifié'));
+        return;
+      }
+      const userId = decode(req.feathers.authentication.accessToken).sub;
+      const idStructureParams = new ObjectID(req.params.id);
+
+      app.get('mongoClient').then(async db => {
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        const structureIdByUser = user.entity.oid;
+        if (!user?.roles.includes('structure_coop') && structureIdByUser !== idStructureParams) {
+          res.status(403).send(new Forbidden('Utilisateur non autorisé', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+        const conseillerIds = await statsFct.getConseillersIdsByStructure(idStructureParams, res, statsRepository(db));
+        try {
+          const listCodePostaux = await statsFct.getCodesPostauxCrasStructure(conseillerIds, statsRepository(db));
+          res.send(listCodePostaux);
+        } catch (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('Une erreur est survenue lors de la génération de la liste des codes postaux.').toJSON());
+          return;
+        }
+      });
+    });
+
     app.get('/stats/admincoop/statistiques.pdf', async (req, res) => {
       app.get('mongoClient').then(async db => {
         const accessToken = req.feathers?.authentication?.accessToken;
@@ -236,23 +266,33 @@ exports.Stats = class Stats extends Service {
         try {
           let userId = decode(accessToken).sub;
           const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-          if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
+          const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+          if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
             res.status(403).send(new Forbidden('User not authorized', {
               userId: userId
             }).toJSON());
             return;
           }
+          let codePostal = '/null';
           const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
           const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
+          let idType = '';
           const type = req.query.type;
-          const idType = req.query.idType === 'undefined' ? '' : req.query.idType + '/';
-          const codePostalNull = idType === '' ? '' : '/null';
-
+          if (type === 'structure') {
+            idType = user.entity.oid + '/';
+            if (req.query.codePostal) {
+              codePostal = '/' + req.query.codePostal;
+            }
+          } else {
+            idType = req.query.idType === 'undefined' ? '' : req.query.idType + '/';
+            codePostal = idType === '' ? '' : '/null';
+          }
           const schema = Joi.object({
             dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
             dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
             type: Joi.string().required().error(new Error('Le type de territoire est invalide')),
             idType: Joi.required().error(new Error('L\'id du territoire invalide')),
+            codePostal: Joi.string().allow(null, '').error(new Error('Le code postal est invalide')),
           }).validate(req.query);
 
           if (schema.error) {
@@ -260,8 +300,7 @@ exports.Stats = class Stats extends Service {
             return;
           }
 
-          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostalNull;
-
+          let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostal;
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
             await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
@@ -287,20 +326,29 @@ exports.Stats = class Stats extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
-        ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
         const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        if (query.type !== 'structure') {
+          ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        } else {
+          const getUserById = userAuthenticationRepository(db);
+          const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
+          const structure = await getStructureAssociatedWithUser(await getUserById(user._id));
+          const structureId = structure._id;
+          ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
+        }
         const { stats, type, idType } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.idType, query.type, ids,
+          query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
           exportStatistiquesRepository(db),
           statsFct.checkRole(user?.roles, Role.AdminCoop)
         );
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, statsFct.checkRole(user?.roles, Role.AdminCoop))
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
+          // eslint-disable-next-line max-len
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(user?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -374,7 +422,8 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!statsFct.checkRole(adminUser?.roles, 'admin_coop') && !statsFct.checkRole(adminUser?.roles, 'structure_coop')) {
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        if (rolesAllowed.filter(role => adminUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -523,7 +572,8 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -557,6 +607,46 @@ exports.Stats = class Stats extends Service {
       });
     });
 
+    app.get('/stats/structure/cra', async (req, res) => {
+
+      app.get('mongoClient').then(async db => {
+        if (req.feathers?.authentication === undefined) {
+          res.status(401).send(new NotAuthenticated('User not authenticated'));
+          return;
+        }
+        //Verification role structure_coop
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        const structureId = user.entity.oid;
+        if (!user?.roles.includes('structure_coop') && structureId !== req.query.idStructure) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+        const conseillerIds = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
+        //Composition de la partie query en formattant la date
+        let dateDebut = new Date(req.query?.dateDebut);
+        dateDebut.setUTCHours(0, 0, 0, 0);
+        let dateFin = new Date(req.query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
+        //Construction des statistiques
+        let stats = {};
+        let query = {
+          'cra.dateAccompagnement': {
+            '$gte': dateDebut,
+            '$lt': dateFin,
+          },
+          'conseiller.$id': { $in: conseillerIds },
+        };
+        if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
+          query['cra.codePostal'] = req.query?.codePostal;
+        }
+        stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
+        res.send(stats);
+      });
+    });
+
     app.get('/stats/nationales/cra', async (req, res) => {
 
       app.get('mongoClient').then(async db => {
@@ -568,7 +658,8 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('admin_coop') && !user?.roles.includes('structure_coop')) {
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -602,7 +693,8 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!adminUser?.roles.includes('admin_coop') && !adminUser?.roles.includes('structure_coop')) {
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        if (rolesAllowed.filter(role => adminUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -651,8 +743,7 @@ exports.Stats = class Stats extends Service {
                     in: { $concatArrays: ['$$value', '$$this'] }
                   }
                 }
-              }
-              }
+              } }
             ]).toArray();
             res.send(territoire[0]);
           }

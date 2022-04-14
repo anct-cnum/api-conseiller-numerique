@@ -50,6 +50,8 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
       telephone: '+33 4 23 45 68 97',
+      isLabeledAidantsConnect: false,
+      isLabeledFranceServices: false,
       coordinates: [3.158667, 46.987344],
       nombreCnfs: 2,
       cnfs: [
@@ -96,6 +98,8 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
       telephone: '+33 4 23 45 68 97',
+      isLabeledAidantsConnect: false,
+      isLabeledFranceServices: false,
       nombreCnfs: 2,
       cnfs: [
         {
@@ -150,6 +154,8 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
     const expectedPermanenceDetails = {
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
+      isLabeledAidantsConnect: false,
+      isLabeledFranceServices: false,
       nombreCnfs: 2,
       cnfs: [
         {
@@ -208,6 +214,8 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
       email: 'john.doe@aide-rurale.net',
+      isLabeledAidantsConnect: false,
+      isLabeledFranceServices: false,
       nombreCnfs: 2,
       cnfs: [
         {
@@ -269,6 +277,8 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
     const expectedPermanenceDetails = {
       adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
       nom: 'Aide rurale',
+      isLabeledAidantsConnect: false,
+      isLabeledFranceServices: false,
       telephone: '+33 4 23 45 68 97',
       nombreCnfs: 3,
       cnfs: [
@@ -285,6 +295,86 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
           nom: 'Dumont',
         }
       ]
+    };
+
+    const details = await permanenceDetailsFromStructureId(structureId, permanenceRepository);
+
+    expect(details).toStrictEqual(expectedPermanenceDetails);
+  });
+
+  it('devrait retourner le détail de la permanence avec le label aidants connect', async () => {
+    const permanenceRepository = {
+      getStructureById: () => ({
+        nom: 'Aide rurale',
+        contact: {},
+        estLabelliseAidantsConnect: 'OUI',
+        insee: {
+          etablissement: {
+            adresse: {
+              numero_voie: '12',
+              type_voie: 'RUE',
+              nom_voie: 'DE LA PLACE',
+              complement_adresse: null,
+              code_postal: '87100',
+              localite: 'LIMOGES',
+              code_insee_localite: '87085',
+              cedex: null
+            }
+          }
+        }
+      }),
+      getCnfs: () => []
+    };
+
+    const structureId = '62a46ca2af2829d3cd298305';
+
+    const expectedPermanenceDetails = {
+      adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
+      nom: 'Aide rurale',
+      isLabeledAidantsConnect: true,
+      isLabeledFranceServices: false,
+      nombreCnfs: 0,
+      cnfs: []
+    };
+
+    const details = await permanenceDetailsFromStructureId(structureId, permanenceRepository);
+
+    expect(details).toStrictEqual(expectedPermanenceDetails);
+  });
+
+  it('devrait retourner le détail de la permanence avec le label france services', async () => {
+    const permanenceRepository = {
+      getStructureById: () => ({
+        nom: 'Aide rurale',
+        contact: {},
+        estLabelliseFranceServices: 'OUI',
+        insee: {
+          etablissement: {
+            adresse: {
+              numero_voie: '12',
+              type_voie: 'RUE',
+              nom_voie: 'DE LA PLACE',
+              complement_adresse: null,
+              code_postal: '87100',
+              localite: 'LIMOGES',
+              code_insee_localite: '87085',
+              cedex: null
+            }
+          }
+        }
+      }),
+      getCnfs: () => []
+    };
+
+    const structureId = '62a46ca2af2829d3cd298305';
+
+    const expectedPermanenceDetails = {
+      adresse: '12 RUE DE LA PLACE, 87100 LIMOGES',
+      nom: 'Aide rurale',
+      isLabeledAidantsConnect: false,
+      isLabeledFranceServices: true,
+      nombreCnfs: 0,
+      cnfs: []
     };
 
     const details = await permanenceDetailsFromStructureId(structureId, permanenceRepository);
@@ -384,7 +474,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           ]
         }
       ],
-      typeAcces: 'libre',
+      typeAcces: ['libre'],
       conseillers: [
         {
           prenom: 'Christelle',
@@ -404,7 +494,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       email: 'structure@mailgenerique.com',
       telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
       openingHours: [
         '8h00 - 12h30 | 13h30 - 18h00',
         '8h00 - 12h30 | 13h30 - 18h00',
@@ -444,7 +534,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           46.8691
         ],
       },
-      typeAcces: 'libre',
+      typeAcces: ['libre'],
       conseillers: [
         {
           prenom: 'Christelle',
@@ -464,7 +554,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       email: 'structure@mailgenerique.com',
       telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
       openingHours: [],
       nombreCnfs: 1,
       cnfs: [
@@ -498,7 +588,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           46.8691
         ],
       },
-      typeAcces: 'libre',
+      typeAcces: ['libre'],
       siteWeb: 'https://ccas-des-herbiers.com',
     };
 
@@ -512,7 +602,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       email: 'structure@mailgenerique.com',
       telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
       openingHours: [],
       nombreCnfs: 0,
       cnfs: []
@@ -539,7 +629,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
           46.8691
         ],
       },
-      typeAcces: 'libre'
+      typeAcces: ['libre']
     };
 
     const expectedPermanenceDetails = {
@@ -549,7 +639,44 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
         46.8691
       ],
       nom: 'CCAS des HERBIERS',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
+      openingHours: [],
+      nombreCnfs: 0,
+      cnfs: []
+    };
+
+    const details = await permanenceDetails(permanence);
+
+    expect(details).toStrictEqual(expectedPermanenceDetails);
+  });
+
+  it('devrait retourner le détail de la permanence avec plusieurs types d\'accès', async () => {
+    const permanence = {
+      nomEnseigne: 'CCAS des HERBIERS',
+      adresse: {
+        numeroRue: '6',
+        rue: 'RUE DU TOURNIQUET',
+        codePostal: '85500',
+        ville: 'LES HERBIERS'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [
+          -1.0134,
+          46.8691
+        ],
+      },
+      typeAcces: ['libre', 'rdv']
+    };
+
+    const expectedPermanenceDetails = {
+      adresse: '6 RUE DU TOURNIQUET, 85500 LES HERBIERS',
+      coordinates: [
+        -1.0134,
+        46.8691
+      ],
+      nom: 'CCAS des HERBIERS',
+      typeAcces: 'Accès libre, Sur rendez-vous',
       openingHours: [],
       nombreCnfs: 0,
       cnfs: []

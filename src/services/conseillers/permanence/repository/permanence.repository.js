@@ -66,7 +66,9 @@ const getStructureById = db => async id => db.collection('structures').findOne({
     '_id': 0,
     'nom': 1,
     'insee.etablissement.adresse': 1,
-    'coordonneesInsee.coordinates': 1
+    'coordonneesInsee.coordinates': 1,
+    'estLabelliseAidantsConnect': 1,
+    'estLabelliseFranceServices': 1,
   }
 });
 

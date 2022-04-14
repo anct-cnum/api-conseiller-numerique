@@ -489,6 +489,10 @@ exports.Users = class Users extends Service {
                 message = emails.getEmailMessageByTemplateName('bienvenueCompteCandidat');
                 await message.send(user);
                 break;
+              case 'hub_coop':
+                message = emails.getEmailMessageByTemplateName('bienvenueCompteHub');
+                await message.send(user);
+                break;
               default:
                 break;
             }

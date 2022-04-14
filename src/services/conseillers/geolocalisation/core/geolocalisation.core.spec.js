@@ -16,6 +16,7 @@ describe('conseillers géolocalisés', () => {
             id: '4c38ebc9a06fdd532bf9d7be',
             name: 'Association pour la formation au numérique à Bessenay',
             structureId: '98b3ca349340250d5d9a144e',
+            isLabeledAidantsConnect: false,
             isLabeledFranceServices: true,
             address: '6 rue de la Mairie, 69690 Bessenay'
           }
@@ -30,6 +31,7 @@ describe('conseillers géolocalisés', () => {
             id: '88bc36fb0db191928330b1e6',
             name: 'Les artisans du numérique',
             structureId: '6980ac85bc8c5c4c1bca7abd',
+            isLabeledAidantsConnect: false,
             isLabeledFranceServices: false,
             address: 'ZI les deux clochers, 62300 Lens'
           }
@@ -129,6 +131,7 @@ describe('conseillers géolocalisés', () => {
             id: '4c38ebc9a06fdd532bf9d7be',
             name: 'Association pour la formation au numérique à Bessenay',
             structureId: '98b3ca349340250d5d9a144e',
+            isLabeledAidantsConnect: false,
             isLabeledFranceServices: true,
           }
         }
@@ -174,7 +177,8 @@ describe('conseillers géolocalisés', () => {
             id: '4c38ebc9a06fdd532bf9d7be',
             name: 'Association pour la formation au numérique à Bessenay',
             structureId: '98b3ca349340250d5d9a144e',
-            isLabeledFranceServices: true,
+            isLabeledAidantsConnect: false,
+            isLabeledFranceServices: true
           }
         }
       ]
@@ -219,7 +223,8 @@ describe('conseillers géolocalisés', () => {
             id: '4c38ebc9a06fdd532bf9d7be',
             name: 'Association pour la formation au numérique à Bessenay',
             structureId: '98b3ca349340250d5d9a144e',
-            isLabeledFranceServices: true,
+            isLabeledAidantsConnect: false,
+            isLabeledFranceServices: true
           }
         },
         {
@@ -353,6 +358,53 @@ describe('conseillers géolocalisés', () => {
         ]
       }
     ];
+
+    const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation, getLieuxDePermanence });
+
+    expect(conseillers).toStrictEqual(expectedStructures);
+  });
+
+  it('devrait retourner un conseiller dont la structure est labellisée aidants connect', async () => {
+    const expectedStructures = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [3.158667, 46.987344]
+          },
+          properties: {
+            id: '4c38ebc9a06fdd532bf9d7be',
+            name: 'Association pour la formation au numérique à Bessenay',
+            structureId: '98b3ca349340250d5d9a144e',
+            isLabeledAidantsConnect: true,
+            isLabeledFranceServices: false
+          }
+        }
+      ]
+    };
+
+    const getConseillersWithGeolocation = async () => [
+      {
+        _id: '4c38ebc9a06fdd532bf9d7be',
+        structure: {
+          _id: '98b3ca349340250d5d9a144e',
+          nom: 'Association pour la formation au numérique à Bessenay',
+          estLabelliseFranceServices: 'NON',
+          estLabelliseAidantsConnect: 'OUI',
+          coordonneesInsee: {
+            type: 'Point',
+            coordinates: [
+              3.158667,
+              46.987344
+            ]
+          }
+        }
+      }
+    ];
+
+    const getLieuxDePermanence = async () => [];
 
     const conseillers = await geolocatedConseillers({ getConseillersWithGeolocation, getLieuxDePermanence });
 

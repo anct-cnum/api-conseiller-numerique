@@ -4,7 +4,8 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   let render = async user => {
-    const link = user.roles[0] !== 'conseiller' ? utils.getBackofficeUrl(`/login?role=${(user.roles[0])}`) : utils.getEspaceCoopUrl(`/login`);
+    const rolesCoop = ['conseiller', 'hub_coop'];
+    const link = !rolesCoop.includes(user.roles[0]) ? utils.getBackofficeUrl(`/login?role=${(user.roles[0])}`) : utils.getEspaceCoopUrl(`/login`);
     return mailer.render(__dirname, templateName, {
       user,
       link: link,
@@ -25,7 +26,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         user.persoEmail ?? user.name,
         {
-          subject: 'Votre mot de passe Conseiller Numérique France services à été renouvelé avec succès',
+          subject: 'Votre mot de passe Conseiller Numérique France services a été renouvelé avec succès',
           body: await render(user),
         },
       )

@@ -217,10 +217,11 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
     };
 
     const idType = undefined;
+    const codePostal = '';
     const isAdminCoop = false;
 
     const expectedFileContent =
-      'Statistiques John Doe  01/01/2021-15/11/2021\n' +
+      'Statistiques John Doe   01/01/2021-15/11/2021\n' +
       '\n' +
       'Général\n' +
       'Personnes totales accompagnées durant cette période;20\n' +
@@ -294,7 +295,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Port maritime;11';
 
 
-    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName, idType, isAdminCoop);
+    const fileContent = buildExportStatistiquesCsvFileContent(statistiques, dateDebut, dateFin, cnfsFullName, idType, codePostal, isAdminCoop);
 
     expect(fileContent).toEqual(expectedFileContent);
   });
