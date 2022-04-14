@@ -494,7 +494,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       email: 'structure@mailgenerique.com',
       telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
       openingHours: [
         '8h00 - 12h30 | 13h30 - 18h00',
         '8h00 - 12h30 | 13h30 - 18h00',
@@ -554,7 +554,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       email: 'structure@mailgenerique.com',
       telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
       openingHours: [],
       nombreCnfs: 1,
       cnfs: [
@@ -602,7 +602,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
       email: 'structure@mailgenerique.com',
       telephone: '+33 6 53 65 89 96',
       siteWeb: 'https://ccas-des-herbiers.com',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
       openingHours: [],
       nombreCnfs: 0,
       cnfs: []
@@ -639,7 +639,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
         46.8691
       ],
       nom: 'CCAS des HERBIERS',
-      typeAcces: 'libre',
+      typeAcces: 'Accès libre',
       openingHours: [],
       nombreCnfs: 0,
       cnfs: []
@@ -676,7 +676,7 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
         46.8691
       ],
       nom: 'CCAS des HERBIERS',
-      typeAcces: 'libre, rdv',
+      typeAcces: 'Accès libre, Sur rendez-vous',
       openingHours: [],
       nombreCnfs: 0,
       cnfs: []
