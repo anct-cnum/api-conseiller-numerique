@@ -11,6 +11,10 @@ const assignPermanence = (body, database) => {
   body?.conseillersItinerants?.forEach(conseiller => {
     permanence.conseillersItinerants.push(new ObjectId(conseiller));
   });
+  permanence.lieuPrincipalPour = [];
+  body?.lieuPrincipalPour?.forEach(conseiller => {
+    permanence.lieuPrincipalPour.push(new ObjectId(conseiller));
+  });
 
   permanence.structure = new DBRef('structure', new ObjectId(body.structureId), database);
   permanence.updatedAt = new Date();
