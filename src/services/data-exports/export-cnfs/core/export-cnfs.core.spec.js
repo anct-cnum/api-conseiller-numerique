@@ -6,9 +6,13 @@ const getStatsCnfsNoUserActifSingleValue = () => [
     prenom: 'John',
     nom: 'Doe',
     structureId: '98dbc77b988c970031479ba1',
+    emailStructure: undefined,
+    adresseStructure: '    ',
+    codeDepartement: undefined,
     codePostal: 69005,
     datePrisePoste: '2021-01-27T22:00:00.000Z',
     dateFinFormation: '2021-03-12T22:00:00.000Z',
+    groupeCRA: 0,
     emailCNError: undefined,
     mattermost: undefined
   }
@@ -18,9 +22,14 @@ const getStatsCnfsUserActifSingleValue = () => [
     prenom: 'John',
     nom: 'Doe',
     structureId: '98dbc77b988c970031479ba1',
+    nomStructure: 'Association pour l\'accès au numérique',
+    emailStructure: undefined,
+    adresseStructure: '     ',
+    codeDepartement: undefined,
     codePostal: 69005,
     datePrisePoste: '2021-01-27T22:00:00.000Z',
     dateFinFormation: '2021-03-12T22:00:00.000Z',
+    groupeCRA: 0,
     emailCNError: false,
     mattermost: {
       error: false,
@@ -37,6 +46,7 @@ const getStatsCnfsNoStructureIdSingleValue = () => [
     codePostal: 69005,
     datePrisePoste: '2021-01-27T22:00:00.000Z',
     dateFinFormation: '2021-03-12T22:00:00.000Z',
+    groupeCRA: 0,
     emailCNError: undefined,
     mattermost: undefined
   }
@@ -64,10 +74,15 @@ describe('export cnfs core', () => {
       {
         prenom: 'John',
         nom: 'Doe',
+        structureId: '98dbc77b988c970031479ba1',
         nomStructure: 'Association pour l\'accès au numérique',
+        emailStructure: undefined,
+        adresseStructure: '     ',
+        codeDepartement: undefined,
         codePostal: 69005,
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
+        groupeCRA: 0,
         certifie: 'Non',
         isUserActif: 'Non'
       }
@@ -84,10 +99,15 @@ describe('export cnfs core', () => {
       {
         prenom: 'John',
         nom: 'Doe',
+        structureId: '98dbc77b988c970031479ba1',
         nomStructure: 'Association pour l\'accès au numérique',
+        emailStructure: undefined,
+        adresseStructure: '     ',
+        codeDepartement: undefined,
         codePostal: 69005,
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
+        groupeCRA: 0,
         certifie: 'Non',
         isUserActif: 'Oui'
       }
@@ -105,10 +125,13 @@ describe('export cnfs core', () => {
         prenom: 'John',
         nom: 'Doe',
         nomStructure: '',
+        adresseStructure: '',
+        emailStructure: '',
         codeDepartement: '',
         codePostal: 69005,
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
+        groupeCRA: 0,
         certifie: 'Non',
         isUserActif: 'Non'
       }

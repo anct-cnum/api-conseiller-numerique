@@ -403,11 +403,12 @@ describe('export statistiques core', () => {
     const dateFin = new Date('2021-11-18T00:00:00.000Z');
     const idType = '4a9bc1489ac8ba4c891b9a1c';
     const type = 'user';
+    const codePostal = '';
     const ids = undefined;
     const isAdminCoop = false;
 
     const statistiques = await getStatistiquesToExport(
-      dateDebut, dateFin, idType, type, ids, { getConseillerById, getStatsConseiller }, isAdminCoop
+      dateDebut, dateFin, idType, type, codePostal, ids, { getConseillerById, getStatsConseiller }, isAdminCoop
     );
 
     expect(statistiques).toStrictEqual({
@@ -421,11 +422,12 @@ describe('export statistiques core', () => {
     const dateFin = new Date('2021-11-18T00:00:00.000Z');
     const type = 'nationales';
     const idType = undefined;
+    const codePostal = '';
     const ids = undefined;
     const isAdminCoop = true;
 
     const statistiques = await getStatistiquesToExport(
-      dateDebut, dateFin, idType, type, ids, {
+      dateDebut, dateFin, idType, type, codePostal, ids, {
         getConseillerById,
         getStatsConseiller,
         getStatsNationales,

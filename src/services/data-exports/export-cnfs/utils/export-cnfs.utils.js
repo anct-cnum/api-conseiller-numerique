@@ -62,9 +62,10 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders[5] = 'Code Postal du conseiller';
     fileHeaders.push('CRA Saisis');
     fileHeaders.splice(4, 0, 'Id de la structure');
-    fileHeaders.splice(6, 0, 'Adresse de la structure');
-    fileHeaders.splice(7, 0, 'Code département de la structure');
-    fileHeaders.splice(11, 0, 'GroupeCRA');
+    fileHeaders.splice(6, 0, 'Email de la structure');
+    fileHeaders.splice(7, 0, 'Adresse de la structure');
+    fileHeaders.splice(8, 0, 'Code département de la structure');
+    fileHeaders.splice(12, 0, 'GroupeCRA');
     fileHeaders.push('Nom Supérieur hiérarchique');
     fileHeaders.push('Prénom supérieur hiérarchique');
     fileHeaders.push('Fonction supérieur hiérarchique');
@@ -79,6 +80,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs?.emailCN?.address ?? 'compte COOP non créé',
         statCnfs?.structureId,
         statCnfs.nomStructure.replace(/["',]/g, ''),
+        statCnfs.emailStructure,
         statCnfs.adresseStructure,
         statCnfs.codeDepartement,
         statCnfs.codePostal,
