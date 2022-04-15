@@ -21,7 +21,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     return;
   }
 
-  const candidatValidee = await db.collection('misesEnRelation').find({ statut: 'recrutee', dateRecrutement: { $lte: date } }).limit(5).toArray();
+  const candidatValidee = await db.collection('misesEnRelation').find({ statut: 'recrutee', dateRecrutement: { $lte: date } }).toArray();
   let promises = [];
 
   logger.info(`Generating CSV file...`);
