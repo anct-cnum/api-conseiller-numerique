@@ -38,7 +38,7 @@ execute(__filename, async ({ logger, db, exit }) => {
       const conseiller = await db.collection('conseillers').findOne({ _id: relation.conseiller.oid });
       const structure = await db.collection('structures').findOne({ _id: relation.structure.oid });
       // eslint-disable-next-line max-len
-      file.write(`${conseiller.idPG};${conseiller.email};${relation?.dateRecrutement ?? 'non renseigné'};${structure.idPG};${structure.nom};${structure?.siret ?? 'non renseigné'};${structure.contact.email}\n`);
+      file.write(`${conseiller.idPG};${conseiller.email};${dayjs(relation?.dateRecrutement).format('DD/MM/YYYY') ?? 'non renseigné'};${structure.idPG};${structure.nom};${structure?.siret ?? 'non renseigné'};${structure.contact.email}\n`);
       resolve();
     }));
   });
