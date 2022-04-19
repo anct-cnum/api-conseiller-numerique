@@ -17,8 +17,9 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
     try {
       //Bridage si doublon recruté => pas de création de compte candidat
       const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: 'RECRUTE', email: conseillerDoc.email });
+      const userExists = await db.collection('users').countDocuments({ name: conseillerDoc.email });
 
-      if (hasUserCoop === 0) {
+      if ((hasUserCoop === 0) && (userExists === 0)) {
         await feathers.service('users').create({
           name: conseillerDoc.email,
           prenom: conseillerDoc.prenom,
