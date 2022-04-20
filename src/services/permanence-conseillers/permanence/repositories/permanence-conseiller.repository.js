@@ -12,7 +12,7 @@ const createPermanence = db => async (permanence, conseillerId, userId, showPerm
   await db.collection('permanences').insertOne(
     permanence
   );
-  
+
   await db.collection('conseillers').updateOne({
     _id: new ObjectId(conseillerId)
   }, {
@@ -61,9 +61,18 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
   });
 };
 
+const setReporterInsertion = db => async userId => {
+  await db.collection('users').updateOne({
+    _id: userId
+  }, {
+    $inc: { reportPermanence: +1 }
+  });
+};
+
 module.exports = {
   getPermanenceByConseiller,
   getPermanencesByStructure,
   setPermanence,
   createPermanence,
+  setReporterInsertion,
 };
