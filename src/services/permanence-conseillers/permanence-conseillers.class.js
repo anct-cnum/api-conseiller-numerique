@@ -14,7 +14,7 @@ const {
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { updatePermanenceToSchema } = require('./permanence/utils/update-permanence.utils');
-const { getPermanenceByConseiller, getPermanencesByStructure, createPermanence, setPermanence } =
+const { getPermanenceByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion } =
   require('./permanence/repositories/permanence-conseiller.repository');
 const axios = require('axios');
 
@@ -168,6 +168,24 @@ exports.PermanenceConseillers = class Sondages extends Service {
         } catch (e) {
           return res.send({ 'geocodeAdresse': null });
         }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.post('/permanences/reporter', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await setReporterInsertion(db)(user._id).then(() => {
+          res.send({ isReporter: true });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(409).send(new Conflict('Une erreur est survenue au moment du repport du formulaire.').toJSON());
+        });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
