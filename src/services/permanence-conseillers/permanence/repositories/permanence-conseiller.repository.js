@@ -12,7 +12,7 @@ const createPermanence = db => async (permanence, conseillerId, userId, showPerm
   await db.collection('permanences').insertOne(
     permanence
   );
-  
+
   await db.collection('conseillers').updateOne({
     _id: new ObjectId(conseillerId)
   }, {
@@ -61,9 +61,29 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
   });
 };
 
+const deletePermanence = db => async permanenceId => {
+  await db.collection('permanences').deleteOne({
+    _id: new ObjectId(permanenceId)
+  });
+};
+
+const deleteConseillerPermanence = db => async(permanenceId, conseillerId) => {
+  await db.collection('permanences').updateOne({
+    _id: new ObjectId(permanenceId)
+  }, {
+    $pull: {
+      conseillers: new ObjectId(conseillerId),
+      conseillersItinerants: new ObjectId(conseillerId),
+      lieuPrincipalPour: new ObjectId(conseillerId),
+    }
+  });
+};
+
 module.exports = {
   getPermanenceByConseiller,
   getPermanencesByStructure,
   setPermanence,
   createPermanence,
+  deletePermanence,
+  deleteConseillerPermanence
 };
