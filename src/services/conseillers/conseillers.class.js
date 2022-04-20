@@ -551,6 +551,7 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }).then(() => {
         res.send({ deleteSuccess: true });
+        return;
       }).catch(error => {
         logger.error(error);
         app.get('sentry').captureException(error);
