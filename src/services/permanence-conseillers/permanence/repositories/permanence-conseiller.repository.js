@@ -63,7 +63,7 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
 
 const setReporterInsertion = db => async userId => {
   await db.collection('users').updateOne({
-    _id: new ObjectId(userId)
+    _id: userId
   }, {
     $inc: { reportPermanence: +1 }
   });
