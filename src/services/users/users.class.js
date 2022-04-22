@@ -589,10 +589,12 @@ exports.Users = class Users extends Service {
           hiddenEmail: hiddenEmail,
           successCheckEmail: true
         });
+        return;
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
+        return;
       }
     });
 
@@ -631,9 +633,11 @@ exports.Users = class Users extends Service {
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
         res.status(200).json({ successResetPassword: true });
+        return;
       } catch (err) {
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
+        return;
       }
     });
 
