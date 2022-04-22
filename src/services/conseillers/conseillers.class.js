@@ -574,6 +574,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       try {
         const conseillerUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
+        user = conseillerUser;
         if (conseillerUser === null) {
           // message d'erreur dans le cas où le cron n'est pas encore passer
           res.status(404).send(new NotFound('Une erreur est survenue, veuillez réessayez plus tard', {
@@ -581,13 +582,11 @@ exports.Conseillers = class Conseillers extends Service {
           }).toJSON());
           return;
         }
-        await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
-        user = conseillerUser;
-
-        if (user.roles.includes('conseiller') && user.passwordCreated) {
+        if (conseillerUser.passwordCreated) {
           res.status(409).send(new Conflict(`Le compte de ${conseiller.prenom} ${conseiller.nom} est déjà activé`));
           return;
         }
+        await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
         let mailer = createMailer(app);
         const emails = createEmails(db, mailer, app);
         const typeEmail = user.roles.includes('conseiller') ? 'creationCompteConseiller' : 'creationCompteCandidat';
