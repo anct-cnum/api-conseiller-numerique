@@ -582,7 +582,7 @@ exports.Conseillers = class Conseillers extends Service {
           }).toJSON());
           return;
         }
-        if (conseillerUser.passwordCreated) {
+        if (conseillerUser.passwordCreated === true) {
           res.status(409).send(new Conflict(`Le compte de ${conseiller.prenom} ${conseiller.nom} est déjà activé`));
           return;
         }
