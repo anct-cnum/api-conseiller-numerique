@@ -559,7 +559,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.post('/conseillers/:id/relance-inscription-candidat', async (req, res) => {
+    app.post('/conseillers/:id/relance-invitation', async (req, res) => {
       await checkAuth(req, res);
       await checkRoleAdmin(db, req, res);
       const conseillerId = new ObjectId(req.params.id);
@@ -569,61 +569,30 @@ exports.Conseillers = class Conseillers extends Service {
         res.status(404).send(new NotFound('Conseiller n\'existe pas', {
           conseillerId,
         }).toJSON());
+        return;
       }
 
       try {
         const conseillerUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
+        user = conseillerUser;
         if (conseillerUser === null) {
-          const verifEmail = await db.collection('users').countDocuments({ name: conseiller.email });
-          if (verifEmail !== 0) {
-            await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreationError: true } });
-            res.status(409).send(new Conflict(`un doublon a déjà un compte associé à ${conseiller.email}`));
-            return;
-          }
-          const NOW = new Date();
-          const obj = {
-            name: conseiller.email,
-            prenom: conseiller.prenom,
-            nom: conseiller.nom,
-            password: uuidv4(),
-            roles: Array('candidat'),
-            entity: {
-              '$ref': `conseillers`,
-              '$id': conseiller._id,
-              '$db': db.serverConfig.s.options.dbName
-            },
-            token: uuidv4(),
-            tokenCreatedAt: NOW,
-            mailSentDate: null,
-            passwordCreated: false,
-            createdAt: NOW,
-          };
-          const createUser = await db.collection('users').insertOne(obj);
-          user = createUser.ops[0];
-        } else {
-          //Met à jour le token possiblement expiré
-          await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
-          user = await db.collection('users').findOne({ _id: conseillerUser._id });
-        }
-        if (user.roles[0] === 'candidat') {
-          await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreated: true }, $unset: { userCreationError: true } });
-          let mailer = createMailer(app);
-          const emails = createEmails(db, mailer, app);
-          let message = emails.getEmailMessageByTemplateName('creationCompteCandidat');
-          await message.send(user);
-          res.send({ emailEnvoyer: true });
-        } else if (user.roles[0] === 'conseiller' && !user.passwordCreated) {
-          // conseiller qui n'a pas encore activé son compte Coop
-          let mailer = createMailer(app);
-          const emails = createEmails(db, mailer, app);
-          let message = emails.getEmailMessageByTemplateName('creationCompteConseiller');
-          await message.send(user);
-          res.send({ emailEnvoyer: true });
-        } else if (user.roles[0] === 'conseiller' && user.passwordCreated) {
-          // conseiller qui a activé son compte Coop
-          res.status(409).send(new Conflict(`${conseiller.prenom} ${conseiller.nom} est déjà recruté donc a un compte COOP existant`));
+          // message d'erreur dans le cas où le cron n'est pas encore passer
+          res.status(404).send(new NotFound('Une erreur est survenue, veuillez réessayez plus tard', {
+            conseillerId,
+          }).toJSON());
           return;
         }
+        if (conseillerUser.passwordCreated === true) {
+          res.status(409).send(new Conflict(`Le compte de ${conseiller.prenom} ${conseiller.nom} est déjà activé`));
+          return;
+        }
+        await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
+        let mailer = createMailer(app);
+        const emails = createEmails(db, mailer, app);
+        const typeEmail = user.roles.includes('conseiller') ? 'creationCompteConseiller' : 'creationCompteCandidat';
+        let message = emails.getEmailMessageByTemplateName(typeEmail);
+        await message.send(user);
+        return res.status(200).json({ emailEnvoyer: true });
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);

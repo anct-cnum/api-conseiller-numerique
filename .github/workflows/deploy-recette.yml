@@ -36,3 +36,4 @@ jobs:
         SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
       with:
         environment: recette
+        ignore_missing: true
