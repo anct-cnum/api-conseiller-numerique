@@ -591,7 +591,8 @@ exports.Conseillers = class Conseillers extends Service {
         const emails = createEmails(db, mailer, app);
         const typeEmail = user.roles.includes('conseiller') ? 'creationCompteConseiller' : 'creationCompteCandidat';
         let message = emails.getEmailMessageByTemplateName(typeEmail);
-        await message.send(user);
+        const usersAJour = await db.collection('users').findOne({ _id: conseillerUser._id });
+        await message.send(usersAJour);
         return res.status(200).json({ emailEnvoyer: true });
       } catch (error) {
         logger.error(error);
