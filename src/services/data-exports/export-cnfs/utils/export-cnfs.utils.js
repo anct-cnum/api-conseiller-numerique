@@ -71,6 +71,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders.push('Fonction supérieur hiérarchique');
     fileHeaders.push('Email supérieur hiérarchique');
     fileHeaders.push('Numéro téléphone supérieur hiérarchique');
+    fileHeaders.push('Historique des groupes CRA');
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
@@ -94,7 +95,8 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs?.supHierarchique?.prenom,
         statCnfs?.supHierarchique?.fonction,
         statCnfs?.supHierarchique?.email,
-        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`
+        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`,
+        statCnfs?.groupeCRAHistorique
       ].join(csvCellSeparator))
     ].join(csvLineSeparator);
   }

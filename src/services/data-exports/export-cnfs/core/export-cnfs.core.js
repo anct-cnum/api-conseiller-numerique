@@ -17,6 +17,8 @@ const formatAdresseStructure = insee => {
   return adresse.replace(/["']/g, '');
 };
 
+const getFormatHistoriqueGroupeCRA = groupeCRAHistorique => JSON.stringify(groupeCRAHistorique);
+
 const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
   const { structureId, emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
   return {
@@ -31,6 +33,7 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
     codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
     certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ?? undefined,
+    groupeCRAHistorique: getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique) ?? undefined,
     isUserActif: userActifStatus(mattermost, emailCNError)
   };
 };
