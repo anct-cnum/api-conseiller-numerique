@@ -102,14 +102,14 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
     let conseillersSansDoublon = [];
     let alreadySeen = [];
-    for (let str of conseillers) {
-      if (alreadySeen[str.email]) {
-        await db.collection('conseillers').updateOne({ _id: str._id }, { $set: {
+    for (let conseiller of conseillers) {
+      if (alreadySeen[conseiller.email]) {
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: {
           userCreationError: true
         } });
       } else {
-        alreadySeen[str.email] = true;
-        conseillersSansDoublon.push(str);
+        alreadySeen[conseiller.email] = true;
+        conseillersSansDoublon.push(conseiller);
       }
     }
     let promises = [];
