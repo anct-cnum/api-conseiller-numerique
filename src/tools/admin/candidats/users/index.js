@@ -100,23 +100,18 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       statut: { $ne: 'RECRUTE' }
     }, { limit: limit }).toArray();
 
-
-    let doublon = [];
     let conseillersSansDoublon = [];
     let alreadySeen = [];
-
     for (let str of conseillers) {
       if (alreadySeen[str.email]) {
         await db.collection('conseillers').updateOne({ _id: str._id }, { $set: {
           userCreationError: true
         } });
-        doublon.push(str);
       } else {
         alreadySeen[str.email] = true;
         conseillersSansDoublon.push(str);
       }
     }
-
     let promises = [];
     conseillersSansDoublon.forEach(candidat => {
       const p = new Promise(async (resolve, reject) => {
