@@ -1,0 +1,71 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+        <mj-section>
+          <mj-column>
+            <mj-text css-class="text-primary" font-weight="bold">
+              Activer votre compte Coop Conseiller numérique France Services
+            </mj-text>
+            <mj-text align="left">
+              Madame, Monsieur,
+            </mj-text>
+            <mj-text align="left">
+              Nous avons le plaisir de vous accueillir au sein de la communauté des conseillers numériques France Services.
+            </mj-text>
+            <mj-text align="left">
+              L'<strong>espace Coop</strong> a été conçu spécialement pour vous, cette plateforme en ligne vous permettra :
+              <ul align="left">
+                <li>d'échanger avec la communauté et de créer des dynamiques de projets,</li>
+                <li>de vous outiller pour vos missions de médiation,</li>
+                <li>de suivre votre activité de médiation.</li>
+              </ul>
+            </mj-text>
+            <mj-text align="left">
+              L'espace coop se substitue à votre espace candidat pendant votre mission de Conseiller numérique France Services.
+            </mj-text>
+            <mj-text align="left" font-weight="bold">
+              Pour activer votre compte, nous allons créer votre adresse mail
+              prenom.nom@conseiller-numerique.fr
+            </mj-text>
+            <mj-text align="left">
+              En cliquant sur « Activer », vous choisirez votre mot de passe unique pour :
+              <ul align="left">
+                <li align="left">accéder à l'espace Coop,</li>
+                <li align="left">accéder à votre adresse mail prenom.nom@conseiller-numerique.fr.</li>
+              </ul>
+            </mj-text>
+          </mj-column>
+        </mj-section>
+
+        <mj-section css-class="box" padding-top="0" padding-left="100px" padding-right="100px">
+          <mj-column border="1px solid #C8CBCE">
+            <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
+              text-transform="uppercase">
+              Activer mon espace Coop
+            </mj-button>
+            <mj-text css-class="text-secondary">
+              <%= link %>
+            </mj-text>
+
+            <mj-text font-size="14px" line-height="21px">
+              (Ce lien expire dans 4 semaines)
+            </mj-text>
+          </mj-column>
+        </mj-section>
+        <mj-section>
+          <mj-column>
+            <%- include('../commun/signature.mjml.ejs'); %>
+            <mj-text css-class="text-secondary">
+              https://www.conseiller-numerique.gouv.fr/
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-wrapper>
+  </mj-body>
+</mjml>
