@@ -93,17 +93,34 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     await doCreateUser(db, feathers, dbName, _id, logger, Sentry);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('conseillers').find({
+    const conseillers = await db.collection('conseillers').find({
       userCreated: false,
       disponible: true, // si un des doublons a le statut RECRUTE, le disponible est passé à false
       userCreationError: { $ne: true },
       statut: { $ne: 'RECRUTE' }
     }, { limit: limit }).toArray();
 
+
+    let doublon = [];
+    let conseillersSansDoublon = [];
+    let alreadySeen = [];
+
+    for (let str of conseillers) {
+      if (alreadySeen[str.email]) {
+        await db.collection('conseillers').updateOne({ _id: str._id }, { $set: {
+          userCreationError: true
+        } });
+        doublon.push(str);
+      } else {
+        alreadySeen[str.email] = true;
+        conseillersSansDoublon.push(str);
+      }
+    }
+
     let promises = [];
-    structures.forEach(structure => {
+    conseillersSansDoublon.forEach(candidat => {
       const p = new Promise(async (resolve, reject) => {
-        doCreateUser(db, feathers, dbName, structure._id, logger, Sentry).then(() => {
+        doCreateUser(db, feathers, dbName, candidat._id, logger, Sentry).then(() => {
           usersCreatedCount++;
           resolve();
         }).catch(() => {
