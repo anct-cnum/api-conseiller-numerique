@@ -102,7 +102,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
 
     let conseillersSansDoublon = [];
     let alreadySeen = [];
-    for (let conseiller of conseillers) {
+    for (const conseiller of conseillers) {
       if (alreadySeen[conseiller.email]) {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: {
           userCreationError: true
