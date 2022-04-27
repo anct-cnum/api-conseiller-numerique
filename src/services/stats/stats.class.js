@@ -308,8 +308,6 @@ exports.Stats = class Stats extends Service {
           } catch (error) {
             app.get('sentry').captureException(error);
             logger.error(error);
-            // logger temporaire
-            logger.error(`Error dans /stats/admincoop/statistiques.pdf : ${error}`);
             res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
             return;
           }
