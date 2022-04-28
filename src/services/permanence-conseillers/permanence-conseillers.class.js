@@ -13,9 +13,9 @@ const {
 } = require('../../common/utils/feathers.utils');
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
-const { updatePermanenceToSchema } = require('./permanence/utils/update-permanence.utils');
-const { getPermanenceByConseiller, getPermanencesByStructure, createPermanence, setPermanence, deletePermanence, deleteConseillerPermanence } =
-  require('./permanence/repositories/permanence-conseiller.repository');
+const { updatePermanenceToSchema, updatePermanencesToSchema } = require('./permanence/utils/update-permanence.utils');
+const { getPermanenceByConseiller, getPermanencesByStructure, createPermanence, setPermanence, deletePermanence,
+  deleteConseillerPermanence, updatePermanences } = require('./permanence/repositories/permanence-conseiller.repository');
 const axios = require('axios');
 
 exports.PermanenceConseillers = class Sondages extends Service {
@@ -74,7 +74,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const db = await app.get('mongoClient');
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
-      const query = updatePermanenceToSchema(req.body.permanence, database);
+      const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       const conseillerId = req.params.id;
@@ -99,7 +99,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const db = await app.get('mongoClient');
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
-      const query = updatePermanenceToSchema(req.body.permanence, database);
+      const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       const conseillerId = req.params.id;
@@ -194,7 +194,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const idPermanence = req.params.id;
-      const idConseiller = user.entity.$id;
+      const idConseiller = user.entity.oid;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -206,6 +206,26 @@ exports.PermanenceConseillers = class Sondages extends Service {
           app.get('sentry').captureException(error);
           logger.error(error);
           res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+        });
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.patch('/permanences/conseiller/:id/updateAll', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const permanences = updatePermanencesToSchema(req.body.permanences, req.params.id);
+      console.log(permanences);
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await updatePermanences(db)(permanences).then(() => {
+          res.send({ isUpdated: true });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

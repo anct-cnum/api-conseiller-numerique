@@ -61,20 +61,36 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
   });
 };
 
+const updatePermanences = db => async permanences => {
+  await permanences.forEach(permanence => {
+    if (permanence._id) {
+      db.collection('permanences').updateOne({
+        _id: permanence._id
+      }, {
+        $set: permanence
+      });
+    } else {
+      db.collection('permanences').insertOne(
+        permanence
+      );
+    }
+  });
+};
+
 const deletePermanence = db => async permanenceId => {
   await db.collection('permanences').deleteOne({
     _id: new ObjectId(permanenceId)
   });
 };
 
-const deleteConseillerPermanence = db => async(permanenceId, conseillerId) => {
+const deleteConseillerPermanence = db => async (permanenceId, conseillerId) => {
   await db.collection('permanences').updateOne({
     _id: new ObjectId(permanenceId)
   }, {
     $pull: {
-      conseillers: new ObjectId(conseillerId),
-      conseillersItinerants: new ObjectId(conseillerId),
-      lieuPrincipalPour: new ObjectId(conseillerId),
+      conseillers: conseillerId,
+      conseillersItinerants: conseillerId,
+      lieuPrincipalPour: conseillerId,
     }
   });
 };
@@ -84,6 +100,7 @@ module.exports = {
   getPermanencesByStructure,
   setPermanence,
   createPermanence,
+  updatePermanences,
   deletePermanence,
   deleteConseillerPermanence
 };
