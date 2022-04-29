@@ -15,7 +15,7 @@ module.exports = (db, mailer) => {
         return db.collection('conseillers').updateOne(
           {
             '_id': conseiller._id,
-            'groupeCRAHistorique.nbJourDansGroupe': { $exists: false }
+            'groupeCRAHistorique': { '$elemMatch': { 'nbJourDansGroupe': { $exists: false } } },
           },
           {
             $set: {
@@ -30,10 +30,10 @@ module.exports = (db, mailer) => {
       };
 
       let onError = async err => {
-        await db.collection('users').updateOne(
+        await db.collection('conseillers').updateOne(
           {
             '_id': conseiller._id,
-            'groupeCRAHistorique.nbJourDansGroupe': { $exists: false }
+            'groupeCRAHistorique': { '$elemMatch': { 'nbJourDansGroupe': { $exists: false } } }
           },
           {
             $set: {
@@ -45,9 +45,9 @@ module.exports = (db, mailer) => {
         throw err;
       };
       return mailer.createMailer().sendEmail(
-        conseiller.name,
+        conseiller.emailCN.address,
         {
-          subject: 'Veuillez activer votre compte Coop des Conseillers numériques France Services',
+          subject: 'Vous ne remplissez pas vos CRA !',
           body: await render(conseiller),
         },
       )
