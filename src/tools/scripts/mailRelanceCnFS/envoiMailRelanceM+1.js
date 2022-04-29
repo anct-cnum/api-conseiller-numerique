@@ -3,10 +3,10 @@
 
 require('dotenv').config();
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 const dayjs = require('dayjs');
-const createEmails = require('../../emails/emails');
-const createMailer = require('../../mailer');
+const createEmails = require('../../../emails/emails');
+const createMailer = require('../../../mailer');
 
 const datePlus1Mois = new Date(dayjs(Date.now()).subtract(1, 'month'));
 execute(__filename, async ({ app, db, logger, Sentry }) => {
