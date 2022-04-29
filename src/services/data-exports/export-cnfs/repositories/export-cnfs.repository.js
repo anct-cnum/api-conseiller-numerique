@@ -46,6 +46,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     datePrisePoste: 1,
     dateFinFormation: 1,
     groupeCRA: 1,
+    groupeCRAHistorique: { $slice: 5 },
     emailCNError: 1,
     mattermost: 1,
     supHierarchique: 1,
@@ -78,7 +79,8 @@ const getStructureNameFromId = db => async id => db.collection('structures')
     nom: 1,
     codeDepartement: 1,
     insee: 1,
-    contact: 1
+    contact: 1,
+    idPG: 1
   }
 });
 
