@@ -98,6 +98,14 @@ const deleteConseillerPermanence = db => async (permanenceId, conseillerId) => {
   });
 };
 
+const setReporterInsertion = db => async userId => {
+  await db.collection('users').updateOne({
+    _id: new ObjectId(userId)
+  }, {
+    $inc: { reportPermanence: +1 }
+  });
+};
+
 module.exports = {
   getPermanenceByConseiller,
   getPermanencesByStructure,
@@ -105,5 +113,6 @@ module.exports = {
   createPermanence,
   updatePermanences,
   deletePermanence,
-  deleteConseillerPermanence
+  deleteConseillerPermanence,
+  setReporterInsertion,
 };

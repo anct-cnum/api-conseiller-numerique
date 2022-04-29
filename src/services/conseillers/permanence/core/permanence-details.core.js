@@ -2,6 +2,12 @@ const { formatAddressFromInsee, formatAddressFromPermanence, formatOpeningHours 
 
 const emptyString = '';
 
+const typeAccesMap = new Map([
+  ['prive', 'La structure n\'accueille pas de public'],
+  ['libre', 'Accès libre'],
+  ['rdv', 'Sur rendez-vous']
+]);
+
 const permanenceFormattedAddress = formattedAddress =>
   formattedAddress === emptyString ? {} : {
     adresse: formattedAddress
@@ -71,7 +77,7 @@ const permanenceDetails = async permanence => ({
   ...(permanence.email ? { email: permanence.email } : {}),
   ...(permanence.numeroTelephone ? { telephone: setPhoneSpaces(permanence.numeroTelephone) } : {}),
   ...(permanence.siteWeb ? { siteWeb: permanence.siteWeb } : {}),
-  typeAcces: permanence.typeAcces.join(', '),
+  typeAcces: permanence.typeAcces.map(type => typeAccesMap.get(type)).join(', '),
   openingHours: formatOpeningHours(permanence.horaires ?? []),
   nombreCnfs: permanence.conseillers?.length ?? 0,
   cnfs: permanence.conseillers ?? []
