@@ -25,7 +25,7 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
     ...nextStatCnfs,
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
-    structureId: structureId ? structureId : undefined,
+    structureId: structureId ? (await getStructureNameFromId(structureId)).idPG : undefined,
     nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
     emailStructure: structureId ? (await getStructureNameFromId(structureId)).contact?.email : '',
     // eslint-disable-next-line max-len
