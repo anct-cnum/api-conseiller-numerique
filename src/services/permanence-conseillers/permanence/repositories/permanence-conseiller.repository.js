@@ -62,8 +62,9 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
 };
 
 const updatePermanences = db => async permanences => {
-  return new Promise(async resolve => {
-    await permanences.forEach(permanence => {
+  let promises = [];
+  permanences.forEach(permanence => {
+    promises.push(new Promise(async resolve => {
       if (permanence._id) {
         db.collection('permanences').updateOne({
           _id: permanence._id
@@ -76,8 +77,9 @@ const updatePermanences = db => async permanences => {
         );
       }
       resolve();
-    });
+    }));
   });
+  await Promise.all(promises);
 };
 
 const deletePermanence = db => async permanenceId => {

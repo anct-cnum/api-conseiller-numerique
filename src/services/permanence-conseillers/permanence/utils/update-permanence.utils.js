@@ -35,7 +35,6 @@ const assignPermanence = (body, conseillerId, database) => {
 };
 
 const assignPermanences = (permanences, conseillerId) => {
-
   permanences.forEach(permanence => {
     const conseillers = [];
     const conseillersItinerants = [];
