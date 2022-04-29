@@ -185,7 +185,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          return res.status(409).send(new Conflict('Une erreur est survenue au moment du repport du formulaire.').toJSON());
+          return res.status(409).send(new Conflict('Une erreur est survenue au moment du report du formulaire, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
