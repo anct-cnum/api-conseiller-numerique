@@ -18,8 +18,7 @@ const formatOpeningHours = openingHours =>
     getOpeningHoursRanges(openingHour)
     .filter(notEmptyString)
     .join(rangeSeparator)
-    .replaceAll(hourSymbol, hourUnit))
-  .filter(notEmptyString);
+    .replaceAll(hourSymbol, hourUnit));
 
 module.exports = {
   formatOpeningHours

@@ -80,7 +80,9 @@ describe('format opening hours', () => {
       '8h00 - 12h30 | 13h30 - 18h00',
       '8h00 - 12h30 | 13h30 - 18h00',
       '8h00 - 12h30 | 13h30 - 18h00',
-      '8h00 - 12h30 | 13h30 - 18h00'
+      '8h00 - 12h30 | 13h30 - 18h00',
+      '',
+      ''
     ];
 
     const openingHours = formatOpeningHours(openingHoursToFormat);
