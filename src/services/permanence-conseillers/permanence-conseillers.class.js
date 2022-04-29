@@ -37,11 +37,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await getPermanenceByConseiller(db)(conseillerId).then(permanence => {
-          res.send({ permanence });
+          return res.send({ permanence });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(404).send(new Conflict('La recherche de permanence a échouée, veuillez réessayer.').toJSON());
+          return res.status(404).send(new Conflict('La recherche de permanence a échouée, veuillez réessayer.').toJSON());
         });
 
       }).catch(routeActivationError => abort(res, routeActivationError));
@@ -59,11 +59,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user?._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await getPermanencesByStructure(db)(structureId).then(permanences => {
-          res.send({ permanences });
+          return res.send({ permanences });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(500).send(new GeneralError('La recherche de permanence a échoué, veuillez réessayer.').toJSON());
+          return res.status(500).send(new GeneralError('La recherche de permanence a échoué, veuillez réessayer.').toJSON());
         });
 
       }).catch(routeActivationError => abort(res, routeActivationError));
@@ -85,11 +85,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
-          res.send({ isCreated: true });
+          return res.send({ isCreated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(409).send(new Conflict('La création de permanence a échoué, veuillez réessayer.').toJSON());
+          return res.status(409).send(new Conflict('La création de permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
 
@@ -112,11 +112,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         await setPermanence(db)(permanenceId, query, conseillerId, user._id, showPermanenceForm, hasPermanence,
           telephonePro, emailPro, estCoordinateur).then(() => {
-          res.send({ isUpdated: true });
+          return res.send({ isUpdated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
+          return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -181,11 +181,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await deletePermanence(db)(idPermanence).then(() => {
-          res.send({ isDeleted: true });
+          return res.send({ isDeleted: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(409).send(new Conflict('La suppression de la permanence a échoué, veuillez réessayer.').toJSON());
+          return res.status(409).send(new Conflict('La suppression de la permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -201,18 +201,18 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await deleteConseillerPermanence(db)(idPermanence, idConseiller).then(() => {
-          res.send({ isConseillerDeleted: true });
+          return res.send({ isConseillerDeleted: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+          return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.patch('/permanences/conseiller/:id/updateAll', async (req, res) => {
       const db = await app.get('mongoClient');
-      const permanences = updatePermanencesToSchema(req.body.permanences, req.params.id);
+      const permanences = await updatePermanencesToSchema(req.body.permanences, req.params.id);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       canActivate(
@@ -220,11 +220,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await updatePermanences(db)(permanences).then(() => {
-          res.send({ isUpdated: true });
+          return res.send({ isUpdated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
+          return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

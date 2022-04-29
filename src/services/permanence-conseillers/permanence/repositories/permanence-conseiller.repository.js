@@ -62,18 +62,21 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
 };
 
 const updatePermanences = db => async permanences => {
-  await permanences.forEach(permanence => {
-    if (permanence._id) {
-      db.collection('permanences').updateOne({
-        _id: permanence._id
-      }, {
-        $set: permanence
-      });
-    } else {
-      db.collection('permanences').insertOne(
-        permanence
-      );
-    }
+  return new Promise(async resolve => {
+    await permanences.forEach(permanence => {
+      if (permanence._id) {
+        db.collection('permanences').updateOne({
+          _id: permanence._id
+        }, {
+          $set: permanence
+        });
+      } else {
+        db.collection('permanences').insertOne(
+          permanence
+        );
+      }
+      resolve();
+    });
   });
 };
 

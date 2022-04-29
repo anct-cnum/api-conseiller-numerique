@@ -70,13 +70,9 @@ const assignPermanences = (permanences, conseillerId) => {
 
   return permanences;
 };
-const updatePermanenceToSchema = (body, conseillerId, database) => (
-  assignPermanence(body, conseillerId, database)
-);
+const updatePermanenceToSchema = (body, conseillerId, database) => assignPermanence(body, conseillerId, database);
 
-const updatePermanencesToSchema = (body, conseillerId) => (
-  assignPermanences(body, conseillerId)
-);
+const updatePermanencesToSchema = async (body, conseillerId) => await assignPermanences(body, conseillerId);
 
 module.exports = {
   assignPermanence,
