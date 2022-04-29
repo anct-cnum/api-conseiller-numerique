@@ -706,6 +706,140 @@ describe('détails de la permanence avec l\'identifiant de la permanence', () =>
     expect(details).toStrictEqual(expectedPermanenceDetails);
   });
 
+  it('devrait retourner le détail de la permanence sans horaires ouverte non-stop le lundi', async () => {
+    const permanence = {
+      nomEnseigne: 'CCAS des HERBIERS',
+      numeroTelephone: '+33653658996',
+      email: 'structure@mailgenerique.com',
+      adresse: {
+        numeroRue: '6',
+        rue: 'RUE DU TOURNIQUET',
+        codePostal: '85500',
+        ville: 'LES HERBIERS'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [
+          -1.0134,
+          46.8691
+        ],
+      },
+      horaires: [
+        {
+          matin: [
+            '8:00',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            '18:00'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        },
+        {
+          matin: [
+            'Fermé',
+            'Fermé'
+          ],
+          apresMidi: [
+            'Fermé',
+            'Fermé'
+          ]
+        }
+      ],
+      typeAcces: ['libre'],
+      conseillers: [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        }
+      ],
+      siteWeb: 'https://ccas-des-herbiers.com',
+    };
+
+    const expectedPermanenceDetails = {
+      adresse: '6 RUE DU TOURNIQUET, 85500 LES HERBIERS',
+      coordinates: [
+        -1.0134,
+        46.8691
+      ],
+      nom: 'CCAS des HERBIERS',
+      email: 'structure@mailgenerique.com',
+      telephone: '+33 6 53 65 89 96',
+      siteWeb: 'https://ccas-des-herbiers.com',
+      typeAcces: 'Accès libre',
+      openingHours: [
+        '8h00 - 18h00',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+      ],
+      nombreCnfs: 1,
+      cnfs: [
+        {
+          prenom: 'Christelle',
+          nom: 'Bateau',
+        }
+      ]
+    };
+
+    const details = await permanenceDetails(permanence);
+
+    expect(details).toStrictEqual(expectedPermanenceDetails);
+  });
+
   it('devrait retourner le détail de la permanence sans conseillers', async () => {
     const permanence = {
       nomEnseigne: 'CCAS des HERBIERS',
