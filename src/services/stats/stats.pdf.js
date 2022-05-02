@@ -22,7 +22,8 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   } catch (error) {
     app.get('sentry').captureException(error);
     logger.error(error);
-    logger.error(`Error pdf temporaire (1) : ${browser}`);
+    logger.error(`Error pdf temporaire (1 error) : ${error}`);
+    logger.error(`Error pdf temporaire (1 browser) : ${browser}`);
   }
 
   try {
@@ -40,7 +41,8 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   } catch (error) {
     app.get('sentry').captureException(error);
     logger.error(error);
-    logger.error(`Error pdf temporaire (2) : ${browser}`);
+    logger.error(`Error pdf temporaire (2 error) : ${error}`);
+    logger.error(`Error pdf temporaire (2 browser) : ${browser}`);
   }
 
   let pdf;
@@ -60,7 +62,8 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   } catch (error) {
     app.get('sentry').captureException(error);
     logger.error(error);
-    logger.error(`Error pdf temporaire (3) : ${error}`);
+    logger.error(`Error pdf temporaire (3 error) : ${error}`);
+    logger.error(`Error pdf temporaire (3 browser) : ${browser}`);
     res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer ultérieurement.').toJSON());
   }
   return;
