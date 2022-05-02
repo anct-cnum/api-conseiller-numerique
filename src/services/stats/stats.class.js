@@ -302,8 +302,15 @@ exports.Stats = class Stats extends Service {
 
           let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostal;
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
-          await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
-          return;
+          try {
+            await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
+            return;
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer.').toJSON());
+            return;
+          }
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
