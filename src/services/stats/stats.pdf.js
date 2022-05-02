@@ -6,17 +6,23 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
 
   let browser = null;
 
-  if (app.get('espace_coop_hostname') === 'http://localhost:3000') {
-    //fonctionnement en local
-    browser = await puppeteer.launch({
-      executablePath: app.get('puppeteer_browser')
-    });
-  } else {
-    //fonctionnement sur les autres environnements
-    const browserURL = app.get('browser_wss_link') + '?token=' + app.get('browser_wss_token');
-    browser = await puppeteer.connect({
-      browserWSEndpoint: browserURL,
-    });
+  try {
+    if (app.get('espace_coop_hostname') === 'http://localhost:3000') {
+      //fonctionnement en local
+      browser = await puppeteer.launch({
+        executablePath: app.get('puppeteer_browser')
+      });
+    } else {
+      //fonctionnement sur les autres environnements
+      const browserURL = app.get('browser_wss_link') + '?token=' + app.get('browser_wss_token');
+      browser = await puppeteer.connect({
+        browserWSEndpoint: browserURL,
+      });
+    }
+  } catch (error) {
+    app.get('sentry').captureException(error);
+    logger.error(error);
+    logger.error(`Error pdf temporaire (1) : ${browser}`);
   }
 
   try {
@@ -34,6 +40,7 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   } catch (error) {
     app.get('sentry').captureException(error);
     logger.error(error);
+    logger.error(`Error pdf temporaire (2) : ${browser}`);
   }
 
   let pdf;
@@ -53,6 +60,7 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   } catch (error) {
     app.get('sentry').captureException(error);
     logger.error(error);
+    logger.error(`Error pdf temporaire (3) : ${error}`);
     res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer ultérieurement.').toJSON());
   }
   return;
