@@ -5,28 +5,40 @@ require('dotenv').config();
 
 const { execute } = require('../../utils');
 const dayjs = require('dayjs');
-const createEmails = require('../../../emails/emails');
-const createMailer = require('../../../mailer');
+const cli = require('commander');
+
+cli.description('Send emails for conseiller without deposit CRA after 1 month')
+.option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
+.option('--delay [delay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
+.helpOption('-e', 'HELP command')
+.parse(process.argv);
 
 const datePlus1Mois = new Date(dayjs(Date.now()).subtract(1, 'month'));
-execute(__filename, async ({ app, db, logger, Sentry }) => {
+execute(__filename, async ({ db, logger, Sentry, emails }) => {
+  const { limit = 25, delay = 2000 } = cli;
   const conseillers = await db.collection('conseillers').find({
     'groupeCRA': { $eq: 4 },
     '$expr': {
       '$and': [
         { '$eq': [{ '$year': [{ '$arrayElemAt': ['$groupeCRAHistorique.dateDeChangement', -1] }] }, datePlus1Mois.getFullYear()] },
         { '$eq': [{ '$month': [{ '$arrayElemAt': ['$groupeCRAHistorique.dateDeChangement', -1] }] }, datePlus1Mois.getMonth() + 1] },
-        { '$eq': [{ '$dayOfMonth': [{ '$arrayElemAt': ['$groupeCRAHistorique.dateDeChangement', -1] }] }, datePlus1Mois.getDate()] }
+        { '$eq': [{ '$dayOfMonth': [{ '$arrayElemAt': ['$groupeCRAHistorique.dateDeChangement', -1] }] }, datePlus1Mois.getDate()] },
+        { '$eq': [{ '$arrayElemAt': ['$groupeCRAHistorique.mailSendConseillerM+1', -1] }, undefined] }
       ]
     }
-  }).toArray();
+  }).limit(limit).toArray();
 
   for (const conseiller of conseillers) {
     try {
-      let mailer = createMailer(app, conseiller.emailCN.address);
-      const emails = createEmails(db, mailer);
-      let message = emails.getEmailMessageByTemplateName('mailRelanceM+1Conseiller');
-      await message.send(conseiller);
+      const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
+      const messageConseiller = emails.getEmailMessageByTemplateName('mailRelanceM+1Conseiller');
+      const messageStructure = emails.getEmailMessageByTemplateName('mailRelanceM+1Structure');
+
+      await messageConseiller.send(conseiller);
+      await messageStructure.send(conseiller, structure.contact.email);
+      if (delay) {
+        await delay(delay);
+      }
     } catch (e) {
       Sentry.captureException(e);
       logger.error(e);

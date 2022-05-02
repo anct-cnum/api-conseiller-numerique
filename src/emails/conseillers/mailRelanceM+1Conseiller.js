@@ -19,12 +19,12 @@ module.exports = (db, mailer) => {
           },
           {
             $set: {
-              'groupeCRAHistorique.$.mailSendM+1': true,
-              'groupeCRAHistorique.$.dateMailSendM+1': new Date()
+              'groupeCRAHistorique.$.mailSendConseillerM+1': true,
+              'groupeCRAHistorique.$.dateMailSendConseillerM+1': new Date()
             },
             $unset: {
-              'groupeCRAHistorique.$.mailErrorM+1': '',
-              'groupeCRAHistorique.$.mailErrorDetailM+1': ''
+              'groupeCRAHistorique.$.mailErrorConseillerM+1': '',
+              'groupeCRAHistorique.$.mailErrorDetailConseillerM+1': ''
             },
           });
       };
@@ -37,8 +37,8 @@ module.exports = (db, mailer) => {
           },
           {
             $set: {
-              'groupeCRAHistorique.$.mailErrorM+1': 'smtpError',
-              'groupeCRAHistorique.$.mailErrorDetailM+1': err.message
+              'groupeCRAHistorique.$.mailErrorConseillerM+1': 'smtpError',
+              'groupeCRAHistorique.$.mailErrorDetailConseillerM+1': err.message
             }
           });
         utils.setSentryError(err);
@@ -47,7 +47,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         conseiller.emailCN.address,
         {
-          subject: 'Vous ne remplissez pas vos CRA !',
+          subject: 'N\'oubliez pas de remplir votre Compte-Rendu d\'Activité !',
           body: await render(conseiller),
         },
       )

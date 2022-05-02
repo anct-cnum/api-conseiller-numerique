@@ -1,15 +1,15 @@
 module.exports = (db, mailer) => {
-  const templateName = 'mailRelanceM+1,5Conseiller';
+  const templateName = 'mailRelanceM+1Structure';
   const { utils } = mailer;
 
-  let render = async conseiller => {
-    return mailer.render(__dirname, templateName, { conseiller });
+  const render = () => {
+    return mailer.render(__dirname, templateName);
   };
 
   return {
     templateName,
     render,
-    send: async conseiller => {
+    send: async (conseiller, emailContactStructure) => {
 
       let onSuccess = () => {
         return db.collection('conseillers').updateOne(
@@ -19,12 +19,12 @@ module.exports = (db, mailer) => {
           },
           {
             $set: {
-              'groupeCRAHistorique.$.mailSendConseillerM+1,5': true,
-              'groupeCRAHistorique.$.dateMailSendConseillerM+1,5': new Date()
+              'groupeCRAHistorique.$.mailSendStructureM+1': true,
+              'groupeCRAHistorique.$.dateMailSendStructureM+1': new Date()
             },
             $unset: {
-              'groupeCRAHistorique.$.mailErrorConseillerM+1': '',
-              'groupeCRAHistorique.$.mailErrorDetailConseillerM+1': ''
+              'groupeCRAHistorique.$.mailErrorStructureM+1': '',
+              'groupeCRAHistorique.$.mailErrorDetailStructureM+1': ''
             },
           });
       };
@@ -37,18 +37,18 @@ module.exports = (db, mailer) => {
           },
           {
             $set: {
-              'groupeCRAHistorique.$.mailErrorConseillerM+1,5': 'smtpError',
-              'groupeCRAHistorique.$.mailErrorDetailConseillerM+1,5': err.message
+              'groupeCRAHistorique.$.mailErrorStructureM+1': 'smtpError',
+              'groupeCRAHistorique.$.mailErrorDetailStructureM+1': err.message
             }
           });
         utils.setSentryError(err);
         throw err;
       };
       return mailer.createMailer().sendEmail(
-        conseiller.emailCN.address,
+        emailContactStructure,
         {
-          subject: '[IMPORTANT] Aucun compte-rendu d\'activité enregistré depuis 45 jours',
-          body: await render(conseiller),
+          subject: 'Rencontrez-vous des difficultés avec le Compte-Rendu d\'Activités ?',
+          body: await render(),
         },
       )
       .then(onSuccess)
