@@ -57,8 +57,8 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
       logger.error(error);
       res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer ultérieurement.').toJSON());
     }
-    return;
   }
+  return;
 };
 
 module.exports = { generatePdf };
