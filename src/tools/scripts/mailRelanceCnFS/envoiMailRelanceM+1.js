@@ -20,11 +20,12 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
   const { optionLimit = 2, optionDelay = 2000 } = cli;
   const conseillers = await db.collection('conseillers').find({
     'groupeCRA': { $eq: 4 },
-    'groupeCRAHistorique.mailSendConseillerM+1': { '$exists': false },
-    'groupeCRAHistorique.dateDeChangement': { $lte: datePlus1Mois, $gt: datePlus1MoisEtDemi }
-  }, {
     'groupeCRAHistorique': {
-      $slice: -1
+      $elemMatch: {
+        'nbJourDansGroupe': { $exists: false },
+        'dateDeChangement': { $lte: datePlus1Mois, $gt: datePlus1MoisEtDemi },
+        'mailSendConseillerM+1': { $exists: false }
+      }
     }
   }).limit(optionLimit).toArray();
 
