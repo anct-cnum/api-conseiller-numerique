@@ -23,8 +23,8 @@ module.exports = (db, mailer) => {
               'groupeCRAHistorique.$.dateMailSendConseillerM+1,5': new Date()
             },
             $unset: {
-              'groupeCRAHistorique.$.mailErrorConseillerM+1': '',
-              'groupeCRAHistorique.$.mailErrorDetailConseillerM+1': ''
+              'groupeCRAHistorique.$.mailErrorConseillerM+1,5': '',
+              'groupeCRAHistorique.$.mailErrorDetailConseillerM+1,5': ''
             },
           });
       };
