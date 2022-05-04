@@ -2,11 +2,20 @@
 const { GeneralError } = require('@feathersjs/errors');
 const puppeteer = require('puppeteer');
 
+const downBrowser = async (noWss, browser) => {
+  if (noWss) {
+    await browser.close();
+  } else {
+    await browser.disconnect();
+  }
+};
+
 const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) => {
 
   let browser = null;
 
-  if (app.get('espace_coop_hostname') === 'http://localhost:3000') {
+  const noWss = app.get('espace_coop_hostname') === 'http://localhost:3000';
+  if (noWss) {
     //fonctionnement en local
     browser = await puppeteer.launch({
       executablePath: app.get('puppeteer_browser')
@@ -32,7 +41,7 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
         });
       });
     } catch (error) {
-      await browser?.close();
+      await downBrowser(noWss, browser);
       app.get('sentry').captureException(error);
       logger.error(error);
     }
@@ -47,12 +56,12 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
         pdf = page.pdf({ format: 'A4', printBackground: true })
       ]);
 
-      await browser.close();
+      await downBrowser(noWss, browser);
 
       res.contentType('application/pdf');
       pdf.then(buffer => res.send(buffer));
     } catch (error) {
-      await browser?.close();
+      await downBrowser(noWss, browser);
       app.get('sentry').captureException(error);
       logger.error(error);
       res.status(500).send(new GeneralError('Une erreur est survenue lors de la création du PDF, veuillez réessayer ultérieurement.').toJSON());
