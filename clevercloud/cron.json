@@ -3,7 +3,7 @@
   "30 0 * * * $ROOT/src/tools/jobs/mises-en-relation.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-prefets.sh",
   "*/15 * * * * $ROOT/src/tools/jobs/create-account-structures.sh",
-  "*/30 * * * * $ROOT/src/tools/jobs/mail-relance-cra.sh",
+  "30 1 * * * $ROOT/src/tools/jobs/mail-relance-cra.sh",
   "*/5 * * * * $ROOT/src/tools/jobs/send-email-structures.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh",
   "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
