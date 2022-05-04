@@ -129,7 +129,12 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     slugify.extend({ '-': ' ' });
     slugify.extend({ '\'': ' ' });
     const departements = require('../../data/imports/departements-region.json');
-    const departement = departements.find(d => `${d.num_dep}` === conseiller.codeDepartement);
+    let departement = departements.find(d => `${d.num_dep}` === conseiller.codeDepartement);
+    // Cas Saint Martin => on les regroupe au canal département 971 - guadeloupe
+    if (conseiller.codeDepartement === '00' && conseiller.codePostal === '97150') {
+      departement = departements.find(d => `${d.num_dep}` === '971');
+    }
+
     const channelName = slugify(departement.dep_name, { replacement: '', lower: true });
 
     const resultChannel = await axios({
@@ -176,7 +181,12 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
 
     let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
     if (hub === null) {
-      hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
+      // Cas Saint Martin => on les regroupe au hub Antilles-Guyane
+      if (structure.codeDepartement === '00' && structure.codeCom === '978') {
+        hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: '973' } } });
+      } else {
+        hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
+      }
     }
     if (hub !== null) {
       await joinTeam(mattermost, token, mattermost.hubTeamId, mattermostSet.id);
