@@ -8,7 +8,7 @@ const dayjs = require('dayjs');
 const cli = require('commander');
 let { delay } = require('../../utils');
 
-cli.description('Send emails for conseiller without deposit CRA after 1 month')
+cli.description('Send emails for conseillers without deposit CRA after 1 month')
 .option('--limit [optionLimit]', 'limit the number of emails sent (default: 1)', parseInt)
 .option('--delay [optionDelay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
 .helpOption('-e', 'HELP command')
@@ -17,7 +17,7 @@ cli.description('Send emails for conseiller without deposit CRA after 1 month')
 const datePlus1Mois = new Date(dayjs(Date.now()).subtract(1, 'month'));
 const datePlus1MoisEtDemi = new Date(dayjs(Date.now()).subtract(45, 'day'));
 execute(__filename, async ({ db, logger, Sentry, emails }) => {
-  const { optionLimit = 2, optionDelay = 2000 } = cli;
+  const { optionLimit = 20, optionDelay = 1000 } = cli;
   const conseillers = await db.collection('conseillers').find({
     'groupeCRA': { $eq: 4 },
     'groupeCRAHistorique': {
