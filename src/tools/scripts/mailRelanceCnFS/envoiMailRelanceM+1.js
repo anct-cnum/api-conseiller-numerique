@@ -20,6 +20,7 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
   const { optionLimit = 1, optionDelay = 1000 } = cli;
   const conseillers = await db.collection('conseillers').find({
     'groupeCRA': { $eq: 4 },
+    'statut': { $eq: 'RECRUTE' },
     'groupeCRAHistorique': {
       $elemMatch: {
         'nbJourDansGroupe': { $exists: false },
@@ -46,5 +47,5 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
     }
   }
 
-  logger.info(`les mails de relance aux conseillers concernés ont été envoyés`);
+  logger.info(`les mails de relance CRA à M+1 aux conseillers concernés ont été envoyés`);
 });

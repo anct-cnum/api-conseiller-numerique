@@ -2,7 +2,7 @@ module.exports = (db, mailer) => {
   const templateName = 'mailRelanceM+1Conseiller';
   const { utils } = mailer;
 
-  let render = async conseiller => {
+  const render = async conseiller => {
     return mailer.render(__dirname, templateName, { conseiller });
   };
 
@@ -11,7 +11,7 @@ module.exports = (db, mailer) => {
     render,
     send: async conseiller => {
 
-      let onSuccess = () => {
+      const onSuccess = () => {
         return db.collection('conseillers').updateOne(
           {
             '_id': conseiller._id,
@@ -29,7 +29,7 @@ module.exports = (db, mailer) => {
           });
       };
 
-      let onError = async err => {
+      const onError = async err => {
         await db.collection('conseillers').updateOne(
           {
             '_id': conseiller._id,

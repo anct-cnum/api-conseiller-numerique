@@ -11,7 +11,7 @@ module.exports = (db, mailer) => {
     render,
     send: async (conseiller, emailContactStructure) => {
 
-      let onSuccess = () => {
+      const onSuccess = () => {
         return db.collection('conseillers').updateOne(
           {
             '_id': conseiller._id,
@@ -29,7 +29,7 @@ module.exports = (db, mailer) => {
           });
       };
 
-      let onError = async err => {
+      const onError = async err => {
         await db.collection('conseillers').updateOne(
           {
             '_id': conseiller._id,
