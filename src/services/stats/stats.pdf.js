@@ -23,9 +23,15 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
   } else {
     //fonctionnement sur les autres environnements
     const browserURL = app.get('browser_wss_link') + '?token=' + app.get('browser_wss_token');
-    browser = await puppeteer.connect({
-      browserWSEndpoint: browserURL,
-    });
+    try {
+      browser = await puppeteer.connect({
+        browserWSEndpoint: browserURL,
+      });
+    } catch (error) {
+      logger.error(browser);
+      app.get('sentry').captureException(error);
+      logger.error(error);
+    }
   }
   if (browser !== null) {
     try {
