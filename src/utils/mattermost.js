@@ -177,8 +177,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     });
 
     const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
-    const regionName = findDepartement(structure.codeDepartement).region_name;
-
+    const regionName = findDepartement(structure.codeDepartement)?.region_name;
     let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
     if (hub === null) {
       // Cas Saint Martin => on les regroupe au hub Antilles-Guyane
