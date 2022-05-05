@@ -28,7 +28,6 @@ const generatePdf = async (app, res, logger, accessToken, user, finUrl = null) =
         browserWSEndpoint: browserURL,
       });
     } catch (error) {
-      logger.error(browser);
       app.get('sentry').captureException(error);
       logger.error(error);
     }
