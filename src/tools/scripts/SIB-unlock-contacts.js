@@ -4,7 +4,7 @@ const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
 let apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = 'REPLACE WITH API-KEY'; //TO REPLACE
+apiKey.apiKey = 'YOUR API KEY'; //TO REPLACE
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
 program
@@ -22,25 +22,23 @@ const readCSV = async filePath => {
   }
 };
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 const { execute } = require('../utils');
 
-execute(__filename, async ({ logger, exit, Sentry }) => {
-  let promises = [];
-  await new Promise(resolve => {
+execute(__filename, async ({ logger }) => {
+  await new Promise(() => {
     readCSV(program.csv).then(async emails => {
-      emails.forEach(email => {
-        let p = new Promise(async () => {
-          await apiInstance.smtpBlockedContactsEmailDelete(email.Contact);
-          logger.info(email.Contact);
-        });
-        promises.push(p);
-      });
-      resolve();
-    }).catch(error => {
-      logger.error(error);
-      Sentry.captureException(error);
+
+      // Conservation des emails sans doublon
+      let emailsList = emails.map(email => email.Contact);
+      emailsList = [...new Set(emailsList)];
+
+      for (let email of emailsList) {
+        logger.info(email);
+        await apiInstance.smtpBlockedContactsEmailDelete(email);
+        await sleep(500);
+      }
     });
   });
-  await Promise.allSettled(promises);
-  exit();
 });
