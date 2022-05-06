@@ -10,7 +10,7 @@ let { delay } = require('../../utils');
 
 cli.description('Send emails for conseillers without deposit CRA after 1 month')
 .option('--limit [optionLimit]', 'limit the number of emails sent (default: 1)', parseInt)
-.option('--delay [optionDelay]', 'Time in milliseconds to wait before sending the next email (default: 100)', parseInt)
+.option('--delay [optionDelay]', 'Time in milliseconds to wait before sending the next email (default: 1000)', parseInt)
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
