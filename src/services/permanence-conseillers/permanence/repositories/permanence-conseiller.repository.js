@@ -61,6 +61,45 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
   });
 };
 
+const updatePermanences = db => async permanences => {
+  let promises = [];
+  permanences.forEach(permanence => {
+    promises.push(new Promise(async resolve => {
+      if (permanence._id) {
+        db.collection('permanences').updateOne({
+          _id: permanence._id
+        }, {
+          $set: permanence
+        });
+      } else {
+        db.collection('permanences').insertOne(
+          permanence
+        );
+      }
+      resolve();
+    }));
+  });
+  await Promise.all(promises);
+};
+
+const deletePermanence = db => async permanenceId => {
+  await db.collection('permanences').deleteOne({
+    _id: new ObjectId(permanenceId)
+  });
+};
+
+const deleteConseillerPermanence = db => async (permanenceId, conseillerId) => {
+  await db.collection('permanences').updateOne({
+    _id: new ObjectId(permanenceId)
+  }, {
+    $pull: {
+      conseillers: conseillerId,
+      conseillersItinerants: conseillerId,
+      lieuPrincipalPour: conseillerId,
+    }
+  });
+};
+
 const setReporterInsertion = db => async userId => {
   await db.collection('users').updateOne({
     _id: userId
@@ -74,5 +113,8 @@ module.exports = {
   getPermanencesByStructure,
   setPermanence,
   createPermanence,
+  updatePermanences,
+  deletePermanence,
+  deleteConseillerPermanence,
   setReporterInsertion,
 };

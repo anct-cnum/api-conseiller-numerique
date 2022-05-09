@@ -237,12 +237,12 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Redirections vers une autre structure agréée;10\n' +
       '\n' +
       'Thèmes des accompagnements\n' +
-      'Prendre en main un équipement;13\n' +
+      'Prendre en main du matériel;13\n' +
       'Naviguer sur Internet;9\n' +
       'Courriels;8\n' +
       'Applications smartphone;2\n' +
       'Gestion de contenus numériques;8\n' +
-      'Connaître le vocabulaire numérique;4\n' +
+      'Culture numérique;4\n' +
       'Traitement de texte;8\n' +
       'Échanger avec ses proches;0\n' +
       'Emploi et formation;21\n' +

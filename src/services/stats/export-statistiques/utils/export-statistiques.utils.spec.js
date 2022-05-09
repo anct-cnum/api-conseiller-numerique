@@ -207,7 +207,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
           'valeur': 4
         },
         {
-          'nom': 'equipement informatique', //Correpondance : Prendre en main un équipement
+          'nom': 'equipement informatique', //Correpondance : Prendre en main du matériel
           'valeur': 4
         },
       ];
