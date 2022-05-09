@@ -42,7 +42,13 @@ const getPermanenceById = db => async id => db.collection('permanences').aggrega
       typeAcces: 1,
       conseillers: {
         $map: {
-          input: '$conseillers',
+          input: {
+            $filter: {
+              input: '$conseillers',
+              as: 'conseillerFiltered',
+              cond: { '$$conseillerFiltered.nonAffichageCarto': { $ne: true } }
+            }
+          },
           as: 'conseiller',
           in: {
             prenom: '$$conseiller.prenom',
@@ -76,7 +82,8 @@ const getCnfs = db => async structureId => db.collection('conseillers').find({
   statut: ConseillerStatut.Recrute,
   estCoordinateur: { $ne: true },
   hasPermanence: { $ne: true },
-  structureId: new ObjectId(structureId)
+  structureId: new ObjectId(structureId),
+  nonAffichageCarto: { $ne: true }
 }, {
   projection: {
     '_id': 0,
