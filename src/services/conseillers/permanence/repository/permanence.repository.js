@@ -46,7 +46,7 @@ const getPermanenceById = db => async id => db.collection('permanences').aggrega
             $filter: {
               input: '$conseillers',
               as: 'conseillerFiltered',
-              cond: { '$$conseillerFiltered.nonAffichageCarto': { $ne: true } }
+              cond: { $ne: ['$$conseillerFiltered.nonAffichageCarto', true] }
             }
           },
           as: 'conseiller',
