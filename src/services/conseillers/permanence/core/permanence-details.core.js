@@ -60,10 +60,16 @@ const structureToPermanenceDetailsTransfer = permanence => ({
   ...permanenceCoordinates(permanence.coordonneesInsee?.coordinates)
 });
 
-const cnfsDetails = cnfs => ({
-  cnfs,
-  nombreCnfs: cnfs.length,
-});
+const cnfsDetails = cnfs => {
+  cnfs = cnfs.map(conseiller => ({
+    prenom: conseiller.nonAffichageCarto !== true ? conseiller.prenom : 'Anonyme',
+    nom: conseiller.nonAffichageCarto !== true ? conseiller.nom : '',
+    ...(conseiller.nonAffichageCarto !== true && conseiller.emailPro !== undefined && { email: conseiller.emailPro }),
+    ...(conseiller.nonAffichageCarto !== true && conseiller.telephonePro !== undefined && { phone: conseiller.telephonePro })
+  }));
+
+  return { cnfs, nombreCnfs: cnfs.length };
+};
 
 const permanenceDetailsFromStructureId = async (structureId, { getStructureById, getCnfs }) => ({
   ...structureToPermanenceDetailsTransfer(await getStructureById(structureId)),

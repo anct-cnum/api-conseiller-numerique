@@ -42,19 +42,13 @@ const getPermanenceById = db => async id => db.collection('permanences').aggrega
       typeAcces: 1,
       conseillers: {
         $map: {
-          input: {
-            $filter: {
-              input: '$conseillers',
-              as: 'conseillerFiltered',
-              cond: { $ne: ['$$conseillerFiltered.nonAffichageCarto', true] }
-            }
-          },
+          input: '$conseillers',
           as: 'conseiller',
           in: {
-            prenom: '$$conseiller.prenom',
-            nom: '$$conseiller.nom',
-            email: '$$conseiller.emailPro',
-            phone: '$$conseiller.telephonePro',
+            prenom: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.prenom', 'Anonyme'] },
+            nom: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.nom', ''] },
+            email: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.emailPro', ''] },
+            phone: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.telephonePro', ''] },
           }
         }
       }
@@ -82,15 +76,15 @@ const getCnfs = db => async structureId => db.collection('conseillers').find({
   statut: ConseillerStatut.Recrute,
   estCoordinateur: { $ne: true },
   hasPermanence: { $ne: true },
-  structureId: new ObjectId(structureId),
-  nonAffichageCarto: { $ne: true }
+  structureId: new ObjectId(structureId)
 }, {
   projection: {
     '_id': 0,
     'prenom': 1,
     'nom': 1,
     'telephonePro': 1,
-    'emailPro': 1
+    'emailPro': 1,
+    'nonAffichageCarto': 1
   }
 }).toArray();
 
