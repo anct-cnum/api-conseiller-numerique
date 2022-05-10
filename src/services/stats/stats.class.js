@@ -31,7 +31,10 @@ const { getStatistiquesToExport } = require('./export-statistiques/core/export-s
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 const { statsRepository } = require('./stats.repository');
 const departementsRegion = require('../../../data/imports/departements-region.json');
-
+const { validateExportStatistiquesHubSchema, findDepartementOuRegion } = require('./export-statistiques-hub/utils/export-statistiques-hub.utils');
+const { getStatsCnfsHubs } = require('./export-statistiques-hub/core/export-statistiques-hub.core');
+const { exportStatistiquesHubRepository } = require('./export-statistiques-hub/repositories/export-statistiques-hub.repository');
+const { buildExportHubCnfsCsvFileContent } = require('./export-statistiques-hub/utils/export-statistiques-hub.utils');
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
     super(options);
@@ -350,6 +353,22 @@ exports.Stats = class Stats extends Service {
           // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(user?.roles, Role.AdminCoop))
         );
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/stats/hubcoop/statistiques.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = req.query;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.HubCoop], userAuthenticationRepository(db)),
+        schemaGuard(validateExportStatistiquesHubSchema(query))
+      ).then(async () => {
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const hub = findDepartementOuRegion(query.hub);
+        const statsCnfs = await getStatsCnfsHubs(hub, exportStatistiquesHubRepository(db));
+        csvFileResponse(res, `${getExportStatistiquesFileName(query.hub)}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs, user)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
