@@ -1,4 +1,4 @@
-const { findDepartementByRegion } = require('../utils/export-statistiques-hub.utils');
+const { findNumDepartementByRegion } = require('../utils/export-statistiques-hub.utils');
 
 const formatAdresseStructure = insee => {
 
@@ -26,17 +26,15 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
 };
 
 const getStatsCnfsHubs = async (hub, { getStatsCnfsHub, getStructureNameFromId }) => {
-  let departements;
   if (hub.region_names) {
-    departements = findDepartementByRegion(hub.region_names);
-    console.log(departements);
-  } else {
-    departements = hub.departements;
+    return Promise.all((await getStatsCnfsHub(findNumDepartementByRegion(hub.region_names))).map(prettifyAndComplete(getStructureNameFromId)));
+  }
+  if (hub.nom === 'Hub Antilles-Guyane') {
+    hub.departements.push('978');
+    return Promise.all((await getStatsCnfsHub(hub.departements)).map(prettifyAndComplete(getStructureNameFromId)));
   }
 
-  return Promise.all(
-    (await getStatsCnfsHub(departements)).map(prettifyAndComplete(getStructureNameFromId))
-  );
+  return Promise.all((await getStatsCnfsHub(hub.departements)).map(prettifyAndComplete(getStructureNameFromId)));
 };
 
 module.exports = {

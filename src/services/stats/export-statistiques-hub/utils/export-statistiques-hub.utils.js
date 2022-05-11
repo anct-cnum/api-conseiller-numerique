@@ -6,17 +6,16 @@ const validateExportStatistiquesHubSchema = exportHubInput => Joi.object({
   hub: Joi.string().required().error(new Error('Le hub est invalide')),
 }).validate(exportHubInput);
 
-const findDepartementOuRegion = nomHub => {
+const findDepartementOrRegion = nomHub => {
   return hubs.find(hub => `${hub.name}` === nomHub);
 };
 
-const findDepartementByRegion = hubRegion => {
+const findNumDepartementByRegion = hubRegion => {
   return departements.filter(
     departement => departement.region_name === hubRegion[0]).map(departement => departement.num_dep);
 };
 
-// const getExportCnfsFileName = (dateDebut, dateFin) =>
-//   `export-cnfs_entre_${dayjs(dateDebut).format('YYYY-MM-DD')}_et_${dayjs(dateFin).format('YYYY-MM-DD')}.csv`;
+const getExportStatistiquesHubFileName = hub => `Statistiques_${hub}`;
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
@@ -51,7 +50,8 @@ const buildExportHubCnfsCsvFileContent = async statsCnfs => {
 
 module.exports = {
   validateExportStatistiquesHubSchema,
-  findDepartementOuRegion,
-  findDepartementByRegion,
-  buildExportHubCnfsCsvFileContent
+  findDepartementOrRegion,
+  findNumDepartementByRegion,
+  buildExportHubCnfsCsvFileContent,
+  getExportStatistiquesHubFileName
 };

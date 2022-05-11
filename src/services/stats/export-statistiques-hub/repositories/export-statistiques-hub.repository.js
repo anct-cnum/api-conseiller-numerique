@@ -1,21 +1,17 @@
 const { ObjectId } = require('mongodb');
 
-const getStatsCnfsHub = db => async departement => {
-  const conseillers = db.collection('conseillers').find({
-    codeDepartement: { $in: departement },
-    statut: 'RECRUTE'
-  }).project({
-    _id: 1,
-    prenom: 1,
-    nom: 1,
-    emailCN: 1,
-    structureId: 1,
-    codePostal: 1,
-    codeRegion: 1
-  }).toArray();
-
-  return conseillers;
-};
+const getStatsCnfsHub = db => async departement => db.collection('conseillers').find({
+  codeDepartement: { $in: departement },
+  statut: 'RECRUTE'
+}).project({
+  _id: 1,
+  prenom: 1,
+  nom: 1,
+  emailCN: 1,
+  structureId: 1,
+  codePostal: 1,
+  codeRegion: 1
+}).toArray();
 
 const getStructureNameFromId = db => async id => db.collection('structures')
 .findOne({
