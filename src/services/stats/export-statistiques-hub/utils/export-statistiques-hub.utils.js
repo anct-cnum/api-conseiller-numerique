@@ -22,8 +22,8 @@ const csvLineSeparator = '\n';
 
 const buildExportHubCnfsCsvFileContent = async statsCnfs => {
   let fileHeaders = [
-    'Prénom',
     'Nom',
+    'Prénom',
     'Email @conseiller-numerique.fr',
     'Code Region du conseiller',
     'Code Postal du conseiller',
@@ -35,8 +35,8 @@ const buildExportHubCnfsCsvFileContent = async statsCnfs => {
   return [
     fileHeaders.join(csvCellSeparator),
     ...statsCnfs.map(statCnfs => [
-      statCnfs.prenom,
       statCnfs.nom,
+      statCnfs.prenom,
       statCnfs?.emailCN?.address ?? 'compte COOP non créé',
       statCnfs.codeRegion,
       statCnfs.codePostal,

@@ -13,6 +13,22 @@ const getStatsCnfsHub = db => async departement => db.collection('conseillers').
   codeRegion: 1
 }).toArray();
 
+const getStatsCnfsHubAntillesGuyane = db => async departement => db.collection('conseillers').find({
+  $or: [
+    { codeDepartement: { $eq: departement[0] } },
+    { codeCom: { $eq: departement[1] } }
+  ],
+  statut: 'RECRUTE'
+}).project({
+  _id: 1,
+  prenom: 1,
+  nom: 1,
+  emailCN: 1,
+  structureId: 1,
+  codePostal: 1,
+  codeRegion: 1
+}).toArray();
+
 const getStructureNameFromId = db => async id => db.collection('structures')
 .findOne({
   _id: new ObjectId(id)
@@ -29,7 +45,8 @@ const getStructureNameFromId = db => async id => db.collection('structures')
 
 const exportStatistiquesHubRepository = db => ({
   getStatsCnfsHub: getStatsCnfsHub(db),
-  getStructureNameFromId: getStructureNameFromId(db)
+  getStructureNameFromId: getStructureNameFromId(db),
+  getStatsCnfsHubAntillesGuyane: getStatsCnfsHubAntillesGuyane(db)
 });
 
 module.exports = {

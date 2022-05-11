@@ -25,13 +25,13 @@ const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
   };
 };
 
-const getStatsCnfsHubs = async (hub, { getStatsCnfsHub, getStructureNameFromId }) => {
+const getStatsCnfsHubs = async (hub, { getStatsCnfsHub, getStatsCnfsHubAntillesGuyane, getStructureNameFromId }) => {
   if (hub.region_names) {
     return Promise.all((await getStatsCnfsHub(findNumDepartementByRegion(hub.region_names))).map(prettifyAndComplete(getStructureNameFromId)));
   }
-  if (hub.nom === 'Hub Antilles-Guyane') {
+  if (hub.name === 'Hub Antilles-Guyane') {
     hub.departements.push('978');
-    return Promise.all((await getStatsCnfsHub(hub.departements)).map(prettifyAndComplete(getStructureNameFromId)));
+    return Promise.all((await getStatsCnfsHubAntillesGuyane(hub.departements)).map(prettifyAndComplete(getStructureNameFromId)));
   }
 
   return Promise.all((await getStatsCnfsHub(hub.departements)).map(prettifyAndComplete(getStructureNameFromId)));
