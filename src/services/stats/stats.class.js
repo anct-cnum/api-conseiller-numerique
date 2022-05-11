@@ -35,6 +35,7 @@ const { validateExportStatistiquesHubSchema, findDepartementOrRegion } = require
 const { getStatsCnfsHubs } = require('./export-statistiques-hub/core/export-statistiques-hub.core');
 const { exportStatistiquesHubRepository } = require('./export-statistiques-hub/repositories/export-statistiques-hub.repository');
 const { buildExportHubCnfsCsvFileContent, getExportStatistiquesHubFileName } = require('./export-statistiques-hub/utils/export-statistiques-hub.utils');
+
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
     super(options);
