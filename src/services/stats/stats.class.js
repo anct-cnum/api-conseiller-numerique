@@ -339,29 +339,38 @@ exports.Stats = class Stats extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
+        let userFinal = {};
         const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
+        if (user.roles.includes(Role.Prefet)) {
+          userFinal = await db.collection('users').findOne({ 'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
+        } else {
+          userFinal = user;
+        }
+
         if (query.type !== 'structure') {
           ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
         } else {
           const getUserById = userAuthenticationRepository(db);
           const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
-          const structure = await getStructureAssociatedWithUser(await getUserById(user._id));
+
+          const structure = await getStructureAssociatedWithUser(await getUserById(userFinal._id));
           const structureId = structure._id;
           ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
         }
         const { stats, type, idType } = await getStatistiquesToExport(
           query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
           exportStatistiquesRepository(db),
-          statsFct.checkRole(user?.roles, Role.AdminCoop)
+          statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
         );
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(user?.roles, Role.AdminCoop))
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
