@@ -270,21 +270,29 @@ exports.Stats = class Stats extends Service {
         }
         try {
           let userId = decode(accessToken).sub;
+          let userFinal = {};
           const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-          const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+          const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet];
           if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
             res.status(403).send(new Forbidden('User not authorized', {
               userId: userId
             }).toJSON());
             return;
           }
+
+          if (user.roles.includes(Role.Prefet)) {
+            userFinal = await db.collection('users').findOne({'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
+          } else {
+            userFinal = user;
+          }
+
           let codePostal = '/null';
           const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
           const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
           let idType = '';
           const type = req.query.type;
           if (type === 'structure') {
-            idType = user.entity.oid + '/';
+            idType = userFinal?.entity?.oid + '/';
             if (req.query.codePostal) {
               codePostal = '/' + req.query.codePostal;
             }
@@ -308,7 +316,7 @@ exports.Stats = class Stats extends Service {
           let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostal;
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
-            await statsPdf.generatePdf(app, res, logger, accessToken, user, finUrl);
+            await statsPdf.generatePdf(app, res, logger, accessToken, userFinal, finUrl);
             return;
           } catch (error) {
             app.get('sentry').captureException(error);
