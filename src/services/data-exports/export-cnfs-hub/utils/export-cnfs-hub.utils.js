@@ -2,7 +2,7 @@ const Joi = require('joi');
 const hubs = require('../../../../../data/imports/hubs.json');
 const departements = require('../../../../../data/imports/departements-region.json');
 
-const validateExportStatistiquesHubSchema = exportHubInput => Joi.object({
+const validateExportsHubSchema = exportHubInput => Joi.object({
   hub: Joi.string().required().error(new Error('Le hub est invalide')),
 }).validate(exportHubInput);
 
@@ -15,7 +15,19 @@ const findNumDepartementByRegion = hubRegion => {
     departement => departement.region_name === hubRegion[0]).map(departement => departement.num_dep);
 };
 
-const getExportStatistiquesHubFileName = hub => `Statistiques_${hub}`;
+const formatAdresseStructure = insee => {
+
+  let adresse = (insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.nom_voie ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.complement_adresse ? insee.etablissement.adresse.complement_adresse + ' ' : ' ') +
+  (insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
+  (insee?.etablissement?.adresse?.localite ?? '');
+
+  return adresse.replace(/["']/g, '');
+};
+
+const getExportCnfsHubFileName = hub => `export-cnfs_${hub}`;
 
 const csvCellSeparator = ';';
 const csvLineSeparator = '\n';
@@ -35,23 +47,23 @@ const buildExportHubCnfsCsvFileContent = async statsCnfs => {
   return [
     fileHeaders.join(csvCellSeparator),
     ...statsCnfs.map(statCnfs => [
-      statCnfs.nom,
-      statCnfs.prenom,
-      statCnfs?.emailCN?.address ?? 'compte COOP non créé',
-      statCnfs.codeRegion,
-      statCnfs.codePostal,
-      statCnfs.nomStructure.replace(/["',]/g, ''),
-      statCnfs.emailStructure,
-      statCnfs.adresseStructure,
+      statCnfs.conseiller.nom,
+      statCnfs.conseiller.prenom,
+      statCnfs.conseiller?.emailCN?.address ?? 'compte COOP non créé',
+      statCnfs.conseiller.codeRegion,
+      statCnfs.conseiller.codePostal,
+      statCnfs.nom.replace(/["',]/g, ''),
+      statCnfs.contact?.email,
+      formatAdresseStructure(statCnfs.insee),
       statCnfs.codeDepartement,
     ].join(csvCellSeparator))
   ].join(csvLineSeparator);
 };
 
 module.exports = {
-  validateExportStatistiquesHubSchema,
+  validateExportsHubSchema,
   findDepartementOrRegion,
   findNumDepartementByRegion,
   buildExportHubCnfsCsvFileContent,
-  getExportStatistiquesHubFileName
+  getExportCnfsHubFileName
 };

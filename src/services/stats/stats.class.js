@@ -1,6 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const decode = require('jwt-decode');
-const { Forbidden, NotAuthenticated, BadRequest, GeneralError, NotFound } = require('@feathersjs/errors');
+const { Forbidden, NotAuthenticated, BadRequest, GeneralError } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
 const Joi = require('joi');
@@ -31,10 +31,6 @@ const { getStatistiquesToExport } = require('./export-statistiques/core/export-s
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 const { statsRepository } = require('./stats.repository');
 const departementsRegion = require('../../../data/imports/departements-region.json');
-const { validateExportStatistiquesHubSchema, findDepartementOrRegion } = require('./export-statistiques-hub/utils/export-statistiques-hub.utils');
-const { getStatsCnfsHubs } = require('./export-statistiques-hub/core/export-statistiques-hub.core');
-const { exportStatistiquesHubRepository } = require('./export-statistiques-hub/repositories/export-statistiques-hub.repository');
-const { buildExportHubCnfsCsvFileContent, getExportStatistiquesHubFileName } = require('./export-statistiques-hub/utils/export-statistiques-hub.utils');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -354,28 +350,6 @@ exports.Stats = class Stats extends Service {
           // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(user?.roles, Role.AdminCoop))
         );
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
-
-    app.get('/stats/hubcoop/statistiques.csv', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const query = req.query;
-
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.HubCoop], userAuthenticationRepository(db)),
-        schemaGuard(validateExportStatistiquesHubSchema(query))
-      ).then(async () => {
-        const hubName = query.hub;
-        const hub = findDepartementOrRegion(hubName);
-        if (hub === undefined) {
-          res.status(404).send(new NotFound('Hub not found', {
-            hubName
-          }).toJSON());
-          return;
-        }
-        const statsCnfs = await getStatsCnfsHubs(hub, exportStatistiquesHubRepository(db));
-        csvFileResponse(res, `${getExportStatistiquesHubFileName(hubName)}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 

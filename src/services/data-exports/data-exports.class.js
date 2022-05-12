@@ -32,6 +32,13 @@ const {
   exportCnfsQueryToSchema,
   getExportCnfsFileName
 } = require('./export-cnfs/utils/export-cnfs.utils');
+const {
+  findDepartementOrRegion,
+  buildExportHubCnfsCsvFileContent,
+  getExportCnfsHubFileName
+} = require('./export-cnfs-hub/utils/export-cnfs-hub.utils.js');
+const { exportCnfsHubRepository } = require('./export-cnfs-hub/repositories/export-cnfs-hub.repository.js');
+const { getStatsCnfsHubs } = require('./export-cnfs-hub/core/export-cnfs-hub.core.js');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -348,6 +355,27 @@ exports.DataExports = class DataExports {
           getExportTerritoiresFileName(req.query.territoire, req.query.dateDebut, req.query.dateFin),
           buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire)
         );
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports/hubcoop/cnfs.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.HubCoop], userAuthenticationRepository(db))
+      ).then(async () => {
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const hubName = user.hub;
+        const hub = findDepartementOrRegion(hubName);
+        if (hub === undefined) {
+          res.status(404).send(new NotFound('Hub not found', {
+            hubName
+          }).toJSON());
+          return;
+        }
+        const statsCnfs = await getStatsCnfsHubs(hub, exportCnfsHubRepository(db));
+        csvFileResponse(res, `${getExportCnfsHubFileName(hubName)}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
