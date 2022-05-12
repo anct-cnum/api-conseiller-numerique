@@ -281,7 +281,7 @@ exports.Stats = class Stats extends Service {
           }
 
           if (user.roles.includes(Role.Prefet)) {
-            userFinal = await db.collection('users').findOne({'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
+            userFinal = await db.collection('users').findOne({ 'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
           } else {
             userFinal = user;
           }
