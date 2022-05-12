@@ -1,3 +1,4 @@
+/* eslint-disable no-mixed-spaces-and-tabs */
 const getStructureAndConseillerByDepartement = db => async departement => db.collection('structures').aggregate([
   {
     $match: {
@@ -23,15 +24,12 @@ const getStructureAndConseillerByDepartement = db => async departement => db.col
   {
     $project: {
       'nom': 1,
-      'codeDepartement': 1,
       'insee': 1,
       'contact': 1,
-      'prenom': 1,
+      'codeRegion': 1,
       'conseiller.nom': 1,
       'conseiller.prenom': 1,
       'conseiller.emailCN': 1,
-      'conseiller.codePostal': 1,
-      'conseiller.codeRegion': 1
     }
   }
 ]).toArray();
@@ -40,9 +38,9 @@ const getStructureAndConseillerByDepartementHubAntillesGuyane = db => async depa
   {
     $match: {
       $or: [
-        { codeDepartement: { $eq: departement[0] } },
+        { codeDepartement: { $in: departement } },
         { $and: [
-          { codeCom: { $eq: departement[1] } },
+          { codeCom: { $eq: '978' } },
           { codeDepartement: { $eq: '00' } }
         ] },
       ],
@@ -58,8 +56,7 @@ const getStructureAndConseillerByDepartementHubAntillesGuyane = db => async depa
         {
           $match: {
             statut: 'RECRUTE'
-          }
-        }
+          } }
       ]
     }
   },
@@ -67,15 +64,12 @@ const getStructureAndConseillerByDepartementHubAntillesGuyane = db => async depa
   {
     $project: {
       'nom': 1,
-      'codeDepartement': 1,
       'insee': 1,
       'contact': 1,
-      'prenom': 1,
+      'codeRegion': { $cond: { if: { $eq: ['$codeCom', '978'] }, then: '$codeCom', else: '$codeRegion' } },
       'conseiller.nom': 1,
       'conseiller.prenom': 1,
       'conseiller.emailCN': 1,
-      'conseiller.codePostal': 1,
-      'conseiller.codeRegion': 1
     }
   }
 ]).toArray();

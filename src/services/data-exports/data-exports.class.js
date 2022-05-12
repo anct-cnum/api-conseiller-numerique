@@ -34,8 +34,7 @@ const {
 } = require('./export-cnfs/utils/export-cnfs.utils');
 const {
   findDepartementOrRegion,
-  buildExportHubCnfsCsvFileContent,
-  getExportCnfsHubFileName
+  buildExportHubCnfsCsvFileContent
 } = require('./export-cnfs-hub/utils/export-cnfs-hub.utils.js');
 const { exportCnfsHubRepository } = require('./export-cnfs-hub/repositories/export-cnfs-hub.repository.js');
 const { getStatsCnfsHubs } = require('./export-cnfs-hub/core/export-cnfs-hub.core.js');
@@ -375,7 +374,7 @@ exports.DataExports = class DataExports {
           return;
         }
         const statsCnfs = await getStatsCnfsHubs(hub, exportCnfsHubRepository(db));
-        csvFileResponse(res, `${getExportCnfsHubFileName(hubName)}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
+        csvFileResponse(res, `export-cnfs_${hubName}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
