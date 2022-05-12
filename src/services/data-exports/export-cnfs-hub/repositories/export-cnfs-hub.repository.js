@@ -1,4 +1,3 @@
-/* eslint-disable no-mixed-spaces-and-tabs */
 const getStructureAndConseillerByDepartement = db => async departement => db.collection('structures').aggregate([
   {
     $match: {
