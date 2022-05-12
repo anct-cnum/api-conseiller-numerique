@@ -226,6 +226,7 @@ exports.Stats = class Stats extends Service {
     });
 
     app.get('/stats/cra/codesPostaux/structure/:id', async (req, res) => {
+
       if (!statsFct.checkAuth(req)) {
         res.status(401).send(new NotAuthenticated('Utilisateur non authentifié'));
         return;
@@ -235,17 +236,21 @@ exports.Stats = class Stats extends Service {
 
       app.get('mongoClient').then(async db => {
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const structureIdByUser = user.entity.oid;
-        if (!user?.roles.includes('structure_coop') && structureIdByUser !== idStructureParams) {
-          res.status(403).send(new Forbidden('Utilisateur non autorisé', {
-            userId: userId
-          }).toJSON());
-          return;
+        if (!user?.roles.includes('prefet')) {
+          const structureIdByUser = user.entity.oid;
+          if (!user?.roles.includes('structure_coop') && structureIdByUser !== idStructureParams) {
+            res.status(403).send(new Forbidden('Utilisateur non autorisé', {
+              userId: userId
+            }).toJSON());
+            return;
+          }
         }
+
         const conseillerIds = await statsFct.getConseillersIdsByStructure(idStructureParams, res, statsRepository(db));
+
         try {
           const listCodePostaux = await statsFct.getCodesPostauxCrasStructure(conseillerIds, statsRepository(db));
-          res.send(listCodePostaux);
+          return res.send(listCodePostaux);
         } catch (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
@@ -608,7 +613,6 @@ exports.Stats = class Stats extends Service {
     });
 
     app.get('/stats/structure/cra', async (req, res) => {
-
       app.get('mongoClient').then(async db => {
         if (req.feathers?.authentication === undefined) {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -617,19 +621,23 @@ exports.Stats = class Stats extends Service {
         //Verification role structure_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const structureId = user.entity.oid;
-        if (!user?.roles.includes('structure_coop') && structureId !== req.query.idStructure) {
-          res.status(403).send(new Forbidden('User not authorized', {
-            userId: userId
-          }).toJSON());
-          return;
+        if (!user?.roles.includes('prefet')) {
+          const structureId = user.entity.oid;
+          if (!user?.roles.includes('structure_coop') && structureId !== req.query.idStructure) {
+            res.status(403).send(new Forbidden('User not authorized', {
+              userId: userId
+            }).toJSON());
+            return;
+          }
         }
-        const conseillerIds = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
         //Composition de la partie query en formattant la date
         let dateDebut = new Date(req.query?.dateDebut);
         dateDebut.setUTCHours(0, 0, 0, 0);
         let dateFin = new Date(req.query?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
+        const idStructure = new ObjectID(req.query?.idStructure);
+        const conseillerIds = await statsFct.getConseillersIdsByStructure(idStructure, res, statsRepository(db));
+
         //Construction des statistiques
         let stats = {};
         let query = {

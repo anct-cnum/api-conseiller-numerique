@@ -92,10 +92,14 @@ const getCodesPostauxStatistiquesCrasStructure = db => async conseillersId => aw
   });
 
 const getConseillersIdsByStructure = db => async idStructure => {
-  return await db.collection('misesEnRelation').find({
-    'structure.$id': idStructure,
-    'statut': { $in: ['finalisee', 'finalisee_rupture'] }
-  }).toArray();
+  const promise = new Promise(async resolve => {
+    const miseEnRelation = db.collection('misesEnRelation').find({
+      'structure.$id': idStructure,
+      'statut': { $in: ['finalisee', 'finalisee_rupture'] }
+    }).toArray();
+    resolve(miseEnRelation);
+  });
+  return promise;
 };
 
 const statsRepository = db => ({

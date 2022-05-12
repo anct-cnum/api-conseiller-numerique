@@ -64,7 +64,7 @@ const getConseillersIdsByStructure = async (idStructure, res, { getConseillersId
     }).toJSON());
     return;
   }
-  let conseillerIds = [];
+  const conseillerIds = [];
   miseEnRelations.forEach(miseEnRelation => {
     conseillerIds.push(miseEnRelation?.conseillerObj._id);
   });
