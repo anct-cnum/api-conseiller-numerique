@@ -13,6 +13,7 @@ const getStatsCnfsNoUserActifSingleValue = () => [
     datePrisePoste: '2021-01-27T22:00:00.000Z',
     dateFinFormation: '2021-03-12T22:00:00.000Z',
     groupeCRA: 0,
+    groupeCRAHistorique: [{ numero: 0, dateDeChangement: '2022-04-25T09:35:15.699Z' }],
     emailCNError: undefined,
     mattermost: undefined
   }
@@ -30,6 +31,7 @@ const getStatsCnfsUserActifSingleValue = () => [
     datePrisePoste: '2021-01-27T22:00:00.000Z',
     dateFinFormation: '2021-03-12T22:00:00.000Z',
     groupeCRA: 0,
+    groupeCRAHistorique: [{ numero: 0, dateDeChangement: '2022-04-25T09:35:15.699Z' }],
     emailCNError: false,
     mattermost: {
       error: false,
@@ -47,6 +49,7 @@ const getStatsCnfsNoStructureIdSingleValue = () => [
     datePrisePoste: '2021-01-27T22:00:00.000Z',
     dateFinFormation: '2021-03-12T22:00:00.000Z',
     groupeCRA: 0,
+    groupeCRAHistorique: [{ numero: 0, dateDeChangement: '2022-04-25T09:35:15.699Z' }],
     emailCNError: undefined,
     mattermost: undefined
   }
@@ -83,6 +86,7 @@ describe('export cnfs core', () => {
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
         groupeCRA: 0,
+        groupeCRAHistorique: '[{"numero":0,"dateDeChangement":"2022-04-25T09:35:15.699Z"}]',
         certifie: 'Non',
         isUserActif: 'Non'
       }
@@ -108,6 +112,7 @@ describe('export cnfs core', () => {
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
         groupeCRA: 0,
+        groupeCRAHistorique: '[{"numero":0,"dateDeChangement":"2022-04-25T09:35:15.699Z"}]',
         certifie: 'Non',
         isUserActif: 'Oui'
       }
@@ -132,6 +137,7 @@ describe('export cnfs core', () => {
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
         groupeCRA: 0,
+        groupeCRAHistorique: '[{"numero":0,"dateDeChangement":"2022-04-25T09:35:15.699Z"}]',
         certifie: 'Non',
         isUserActif: 'Non'
       }
