@@ -102,6 +102,16 @@ const getConseillersIdsByStructure = db => async idStructure => {
   return promise;
 };
 
+const getStructuresIdsByPrefecture = db => async (code, page, limit) => {
+  return await db.collection('structures').find(
+    code,
+  ).skip(page).limit(limit).toArray();
+};
+
+const countStructures = db => async code => {
+  return await db.collection('structures').countDocuments(code);
+};
+
 const statsRepository = db => ({
   getDepartement: getDepartement(db),
   getRegion: getRegion(db),
@@ -111,7 +121,9 @@ const statsRepository = db => ({
   getTotalRegions: getTotalRegions(db),
   getCodesPostauxStatistiquesCras: getCodesPostauxStatistiquesCras(db),
   getCodesPostauxStatistiquesCrasStructure: getCodesPostauxStatistiquesCrasStructure(db),
-  getConseillersIdsByStructure: getConseillersIdsByStructure(db)
+  getConseillersIdsByStructure: getConseillersIdsByStructure(db),
+  getStructuresIdsByPrefecture: getStructuresIdsByPrefecture(db),
+  countStructures: countStructures(db),
 });
 
 module.exports = {

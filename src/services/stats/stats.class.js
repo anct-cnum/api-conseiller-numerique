@@ -510,6 +510,75 @@ exports.Stats = class Stats extends Service {
       });
     });
 
+    app.get('/stats/prefet/structures', async (req, res) => {
+      if (!statsFct.checkAuth(req)) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      app.get('mongoClient').then(async db => {
+        let userId = decode(req.feathers.authentication.accessToken).sub;
+        const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+        if (!statsFct.checkRole(adminUser?.roles, 'prefet')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: userId
+          }).toJSON());
+          return;
+        }
+
+        let items = {};
+        const dateDebut = new Date(req.query.dateDebut);
+        const dateFin = new Date(req.query.dateFin);
+        const page = req.query.page;
+
+        let code = {};
+        if (adminUser.departement) {
+          code = { 'codeDepartement': adminUser.departement };
+        }
+        if (adminUser.region) {
+          code = { 'codeRegion': adminUser.region };
+        }
+        const countStructures = await statsFct.countStructures(code, statsRepository(db));
+        const structures = await statsFct.getStructuresByPrefetCode(
+          code,
+          page > 0 ? ((page - 1) * Number(options.paginate.default)) : 0,
+          Number(options.paginate.default),
+          res,
+          statsRepository(db)
+        );
+        const structuresStatistiques = [];
+        await Promise.all(structures.map(async structure => {
+
+          const conseillerIds = await statsFct.getConseillersIdsByStructure(structure._id, res, statsRepository(db));
+          const query = { 'conseiller.$id': { $in: conseillerIds }, 'cra.dateAccompagnement': {
+            '$gte': dateDebut,
+            '$lte': dateFin,
+          } };
+
+          const countAccompagnees = await statsCras.getPersonnesAccompagnees(db, query);
+          const CRAEnregistres = await statsCras.getNombreCra(db)(query);
+
+          const structureStatistiques = {
+            _id: structure._id,
+            idPG: structure.idPG,
+            siret: structure.siret,
+            nom: structure.nom,
+            codePostal: structure.codePostal,
+            CRAEnregistres: CRAEnregistres,
+            personnesAccompagnees: countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0,
+          };
+
+          structuresStatistiques.push(structureStatistiques);
+        }));
+
+        items.data = structuresStatistiques;
+        items.limit = options.paginate.default;
+        items.total = countStructures;
+        items.skip = page;
+
+        res.send({ items: items });
+      });
+    });
+
     app.get('/stats/prefet/territoires', async (req, res) => {
       if (!statsFct.checkAuth(req)) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
