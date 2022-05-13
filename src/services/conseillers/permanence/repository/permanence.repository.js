@@ -45,10 +45,10 @@ const getPermanenceById = db => async id => db.collection('permanences').aggrega
           input: '$conseillers',
           as: 'conseiller',
           in: {
-            prenom: '$$conseiller.prenom',
-            nom: '$$conseiller.nom',
-            email: '$$conseiller.emailPro',
-            phone: '$$conseiller.telephonePro',
+            prenom: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.prenom', 'Anonyme'] },
+            nom: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.nom', ''] },
+            email: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.emailPro', ''] },
+            phone: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.telephonePro', ''] },
           }
         }
       }
@@ -83,7 +83,8 @@ const getCnfs = db => async structureId => db.collection('conseillers').find({
     'prenom': 1,
     'nom': 1,
     'telephonePro': 1,
-    'emailPro': 1
+    'emailPro': 1,
+    'nonAffichageCarto': 1
   }
 }).toArray();
 
