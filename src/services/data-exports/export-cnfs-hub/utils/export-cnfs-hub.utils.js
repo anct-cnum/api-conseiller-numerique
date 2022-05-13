@@ -5,7 +5,7 @@ const findDepartementOrRegion = nomHub => {
   return hubs.find(hub => `${hub.name}` === nomHub);
 };
 
-const findNumDepartementByRegion = hubRegion => {
+const findNumDepartementsByRegion = hubRegion => {
   return departements.filter(
     departement => hubRegion.includes(departement.region_name)).map(departement => departement.num_dep);
 };
@@ -51,6 +51,6 @@ const buildExportHubCnfsCsvFileContent = async statsCnfs => {
 
 module.exports = {
   findDepartementOrRegion,
-  findNumDepartementByRegion,
+  findNumDepartementsByRegion,
   buildExportHubCnfsCsvFileContent,
 };

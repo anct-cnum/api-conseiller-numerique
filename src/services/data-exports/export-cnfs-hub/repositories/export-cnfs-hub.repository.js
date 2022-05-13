@@ -1,7 +1,7 @@
-const getStructureAndConseillerByDepartement = db => async departement => db.collection('structures').aggregate([
+const getStructureAndConseillerByDepartement = db => async departements => db.collection('structures').aggregate([
   {
     $match: {
-      codeDepartement: { $in: departement }
+      codeDepartement: { $in: departements }
     }
   },
   {
@@ -33,11 +33,11 @@ const getStructureAndConseillerByDepartement = db => async departement => db.col
   }
 ]).toArray();
 
-const getStructureAndConseillerByDepartementHubAntillesGuyane = db => async departement => db.collection('structures').aggregate([
+const getStructureAndConseillerByDepartementHubAntillesGuyane = db => async departements => db.collection('structures').aggregate([
   {
     $match: {
       $or: [
-        { codeDepartement: { $in: departement } },
+        { codeDepartement: { $in: departements } },
         { $and: [
           { codeCom: { $eq: '978' } },
           { codeDepartement: { $eq: '00' } }

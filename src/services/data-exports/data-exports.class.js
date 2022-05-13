@@ -374,7 +374,7 @@ exports.DataExports = class DataExports {
           return;
         }
         const statsCnfs = await getStatsCnfsHubs(hub, exportCnfsHubRepository(db));
-        csvFileResponse(res, `export-cnfs_${hubName}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
+        csvFileResponse(res, `export-cnfs_${dayjs(new Date()).format('YYYY-MM-DD')}_${hubName}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
