@@ -161,6 +161,7 @@ module.exports = {
                       'statut': 'finalisee',
                       'conseiller.$id': conseiller._id
                     });
+                    
                   if (dejaFinalisee === 1) {
                     conseiller.finalisee = true;
                     conseiller.craCount = await db.collection('cras').countDocuments({
