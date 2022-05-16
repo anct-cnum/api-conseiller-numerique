@@ -6,14 +6,16 @@ const getStructureAndConseillerByDepartement = db => async departements => db.co
   },
   {
     $lookup: {
-      localField: '_id',
       from: 'conseillers',
-      foreignField: 'structureId',
+      let: { idStructure: '$_id' },
       as: 'conseiller',
       pipeline: [
         {
           $match: {
-            statut: 'RECRUTE'
+            $and: [
+              { $expr: { $eq: ['$$idStructure', '$structureId'] } },
+              { $expr: { $eq: ['$statut', 'RECRUTE'] } }
+            ]
           }
         }
       ]
