@@ -64,7 +64,7 @@ const getConseillersIdsByStructure = async (idStructure, res, { getConseillersId
     }).toJSON());
     return;
   }
-  const conseillerIds = [];
+  let conseillerIds = [];
   miseEnRelations.forEach(miseEnRelation => {
     conseillerIds.push(miseEnRelation?.conseillerObj._id);
   });
@@ -74,7 +74,7 @@ const getConseillersIdsByStructure = async (idStructure, res, { getConseillersId
 
 const getStructuresByPrefetCode = async (code, page, limit, res, { getStructuresIdsByPrefecture }) => {
   const structures = await getStructuresIdsByPrefecture(code, page, limit);
-  if (structures === null) {
+  if (structures === null || structures.length === 0) {
     res.status(404).send(new NotFound('no matchings', {
       code
     }).toJSON());

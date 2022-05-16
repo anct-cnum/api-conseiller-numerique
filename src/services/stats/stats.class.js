@@ -533,8 +533,7 @@ exports.Stats = class Stats extends Service {
         let code = {};
         if (adminUser.departement) {
           code = { 'codeDepartement': adminUser.departement };
-        }
-        if (adminUser.region) {
+        } else if (adminUser.region) {
           code = { 'codeRegion': adminUser.region };
         }
         const countStructures = await statsFct.countStructures(code, statsRepository(db));
@@ -563,7 +562,7 @@ exports.Stats = class Stats extends Service {
             siret: structure.siret,
             nom: structure.nom,
             codePostal: structure.codePostal,
-            CRAEnregistres: CRAEnregistres,
+            CRAEnregistres,
             personnesAccompagnees: countAccompagnees.length > 0 ? countAccompagnees[0]?.count : 0,
           };
 
