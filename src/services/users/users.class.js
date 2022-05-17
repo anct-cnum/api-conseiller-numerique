@@ -440,7 +440,7 @@ exports.Users = class Users extends Service {
           });
           user.name = email;
           // La boite mail a été créée dans import-recrutes.js
-          await updateMailboxPassword(app.get('gandi'), user.entity.oid, login, password, db, logger, app.get('sentry'));
+          await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
           await createAccount({
             mattermost,
             conseiller,
