@@ -25,7 +25,7 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
       await createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: conseiller._id, login, password });
       count++;
     }
-    logger.info(`${count} conseillers mises à jours`);
+    logger.info(`${count} conseillers mis à jour`);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
