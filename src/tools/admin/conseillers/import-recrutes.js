@@ -4,7 +4,7 @@ const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 const pool = new Pool();
-const { createMailbox } = require('../../utils/mailbox');
+const { createMailbox } = require('../../../utils/mailbox');
 const slugify = require('slugify');
 
 const configPG = {
@@ -224,7 +224,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             const prenom = slugify(`${conseillerUpdated.prenom}`, { replacement: '-', lower: true, strict: true });
             const login = `${prenom}.${nom}`;
             const password = uuidv4(); // Sera choisi par le conseiller via invitation
-            await createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: conseillerUpdated._id, login, password });
+            await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseillerUpdated._id, login, password });
 
             count++;
             resolve();
