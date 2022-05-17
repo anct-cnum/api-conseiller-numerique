@@ -574,7 +574,7 @@ exports.Stats = class Stats extends Service {
         items.total = countStructures;
         items.skip = page;
 
-        res.send({ items: items });
+        return res.send({ items: items });
       });
     });
 
