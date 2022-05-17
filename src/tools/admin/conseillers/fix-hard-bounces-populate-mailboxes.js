@@ -5,7 +5,7 @@
 const { execute } = require('../../utils');
 const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
-const { createMailbox } = require('../../utils/mailbox');
+const { createMailbox } = require('../../../utils/mailbox');
 
 execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
   try {
