@@ -439,8 +439,9 @@ exports.Users = class Users extends Service {
             }
           });
           user.name = email;
-          createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: user.entity.oid, login, password });
-          createAccount({
+          // La boite mail a été créée dans import-recrutes.js
+          await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
+          await createAccount({
             mattermost,
             conseiller,
             email,
@@ -454,12 +455,12 @@ exports.Users = class Users extends Service {
           });
 
           try {
-            //let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-            //await message.send(user, conseiller);
+            let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+            await message.send(user, conseiller);
 
             // Envoi d'un deuxième email pour l'inscription à Pix Orga
-            //let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-            //await messagePix.send(user, conseiller);
+            let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+            await messagePix.send(user, conseiller);
 
             res.send(user);
             return;

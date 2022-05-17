@@ -4,6 +4,8 @@ const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 const pool = new Pool();
+const { createMailbox } = require('../../../utils/mailbox');
+const slugify = require('slugify');
 
 const configPG = {
   user: process.env.PGUSER,
@@ -31,7 +33,7 @@ const readCSV = async filePath => {
 
 const { execute } = require('../../utils');
 
-execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
+execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
 
   if (Object.values(configPG).includes(undefined)) {
     logger.warn(`ATTENTION : les 6 vars d'env PG n'ont pas été configurées`);
@@ -215,6 +217,14 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
                 'conseillerObj.userCreated': false
               }
             });
+
+            // Creation boite mail du conseiller
+            const gandi = app.get('gandi');
+            const nom = slugify(`${conseillerUpdated.nom}`, { replacement: '-', lower: true, strict: true });
+            const prenom = slugify(`${conseillerUpdated.prenom}`, { replacement: '-', lower: true, strict: true });
+            const login = `${prenom}.${nom}`;
+            const password = uuidv4(); // Sera choisi par le conseiller via invitation
+            await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseillerUpdated._id, login, password });
 
             count++;
             resolve();
