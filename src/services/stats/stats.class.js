@@ -532,9 +532,9 @@ exports.Stats = class Stats extends Service {
 
         let code = {};
         if (adminUser.departement) {
-          code = { 'codeDepartement': adminUser.departement };
+          code = { 'codeDepartement': String(adminUser.departement) };
         } else if (adminUser.region) {
-          code = { 'codeRegion': adminUser.region };
+          code = { 'codeRegion': String(adminUser.region) };
         }
         const countStructures = await statsFct.countStructures(code, statsRepository(db));
         const structures = await statsFct.getStructuresByPrefetCode(
