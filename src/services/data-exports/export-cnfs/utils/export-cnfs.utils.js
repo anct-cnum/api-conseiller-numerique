@@ -80,7 +80,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.email,
         statCnfs?.emailCN?.address ?? 'compte COOP non créé',
         statCnfs.structure?.idPG,
-        statCnfs.structure.nom.replace(/["',]/g, ''),
+        statCnfs.structure?.nom.replace(/["',]/g, ''),
         statCnfs.structure?.contact?.email,
         statCnfs.adresseStructure,
         statCnfs.structure?.codeDepartement,
