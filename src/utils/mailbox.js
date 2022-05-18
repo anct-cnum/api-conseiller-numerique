@@ -11,8 +11,14 @@ const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, 
       },
       data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
     });
-    logger.info(resultCreation);
-
+    const resultInfo = {
+      satus: resultCreation?.status,
+      url: `${gandi.endPoint}/mailboxes/${gandi.domain}`,
+      method: 'POST',
+      login: login,
+      message: resultCreation?.data?.message
+    };
+    logger.info(`response: ${resultInfo}`);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:
         { emailCNError: false,
@@ -54,7 +60,14 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
         },
         data: { 'password': password }
       });
-      logger.info(resultUpdatePassword);
+      const resultInfo = {
+        satus: resultUpdatePassword?.status,
+        url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
+        method: 'PATCH',
+        login: login,
+        message: resultUpdatePassword?.data?.message
+      };
+      logger.info(`response: ${resultInfo}`);
       logger.info(`Mot de passe Webmail Gandi mis à jour du login ${login} pour le conseiller id=${conseillerId}`);
       await db.collection('conseillers').updateOne({ _id: conseillerId },
         { $set:
