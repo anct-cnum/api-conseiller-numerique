@@ -12,6 +12,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
     logger.info('Recherche des conseillers sans mot de passe');
     let count = 0;
     const users = await db.collection('users').find({ roles: { $in: ['conseiller'] }, passwordCreated: false }).toArray();
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
     for (const idx in users) {
       const user = users[idx];
@@ -21,9 +22,10 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
       const login = `${prenom}.${nom}`;
-      const password = uuidv4(); // Sera choisi par le conseiller via invitation
+      const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
       await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseiller._id, login, password });
       count++;
+      await sleep(1000);
     }
     logger.info(`${count} conseillers mis à jour`);
   } catch (error) {

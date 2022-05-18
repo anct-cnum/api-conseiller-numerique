@@ -58,6 +58,8 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
     }
   };
 
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
       conseillers.forEach(conseiller => {
@@ -223,8 +225,9 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             const nom = slugify(`${conseillerUpdated.nom}`, { replacement: '-', lower: true, strict: true });
             const prenom = slugify(`${conseillerUpdated.prenom}`, { replacement: '-', lower: true, strict: true });
             const login = `${prenom}.${nom}`;
-            const password = uuidv4() + 'AZEdsf;+:1!'; // Sera choisi par le conseiller via invitation
+            const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
             await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseillerUpdated._id, login, password });
+            await sleep(1000);
 
             count++;
             resolve();
