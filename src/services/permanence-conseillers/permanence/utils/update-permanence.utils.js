@@ -52,7 +52,7 @@ const assignPermanences = (permanences, conseillerId) => {
     });
     permanence.conseillersItinerants = conseillersItinerants;
 
-    permanence?.lieuPrincipalPour.forEach(conseiller => {
+    permanence?.lieuPrincipalPour?.forEach(conseiller => {
       lieuPrincipalPour.push(new ObjectId(conseiller));
     });
     permanence.lieuPrincipalPour = lieuPrincipalPour;

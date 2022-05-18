@@ -17,32 +17,27 @@ const formatAdresseStructure = insee => {
   return adresse.replace(/["']/g, '');
 };
 
-const getFormatHistoriqueGroupeCRA = groupeCRAHistorique => JSON.stringify(groupeCRAHistorique);
+const getFormatHistoriqueGroupeCRA = groupeCRAHistorique => JSON.stringify(new Array(groupeCRAHistorique).slice(-3));
 
-const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
-  const { structureId, emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
+const prettifyAndComplete = () => async statCnfs => {
+  const { emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
   return {
     ...nextStatCnfs,
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
-    structureId: structureId ? (await getStructureNameFromId(structureId)).idPG : undefined,
-    nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
-    emailStructure: structureId ? (await getStructureNameFromId(structureId)).contact?.email : '',
-    // eslint-disable-next-line max-len
-    adresseStructure: structureId ? formatAdresseStructure((await getStructureNameFromId(structureId)).insee) : '',
-    codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
+    adresseStructure: nextStatCnfs.structure?.insee ? formatAdresseStructure(nextStatCnfs.structure.insee) : '',
     certifie: 'Non',
-    groupeCRA: nextStatCnfs.groupeCRA ?? undefined,
-    groupeCRAHistorique: getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique) ?? undefined,
+    groupeCRA: nextStatCnfs.groupeCRA ?? '',
+    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique) : '',
     isUserActif: userActifStatus(mattermost, emailCNError)
   };
 };
 
 const getStatsCnfs = async (
   { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif },
-  { getStatsCnfs, getStructureNameFromId }) => {
+  { getStatsCnfs }) => {
   return Promise.all(
-    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
+    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete())
   );
 };
 const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {
