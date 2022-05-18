@@ -132,8 +132,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       id: resultCreation.data.id
     };
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { mattermost: mattermostSet }
+      {
+        $set:
+          { mattermost: mattermostSet }
       });
 
     slugify.extend({ '-': ' ' });
@@ -214,8 +215,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.error': true, 'mattermost.errorMessage': e.message }
+      {
+        $set:
+          { 'mattermost.error': true, 'mattermost.errorMessage': e.message }
       });
     return false;
   }
@@ -236,7 +238,7 @@ const updateAccountPassword = (mattermost, db, logger, Sentry) => async (conseil
       data: { 'new_password': newPassword }
     });
     const resultInfo = {
-      satus: resultUpdatePassword?.status,
+      status: resultUpdatePassword?.status,
       url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/password`,
       method: 'PUT',
       id: conseiller.mattermost?.id
@@ -244,16 +246,18 @@ const updateAccountPassword = (mattermost, db, logger, Sentry) => async (conseil
     logger.info(resultInfo);
     logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id})`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorResetPassword': false }
+      {
+        $set:
+          { 'mattermost.errorResetPassword': false }
       });
     return true;
   } catch (e) {
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorResetPassword': true }
+      {
+        $set:
+          { 'mattermost.errorResetPassword': true }
       });
     return false;
   }
@@ -277,16 +281,18 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
     logger.info(resultDeleteAccount);
     logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorDeleteAccount': false }
+      {
+        $set:
+          { 'mattermost.errorDeleteAccount': false }
       });
     return true;
   } catch (e) {
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorDeleteAccount': true }
+      {
+        $set:
+          { 'mattermost.errorDeleteAccount': true }
       });
     return false;
   }
