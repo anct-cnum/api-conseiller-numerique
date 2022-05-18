@@ -7,7 +7,7 @@ const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
 const { createMailbox } = require('../../../utils/mailbox');
 
-execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
+execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
   try {
     logger.info('Recherche des conseillers sans mot de passe');
     let count = 0;
