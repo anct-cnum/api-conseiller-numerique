@@ -7,7 +7,7 @@ const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
 const { createMailbox } = require('../../../utils/mailbox');
 
-execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
+execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
   try {
     logger.info('Recherche des conseillers sans mot de passe');
     let count = 0;
@@ -22,7 +22,7 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
       const login = `${prenom}.${nom}`;
       const password = uuidv4(); // Sera choisi par le conseiller via invitation
-      await createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: conseiller._id, login, password });
+      await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseiller._id, login, password });
       count++;
     }
     logger.info(`${count} conseillers mis à jour`);
