@@ -115,7 +115,17 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       },
       data: { 'email': email, 'username': login, 'first_name': nom, 'last_name': prenom, 'password': password }
     });
-    logger.info(resultCreation);
+    const infoResult = {
+      status: resultCreation?.status,
+      url: `${mattermost.endPoint}/api/v4/users`,
+      method: 'POST',
+      id: resultCreation?.data?.id,
+      prenom: resultCreation?.data?.last_name,
+      nom: resultCreation?.data?.first_name,
+      email: resultCreation?.data?.email
+    };
+    logger.info(infoResult);
+
     const mattermostSet = {
       error: false,
       login: login,
@@ -225,8 +235,14 @@ const updateAccountPassword = (mattermost, db, logger, Sentry) => async (conseil
       },
       data: { 'new_password': newPassword }
     });
-    logger.info(resultUpdatePassword);
-    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
+    const resultInfo = {
+      satus: resultUpdatePassword?.status,
+      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/password`,
+      method: 'PUT',
+      id: conseiller.mattermost?.id
+    };
+    logger.info(resultInfo);
+    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id})`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       { $set:
         { 'mattermost.errorResetPassword': false }

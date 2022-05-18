@@ -18,7 +18,7 @@ const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, 
       login: login,
       message: resultCreation?.data?.message
     };
-    logger.info(`response: ${resultInfo}`);
+    logger.info(resultInfo);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       { $set:
         { emailCNError: false,
@@ -67,7 +67,7 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
         login: login,
         message: resultUpdatePassword?.data?.message
       };
-      logger.info(`response: ${resultInfo}`);
+      logger.info(resultInfo);
       logger.info(`Mot de passe Webmail Gandi mis à jour du login ${login} pour le conseiller id=${conseillerId}`);
       await db.collection('conseillers').updateOne({ _id: conseillerId },
         { $set:
