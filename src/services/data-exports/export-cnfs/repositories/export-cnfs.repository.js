@@ -1,5 +1,3 @@
-const { ObjectId } = require('mongodb');
-
 function filterUserActif(isUserActif) {
   if (isUserActif === 'true') {
     return {
@@ -27,30 +25,51 @@ function filterGroupeCRA(groupeCRA) {
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
 const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif) => {
-  const conseillers = db.collection('conseillers').find({
-    statut: 'RECRUTE',
-    $and: [
-      { datePrisePoste: { $gt: dateDebut } },
-      { datePrisePoste: { $lt: dateFin } },
-    ],
-    ...filterUserActif(isUserActif),
-    ...filterGroupeCRA(groupeCRA)
-  }).project({
-    _id: 1,
-    prenom: 1,
-    nom: 1,
-    email: 1,
-    emailCN: 1,
-    structureId: 1,
-    codePostal: 1,
-    datePrisePoste: 1,
-    dateFinFormation: 1,
-    groupeCRA: 1,
-    groupeCRAHistorique: { $slice: 5 },
-    emailCNError: 1,
-    mattermost: 1,
-    supHierarchique: 1,
-  });
+  const conseillers = db.collection('conseillers').aggregate([
+    {
+      $match: {
+        statut: 'RECRUTE',
+        $and: [
+          { datePrisePoste: { $gt: dateDebut } },
+          { datePrisePoste: { $lt: dateFin } },
+        ],
+        ...filterUserActif(isUserActif),
+        ...filterGroupeCRA(groupeCRA)
+      }
+    },
+    {
+      $lookup: {
+        localField: 'structureId',
+        from: 'structures',
+        foreignField: '_id',
+        as: 'structure'
+      }
+    },
+    { $unwind: '$structure' },
+    {
+      $project: {
+        '_id': 1,
+        'prenom': 1,
+        'nom': 1,
+        'email': 1,
+        'emailCN': 1,
+        'codePostal': 1,
+        'structureId': 1,
+        'datePrisePoste': 1,
+        'dateFinFormation': 1,
+        'groupeCRA': 1,
+        'groupeCRAHistorique': { $slice: ['$groupeCRAHistorique', 3] },
+        'emailCNError': 1,
+        'mattermost': 1,
+        'supHierarchique': 1,
+        'structure.idPG': 1,
+        'structure.contact.email': 1,
+        'structure.nom': 1,
+        'structure.insee': 1,
+        'structure.codeDepartement': 1,
+      }
+    }
+  ]);
   let arrayConseillers = [];
   const functionCraCount = db => async conseillers => {
     for (let conseiller of conseillers) {
@@ -70,23 +89,8 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
   return arrayConseillers;
 };
 
-const getStructureNameFromId = db => async id => db.collection('structures')
-.findOne({
-  _id: new ObjectId(id)
-}, {
-  projection: {
-    _id: 0,
-    nom: 1,
-    codeDepartement: 1,
-    insee: 1,
-    contact: 1,
-    idPG: 1
-  }
-});
-
 const statsCnfsRepository = db => ({
-  getStatsCnfs: getStatsCnfs(db),
-  getStructureNameFromId: getStructureNameFromId(db),
+  getStatsCnfs: getStatsCnfs(db)
 });
 
 module.exports = {
