@@ -25,7 +25,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
       const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
       await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseiller._id, login, password });
       count++;
-      await sleep(1000);
+      await sleep(7000);
     }
     logger.info(`${count} conseillers mis à jour`);
   } catch (error) {
