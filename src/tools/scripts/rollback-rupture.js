@@ -7,7 +7,8 @@ const { execute } = require('../utils');
 const { program } = require('commander');
 
 program.option('-c, --idConseiller <idConseiller>', 'IdPG du conseiller', parseInt);
-program.option('-s, --idStructure <idStructure>', 'IdPG de la structure', parseInt).parse(process.argv);
+program.option('-s, --idStructure <idStructure>', 'IdPG de la structure', parseInt);
+program.parse(process.argv);
 
 execute(__filename, async ({ db, logger }) => {
 
@@ -64,9 +65,7 @@ execute(__filename, async ({ db, logger }) => {
       {
         $set: {
           statut: 'recrutee'
-        }
-      },
-      {
+        },
         $unset: {
           dateRupture: '',
           motifRupture: '',
