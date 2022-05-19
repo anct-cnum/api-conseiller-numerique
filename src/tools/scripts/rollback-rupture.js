@@ -30,8 +30,8 @@ execute(__filename, async ({ db, logger }) => {
     const conseiller = await db.collection('conseillers').findOne({ idPG: ~~idConseiller });
     const structure = await db.collection('structures').findOne({ idPG: ~~idStructure });
     const miseEnRelation = await db.collection('misesEnRelation').findOne({
-      'conseiller.$id': conseiller._id,
-      'structure.$id': structure._id,
+      'conseiller.$id': conseiller?._id,
+      'structure.$id': structure?._id,
       'statut': 'finalisee_rupture'
     });
 
