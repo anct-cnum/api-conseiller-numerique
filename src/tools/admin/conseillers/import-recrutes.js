@@ -43,7 +43,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
   logger.info('Import des conseillers recrutés');
   let count = 0;
   let errors = 0;
-  let promises = [];
 
   const updateConseillersPG = async (email, disponible) => {
     try {
@@ -60,10 +59,10 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  await new Promise(resolve => {
+  await new Promise(() => {
     readCSV(program.csv).then(async conseillers => {
-      conseillers.forEach(conseiller => {
-        let p = new Promise(async (resolve, reject) => {
+      await new Promise(async () => {
+        for (const conseiller of conseillers) {
           const regexDateFormation = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
           const idPGConseiller = parseInt(conseiller['ID conseiller']);
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ idPG: idPGConseiller, estRecrute: true });
@@ -83,7 +82,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
             logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
-            reject();
           } else if (alreadyRecruted > 0) {
             logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
@@ -112,27 +110,22 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                   'conseillerObj.dateFinFormation': date(dateFinFormation)
                 } });
             }
-            reject();
           } else if (conseillerOriginal === null) {
             logger.error(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
             Sentry.captureException(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
             errors++;
-            reject();
           } else if (structure === null) {
             logger.error(`Structure avec l'idPG '${structureId}' introuvable`);
             Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
             errors++;
-            reject();
           } else if (structure.contact.email === conseillerOriginal.email) {
             logger.error(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
             Sentry.captureException(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
             errors++;
-            reject();
           } else if (miseEnRelation === null) {
             logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             errors++;
-            reject();
           } else {
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
             await updateConseillersPG(conseillerOriginal.email, false);
@@ -230,17 +223,15 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             await sleep(1000);
 
             count++;
-            resolve();
           }
-        });
-        promises.push(p);
+        }
+        if (count + errors === conseillers.length) {
+          logger.info(`${count} conseillers recrutés et ${errors} conseillers en erreur`);
+          exit();
+        }
       });
-      resolve();
     }).catch(error => {
       logger.error(error);
     });
   });
-  await Promise.allSettled(promises);
-  logger.info(`${count} conseillers recrutés et ${errors} conseillers en erreur`);
-  exit();
 });
