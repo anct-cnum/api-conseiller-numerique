@@ -107,6 +107,18 @@ const setReporterInsertion = db => async userId => {
     $inc: { reportPermanence: +1 }
   });
 };
+const updateConseillerStatut = db => async (userId, conseillerId) => {
+  await db.collection('users').updateOne({
+    _id: userId
+  }, {
+    $set: { showPermanenceForm: false }
+  });
+  await db.collection('conseillers').updateOne({
+    _id: new ObjectId(conseillerId)
+  }, {
+    $set: { hasPermanence: true }
+  });
+};
 
 module.exports = {
   getPermanenceByConseiller,
@@ -117,4 +129,5 @@ module.exports = {
   deletePermanence,
   deleteConseillerPermanence,
   setReporterInsertion,
+  updateConseillerStatut,
 };
