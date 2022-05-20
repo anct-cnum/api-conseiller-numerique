@@ -5,7 +5,7 @@
 const { execute } = require('../../utils');
 const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
-const { createMailbox } = require('../../../utils/mailbox');
+const { createMailbox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
 
 execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
   try {
@@ -21,24 +21,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
       // Creation boite mail du conseiller
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-      let login = `${prenom}.${nom}`;
-      let conseillerNumber = await db.collection('conseillers').countDocuments(
-        {
-          'emailCN.address': `${login}@${gandi.domain}`,
-          'statut': 'RECRUTE'
-        });
-      if (conseillerNumber > 0) {
-        let indexLoginConseiller = 1;
-        do {
-          login = `${prenom}.${nom}${indexLoginConseiller.toString()}`;
-          conseillerNumber = await db.collection('conseillers').countDocuments(
-            {
-              'emailCN.address': `${login}@${gandi.domain}`,
-              'statut': 'RECRUTE'
-            });
-          indexLoginConseiller += 1;
-        } while (conseillerNumber !== 0);
-      }
+      const login = fixHomonymesCreateMailbox(gandi, nom, prenom, db);
       const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
       await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseiller._id, login, password });
       count++;

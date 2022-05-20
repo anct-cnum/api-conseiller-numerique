@@ -4,7 +4,7 @@ const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 const pool = new Pool();
-const { createMailbox } = require('../../../utils/mailbox');
+const { createMailbox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
 const slugify = require('slugify');
 
 const configPG = {
@@ -217,24 +217,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             const gandi = app.get('gandi');
             const nom = slugify(`${conseillerUpdated.nom}`, { replacement: '-', lower: true, strict: true });
             const prenom = slugify(`${conseillerUpdated.prenom}`, { replacement: '-', lower: true, strict: true });
-            let login = `${prenom}.${nom}`;
-            let conseillerNumber = await db.collection('conseillers').countDocuments(
-              {
-                'emailCN.address': `${login}@${gandi.domain}`,
-                'statut': 'RECRUTE'
-              });
-            if (conseillerNumber > 0) {
-              let indexLoginConseiller = 1;
-              do {
-                login = `${prenom}.${nom}${indexLoginConseiller.toString()}`;
-                conseillerNumber = await db.collection('conseillers').countDocuments(
-                  {
-                    'emailCN.address': `${login}@${gandi.domain}`,
-                    'statut': 'RECRUTE'
-                  });
-                indexLoginConseiller += 1;
-              } while (conseillerNumber !== 0);
-            }
+            const login = fixHomonymesCreateMailbox(gandi, nom, prenom, db);
             const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
             await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseillerUpdated._id, login, password });
             await sleep(1000);
