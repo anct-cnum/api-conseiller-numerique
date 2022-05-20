@@ -22,8 +22,24 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
     try {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-
-      const login = `${prenom}.${nom}`;
+      let login = `${prenom}.${nom}`;
+      let conseillerNumber = await db.collection('conseillers').countDocuments(
+        {
+          'mattermost.login': login,
+          'statut': { $ne: 'RUPTURE' }
+        });
+      if (conseillerNumber > 0) {
+        let indexLoginConseiller = 1;
+        do {
+          login = `${prenom}.${nom}` + indexLoginConseiller.toString();
+          conseillerNumber = await db.collection('conseillers').countDocuments(
+            {
+              'mattermost.login': login,
+              'statut': { $ne: 'RUPTURE' }
+            });
+          indexLoginConseiller += 1;
+        } while (conseillerNumber !== 0);
+      }
       const password = uuidv4() + 'AZEdsf;+:'; // pour respecter la règle de complexité de mot de passe
       createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
 

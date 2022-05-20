@@ -217,7 +217,24 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             const gandi = app.get('gandi');
             const nom = slugify(`${conseillerUpdated.nom}`, { replacement: '-', lower: true, strict: true });
             const prenom = slugify(`${conseillerUpdated.prenom}`, { replacement: '-', lower: true, strict: true });
-            const login = `${prenom}.${nom}`;
+            let login = `${prenom}.${nom}`;
+            let conseillerNumber = await db.collection('conseillers').countDocuments(
+              {
+                'mattermost.login': login,
+                'statut': { $ne: 'RUPTURE' }
+              });
+            if (conseillerNumber > 0) {
+              let indexLoginConseiller = 1;
+              do {
+                login = `${prenom}.${nom}` + indexLoginConseiller.toString();
+                conseillerNumber = await db.collection('conseillers').countDocuments(
+                  {
+                    'mattermost.login': login,
+                    'statut': { $ne: 'RUPTURE' }
+                  });
+                indexLoginConseiller += 1;
+              } while (conseillerNumber !== 0);
+            }
             const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
             await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseillerUpdated._id, login, password });
             await sleep(1000);
