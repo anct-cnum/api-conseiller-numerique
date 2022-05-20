@@ -26,16 +26,16 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       let conseillerNumber = await db.collection('conseillers').countDocuments(
         {
           'emailCN.address': `${login}@${gandi.domain}`,
-          'statut': { $ne: 'RUPTURE' }
+          'statut': 'RECRUTE'
         });
       if (conseillerNumber > 0) {
         let indexLoginConseiller = 1;
         do {
-          login = `${prenom}.${nom}` + indexLoginConseiller.toString();
+          login = `${prenom}.${nom}${indexLoginConseiller.toString()}`;
           conseillerNumber = await db.collection('conseillers').countDocuments(
             {
               'emailCN.address': `${login}@${gandi.domain}`,
-              'statut': { $ne: 'RUPTURE' }
+              'statut': 'RECRUTE'
             });
           indexLoginConseiller += 1;
         } while (conseillerNumber !== 0);
