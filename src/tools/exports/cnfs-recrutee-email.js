@@ -49,7 +49,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     promises.push(new Promise(async resolve => {
       const cnfs = await db.collection('conseillers').findOne({ _id: conseiller.conseiller.oid });
       // eslint-disable-next-line max-len
-      file.write(`${cnfs?.nom ?? 'non renseigné'};${cnfs?.prenom ?? 'non renseigné'};${cnfs?.email ?? 'non renseigné'};${cnfs?.emailCN?.address ?? 'compte non créé'}\n`);
+      file.write(`${cnfs?.nom ?? 'non renseigné'};${cnfs?.prenom ?? 'non renseigné'};${cnfs?.email ?? 'non renseigné'};${cnfs?.mattermost?.id ?? 'compte non créé'}\n`);
       resolve();
     }));
   });

@@ -40,7 +40,7 @@ const buildExportHubCnfsCsvFileContent = async statsCnfs => {
     ...statsCnfs.map(statCnfs => [
       statCnfs.conseiller.nom,
       statCnfs.conseiller.prenom,
-      statCnfs.conseiller?.emailCN?.address ?? 'compte COOP non créé',
+      statCnfs.conseiller?.mattermost?.id ?? 'compte COOP non créé',
       statCnfs.nom.replace(/["',]/g, ''),
       statCnfs.contact?.email,
       formatAdresseStructure(statCnfs.insee),
