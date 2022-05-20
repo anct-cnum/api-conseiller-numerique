@@ -428,27 +428,10 @@ exports.Users = class Users extends Service {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
           const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
           const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+          const email = conseiller.emailCN.address;
+          const login = email.match(`^${prenom}.${nom}?[0-9]?`);
           const gandi = app.get('gandi');
-          let login = `${prenom}.${nom}`;
-          let conseillerNumber = await db.collection('conseillers').countDocuments(
-            {
-              'emailCN.address': `${login}@${gandi.domain}`,
-              'statut': { $ne: 'RUPTURE' }
-            });
-          if (conseillerNumber > 0) {
-            let indexLoginConseiller = 1;
-            do {
-              login = `${prenom}.${nom}` + indexLoginConseiller.toString();
-              conseillerNumber = await db.collection('conseillers').countDocuments(
-                {
-                  'emailCN.address': `${login}@${gandi.domain}`,
-                  'statut': { $ne: 'RUPTURE' }
-                });
-              indexLoginConseiller += 1;
-            } while (conseillerNumber !== 0);
-          }
           const mattermost = app.get('mattermost');
-          const email = `${login}@${gandi.domain}`;
           await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
               name: email,
