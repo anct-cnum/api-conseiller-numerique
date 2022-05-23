@@ -5,10 +5,13 @@ const { program } = require('commander');
 execute(__filename, async ({ db, logger, exit }) => {
 
   program.option('-o, --option <option>', 'option: conseillers ou structures');
+  program.option('-i, --id <id>', 'id: idPG d\'un conseiller ou une structure ');
   program.helpOption('-h', 'HELP command');
   program.parse(process.argv);
 
   const option = program.option;
+  const id = ~~program.id;
+  const query = id ? { idPG: id } : {};
   let promises = [];
   let countTotalConseiller = 0;
   let countActionMAJ = 0;
@@ -21,8 +24,9 @@ execute(__filename, async ({ db, logger, exit }) => {
     exit('option invalide. Veuillez choisir entre conseillers ou structures');
     return;
   }
-
-  const arrayData = await db.collection(option).find().toArray();
+  // eslint-disable-next-line max-len
+  logger.info(`MAJ de tous les mises en relation de ${!id ? `de tous les ${option}` : `1 ${option === 'conseillers' ? 'conseiller' : 'strcutres'} idPG: ${id}`}`);
+  const arrayData = await db.collection(option).find(query).toArray();
 
   arrayData.forEach(obj => {
     promises.push(new Promise(async resolve => {
