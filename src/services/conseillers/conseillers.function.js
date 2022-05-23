@@ -48,7 +48,7 @@ const suppressionCVConseiller = (db, conseiller) => {
       { $unset: {
         cv: ''
       } });
-    await db.collection('misesEnRelation').updateMany({ 'conseiller.email': conseiller.email },
+    await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
       { $unset: {
         'conseillerObj.cv': ''
       } });
