@@ -148,7 +148,7 @@ const fixHomonymesCreateMailbox = async (gandi, nom, prenom, db) => {
   if (conseillerNumber > 0) {
     let indexLoginConseiller = 1;
     do {
-      login = `${prenom}.${nom}${indexLoginConseiller.toString()}`;
+      login = `${prenom}.${nom}${indexLoginConseiller}`;
       conseillerNumber = await db.collection('conseillers').countDocuments(
         {
           'emailCN.address': `${login}@${gandi.domain}`,
@@ -157,7 +157,7 @@ const fixHomonymesCreateMailbox = async (gandi, nom, prenom, db) => {
       indexLoginConseiller += 1;
     } while (conseillerNumber !== 0);
   }
-      
+
   return login;
 };
 
