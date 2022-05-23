@@ -22,7 +22,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
     try {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-      const login = fixHomonymesCreateMailbox(gandi, nom, prenom, db);
+      const login = await fixHomonymesCreateMailbox(gandi, nom, prenom, db);
       const password = uuidv4() + 'AZEdsf;+:'; // pour respecter la règle de complexité de mot de passe
       createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
 

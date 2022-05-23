@@ -21,7 +21,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, gandi }) => {
       // Creation boite mail du conseiller
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-      const login = fixHomonymesCreateMailbox(gandi, nom, prenom, db);
+      const login = await fixHomonymesCreateMailbox(gandi, nom, prenom, db);
       const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
       await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseiller._id, login, password });
       count++;
