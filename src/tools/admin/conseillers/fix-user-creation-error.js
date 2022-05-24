@@ -2,10 +2,9 @@
 'use strict';
 require('dotenv').config();
 const cli = require('commander');
-const { ObjectId } = require('mongodb');
 const { execute } = require('../../utils');
 
-cli.description('Suppresion de la clé userCreationError pour un conseiller ou tout les conseillers recrutés')
+cli.description('Suppression de la clé userCreationError pour un conseiller ou tous les conseillers recrutés')
 .option('-c, --conseiller <id>', 'id: id du conseiller')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
@@ -15,14 +14,17 @@ execute(__filename, async ({ db, logger, exit }) => {
   const idConseiller = cli.conseiller;
   await new Promise(async () => {
     if (idConseiller) {
-      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      const conseiller = await db.collection('conseillers').findOne({
+        idPG: idConseiller,
+        statut: 'RECRUTE'
+      });
       if (conseiller === null) {
-        exit('id conseiller inconnu dans la bdd mongodb');
+        exit('id conseiller avec statut \'RECRUTE\' inconnu dans la bdd mongodb');
         return;
       }
       await db.collection('conseillers').updateOne(
         {
-          _id: new ObjectId(idConseiller),
+          idPG: idConseiller,
         },
         {
           $unset: {
