@@ -359,6 +359,10 @@ exports.Users = class Users extends Service {
           res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé pour une structure').toJSON());
           return;
         }
+        const emailExistStructure = await db.collection('structures').countDocuments({ 'contact.email': email });
+        if (emailExistStructure !== 0) {
+          return res.status(409).send(new Conflict('L\'adresse email que vous avez renseigné existe déjà dans une autre structure').toJSON());
+        }
 
         try {
           const connection = app.get('mongodb');
