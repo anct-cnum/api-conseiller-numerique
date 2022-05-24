@@ -10,7 +10,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   const s3 = new aws.S3({ endpoint: ep });
 
   let coherenceOk = 0;
-  let coherenceNot = 0;
+  let coherenceNotOk = 0;
 
   for (const obj of cvExists) {
     let params = { Bucket: awsConfig.cv_bucket, Key: obj.cv.file };/*  */
@@ -18,11 +18,13 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       await s3.getObject(params).promise();
       coherenceOk++;
     } catch (error) {
-      await db.collection('conseillers').updateOne({ _id: obj._id }, { $unset: { cv: '' } });
-      coherenceNot++;
+      if (error?.statusCode === 404) {
+        await db.collection('conseillers').updateOne({ _id: obj._id }, { $unset: { cv: '' } });
+      }
+      coherenceNotOk++;
     }
   }
 
-  logger.info(`${coherenceOk} était ok / ${coherenceNot} était pas ok`);
+  logger.info(`${coherenceOk} était ok / ${coherenceNotOk} était pas ok`);
   exit();
 });

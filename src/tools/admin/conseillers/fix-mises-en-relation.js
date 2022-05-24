@@ -34,13 +34,13 @@ execute(__filename, async ({ db, logger, exit }) => {
       const updateObj = option === 'conseillers' ? { 'conseillerObj': obj } : { 'structureObj': obj };
       const verifMisesEnRelation = await db.collection('misesEnRelation').findOne(match);
       const checkObj = option === 'conseillers' ? verifMisesEnRelation?.conseillerObj : verifMisesEnRelation?.structureObj;
-      
+
       if (verifMisesEnRelation !== null) {
         if (!isEqual(checkObj, obj)) {
           await db.collection('misesEnRelation').updateMany(match, { $set: { updateObj } });
-          countNonMAJ++;
+          countActionMAJ++;
         }
-        countActionMAJ++;
+        countNonMAJ++;
       }
       countTotalConseiller++;
       resolve();
