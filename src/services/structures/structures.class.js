@@ -340,6 +340,12 @@ exports.Structures = class Structures extends Service {
           structureId
         }).toJSON());
       }
+      const emailExistStructure = await db.collection('structures').countDocuments({ 'contact.email': email });
+      if (emailExistStructure !== 0) {
+        return res.status(409).send(new Conflict('L\'adresse email que vous avez renseigné existe déjà dans une autre structure', {
+          structureId
+        }).toJSON());
+      }
 
       const updateStructure = async (id, email) => {
         try {
