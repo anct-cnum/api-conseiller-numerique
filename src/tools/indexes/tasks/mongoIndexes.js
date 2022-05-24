@@ -36,6 +36,7 @@ module.exports = {
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.idPG': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.disponible': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.email': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'conseillerObj.cv': 1 }),
       db.collection('misesEnRelation').createIndex({
         'conseillerObj.nom': 'text',
         'conseillerObj.prenom': 'text',
