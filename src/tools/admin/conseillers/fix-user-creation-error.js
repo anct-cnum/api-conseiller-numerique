@@ -31,8 +31,7 @@ execute(__filename, async ({ db, logger, exit }) => {
             userCreationError: ''
           }
         });
-      logger.info(`Suppresion de la clé userCreationError pour le conseiller id ${idConseiller}`);
-      exit();
+      logger.info(`Suppression de la clé userCreationError pour le conseiller id ${idConseiller}`);
     } else {
       await db.collection('conseillers').updateMany(
         {
@@ -45,8 +44,8 @@ execute(__filename, async ({ db, logger, exit }) => {
           }
         }
       );
-      logger.info(`Suppresion de la clé userCreationError pour tous les conseillers recrutés`);
-      exit();
+      logger.info(`Suppression de la clé userCreationError pour tous les conseillers recrutés`);
     }
+    exit();
   });
 });
