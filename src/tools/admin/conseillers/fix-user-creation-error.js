@@ -16,10 +16,11 @@ execute(__filename, async ({ db, logger, exit }) => {
     if (idConseiller) {
       const conseiller = await db.collection('conseillers').findOne({
         idPG: idConseiller,
-        statut: 'RECRUTE'
+        statut: 'RECRUTE',
+        userCreationError: true
       });
       if (conseiller === null) {
-        exit('id conseiller avec statut \'RECRUTE\' inconnu dans la bdd mongodb');
+        exit('id conseiller avec statut \'RECRUTE\' et avec la clé userCreationError inconnu dans la bdd mongodb');
         return;
       }
       await db.collection('conseillers').updateOne(
