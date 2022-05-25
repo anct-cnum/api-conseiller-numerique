@@ -93,6 +93,7 @@ const deletePermanence = db => async permanenceId => {
 };
 
 const deleteConseillerPermanence = db => async (permanenceId, conseillerId) => {
+  conseillerId = typeof (conseillerId) === 'string' ? new ObjectId(conseillerId) : conseillerId;
   await db.collection('permanences').updateOne({
     _id: new ObjectId(permanenceId)
   }, {
