@@ -14,7 +14,7 @@ const {
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { updatePermanenceToSchema, updatePermanencesToSchema } = require('./permanence/utils/update-permanence.utils');
-const { getPermanenceByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
+const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
   deleteConseillerPermanence, updatePermanences, updateConseillerStatut } = require('./permanence/repositories/permanence-conseiller.repository');
 
 const axios = require('axios');
@@ -27,6 +27,28 @@ exports.PermanenceConseillers = class Sondages extends Service {
       this.Model = db.collection('permanences');
     });
 
+    app.get('/permanences/:id', async (req, res) => {
+
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const permanenceId = req.params.id;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await getPermanenceById(db)(permanenceId).then(permanence => {
+          return res.send({ permanence });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(404).send(new Conflict('La recherche de permanence a échouée, veuillez réessayer.').toJSON());
+        });
+
+      }).catch(routeActivationError => abort(res, routeActivationError));
+
+    });
+
     app.get('/permanences/conseiller/:id', async (req, res) => {
 
       const db = await app.get('mongoClient');
@@ -37,8 +59,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await getPermanenceByConseiller(db)(conseillerId).then(permanence => {
-          return res.send({ permanence });
+        await getPermanencesByConseiller(db)(conseillerId).then(permanences => {
+          return res.send({ permanences });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
@@ -139,10 +161,12 @@ exports.PermanenceConseillers = class Sondages extends Service {
             object: 'checkSiret',
           };
           const result = await axios.get(urlSiret, { params: params });
-          return res.send({ 'adresseParSiret': result.data.etablissement.adresse });
+          return res.send({ 'adresseParSiret': result?.data?.etablissement?.adresse });
         } catch (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
+          if (!error?.gateway_error) {
+            logger.error(error);
+            app.get('sentry').captureException(error);
+          }
           return res.send({ 'adresseParSiret': null });
         }
       }).catch(routeActivationError => abort(res, routeActivationError));
@@ -181,7 +205,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await setReporterInsertion(db)(user._id).then(() => {
-          res.send({ isReporter: true });
+          return res.send({ isReporter: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);

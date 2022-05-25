@@ -1,7 +1,11 @@
 const { ObjectId } = require('mongodb');
 
-const getPermanenceByConseiller = db => async conseillerId => {
-  return await db.collection('permanences').findOne({ 'conseiller.$id': new ObjectId(conseillerId) });
+const getPermanenceById = db => async permanenceId => {
+  return await db.collection('permanences').findOne({ '_id': new ObjectId(permanenceId) });
+};
+
+const getPermanencesByConseiller = db => async conseillerId => {
+  return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
 };
 
 const getPermanencesByStructure = db => async structureId => {
@@ -121,7 +125,8 @@ const updateConseillerStatut = db => async (userId, conseillerId) => {
 };
 
 module.exports = {
-  getPermanenceByConseiller,
+  getPermanenceById,
+  getPermanencesByConseiller,
   getPermanencesByStructure,
   setPermanence,
   createPermanence,
