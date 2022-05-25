@@ -13,7 +13,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   const id = ~~program.id;
   const query = id ? { idPG: id } : {};
   let promises = [];
-  let countTotalConseiller = 0;
+  let countTotal = 0;
   let countExistsMER = 0;
   let countMAJ = 0;
 
@@ -42,13 +42,13 @@ execute(__filename, async ({ db, logger, exit }) => {
           countMAJ++;
         }
       }
-      countTotalConseiller++;
+      countTotal++;
       resolve();
     }));
   });
   await Promise.all(promises);
   // eslint-disable-next-line max-len
-  logger.info(`${countTotalConseiller} ${collection} ont été traitées, ${countExistsMER} ${collection} qui ont au moins une misesEnRelation && ${countMAJ} qui n'était pas à jour dans les misesEnRelations.`);
+  logger.info(`${countTotal} ${collection} ont été traitées, ${countExistsMER} ${collection} qui ont au moins une misesEnRelation && ${countMAJ} qui n'était pas à jour dans les misesEnRelations.`);
 
   exit();
 });
