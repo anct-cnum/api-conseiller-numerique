@@ -69,8 +69,8 @@ exports.Users = class Users extends Service {
 
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
-            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé par une autre structure`);
-            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par une autre structure', {
+            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé.`);
+            res.status(409).send(new Conflict('Erreur: l\'email saisi est déjà utilisé', {
               nouveauEmail
             }).toJSON());
             return;
@@ -359,6 +359,10 @@ exports.Users = class Users extends Service {
           res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé pour une structure').toJSON());
           return;
         }
+        const emailExistStructure = await db.collection('structures').countDocuments({ 'contact.email': email });
+        if (emailExistStructure !== 0) {
+          return res.status(409).send(new Conflict('L\'adresse email que vous avez renseigné existe déjà dans une autre structure').toJSON());
+        }
 
         try {
           const connection = app.get('mongodb');
@@ -428,10 +432,10 @@ exports.Users = class Users extends Service {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
           const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
           const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-          const login = `${prenom}.${nom}`;
+          const email = conseiller.emailCN.address;
+          const login = email.match(`^${prenom}.${nom}?[0-9]?`);
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
-          const email = `${login}@${gandi.domain}`;
           await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
               name: email,
@@ -439,8 +443,9 @@ exports.Users = class Users extends Service {
             }
           });
           user.name = email;
-          createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: user.entity.oid, login, password });
-          createAccount({
+          // La boite mail a été créée dans import-recrutes.js
+          await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
+          await createAccount({
             mattermost,
             conseiller,
             email,
@@ -487,6 +492,10 @@ exports.Users = class Users extends Service {
                 break;
               case 'candidat':
                 message = emails.getEmailMessageByTemplateName('bienvenueCompteCandidat');
+                await message.send(user);
+                break;
+              case 'hub_coop':
+                message = emails.getEmailMessageByTemplateName('bienvenueCompteHub');
                 await message.send(user);
                 break;
               default:
@@ -585,10 +594,12 @@ exports.Users = class Users extends Service {
           hiddenEmail: hiddenEmail,
           successCheckEmail: true
         });
+        return;
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
+        return;
       }
     });
 
@@ -627,9 +638,11 @@ exports.Users = class Users extends Service {
         let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         await message.send(user);
         res.status(200).json({ successResetPassword: true });
+        return;
       } catch (err) {
         app.get('sentry').captureException(err);
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
+        return;
       }
     });
 

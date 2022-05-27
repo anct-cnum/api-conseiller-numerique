@@ -1,13 +1,21 @@
-const { formatAddress } = require('../../common/format-address');
+const { formatAddressFromInsee, formatAddressFromPermanence, formatOpeningHours } = require('../../common');
+
+const emptyString = '';
+
+const typeAccesMap = new Map([
+  ['prive', 'La structure n\'accueille pas de public'],
+  ['libre', 'Accès libre'],
+  ['rdv', 'Sur rendez-vous']
+]);
 
 const permanenceFormattedAddress = formattedAddress =>
-  formattedAddress === '' ? {} : {
+  formattedAddress === emptyString ? {} : {
     adresse: formattedAddress
   };
 
 const permanenceAddress = permanence =>
   permanenceFormattedAddress(
-    formatAddress(permanence.insee?.etablissement.adresse ?? {})
+    formatAddressFromInsee(permanence.insee?.etablissement.adresse ?? {})
   );
 
 const permanenceContactEmail = permanence =>
@@ -15,16 +23,24 @@ const permanenceContactEmail = permanence =>
     email: permanence.contact.email
   } : {};
 
-const digitsPairsRegexp = /(\d\d(?!$))/g;
+const frenchCallingPhoneCodeRegexp = /(?:(\+(?:33|590|596|594|262|269))(\d))?/;
+const digitsPairsRegexp = /(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?/;
+const phoneRegexp = frenchCallingPhoneCodeRegexp.source + digitsPairsRegexp.source;
+const phoneSpace = ' ';
+const regexpMatchesToSkip = 1;
 
-const setSpaces = permanence => permanence.contact.telephone.includes(' ') ?
-  permanence.contact.telephone :
-  permanence.contact.telephone
-  .replace(digitsPairsRegexp, '$1 ');
+const noUndefinedMatches = match => match !== undefined;
+
+const setPhoneSpaces = telephone => telephone
+.replaceAll(phoneSpace, emptyString)
+.match(phoneRegexp)
+?.slice(regexpMatchesToSkip)
+.filter(noUndefinedMatches)
+.join(phoneSpace);
 
 const permanenceContactTelephone = permanence =>
   permanence.contact.telephone ? {
-    telephone: setSpaces(permanence)
+    telephone: setPhoneSpaces(permanence.contact.telephone)
   } : {};
 
 const permanenceContact = permanence =>
@@ -35,23 +51,45 @@ const permanenceContact = permanence =>
 
 const permanenceCoordinates = coordinates => coordinates ? { coordinates } : {};
 
-const toPermanenceDetailsTransfer = permanence => ({
+const structureToPermanenceDetailsTransfer = permanence => ({
   ...permanenceAddress(permanence),
   nom: permanence.nom,
+  isLabeledAidantsConnect: permanence.estLabelliseAidantsConnect === 'OUI',
+  isLabeledFranceServices: permanence.estLabelliseFranceServices === 'OUI',
   ...permanenceContact(permanence),
   ...permanenceCoordinates(permanence.coordonneesInsee?.coordinates)
 });
 
-const cnfsDetails = cnfs => ({
-  cnfs,
-  nombreCnfs: cnfs.length,
-});
+const cnfsDetails = cnfs => {
+  cnfs = cnfs.map(conseiller => ({
+    prenom: conseiller.nonAffichageCarto !== true ? conseiller.prenom : 'Anonyme',
+    nom: conseiller.nonAffichageCarto !== true ? conseiller.nom : '',
+    ...(conseiller.nonAffichageCarto !== true && conseiller.emailPro !== undefined && { email: conseiller.emailPro }),
+    ...(conseiller.nonAffichageCarto !== true && conseiller.telephonePro !== undefined && { phone: conseiller.telephonePro })
+  }));
 
-const permanenceDetails = async (structureId, { getPermanenceByStructureId, getCnfs }) => ({
-  ...toPermanenceDetailsTransfer(await getPermanenceByStructureId(structureId)),
+  return { cnfs, nombreCnfs: cnfs.length };
+};
+
+const permanenceDetailsFromStructureId = async (structureId, { getStructureById, getCnfs }) => ({
+  ...structureToPermanenceDetailsTransfer(await getStructureById(structureId)),
   ...cnfsDetails(await getCnfs(structureId))
 });
 
+const permanenceDetails = async permanence => ({
+  adresse: formatAddressFromPermanence(permanence.adresse),
+  coordinates: permanence.location.coordinates,
+  nom: permanence.nomEnseigne,
+  ...(permanence.email ? { email: permanence.email } : {}),
+  ...(permanence.numeroTelephone ? { telephone: setPhoneSpaces(permanence.numeroTelephone) } : {}),
+  ...(permanence.siteWeb ? { siteWeb: permanence.siteWeb } : {}),
+  typeAcces: permanence.typeAcces.map(type => typeAccesMap.get(type)).join(', '),
+  openingHours: formatOpeningHours(permanence.horaires ?? []),
+  nombreCnfs: permanence.conseillers?.length ?? 0,
+  cnfs: permanence.conseillers ?? []
+});
+
 module.exports = {
+  permanenceDetailsFromStructureId,
   permanenceDetails
 };

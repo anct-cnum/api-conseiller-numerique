@@ -84,6 +84,34 @@ const getCodesPostauxStatistiquesCras = db => async conseillerId => await db.col
   { 'conseiller.$id': conseillerId }
 );
 
+const getCodesPostauxStatistiquesCrasStructure = db => async conseillersId => await db.collection('cras').distinct('cra.codePostal',
+  {
+    'conseiller.$id': {
+      $in: conseillersId
+    }
+  });
+
+const getConseillersIdsByStructure = db => async idStructure => {
+  const promise = new Promise(async resolve => {
+    const miseEnRelation = db.collection('misesEnRelation').find({
+      'structure.$id': idStructure,
+      'statut': { $in: ['finalisee', 'finalisee_rupture'] }
+    }).toArray();
+    resolve(miseEnRelation);
+  });
+  return promise;
+};
+
+const getStructuresIdsByPrefecture = db => async (code, page, limit) => {
+  return await db.collection('structures').find(
+    code,
+  ).skip(page).limit(limit).toArray();
+};
+
+const countStructures = db => async code => {
+  return await db.collection('structures').countDocuments(code);
+};
+
 const statsRepository = db => ({
   getDepartement: getDepartement(db),
   getRegion: getRegion(db),
@@ -92,6 +120,10 @@ const statsRepository = db => ({
   getTotalDepartements: getTotalDepartements(db),
   getTotalRegions: getTotalRegions(db),
   getCodesPostauxStatistiquesCras: getCodesPostauxStatistiquesCras(db),
+  getCodesPostauxStatistiquesCrasStructure: getCodesPostauxStatistiquesCrasStructure(db),
+  getConseillersIdsByStructure: getConseillersIdsByStructure(db),
+  getStructuresIdsByPrefecture: getStructuresIdsByPrefecture(db),
+  countStructures: countStructures(db),
 });
 
 module.exports = {

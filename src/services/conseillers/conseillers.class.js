@@ -6,6 +6,8 @@ const decode = require('jwt-decode');
 const aws = require('aws-sdk');
 const multer = require('multer');
 const fileType = require('file-type');
+const { Pool } = require('pg');
+const pool = new Pool();
 const crypto = require('crypto');
 const statsPdf = require('../stats/stats.pdf');
 const dayjs = require('dayjs');
@@ -47,14 +49,14 @@ const {
   exportStatistiquesQueryToSchema
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
-const { geolocatedConseillers, geolocatedStructure } = require('./geolocalisation/core/geolocalisation.core');
+const { geolocatedConseillers, geolocatedStructure, geolocatedPermanence } = require('./geolocalisation/core/geolocalisation.core');
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
 const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require('./create-sexe-age/repositories/conseiller.repository');
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
-const { permanenceDetails } = require('./permanence/core/permanence-details.core');
+const { permanenceDetailsFromStructureId, permanenceDetails } = require('./permanence/core/permanence-details.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -369,7 +371,7 @@ exports.Conseillers = class Conseillers extends Service {
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        const rolesAllowed = ['conseiller', 'admin_coop', 'structure_coop'];
+        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -442,7 +444,8 @@ exports.Conseillers = class Conseillers extends Service {
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, isAdminCoop)
+          // eslint-disable-next-line max-len
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -548,6 +551,7 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }).then(() => {
         res.send({ deleteSuccess: true });
+        return;
       }).catch(error => {
         logger.error(error);
         app.get('sentry').captureException(error);
@@ -555,7 +559,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.post('/conseillers/:id/relance-inscription-candidat', async (req, res) => {
+    app.post('/conseillers/:id/relance-invitation', async (req, res) => {
       await checkAuth(req, res);
       await checkRoleAdmin(db, req, res);
       const conseillerId = new ObjectId(req.params.id);
@@ -565,61 +569,31 @@ exports.Conseillers = class Conseillers extends Service {
         res.status(404).send(new NotFound('Conseiller n\'existe pas', {
           conseillerId,
         }).toJSON());
+        return;
       }
 
       try {
         const conseillerUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
+        user = conseillerUser;
         if (conseillerUser === null) {
-          const verifEmail = await db.collection('users').countDocuments({ name: conseiller.email });
-          if (verifEmail !== 0) {
-            await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreationError: true } });
-            res.status(409).send(new Conflict(`un doublon a déjà un compte associé à ${conseiller.email}`));
-            return;
-          }
-          const NOW = new Date();
-          const obj = {
-            name: conseiller.email,
-            prenom: conseiller.prenom,
-            nom: conseiller.nom,
-            password: uuidv4(),
-            roles: Array('candidat'),
-            entity: {
-              '$ref': `conseillers`,
-              '$id': conseiller._id,
-              '$db': db.serverConfig.s.options.dbName
-            },
-            token: uuidv4(),
-            tokenCreatedAt: NOW,
-            mailSentDate: null,
-            passwordCreated: false,
-            createdAt: NOW,
-          };
-          const createUser = await db.collection('users').insertOne(obj);
-          user = createUser.ops[0];
-        } else {
-          //Met à jour le token possiblement expiré
-          await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
-          user = await db.collection('users').findOne({ _id: conseillerUser._id });
-        }
-        if (user.roles[0] === 'candidat') {
-          await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { userCreated: true }, $unset: { userCreationError: true } });
-          let mailer = createMailer(app);
-          const emails = createEmails(db, mailer, app);
-          let message = emails.getEmailMessageByTemplateName('creationCompteCandidat');
-          await message.send(user);
-          res.send({ emailEnvoyer: true });
-        } else if (user.roles[0] === 'conseiller' && !user.passwordCreated) {
-          // conseiller qui n'a pas encore activé son compte Coop
-          let mailer = createMailer(app);
-          const emails = createEmails(db, mailer, app);
-          let message = emails.getEmailMessageByTemplateName('creationCompteConseiller');
-          await message.send(user);
-          res.send({ emailEnvoyer: true });
-        } else if (user.roles[0] === 'conseiller' && user.passwordCreated) {
-          // conseiller qui a activé son compte Coop
-          res.status(409).send(new Conflict(`${conseiller.prenom} ${conseiller.nom} est déjà recruté donc a un compte COOP existant`));
+          // message d'erreur dans le cas où le cron n'est pas encore passer
+          res.status(404).send(new NotFound('Une erreur est survenue, veuillez réessayez plus tard', {
+            conseillerId,
+          }).toJSON());
           return;
         }
+        if (conseillerUser.passwordCreated === true) {
+          res.status(409).send(new Conflict(`Le compte de ${conseiller.prenom} ${conseiller.nom} est déjà activé`));
+          return;
+        }
+        await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
+        let mailer = createMailer(app);
+        const emails = createEmails(db, mailer, app);
+        const typeEmail = user.roles.includes('conseiller') ? 'creationCompteConseiller' : 'creationCompteCandidat';
+        let message = emails.getEmailMessageByTemplateName(typeEmail);
+        const usersAJour = await db.collection('users').findOne({ _id: conseillerUser._id });
+        await message.send(usersAJour);
+        return res.status(200).json({ emailEnvoyer: true });
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
@@ -654,22 +628,32 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
 
       canActivate(
-        existGuard(conseiller),
+        existGuard(conseiller ?? permanence),
       ).then(async () => {
-        res.send(await permanenceDetails(conseiller.structureId, permanenceRepository(db)));
+        if (conseiller !== null) {
+          res.send(await permanenceDetailsFromStructureId(conseiller.structureId, permanenceRepository(db)));
+        } else {
+          res.send(await permanenceDetails(permanence, permanenceRepository(db)));
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
     app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
+      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
 
       canActivate(
-        existGuard(conseiller),
+        existGuard(conseiller ?? permanence),
       ).then(async () => {
-        res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
+        if (conseiller !== null) {
+          res.send(await geolocatedStructure(conseiller.structureId, geolocationRepository(db)));
+        } else {
+          res.send(await geolocatedPermanence(permanence));
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
@@ -789,7 +773,77 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
     });
+    app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idConseiller = req.params.id;
+      const { disponible } = req.body;
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+          idConseiller,
+        }).toJSON());
+        return;
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId
+        }).toJSON());
+        return;
+      }
+      try {
+        await pool.query(`UPDATE djapp_coach
+            SET disponible = $2 WHERE id = $1`,
+        [conseiller.idPG, disponible]);
 
+      } catch (err) {
+        logger.error(err);
+        app.get('sentry').captureException(err);
+      }
+      try {
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      try {
+        if (disponible) {
+          await db.collection('misesEnRelation').updateMany(
+            {
+              'conseiller.$id': conseiller._id,
+              'statut': 'non_disponible'
+            },
+            {
+              $set:
+                {
+                  'statut': 'nouvelle'
+                }
+            });
+        } else {
+          await db.collection('misesEnRelation').updateMany(
+            {
+              'conseiller.$id': conseiller._id,
+              'statut': 'nouvelle'
+            },
+            {
+              $set:
+                {
+                  'statut': 'non_disponible'
+                }
+            });
+        }
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+          $set: { 'conseillerObj.disponible': disponible }
+        });
+
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      res.send({ disponible });
+    });
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;

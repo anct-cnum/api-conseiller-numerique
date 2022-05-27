@@ -17,28 +17,27 @@ const formatAdresseStructure = insee => {
   return adresse.replace(/["']/g, '');
 };
 
-const prettifyAndComplete = getStructureNameFromId => async statCnfs => {
-  const { structureId, emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
+const getFormatHistoriqueGroupeCRA = groupeCRAHistorique => JSON.stringify(new Array(groupeCRAHistorique).slice(-3));
+
+const prettifyAndComplete = () => async statCnfs => {
+  const { emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
   return {
     ...nextStatCnfs,
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
-    structureId: structureId ? structureId : undefined,
-    nomStructure: structureId ? (await getStructureNameFromId(structureId)).nom : '',
-    // eslint-disable-next-line max-len
-    adresseStructure: structureId ? formatAdresseStructure((await getStructureNameFromId(structureId)).insee) : '',
-    codeDepartement: structureId ? (await getStructureNameFromId(structureId)).codeDepartement : '',
+    adresseStructure: nextStatCnfs.structure?.insee ? formatAdresseStructure(nextStatCnfs.structure.insee) : '',
     certifie: 'Non',
-    groupeCRA: nextStatCnfs.groupeCRA ?? undefined,
+    groupeCRA: nextStatCnfs.groupeCRA ?? '',
+    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique) : '',
     isUserActif: userActifStatus(mattermost, emailCNError)
   };
 };
 
 const getStatsCnfs = async (
   { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif },
-  { getStatsCnfs, getStructureNameFromId }) => {
+  { getStatsCnfs }) => {
   return Promise.all(
-    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
+    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete())
   );
 };
 const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {

@@ -32,6 +32,12 @@ const {
   exportCnfsQueryToSchema,
   getExportCnfsFileName
 } = require('./export-cnfs/utils/export-cnfs.utils');
+const {
+  findDepartementOrRegion,
+  buildExportHubCnfsCsvFileContent
+} = require('./export-cnfs-hub/utils/export-cnfs-hub.utils.js');
+const { exportCnfsHubRepository } = require('./export-cnfs-hub/repositories/export-cnfs-hub.repository.js');
+const { getStatsCnfsHubs } = require('./export-cnfs-hub/core/export-cnfs-hub.core.js');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -303,8 +309,9 @@ exports.DataExports = class DataExports {
 
       structures.forEach(structure => {
         promises.push(new Promise(async resolve => {
-          const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
-          const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
+          const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': structure._id });
+          const isActiveStructure = await db.collection('users').countDocuments({ 'entity.$id': structure._id, 'passwordCreated': true });
+
           const coselec = utils.getCoselec(structure);
           // France Services
           let label = 'non renseigné';
@@ -324,7 +331,7 @@ exports.DataExports = class DataExports {
           adresse = adresse.replace(/["']/g, '');
 
           // eslint-disable-next-line max-len
-          res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}";${structure?.insee?.entreprise?.forme_juridique ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
+          res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${isActiveStructure >= 1 ? 'OUI' : 'NON'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}";${structure?.insee?.entreprise?.forme_juridique ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
           resolve();
         }));
       });
@@ -338,7 +345,7 @@ exports.DataExports = class DataExports {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.HubCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportTerritoireSchema(req.query))
       ).then(async () => {
         const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
@@ -347,6 +354,27 @@ exports.DataExports = class DataExports {
           getExportTerritoiresFileName(req.query.territoire, req.query.dateDebut, req.query.dateFin),
           buildExportTerritoiresCsvFileContent(statsTerritoires, req.query.territoire)
         );
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports/hubcoop/cnfs.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.HubCoop], userAuthenticationRepository(db))
+      ).then(async () => {
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const hubName = user.hub;
+        const hub = findDepartementOrRegion(hubName);
+        if (hub === undefined) {
+          res.status(404).send(new NotFound('Hub not found', {
+            hubName
+          }).toJSON());
+          return;
+        }
+        const statsCnfs = await getStatsCnfsHubs(hub, exportCnfsHubRepository(db));
+        csvFileResponse(res, `export-cnfs_${dayjs(new Date()).format('YYYY-MM-DD')}_${hubName}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 

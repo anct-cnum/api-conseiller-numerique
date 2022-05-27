@@ -1,6 +1,6 @@
 const { ObjectID, DBRef } = require('mongodb');
 
-const { BadRequest, NotFound, Forbidden, NotAuthenticated, GeneralError } = require('@feathersjs/errors');
+const { BadRequest, NotFound, Forbidden, NotAuthenticated, GeneralError, Conflict } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
 
@@ -331,6 +331,18 @@ exports.Structures = class Structures extends Service {
       const structure = await db.collection('structures').findOne({ _id: new ObjectID(structureId) });
       if (!structure) {
         return res.status(404).send(new NotFound('Structure not found', {
+          structureId
+        }).toJSON());
+      }
+      const emailExists = await db.collection('users').findOne({ name: email });
+      if (emailExists !== null) {
+        return res.status(409).send(new Conflict('L\'adresse email que vous avez renseigné existe déjà', {
+          structureId
+        }).toJSON());
+      }
+      const emailExistStructure = await db.collection('structures').countDocuments({ 'contact.email': email });
+      if (emailExistStructure !== 0) {
+        return res.status(409).send(new Conflict('L\'adresse email que vous avez renseigné existe déjà dans une autre structure', {
           structureId
         }).toJSON());
       }

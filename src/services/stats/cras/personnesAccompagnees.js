@@ -1,5 +1,4 @@
 const getPersonnesAccompagnees = async (db, query) => {
-
   let personnesAccompagnees = await db.collection('cras').aggregate(
     { $match: { ...query } },
     { $group: { _id: null, count: { $sum: '$cra.nbParticipants' } } },

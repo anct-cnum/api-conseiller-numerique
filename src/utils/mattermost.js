@@ -115,21 +115,37 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       },
       data: { 'email': email, 'username': login, 'first_name': nom, 'last_name': prenom, 'password': password }
     });
-    logger.info(resultCreation);
+    const infoResult = {
+      status: resultCreation?.status,
+      url: `${mattermost.endPoint}/api/v4/users`,
+      method: 'POST',
+      id: resultCreation?.data?.id,
+      prenom: resultCreation?.data?.last_name,
+      nom: resultCreation?.data?.first_name,
+      email: resultCreation?.data?.email
+    };
+    logger.info(infoResult);
+
     const mattermostSet = {
       error: false,
       login: login,
       id: resultCreation.data.id
     };
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { mattermost: mattermostSet }
+      {
+        $set:
+          { mattermost: mattermostSet }
       });
 
     slugify.extend({ '-': ' ' });
     slugify.extend({ '\'': ' ' });
     const departements = require('../../data/imports/departements-region.json');
-    const departement = departements.find(d => `${d.num_dep}` === conseiller.codeDepartement);
+    let departement = departements.find(d => `${d.num_dep}` === conseiller.codeDepartement);
+    // Cas Saint Martin => on les regroupe au canal département 971 - guadeloupe
+    if (conseiller.codeDepartement === '00' && conseiller.codePostal === '97150') {
+      departement = departements.find(d => `${d.num_dep}` === '971');
+    }
+
     const channelName = slugify(departement.dep_name, { replacement: '', lower: true });
 
     const resultChannel = await axios({
@@ -172,11 +188,15 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     });
 
     const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
-    const regionName = findDepartement(structure.codeDepartement).region_name;
-
+    const regionName = findDepartement(structure.codeDepartement)?.region_name;
     let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
     if (hub === null) {
-      hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
+      // Cas Saint Martin => on les regroupe au hub Antilles-Guyane
+      if (structure.codeDepartement === '00' && structure.codeCom === '978') {
+        hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: '973' } } });
+      } else {
+        hub = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structure.codeDepartement}` } } });
+      }
     }
     if (hub !== null) {
       await joinTeam(mattermost, token, mattermost.hubTeamId, mattermostSet.id);
@@ -195,8 +215,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.error': true, 'mattermost.errorMessage': e.message }
+      {
+        $set:
+          { 'mattermost.error': true, 'mattermost.errorMessage': e.message }
       });
     return false;
   }
@@ -216,19 +237,27 @@ const updateAccountPassword = (mattermost, db, logger, Sentry) => async (conseil
       },
       data: { 'new_password': newPassword }
     });
-    logger.info(resultUpdatePassword);
-    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
+    const resultInfo = {
+      status: resultUpdatePassword?.status,
+      url: `${mattermost.endPoint}/api/v4/users/${conseiller.mattermost?.id}/password`,
+      method: 'PUT',
+      id: conseiller.mattermost?.id
+    };
+    logger.info(resultInfo);
+    logger.info(`Mot de passe Mattermost mis à jour pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id})`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorResetPassword': false }
+      {
+        $set:
+          { 'mattermost.errorResetPassword': false }
       });
     return true;
   } catch (e) {
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorResetPassword': true }
+      {
+        $set:
+          { 'mattermost.errorResetPassword': true }
       });
     return false;
   }
@@ -252,16 +281,18 @@ const deleteAccount = async (mattermost, conseiller, db, logger, Sentry) => {
     logger.info(resultDeleteAccount);
     logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id} avec un id mattermost: ${conseiller.mattermost.id}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorDeleteAccount': false }
+      {
+        $set:
+          { 'mattermost.errorDeleteAccount': false }
       });
     return true;
   } catch (e) {
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
-      { $set:
-        { 'mattermost.errorDeleteAccount': true }
+      {
+        $set:
+          { 'mattermost.errorDeleteAccount': true }
       });
     return false;
   }

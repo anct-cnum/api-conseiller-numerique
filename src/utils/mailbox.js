@@ -11,12 +11,21 @@ const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, 
       },
       data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
     });
-    logger.info(resultCreation);
-
+    const resultInfo = {
+      status: resultCreation?.status,
+      url: `${gandi.endPoint}/mailboxes/${gandi.domain}`,
+      method: 'POST',
+      login: login,
+      message: resultCreation?.data?.message
+    };
+    logger.info(resultInfo);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
-      { $set:
-        { emailCNError: false,
-          emailCN: { address: `${login}@${gandi.domain}` } }
+      {
+        $set:
+        {
+          emailCNError: false,
+          emailCN: { address: `${login}@${gandi.domain}` }
+        }
       });
     logger.info(`Boite email créée ${login} pour le conseiller id=${conseillerId}`);
     return true;
@@ -24,8 +33,9 @@ const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, 
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
-      { $set:
-        { emailCNError: true }
+      {
+        $set:
+          { emailCNError: true }
       });
     return false;
   }
@@ -54,18 +64,27 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
         },
         data: { 'password': password }
       });
-      logger.info(resultUpdatePassword);
+      const resultInfo = {
+        status: resultUpdatePassword?.status,
+        url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
+        method: 'PATCH',
+        login: login,
+        message: resultUpdatePassword?.data?.message
+      };
+      logger.info(resultInfo);
       logger.info(`Mot de passe Webmail Gandi mis à jour du login ${login} pour le conseiller id=${conseillerId}`);
       await db.collection('conseillers').updateOne({ _id: conseillerId },
-        { $set:
-          { resetPasswordCNError: false }
+        {
+          $set:
+            { resetPasswordCNError: false }
         });
       return true;
     } else {
       logger.error(`Login ${login} inexistant dans Gandi`);
       await db.collection('conseillers').updateOne({ _id: conseillerId },
-        { $set:
-          { resetPasswordCNError: true }
+        {
+          $set:
+            { resetPasswordCNError: true }
         });
       return false;
     }
@@ -73,8 +92,9 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
-      { $set:
-        { resetPasswordCNError: true }
+      {
+        $set:
+          { resetPasswordCNError: true }
       });
     return false;
   }
@@ -105,15 +125,17 @@ const deleteMailbox = (gandi, db, logger, Sentry) => async (conseillerId, login)
       logger.info(resultDeleteMailbox);
       logger.info(`Suppresion boite mail Gandi du login ${login} pour le conseiller id=${conseillerId}`);
       await db.collection('conseillers').updateOne({ _id: conseillerId },
-        { $set:
-          { 'emailCN.deleteMailboxCNError': false }
+        {
+          $set:
+            { 'emailCN.deleteMailboxCNError': false }
         });
       return true;
     } else {
       logger.error(`Login ${login} inexistant dans Gandi`);
       await db.collection('conseillers').updateOne({ _id: conseillerId },
-        { $set:
-          { 'emailCN.deleteMailboxCNError': true }
+        {
+          $set:
+            { 'emailCN.deleteMailboxCNError': true }
         });
       return false;
     }
@@ -121,8 +143,9 @@ const deleteMailbox = (gandi, db, logger, Sentry) => async (conseillerId, login)
     Sentry.captureException(e);
     logger.error(e);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
-      { $set:
-        { 'emailCN.deleteMailboxCNError': true }
+      {
+        $set:
+          { 'emailCN.deleteMailboxCNError': true }
       });
     return false;
   }
@@ -138,4 +161,27 @@ const getMailBox = async ({ gandi, login }) => {
   });
 };
 
-module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox };
+const fixHomonymesCreateMailbox = async (gandi, nom, prenom, db) => {
+  let login = `${prenom}.${nom}`;
+  let conseillerNumber = await db.collection('conseillers').countDocuments(
+    {
+      'emailCN.address': `${login}@${gandi.domain}`,
+      'statut': 'RECRUTE'
+    });
+  if (conseillerNumber > 0) {
+    let indexLoginConseiller = 1;
+    do {
+      login = `${prenom}.${nom}${indexLoginConseiller}`;
+      conseillerNumber = await db.collection('conseillers').countDocuments(
+        {
+          'emailCN.address': `${login}@${gandi.domain}`,
+          'statut': 'RECRUTE'
+        });
+      indexLoginConseiller += 1;
+    } while (conseillerNumber !== 0);
+  }
+
+  return login;
+};
+
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox, fixHomonymesCreateMailbox };

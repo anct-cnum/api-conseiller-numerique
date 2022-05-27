@@ -6,7 +6,60 @@ This project uses [Feathers](http://feathersjs.com). An open source web framewor
 
 ## Getting Started
 
-### Base de donnés postgres (optionnel)
+### Base de données mongo
+
+#### Avec Docker
+
+Créer un volume qui sera persistant après l'extinction du conteneur, il est possible de créer plusieurs volumes pour gérer différents environnements :
+
+```shell
+docker volume create mongo.recette-conseiller-numerique
+docker volume create mongo.production-conseiller-numerique
+```
+
+Télécharger et lancer l'image de mongo :
+
+```shell
+docker run -d --rm --name=mongo.recette-conseiller-numerique -p 27017:27017 -v mongo.recette-conseiller-numerique:/data/db mongo
+```
+
+Se connecter au conteneur pour exécuter l'export d'une base existante avec `mongodump`, exemple avec une chaîne de connexion clever-cloud, il faut remplacer `user`, `password` et `database` par les informations correspondantes :
+
+```shell
+docker exec mongo.recette-conseiller-numerique mongodump --uri="mongodb://${USER}:${PASSWORD}@${DATABASE}-mongodb.services.clever-cloud.com:2167/${DATABASE}"
+```
+
+Se connecter au conteneur pour exécuter l'import de la base avec `mongorestore` :
+
+```shell
+docker exec mongo.recette-conseiller-numerique mongorestore --drop --nsInclude='${DATABASE}.*' --nsFrom='${DATABASE}.*' --nsTo='conseiller-numerique.*'
+```
+
+Une fois l'import effectué, les données exportées peuvent être supprimées du conteneur de cette manière :
+
+```shell
+docker exec mongo.recette-conseiller-numerique rm -rf dump
+```
+
+Pour se connecter au conteneur afin de visualiser les bases de données avec `mongo` :
+
+```shell
+docker exec -it mongo.recette-conseiller-numerique mongo
+```
+
+Pour mettre fin à l'instance du conteneur :
+
+```shell
+docker stop mongo.recette-conseiller-numerique
+```
+
+Pour supprimer définitivement les données de la base :
+
+```shell
+docker volume rm mongo.recette-conseiller-numerique
+```
+
+### Base de données postgres (optionnel)
 
 #### Avec Docker
 

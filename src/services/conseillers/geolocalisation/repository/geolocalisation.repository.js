@@ -16,7 +16,9 @@ const getConseillersWithGeolocation = db => async () =>
   db.collection('conseillers').aggregate([
     {
       $match: {
-        statut: ConseillerStatut.Recrute
+        statut: ConseillerStatut.Recrute,
+        estCoordinateur: { $ne: true },
+        hasPermanence: { $ne: true }
       }
     },
     {
@@ -34,11 +36,24 @@ const getConseillersWithGeolocation = db => async () =>
         'structure.coordonneesInsee': 1,
         'structure.location': 1,
         'structure.nom': 1,
+        'structure.estLabelliseAidantsConnect': 1,
         'structure.estLabelliseFranceServices': 1,
         'structure.insee.etablissement.adresse': 1
       }
     }
   ]).toArray();
+
+const getLieuxDePermanence = db => async () => db.collection('permanences').find({
+  location: { $ne: null },
+}, {
+  projection: {
+    '_id': 1,
+    'nomEnseigne': 1,
+    'adresse': 1,
+    'location': 1,
+    'horaires': 1
+  }
+}).toArray();
 
 const getConseillersByCodeDepartement = db => async () => db.collection('conseillers').aggregate([
   {
@@ -58,7 +73,8 @@ const getConseillersByCodeDepartement = db => async () => db.collection('conseil
 const geolocationRepository = db => ({
   getStructureWithGeolocation: getStructureWithGeolocation(db),
   getConseillersWithGeolocation: getConseillersWithGeolocation(db),
-  getConseillersByCodeDepartement: getConseillersByCodeDepartement(db)
+  getConseillersByCodeDepartement: getConseillersByCodeDepartement(db),
+  getLieuxDePermanence: getLieuxDePermanence(db)
 });
 
 module.exports = {

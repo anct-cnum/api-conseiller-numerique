@@ -28,6 +28,12 @@ const conseillerRuptureStructure = require('./structures/conseillerRuptureStruct
 const conseillersRupturePix = require('./pix/conseillersRupturePix');
 const conseillerChangeEmailCnfs = require('./support/conseillerChangeEmailCnfs');
 const confirmationChangeEmailCnfs = require('./support/confirmationChangeEmailCnfs');
+const invitationHubEspaceCoop = require('./hubs/creationCompteHub');
+const bienvenueCompteHub = require('./hubs/bienvenueCompteHub');
+const mailRelanceM1Conseiller = require('./conseillers/mailRelanceM+1Conseiller');
+const mailRelanceM1Structure = require('./structures/mailRelanceM+1Structure');
+const mailRelanceM15Conseiller = require('./conseillers/mailRelanceM+1,5Conseiller');
+const mailRelanceM15Structure = require('./structures/mailRelanceM+1,5Structure');
 
 module.exports = (db, mailer, app, logger) => {
 
@@ -61,7 +67,13 @@ module.exports = (db, mailer, app, logger) => {
     conseillerRuptureStructure(db, mailer),
     conseillersRupturePix(db, mailer),
     conseillerChangeEmailCnfs(db, mailer, app, logger),
-    confirmationChangeEmailCnfs(db, mailer, app, logger)
+    confirmationChangeEmailCnfs(db, mailer, app, logger),
+    invitationHubEspaceCoop(db, mailer),
+    bienvenueCompteHub(db, mailer),
+    mailRelanceM1Conseiller(db, mailer),
+    mailRelanceM1Structure(db, mailer),
+    mailRelanceM15Conseiller(db, mailer),
+    mailRelanceM15Structure(db, mailer)
   ];
 
   return {

@@ -13,6 +13,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
         dateDebut: 'Fri Jan 01 2021 00:00:00 GMT 0100 (Central European Standard Time)',
         dateFin: 'Thu Nov 18 2021 11:00:00 GMT 0100 (Central European Standard Time)',
         type: 'user',
+        codePostal: '',
         idType: '4a9bc1489ac8ba4c891b9a1c'
       };
 
@@ -22,6 +23,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
         dateDebut: new Date('2021-01-01T00:00:00.000Z'),
         dateFin: new Date('2021-11-18T11:00:00.000Z'),
         type: 'user',
+        codePostal: '',
         idType: '4a9bc1489ac8ba4c891b9a1c',
         conseillerIds: undefined,
       });
@@ -44,6 +46,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
         dateFin: new Date('2021-12-31T11:00:00.000Z'),
         type: 'user',
         idType: '4a9bc1489ac8ba4c891b9a1c',
+        codePostal: '',
         test: 'error'
       });
 
@@ -54,6 +57,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
           dateFin: new Date('2021-12-31T11:00:00.000Z'),
           type: 'user',
           idType: '4a9bc1489ac8ba4c891b9a1c',
+          codePostal: '',
           test: 'error'
         }
       });
@@ -203,7 +207,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
           'valeur': 4
         },
         {
-          'nom': 'equipement informatique', //Correpondance : Prendre en main un équipement
+          'nom': 'equipement informatique', //Correpondance : Prendre en main du matériel
           'valeur': 4
         },
       ];

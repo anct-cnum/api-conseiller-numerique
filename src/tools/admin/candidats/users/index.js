@@ -17,8 +17,9 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
     try {
       //Bridage si doublon recruté => pas de création de compte candidat
       const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: 'RECRUTE', email: conseillerDoc.email });
+      const userExists = await db.collection('users').countDocuments({ name: conseillerDoc.email });
 
-      if (hasUserCoop === 0) {
+      if ((hasUserCoop === 0) && (userExists === 0)) {
         await feathers.service('users').create({
           name: conseillerDoc.email,
           prenom: conseillerDoc.prenom,
@@ -92,17 +93,29 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     await doCreateUser(db, feathers, dbName, _id, logger, Sentry);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('conseillers').find({
+    const conseillers = await db.collection('conseillers').find({
       userCreated: false,
       disponible: true, // si un des doublons a le statut RECRUTE, le disponible est passé à false
       userCreationError: { $ne: true },
       statut: { $ne: 'RECRUTE' }
     }, { limit: limit }).toArray();
 
+    let conseillersSansDoublon = [];
+    let alreadySeen = [];
+    for (const conseiller of conseillers) {
+      if (alreadySeen[conseiller.email]) {
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: {
+          userCreationError: true
+        } });
+      } else {
+        alreadySeen[conseiller.email] = true;
+        conseillersSansDoublon.push(conseiller);
+      }
+    }
     let promises = [];
-    structures.forEach(structure => {
+    conseillersSansDoublon.forEach(candidat => {
       const p = new Promise(async (resolve, reject) => {
-        doCreateUser(db, feathers, dbName, structure._id, logger, Sentry).then(() => {
+        doCreateUser(db, feathers, dbName, candidat._id, logger, Sentry).then(() => {
           usersCreatedCount++;
           resolve();
         }).catch(() => {

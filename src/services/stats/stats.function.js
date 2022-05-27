@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { NotFound } = require('@feathersjs/errors');
 
 const checkAuth = req => {
   return req.feathers?.authentication !== undefined;
@@ -51,6 +52,41 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
   return await getCodesPostauxStatistiquesCras(idConseiller);
 };
 
+const getCodesPostauxCrasStructure = async (idConseiller, { getCodesPostauxStatistiquesCrasStructure }) => {
+  return await getCodesPostauxStatistiquesCrasStructure(idConseiller);
+};
+
+const getConseillersIdsByStructure = async (idStructure, res, { getConseillersIdsByStructure }) => {
+  const miseEnRelations = await getConseillersIdsByStructure(idStructure);
+  if (miseEnRelations === null) {
+    res.status(404).send(new NotFound('no matchings', {
+      idStructure
+    }).toJSON());
+    return;
+  }
+  let conseillerIds = [];
+  miseEnRelations.forEach(miseEnRelation => {
+    conseillerIds.push(miseEnRelation?.conseillerObj._id);
+  });
+
+  return conseillerIds;
+};
+
+const getStructuresByPrefetCode = async (code, page, limit, res, { getStructuresIdsByPrefecture }) => {
+  const structures = await getStructuresIdsByPrefecture(code, page, limit);
+  if (structures === null || structures.length === 0) {
+    res.status(404).send(new NotFound('no matchings', {
+      code
+    }).toJSON());
+    return;
+  }
+  return structures;
+};
+
+const countStructures = async (code, { countStructures }) => {
+  return await countStructures(code);
+};
+
 const getTerritoiresPrefet = async (type, date, codeDepartement, codeRegion, nomRegion, { getDepartement, getRegion }) => {
   if (type === 'codeDepartement') {
     return await getDepartement(date, codeDepartement, codeRegion);
@@ -58,6 +94,7 @@ const getTerritoiresPrefet = async (type, date, codeDepartement, codeRegion, nom
     return await getRegion(date, nomRegion, codeRegion);
   }
 };
+
 module.exports = {
   checkAuth,
   checkRole,
@@ -66,5 +103,9 @@ module.exports = {
   getTerritoires,
   getTotalTerritoires,
   getCodesPostauxCras,
-  getTerritoiresPrefet
+  getCodesPostauxCrasStructure,
+  getTerritoiresPrefet,
+  getConseillersIdsByStructure,
+  getStructuresByPrefetCode,
+  countStructures,
 };

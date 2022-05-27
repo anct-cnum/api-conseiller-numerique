@@ -5,8 +5,10 @@ const Role = {
   Admin: 'admin',
   AdminCoop: 'admin_coop',
   StructureCoop: 'structure_coop',
+  HubCoop: 'hub_coop',
   Conseiller: 'conseiller',
-  Candidat: 'candidat'
+  Candidat: 'candidat',
+  Prefet: 'prefet',
 };
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
