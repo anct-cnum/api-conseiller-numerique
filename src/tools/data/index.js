@@ -15,6 +15,7 @@ program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
 execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
+  // eslint-disable-next-line no-unused-vars
   await new Promise(async (resolve, reject) => {
     const limit = ~~program.limit;
     const collection = program.collection;

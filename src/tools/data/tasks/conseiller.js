@@ -11,11 +11,14 @@ const {
   updateIdMongoConseillerStatsTerritoires,
   updateIdMongoStatsConseillersCras,
   updateIdMongoConseillerRuptures,
-  updateIdMongoSondages
+  updateIdMongoSondages,
+  conseillerPG
 } = require('./requete-mongo');
 
 const fakeData = require('./fake-data');
 const { ObjectId } = require('mongodb');
+const { Pool } = require('pg');
+const pool = new Pool();
 const dayjs = require('dayjs');
 const dayOfYear = require('dayjs/plugin/dayOfYear');
 dayjs.extend(dayOfYear);
@@ -65,6 +68,8 @@ const anonymisationConseiller = async (db, logger, limit) => {
         dataAnonyme.emailCN.address = `${login}@beta-coop-conseiller-numerique.fr`;
       }
     }
+    // Update Côté PG
+    await conseillerPG(pool)(dataAnonyme);
     // update conseiller + idMongo
     await updateIdMongoConseiller(db)(idOriginal, dataAnonyme);
     await updateIdMongoConseillerMisesEnRelation(db)(idOriginal, newIdMongo);
