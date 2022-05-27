@@ -59,7 +59,8 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'email': 1 }),
       db.collection('conseillers').createIndex({ 'estRecrute': 1 }),
       db.collection('conseillers').createIndex({ 'dateFinFormation': 1 }),
-      db.collection('conseillers').createIndex({ 'structureId': 1 })
+      db.collection('conseillers').createIndex({ 'structureId': 1 }),
+      db.collection('conseillers').createIndex({ 'emailCN.address': 1 }, { unique: true })
     ]);
   },
   cras: db => {
