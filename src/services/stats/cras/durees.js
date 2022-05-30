@@ -21,7 +21,7 @@ const getStatsDurees = async (db, query) => {
   }
 
 
-  //Ajout du cas spécifique 90 à 120 minutes
+  //Ajout du cas spécifique 60 à 120 minutes
   let duree60 = await db.collection('cras').aggregate(
     [
       { $match: { ...query,
@@ -32,7 +32,7 @@ const getStatsDurees = async (db, query) => {
               $gte: 60,
               $lt: 120,
             } },
-            { 'cra.duree': { $eq: '90' } } //Correspond au bouton 1h30 sans précision de duree
+            { 'cra.duree': { $eq: '60' } } //Correspond au bouton 1h pile
           ] }
         ],
       } },

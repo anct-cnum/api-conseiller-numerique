@@ -49,9 +49,6 @@ module.exports = {
         context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
         context.data.cra.nomCommune = context.data.cra.cp.slice(6);
 
-        //Conversion en type String
-        context.data.cra.duree = context.data.cra.duree.toString();
-
         //Ajout de la date de création
         context.data.createdAt = new Date();
         delete context.data.cra.datePickerStatus;
