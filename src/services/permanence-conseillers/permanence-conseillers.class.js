@@ -101,14 +101,25 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       const conseillerId = req.params.id;
-      const { showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur } = req.body.permanence;
+      const { showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
-          return res.send({ isCreated: true });
+          if (idOldPermanence) {
+            deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
+              return res.send({ isCreated: true });
+            }).catch(error => {
+              app.get('sentry').captureException(error);
+              logger.error(error);
+              return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+            });
+          } else {
+            return res.send({ isCreated: true });
+          }
+
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
