@@ -34,10 +34,10 @@ const prettifyAndComplete = () => async statCnfs => {
 };
 
 const getStatsCnfs = async (
-  { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif },
+  { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom },
   { getStatsCnfs }) => {
   return Promise.all(
-    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete())
+    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom)).map(prettifyAndComplete())
   );
 };
 const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {

@@ -24,11 +24,12 @@ function filterGroupeCRA(groupeCRA) {
 }
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
-const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif) => {
+const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom) => {
   const conseillers = db.collection('conseillers').aggregate([
     {
       $match: {
         statut: 'RECRUTE',
+        nom: nom,
         $and: [
           { datePrisePoste: { $gt: dateDebut } },
           { datePrisePoste: { $lt: dateFin } },
