@@ -251,7 +251,7 @@ module.exports = {
             const possedeCompteCandidat = await db.collection('users').countDocuments(
               {
                 'entity.$id': context.result._id,
-                'roles': { $eq: ['candidat'] }
+                'roles': { $in: ['candidat'] }
               }
             );
             context.result.possedeCompteCandidat = possedeCompteCandidat > 0;
