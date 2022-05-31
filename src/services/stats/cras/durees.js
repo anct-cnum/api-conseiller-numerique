@@ -32,7 +32,7 @@ const getStatsDurees = async (db, query) => {
               $gte: 60,
               $lt: 120,
             } },
-            { 'cra.duree': { $eq: '60' } } //Correspond au bouton 1h pile
+            { 'cra.duree': { $in: ['60', '90'] } } //Correspond au bouton 1h pile et 1h 30 (60 cra v1 & 90 cra v2)
           ] }
         ],
       } },
@@ -56,6 +56,7 @@ const getStatsDurees = async (db, query) => {
     ]
   ).toArray();
   statsDurees[statsDurees.findIndex(duree => duree.nom === '120+')].valeur = duree120.length !== 0 ? duree120[0].total : 0;
+  console.log('statsDurees:', statsDurees);
 
   return statsDurees;
 
