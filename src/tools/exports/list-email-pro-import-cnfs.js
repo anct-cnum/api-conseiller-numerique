@@ -39,7 +39,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           const conseillerId = parseInt(conseiller['ID CNFS']);
           const cnfs = await db.collection('conseillers').findOne({ idPG: conseillerId });
           // eslint-disable-next-line max-len
-          file.write(`${conseillerId};${conseiller['Id ou email CNFS']};${conseiller['Prénom']};${conseiller['Nom']};${conseiller['Raison sociale']};${conseiller['Commune']};${conseiller['Département']};${conseiller['Date de fin de formation']};${conseiller['Lot']};${conseiller['Parcours']};${conseiller['Palier PIX']};${conseiller['ID structure']};${conseiller['Type de structure']};${cnfs?.emailCN?.address ?? 'COOP non activé'}\n`);
+          file.write(`${conseillerId};${conseiller['Id ou email CNFS']};${conseiller['Prénom']};${conseiller['Nom']};${conseiller['Raison sociale']};${conseiller['Commune']};${conseiller['Département']};${conseiller['Date de fin de formation']};${conseiller['Lot']};${conseiller['Parcours']};${conseiller['Palier PIX']};${conseiller['ID structure']};${conseiller['Type de structure']};${cnfs?.mattermost?.id ? cnfs?.emailCN?.address : 'COOP non activé'}\n`);
           resolve();
         }));
       });

@@ -9,7 +9,7 @@ const { ObjectID } = require('mongodb');
 require('dotenv').config();
 
 const { execute } = require('../../utils');
-const { createMailbox } = require('../../../utils/mailbox');
+const { createMailbox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
 
 execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
 
@@ -43,13 +43,14 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
   }
   const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
   const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-  const login = `${prenom}.${nom}`;
-
   const gandi = app.get('gandi');
   if (operation === 'create') {
+    const login = await fixHomonymesCreateMailbox(gandi, nom, prenom, db);
     await createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
 
   } else if (operation === 'updatePassword') {
+    const email = conseiller.emailCN.address;
+    const login = email.match(`^${prenom}.${nom}?[0-9]?`);
     try {
       await axios({
         method: 'patch',

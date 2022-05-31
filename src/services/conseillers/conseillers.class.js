@@ -20,6 +20,7 @@ const {
   checkRoleCandidat,
   checkRoleAdminCoop,
   checkConseillerExist,
+  checkCvExistsS3,
   checkConseillerHaveCV,
   verificationRoleUser,
   verificationCandidaturesRecrutee,
@@ -275,31 +276,36 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
       checkAuth(req, res);
-
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-
       if (!checkRoleCandidat(user, req)) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
+        return;
       }
-
       const conseiller = await checkConseillerExist(db, req.params.id, user, res);
+
       if (!checkConseillerHaveCV(conseiller)) {
         res.status(404).send(new NotFound('CV not found for this conseiller', {
           conseillerId: user.entity.oid
         }).toJSON());
+        return;
       }
-      suppressionCv(conseiller.cv, app).then(() => {
-        return suppressionCVConseiller(db, conseiller);
-      }).then(() => {
-        res.send({ deleteSuccess: true });
-      }).catch(error => {
-        logger.error(error);
+      try {
+        await checkCvExistsS3(app)(conseiller);
+        await suppressionCv(conseiller.cv, app);
+        await suppressionCVConseiller(db, conseiller);
+        return res.send({ deleteSuccess: true });
+      } catch (error) {
+        if (conseiller?.cv?.file) {
+          await suppressionCVConseiller(db, conseiller);
+          return res.send({ deleteSuccess: true });
+        }
         app.get('sentry').captureException(error);
+        logger.error(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression du CV').toJSON());
-      });
+      }
     });
 
     app.get('/conseillers/:id/cv', async (req, res) => {
