@@ -56,7 +56,6 @@ const getStatsDurees = async (db, query) => {
     ]
   ).toArray();
   statsDurees[statsDurees.findIndex(duree => duree.nom === '120+')].valeur = duree120.length !== 0 ? duree120[0].total : 0;
-  console.log('statsDurees:', statsDurees);
 
   return statsDurees;
 
