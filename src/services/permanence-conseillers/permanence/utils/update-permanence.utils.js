@@ -27,6 +27,7 @@ const assignPermanence = (body, conseillerId, database) => {
   delete permanence.estCoordinateur;
   delete permanence.showPermanenceForm;
   delete permanence.hasPermanence;
+  delete permanence.idOldPermanence;
 
   permanence?.horaires?.forEach(horaires => {
     delete horaires.fermeture;
