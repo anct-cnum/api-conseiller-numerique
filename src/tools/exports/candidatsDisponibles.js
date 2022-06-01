@@ -21,7 +21,7 @@ execute(__filename, async ({ logger, db }) => {
   users.forEach(user => {
     promises.push(new Promise(async resolve => {
       const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-      const estRecrute = await db.collection('misesEnRelation').countDocuments({ statut: 'recrutee', 'conseiller.$id': user.entity.oid });
+      const estRecrute = await db.collection('misesEnRelation').countDocuments({ 'statut': 'recrutee', 'conseiller.$id': user.entity.oid });
 
       if (estRecrute === 0 && conseiller?.statut !== 'RECRUTE' && conseiller?.disponible === true) {
         file.write(`${user?.name};${conseiller?.idPG};${conseiller?.nom};${conseiller?.prenom};${conseiller?.emailConfirmationKey}\n`);
