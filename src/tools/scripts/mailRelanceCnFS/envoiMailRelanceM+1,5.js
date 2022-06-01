@@ -9,14 +9,14 @@ const cli = require('commander');
 let { delay } = require('../../utils');
 
 cli.description('Send emails for conseiller without deposit CRA after 1,5 month')
-.option('--limit [optionLimit]', 'limit the number of emails sent (default: 1)', parseInt)
-.option('--delay [optionDelay]', 'Time in milliseconds to wait before sending the next email (default: 1000)', parseInt)
+.option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
+.option('--delai [delai]', 'Time in milliseconds to wait before sending the next email (default: 1000)', parseInt)
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
 const datePlus1MoisEtDemi = new Date(dayjs(Date.now()).subtract(45, 'day'));
 execute(__filename, async ({ db, logger, Sentry, emails }) => {
-  const { optionLimit = 1, optionDelay = 1000 } = cli;
+  const { limit = 1, delai = 1000 } = cli;
 
   const conseillers = await db.collection('conseillers').find({
     'groupeCRA': { $eq: 4 },
@@ -28,7 +28,7 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
         'mailSendConseillerM+1,5': { $exists: false }
       }
     }
-  }).limit(optionLimit).toArray();
+  }).limit(limit).toArray();
 
   for (const conseiller of conseillers) {
     try {
@@ -37,8 +37,8 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
       const messageStructure = emails.getEmailMessageByTemplateName('mailRelanceM+1,5Structure');
       await messageConseiller.send(conseiller);
       await messageStructure.send(conseiller, structure.contact.email);
-      if (optionDelay) {
-        await delay(optionDelay);
+      if (delai) {
+        await delay(delai);
       }
     } catch (e) {
       Sentry.captureException(e);
