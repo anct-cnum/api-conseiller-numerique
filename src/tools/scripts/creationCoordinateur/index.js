@@ -5,29 +5,63 @@ const { execute } = require('../../utils');
 const { program } = require('commander');
 const CSVToJSON = require('csvtojson');
 
+const isAlreadyCoordinateur = db => async emailConseiller => {
+  const user = await db.collection('users').findOne({
+    'name': emailConseiller.replace(/\s/g, ''),
+    'roles': { '$in': ['coordinateur_coop'] }
+  });
+  return Boolean(user);
+};
+
 const getIdConseillerByMail = db => async emailConseiller => {
   const user = await db.collection('users').findOne({
-    'name': emailConseiller.replace(/\s/g, '')
+    'name': emailConseiller.replace(/\s/g, ''),
+    'roles': { '$in': ['conseiller'] }
   });
   return user?.entity?.oid ?? null;
 };
 
-const updateUserConseiller = db => async idConseiller => {
+const updateUserRole = db => async idConseiller => {
   await db.collection('users').updateOne(
     { 'entity.$id': idConseiller },
     { $set: { 'roles': ['conseiller', 'coordinateur_coop'] } }
   );
 };
 
+const getListeExistante = db => async idConseiller => {
+  const conseiller = await db.collection('conseillers').findOne({
+    '_id': idConseiller
+  });
+  return conseiller?.listeSubordonnes?.liste ?? [];
+};
+
 const addListSubordonnes = db => async (idConseiller, list, type) => {
   await db.collection('conseillers').updateOne(
     { '_id': idConseiller },
-    { $set: { 'listeSubordonnes':
-      {
+    { $set: {
+      'estCoordinateur': true,
+      'listeSubordonnes': {
         'type': type, 'liste': list
       }
     } }
   );
+};
+
+const setListeFinale = (listeFile, listeExistante) => {
+  let listFinale = [];
+  listeFile.forEach(element => {
+    let isPush = true;
+    //forEach car includes ne fonctionne pas sur les ObjectId
+    listeExistante.forEach(existant => {
+      if (String(existant) === String(element)) {
+        isPush = false;
+      }
+    });
+    if (isPush) {
+      listFinale.push(element);
+    }
+  });
+  return listFinale.concat(listeExistante);
 };
 
 // CSV importé
@@ -48,70 +82,68 @@ program.parse(process.argv);
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
 
-  try {
-    await readCSV(program.csv).then(async ressources => {
+
+  logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
+  await new Promise(resolve => {
+    readCSV(program.csv).then(async ressources => {
       ressources.forEach(ressource => {
-
-        promises.push(new Promise(async resolve => {
+        let p = new Promise(async (resolve, reject) => {
+          const estCoordinateur = await isAlreadyCoordinateur(db)(ressource.conseiller);
           const idCoordinateur = await getIdConseillerByMail(db)(ressource.conseiller);
+
           if (idCoordinateur) {
-            let updatePromises = [];
+            if (!estCoordinateur) {
+              await updateUserRole(db)(idCoordinateur);
+            }
 
-            updatePromises.push(new Promise(async resolve => {
-              await updateUserConseiller(db)(idCoordinateur);
+            let listeExistante = await getListeExistante(db)(idCoordinateur);
 
-              let addListPromises = [];
+            let listFinale = [];
+            if (ressource.region.length > 0) {
+              listFinale = setListeFinale(ressource.region.split(','), listeExistante);
+              await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeRegion');
+            } else if (ressource.departement.length > 0) {
+              listFinale = setListeFinale(ressource.departement.split(','), listeExistante);
+              await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeDepartement');
+            } else if (ressource.emails.length > 0) {
+              const emailsSubordonnes = ressource.emails.split(',');
+              const promisesEmails = [];
+              const idSubordonnes = [];
+              emailsSubordonnes.forEach(email => {
+                let p = new Promise(async (resolve, reject) => {
+                  const idSubordonne = await getIdConseillerByMail(db)(email);
+                  if (idSubordonne) {
+                    idSubordonnes.push(idSubordonne);
+                    resolve();
+                  } else {
+                    logger.error('Erreur : Le conseiller avec l\'adresse email : ' + email + ' n\'existe pas !');
+                    reject();
+                  }
+                });
+                promisesEmails.push(p);
+              });
+              await Promise.allSettled(promisesEmails);
 
-              addListPromises.push(new Promise(async resolve => {
+              listFinale = setListeFinale(idSubordonnes, listeExistante);
+              await addListSubordonnes(db)(idCoordinateur, listFinale, 'conseillers');
+            }
 
-                if (ressource.region.length > 0) {
-                  await addListSubordonnes(db)(idCoordinateur, ressource.region.split(','), 'codeRegion');
-                } else if (ressource.departement.length > 0) {
-                  await addListSubordonnes(db)(idCoordinateur, ressource.departement.split(','), 'codeDepartement');
-                } else if (ressource.emails.length > 0) {
-                  const emailsSubordonnes = ressource.emails.split(',');
-                  const idsSubordonnes = [];
-                  let idConseillerPromises = [];
-
-                  emailsSubordonnes.forEach(email => {
-                    idConseillerPromises.push(new Promise(async resolve => {
-                      const idSubordonne = await getIdConseillerByMail(db)(email);
-                      if (idSubordonne) {
-                        idsSubordonnes.push(idSubordonne);
-                      } else {
-                        logger.error('Erreur : Le conseiller avec l\'adresse email : ' + email + ' n\'existe pas !');
-                      }
-                      resolve();
-                    }));
-                  });
-
-                  await Promise.all(idConseillerPromises);
-
-                  await addListSubordonnes(db)(idCoordinateur, idsSubordonnes, 'conseillers');
-                }
-                resolve();
-
-                await Promise.all(addListPromises);
-              }));
-              resolve();
-            }));
-
-            await Promise.all(updatePromises);
+            resolve();
           } else {
             logger.error('Erreur : Le coordinateur avec l\'adresse email : ' + ressource.conseiller + ' n\'existe pas !');
+            reject();
           }
-          resolve();
-        }));
+        });
+        promises.push(p);
       });
-
-      await Promise.all(promises);
-
-      await logger.info('Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
+    }).catch(error => {
+      logger.error(error);
+      Sentry.captureException(error);
     });
-  } catch (error) {
-    logger.error(error);
-    Sentry.captureException(error);
-  }
+    logger.info('Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
+    resolve();
+  });
 
+  await Promise.allSettled(promises);
   exit();
 });
