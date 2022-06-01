@@ -24,7 +24,7 @@ function filterGroupeCRA(groupeCRA) {
   }
   return {};
 }
-const filterNom = nom => nom ? { nom: { $eq: nom } } : {};
+const filterNom = nom => nom ? { nom: new RegExp(`^${nom}$`, 'i') } : {};
 const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
 
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });

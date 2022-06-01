@@ -42,7 +42,7 @@ const exportCnfsQueryToSchema = query => {
     ...isUserActifIdDefined(query.isUserActif),
     ...certifieIfDefined(query.certifie),
     ...groupeCRAIfDefined(query.groupeCRA),
-    ...byNameIfDefined(query.nom),
+    ...byNameIfDefined(query.$search),
     ...byStructureIdIfDefined(query.structureId)
   };
 };
