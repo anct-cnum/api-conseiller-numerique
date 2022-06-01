@@ -115,7 +115,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
       statCnfs.nom,
       statCnfs.email,
       statCnfs.mattermost?.id ? statCnfs.emailCN?.address : 'compte COOP non créé',
-      statCnfs.nomStructure.replace(/["',]/g, ''),
+      statCnfs.structure?.nom.replace(/["',]/g, ''),
       statCnfs.codePostal,
       statCnfs.datePrisePoste,
       statCnfs.dateFinFormation,
