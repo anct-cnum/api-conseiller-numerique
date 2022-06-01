@@ -29,7 +29,8 @@ const prettifyAndComplete = () => async statCnfs => {
     certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ?? '',
     groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique) : '',
-    isUserActif: userActifStatus(mattermost, emailCNError)
+    isUserActif: userActifStatus(mattermost, emailCNError),
+    mattermost
   };
 };
 
