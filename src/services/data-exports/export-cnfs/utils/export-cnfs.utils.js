@@ -97,8 +97,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs?.supHierarchique?.fonction,
         statCnfs?.supHierarchique?.email,
         `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`,
-        // eslint-disable-next-line max-len
-        `${statCnfs?.groupeCRAHistorique[0] ? `groupe ${statCnfs.groupeCRAHistorique[0].numero} le ${dayjs(statCnfs.groupeCRAHistorique[0].dateDeChangement).format('YYYY-MM-DD')}` : ''}${statCnfs?.groupeCRAHistorique[1] ? `| groupe ${statCnfs.groupeCRAHistorique[1].numero} le ${dayjs(statCnfs.groupeCRAHistorique[1].dateDeChangement).format('YYYY-MM-DD')}` : ''}${statCnfs?.groupeCRAHistorique[2] ? `| groupe ${statCnfs.groupeCRAHistorique[2].numero} le ${dayjs(statCnfs.groupeCRAHistorique[2].dateDeChangement).format('YYYY-MM-DD')}` : ''}`
+        statCnfs?.groupeCRAHistorique.replace(/[,]/g, '|')
       ].join(csvCellSeparator))
     ].join(csvLineSeparator);
   }

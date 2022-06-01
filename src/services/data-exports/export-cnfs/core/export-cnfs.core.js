@@ -19,6 +19,9 @@ const formatAdresseStructure = insee => {
 
 const getFormatHistoriqueGroupeCRA = groupeCRAHistorique => groupeCRAHistorique.slice(-3);
 
+const valueHistoryCra = groupeCRAHistorique =>
+  JSON.stringify(`${groupeCRAHistorique.map(h => `${`groupe ${h.numero} le ${dayjs(h.dateDeChangement).format('DD/MM/YYYY')}`}`)}`);
+
 const prettifyAndComplete = () => async statCnfs => {
   const { emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
   return {
@@ -28,7 +31,7 @@ const prettifyAndComplete = () => async statCnfs => {
     adresseStructure: nextStatCnfs.structure?.insee ? formatAdresseStructure(nextStatCnfs.structure.insee) : '',
     certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ?? '',
-    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique) : '',
+    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? valueHistoryCra(getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique)) : '',
     isUserActif: userActifStatus(mattermost, emailCNError),
     mattermost
   };
