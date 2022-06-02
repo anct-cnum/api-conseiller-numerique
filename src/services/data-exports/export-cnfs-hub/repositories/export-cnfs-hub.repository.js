@@ -31,6 +31,7 @@ const getStructureAndConseillerByDepartement = db => async departements => db.co
       'conseiller.nom': 1,
       'conseiller.prenom': 1,
       'conseiller.emailCN': 1,
+      'conseiller.mattermost': 1,
     }
   }
 ]).toArray();
@@ -74,6 +75,7 @@ const getStructureAndConseillerByDepartementHubAntillesGuyane = db => async depa
       'conseiller.nom': 1,
       'conseiller.prenom': 1,
       'conseiller.emailCN': 1,
+      'conseiller.mattermost': 1,
     }
   }
 ]).toArray();
