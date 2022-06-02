@@ -433,7 +433,7 @@ exports.Users = class Users extends Service {
           const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
           const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
           const email = conseiller.emailCN.address;
-          const login = email.match(`^${prenom}.${nom}?[0-9]?`);
+          const login = email.substring(0, email.lastIndexOf('@'));
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
           await db.collection('users').updateOne({ _id: user._id }, {
