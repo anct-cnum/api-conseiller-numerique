@@ -4,7 +4,6 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   let render = () => {
-    console.log('render ++++++++++++++++++++++++++++++++++');
     return mailer.render(__dirname, templateName, { });
   };
 
@@ -15,7 +14,6 @@ module.exports = (db, mailer) => {
       let onSuccess = () => {};
 
       let onError = async err => {
-        console.log(err);
         utils.setSentryError(err);
       };
       return mailer.createMailer().sendEmail(
