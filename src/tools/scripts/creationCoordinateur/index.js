@@ -81,7 +81,7 @@ program.parse(process.argv);
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
-
+  let sendEmailTo = [];
 
   logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
   await new Promise(resolve => {
@@ -94,6 +94,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           if (idCoordinateur) {
             if (!estCoordinateur) {
               await updateUserRole(db)(idCoordinateur);
+              sendEmailTo.push(ressource.conseiller.replace(/\s/g, ''));
             }
 
             let listeExistante = await getListeExistante(db)(idCoordinateur);
@@ -136,14 +137,16 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         });
         promises.push(p);
       });
+
     }).catch(error => {
       logger.error(error);
       Sentry.captureException(error);
     });
-    logger.info('Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
     resolve();
   });
 
   await Promise.allSettled(promises);
+
+  logger.info('Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
   exit();
 });
