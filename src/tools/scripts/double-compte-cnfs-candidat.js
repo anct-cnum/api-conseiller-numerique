@@ -17,7 +17,7 @@ execute(__filename, async ({ db, logger, exit }) => {
         'entity.$id': { '$ne': conseiller._id }
       });
       if (user !== 0) {
-        console.log('conseiller.emai:', conseiller.email, user);
+        logger.info(`Email du conseiller : ${conseiller.email}`);
         count++;
       }
       countRecrute++;
@@ -25,6 +25,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     }));
   });
   await Promise.all(promises);
-  logger.info(`${count} conseiller(s) recruté a un compte candidat avec le même email perso sur ${countRecrute} au total`);
+  logger.info(`${count} conseiller(s) recruté a(ont) un compte candidat avec l'email perso sur ${countRecrute} au total`);
   exit();
 });
