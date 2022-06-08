@@ -24,7 +24,7 @@ const getIdConseillerByMail = db => async emailConseiller => {
 const updateUserRole = db => async idConseiller => {
   await db.collection('users').updateOne(
     { 'entity.$id': idConseiller },
-    { $push: { 'roles': 'coordinateur_coop' } }
+    { $set: { 'roles': ['coordinateur_coop', 'conseiller'] } }
   );
 };
 
