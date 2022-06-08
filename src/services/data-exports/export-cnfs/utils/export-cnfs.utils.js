@@ -8,7 +8,9 @@ const validateExportCnfsSchema = exportTerritoiresInput => Joi.object({
   ordre: Joi.number().error(new Error('L\'ordre est invalide')),
   isUserActif: Joi.boolean().error(new Error('Le filtre actif est invalide')),
   certifie: Joi.boolean().error(new Error('Le filtre certifie est invalide')),
-  groupeCRA: Joi.number().error(new Error('Le filtre groupe CRA est invalide'))
+  groupeCRA: Joi.number().error(new Error('Le filtre groupe CRA est invalide')),
+  nom: Joi.string().error(new Error('le filtre nom est invalide')),
+  structureId: Joi.string().error(new Error('le filtre structureId est invalide'))
 }).validate(exportTerritoiresInput);
 
 const isUserActifIdDefined = isUserActif => isUserActif !== undefined ? { isUserActif } : {};
@@ -16,6 +18,10 @@ const isUserActifIdDefined = isUserActif => isUserActif !== undefined ? { isUser
 const certifieIfDefined = certifie => certifie !== undefined ? { certifie } : {};
 
 const groupeCRAIfDefined = groupeCRA => groupeCRA !== undefined ? { groupeCRA } : {};
+
+const byNameIfDefined = nom => nom !== undefined ? { nom } : {};
+
+const byStructureIdIfDefined = structureId => structureId !== undefined ? { structureId } : {};
 
 const orderingDefined = sort => {
   if (sort === undefined) {
@@ -35,7 +41,9 @@ const exportCnfsQueryToSchema = query => {
     ...orderingDefined(query.$sort),
     ...isUserActifIdDefined(query.isUserActif),
     ...certifieIfDefined(query.certifie),
-    ...groupeCRAIfDefined(query.groupeCRA)
+    ...groupeCRAIfDefined(query.groupeCRA),
+    ...byNameIfDefined(query.$search),
+    ...byStructureIdIfDefined(query.structureId)
   };
 };
 
@@ -112,7 +120,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
       statCnfs.nom,
       statCnfs.email,
       statCnfs.mattermost?.id ? statCnfs.emailCN?.address : 'compte COOP non créé',
-      statCnfs.nomStructure.replace(/["',]/g, ''),
+      statCnfs.structure?.nom.replace(/["',]/g, ''),
       statCnfs.codePostal,
       statCnfs.datePrisePoste,
       statCnfs.dateFinFormation,
