@@ -61,11 +61,13 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
   ];
   if (user.roles.includes('admin_coop')) {
     fileHeaders[5] = 'Code Postal du conseiller';
-    fileHeaders.splice(4, 0, 'Id de la structure');
-    fileHeaders.splice(6, 0, 'Email de la structure');
-    fileHeaders.splice(7, 0, 'Adresse de la structure');
-    fileHeaders.splice(8, 0, 'Code département de la structure');
-    fileHeaders.splice(12, 0, 'GroupeCRA');
+    fileHeaders.splice(4, 0, 'Compte Activé');
+    fileHeaders.splice(5, 0, 'Id de la structure');
+    fileHeaders.splice(7, 0, 'Email de la structure');
+    fileHeaders.splice(8, 0, 'Adresse de la structure');
+    fileHeaders.splice(9, 0, 'Code département de la structure');
+    fileHeaders.splice(11, 0, 'Code département du conseiller');
+    fileHeaders.splice(14, 0, 'GroupeCRA');
     fileHeaders.push('Nom Supérieur hiérarchique');
     fileHeaders.push('Prénom supérieur hiérarchique');
     fileHeaders.push('Fonction supérieur hiérarchique');
@@ -79,13 +81,15 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.prenom,
         statCnfs.nom,
         statCnfs.email,
-        statCnfs.mattermost?.id ? statCnfs.emailCN?.address : 'compte COOP non créé',
+        statCnfs.mattermost?.id ? statCnfs.emailCN?.address : '',
+        statCnfs.mattermost?.id ? 'Oui' : 'Non',
         statCnfs.structure?.idPG,
         statCnfs.structure?.nom.replace(/["',]/g, ''),
         statCnfs.structure?.contact?.email,
         statCnfs.adresseStructure,
         statCnfs.structure?.codeDepartement,
         statCnfs.codePostal,
+        statCnfs.codeDepartement,
         statCnfs.datePrisePoste,
         statCnfs.dateFinFormation,
         statCnfs?.groupeCRA,
