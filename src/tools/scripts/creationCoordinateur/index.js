@@ -24,7 +24,7 @@ const getIdConseillerByMail = db => async emailConseiller => {
 const updateUserRole = db => async idConseiller => {
   await db.collection('users').updateOne(
     { 'entity.$id': idConseiller },
-    { $set: { 'roles': ['conseiller', 'coordinateur_coop'] } }
+    { $push: { 'roles': 'coordinateur_coop' } }
   );
 };
 
@@ -81,7 +81,6 @@ program.parse(process.argv);
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
-  let sendEmailTo = [];
 
   logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
   await new Promise(resolve => {
@@ -94,7 +93,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           if (idCoordinateur) {
             if (!estCoordinateur) {
               await updateUserRole(db)(idCoordinateur);
-              sendEmailTo.push(ressource.conseiller.replace(/\s/g, ''));
             }
 
             let listeExistante = await getListeExistante(db)(idCoordinateur);

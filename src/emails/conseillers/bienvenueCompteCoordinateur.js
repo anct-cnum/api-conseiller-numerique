@@ -10,8 +10,13 @@ module.exports = (db, mailer) => {
   return {
     templateName,
     render,
-    send: async email => {
-      let onSuccess = () => {};
+    send: async (email, id) => {
+
+      let onSuccess = async () => {
+        await db.collection('users').updateOne(
+          { '_id': id },
+          { $set: { 'mailCoordinateurSent': true } });
+      };
 
       let onError = async err => {
         utils.setSentryError(err);
