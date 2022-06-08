@@ -387,7 +387,7 @@ exports.DataExports = class DataExports {
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
-        if (user?.roles.includes('structure_coop') && user?.entity?.oid.toString() !== query.structureId) {
+        if (user?.roles.includes('structure_coop') && user?.entity?.oid?.toString() !== query.structureId) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: user._id
           }).toJSON());
