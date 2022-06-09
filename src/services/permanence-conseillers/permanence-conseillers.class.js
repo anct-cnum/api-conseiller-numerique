@@ -185,7 +185,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
           const result = await axios.get(urlSiret, { params: params });
           return res.send({ 'adresseParSiret': result?.data?.etablissement?.adresse });
         } catch (error) {
-          if (!error?.gateway_error) {
+          if (!error.response.data?.gateway_error) {
             logger.error(error);
             app.get('sentry').captureException(error);
           }
