@@ -53,6 +53,17 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
                 'conseillerObj.disponible': false
               }
             }, {});
+            await db.collection('misesEnRelation').updateMany(
+              {
+                'conseillerObj.idPG': candidat.idPG,
+                'statut': 'nouvelle'
+              },
+              {
+                $set:
+                {
+                  'statut': 'non_disponible'
+                }
+              });
             count++;
           } catch (error) {
             logger.error(error);
