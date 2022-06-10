@@ -87,7 +87,7 @@ execute(__filename, async ({ logger, db }) => {
   let promises = [];
   readExcel(program.file).then(async conseillers => {
     if (!conseillers.length) {
-      logger.info('le fichier ne corespond pas au fichier attendu');
+      logger.info('le fichier ne correspond pas au fichier attendu');
       exit();
     }
     const pathCsvFile = writeConseillersToExcelInCSVFile(conseillers);
