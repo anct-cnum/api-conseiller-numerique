@@ -28,7 +28,9 @@ const {
   suppressionCv,
   suppressionCVConseiller,
   checkRoleAdmin,
-  candidatSupprimeEmailPix } = require('./conseillers.function');
+  candidatSupprimeEmailPix,
+  getConseillerByCoordinateurId,
+  countCraConseiller } = require('./conseillers.function');
 const {
   canActivate,
   authenticationGuard,
@@ -371,7 +373,7 @@ exports.Conseillers = class Conseillers extends Service {
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop];
+        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -907,6 +909,60 @@ exports.Conseillers = class Conseillers extends Service {
         }
         res.send({ 'emailPro': conseiller.mailProAModifier, 'isEmailPro': true });
       }
+    });
+
+
+    app.get('/conseillers/subordonnes', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+      const schema = Joi.object({
+        idCoordinateur: Joi.string().required().error(new Error('L\'id coordinateur est invalide')),
+        page: Joi.string().required().error(new Error('La page est invalide')),
+        dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+        dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+        filtreProfil: Joi.string().optional().allow(null).error(new Error('Le profil est invalide')),
+        ordreNom: Joi.string().optional().allow(null).error(new Error('Le nom de l\'ordre est invalide')),
+        ordre: Joi.string().optional().allow(null).error(new Error('L\'ordre est invalide')),
+      }).validate(req.query);
+
+      if (schema.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
+      }
+
+      const idCoordinateur = new ObjectId(req.query.idCoordinateur);
+      const page = req.query.page;
+      const dateDebut = new Date(req.query.dateDebut);
+      const dateFin = new Date(req.query.dateFin);
+      const filtreProfil = req.query.filtreProfil;
+      const ordreNom = req.query.ordreNom === 'undefined' ? null : req.query.ordreNom;
+      const ordre = Number(req.query.ordre);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Coordinateur], () => user)
+      ).then(async () => {
+        await getConseillerByCoordinateurId(db)(idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options).then(async conseillers => {
+          const promises = [];
+          conseillers.data.forEach(conseiller => {
+            const p = new Promise(async resolve => {
+              conseiller.craCount = await countCraConseiller(db)(conseiller._id, dateDebut, dateFin);
+              resolve();
+            });
+            promises.push(p);
+          });
+          await Promise.all(promises);
+          return res.send({ conseillers });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(500).send(new GeneralError('La recherche de conseillers a échoué, veuillez réessayer.').toJSON());
+        });
+
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
 };

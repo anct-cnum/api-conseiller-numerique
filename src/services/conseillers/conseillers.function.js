@@ -262,6 +262,62 @@ const candidatSupprimeEmailPix = (db, app) => async candidat => {
   await emailPix.send(candidat);
 };
 
+const getConseillersListe = db => async (query, ordreNom, ordre, page, nbParpage) => {
+  return await db.collection('conseillers')
+  .find(query)
+  .sort({ [ordreNom]: ordre })
+  .skip(page > 0 ? ((page - 1) * nbParpage) : 0).limit(nbParpage).toArray();
+};
+
+const countConseillers = db => async query => {
+  return await db.collection('conseillers').countDocuments(query);
+};
+
+const getConseillerByCoordinateurId = db => async (idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options) => {
+  const coordinateur = await db.collection('conseillers').findOne({ '_id': idCoordinateur });
+  let conseillers = {};
+
+  let query = { };
+
+  switch (filtreProfil) {
+    case 'active':
+      query = { 'statut': 'RECRUTE', 'mattermost.error': false };
+      break;
+    case 'inactive':
+      query = { 'statut': 'RECRUTE', 'mattermost.error': { '$in': [true, null] } };
+      break;
+    default:
+      query = { 'statut': 'RECRUTE' };
+      break;
+  }
+
+  query.datePrisePoste = { '$gte': dateDebut, '$lte': dateFin };
+
+  switch (coordinateur.listeSubordonnes.type) {
+    case 'conseillers':
+      query._id = { '$in': coordinateur.listeSubordonnes.liste };
+      break;
+    case 'codeRegion':
+      query.codeRegion = { '$in': coordinateur.listeSubordonnes.liste };
+      break;
+    case 'codeDepartement':
+      query.codeDepartement = { '$in': coordinateur.listeSubordonnes.liste };
+      break;
+    default:
+      break;
+  }
+  console.log(query);
+  conseillers.data = await getConseillersListe(db)(query, ordreNom, ordre, page, options.paginate.default);
+  conseillers.total = await countConseillers(db)(query);
+  conseillers.limit = options.paginate.default;
+  conseillers.skip = Number(page);
+  return conseillers;
+};
+
+const countCraConseiller = db => async (conseillerId, dateDebut, dateFin) => {
+  return await db.collection('cras').countDocuments({ 'conseiller.$id': conseillerId, 'createdAt': { '$gte': dateDebut, '$lte': dateFin } });
+};
+
 module.exports = {
   checkAuth,
   checkRoleCandidat,
@@ -276,5 +332,7 @@ module.exports = {
   suppressionCv,
   checkFormulaire,
   checkRoleAdmin,
-  candidatSupprimeEmailPix
+  candidatSupprimeEmailPix,
+  getConseillerByCoordinateurId,
+  countCraConseiller
 };

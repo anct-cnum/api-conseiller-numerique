@@ -25,7 +25,13 @@ const {
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
-const { getStatsCnfs, getStatsCnfsFilterStructure, userConnected } = require('./export-cnfs/core/export-cnfs.core');
+const {
+  getStatsCnfs,
+  getStatsCnfsFilterStructure,
+  getStatsCnfsCoordinateur,
+  getStatsCnfsFilterCoordinateur,
+  userConnected
+} = require('./export-cnfs/core/export-cnfs.core');
 const {
   buildExportCnfsCsvFileContent,
   validateExportCnfsSchema,
@@ -363,6 +369,23 @@ exports.DataExports = class DataExports {
         const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
         const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports/subordonnes.csv', async (req, res) => {
+      const query = exportCnfsQueryToSchema(req.query);
+      const db = await app.get('mongoClient');
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.Coordinateur], userAuthenticationRepository(db)),
+        schemaGuard(validateExportCnfsSchema(query))
+      ).then(async authentication => {
+        const user = await userConnected(db, authentication);
+        const statsCnfsNoFilter = await getStatsCnfsCoordinateur(query, statsCnfsRepository(db));
+        const statsCnfs = await getStatsCnfsFilterCoordinateur(db)(statsCnfsNoFilter, user);
+        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
+        console.log('lol');
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }

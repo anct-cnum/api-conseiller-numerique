@@ -143,7 +143,7 @@ exports.Stats = class Stats extends Service {
         //Verification role conseiller
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop];
+        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => conseillerUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -152,7 +152,7 @@ exports.Stats = class Stats extends Service {
         }
 
         //Verification du conseiller associé à l'utilisateur correspondant
-        const id = [Role.AdminCoop, Role.StructureCoop].filter(role => conseillerUser?.roles.includes(role)).length > 0 ?
+        const id = [Role.AdminCoop, Role.StructureCoop, Role.Coordinateur].filter(role => conseillerUser?.roles.includes(role)).length > 0 ?
           req.query.idConseiller : conseillerUser.entity.oid;
 
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(id) });
@@ -266,7 +266,7 @@ exports.Stats = class Stats extends Service {
         try {
           let userId = decode(accessToken).sub;
           const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-          const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+          const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
           if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
             res.status(403).send(new Forbidden('User not authorized', {
               userId: userId
@@ -326,7 +326,7 @@ exports.Stats = class Stats extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur], userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
@@ -422,7 +422,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => adminUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -572,7 +572,7 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -658,7 +658,7 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -693,7 +693,7 @@ exports.Stats = class Stats extends Service {
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop];
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => adminUser?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId

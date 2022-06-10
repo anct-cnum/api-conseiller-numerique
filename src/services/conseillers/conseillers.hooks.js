@@ -10,13 +10,13 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       })
     ],
     find: [
       checkPermissions({
-        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop'],
+        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop', 'coordinateur_coop'],
         field: 'roles',
       }),
       context => {
@@ -74,7 +74,8 @@ module.exports = {
     get: [
       async context => {
         //Restreindre les permissions : les conseillers et candidats ne peuvent voir que les informations les concernant
-        if (context.params?.user?.roles.includes('conseiller') || context.params?.user?.roles.includes('candidat')) {
+        if ((context.params?.user?.roles.includes('conseiller') && !context.params?.user?.roles.includes('coordinateur_coop')) ||
+          context.params?.user?.roles.includes('candidat')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
@@ -89,7 +90,7 @@ module.exports = {
     ],
     update: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -103,7 +104,7 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {

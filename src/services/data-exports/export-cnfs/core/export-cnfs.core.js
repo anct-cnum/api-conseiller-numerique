@@ -45,18 +45,63 @@ const getStatsCnfs = async (
     (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
   );
 };
+
 const getStatsCnfsFilterStructure = db => async (statsCnfsNoFilter, user) => {
   if (user.roles.includes('admin_coop')) {
     return statsCnfsNoFilter;
   }
+
   const structure = await db.collection('structures').findOne({ _id: user.entity.oid });
   const filterCnfsByStructure = statsCnfsNoFilter.filter(cnfs => cnfs.nomStructure === structure.nom);
 
   return filterCnfsByStructure;
 };
+
+const getStatsCnfsCoordinateur = async (
+  { dateDebut, dateFin, nomOrdre, ordre, isUserActif },
+  { getStatsCnfsCoordinateur, getStructureNameFromId }) => {
+  return Promise.all(
+    (await getStatsCnfsCoordinateur(dateDebut, dateFin, nomOrdre, ordre, isUserActif)).map(prettifyAndComplete(getStructureNameFromId))
+  );
+};
+
+const getStatsCnfsFilterCoordinateur = db => async (statsCnfsNoFilter, user) => {
+  const coordinateur = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+  const filterCnfsByCoordinateur = [];
+  coordinateur?.listeSubordonnes?.liste.push('84');
+  switch (coordinateur?.listeSubordonnes?.type) {
+    case 'conseillers':
+      statsCnfsNoFilter.forEach(cnfs => {
+        if (coordinateur?.listeSubordonnes?.liste.includes(cnfs?._id)) {
+          filterCnfsByCoordinateur.push(cnfs);
+        }
+      });
+      break;
+    case 'codeDepartement':
+      statsCnfsNoFilter.forEach(cnfs => {
+        if (cnfs?.codeDepartement && coordinateur?.listeSubordonnes?.liste.includes(cnfs?.codeDepartement)) {
+          filterCnfsByCoordinateur.push(cnfs);
+        }
+      });
+      break;
+    case 'codeRegion':
+      statsCnfsNoFilter.forEach(cnfs => {
+        if (cnfs?.codeRegion && coordinateur?.listeSubordonnes?.liste.includes(cnfs?.codeRegion)) {
+          filterCnfsByCoordinateur.push(cnfs);
+        }
+      });
+      break;
+    default:
+      break;
+  }
+  return filterCnfsByCoordinateur;
+};
+
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
 module.exports = {
   getStatsCnfs,
   getStatsCnfsFilterStructure,
+  getStatsCnfsCoordinateur,
+  getStatsCnfsFilterCoordinateur,
   userConnected
 };
