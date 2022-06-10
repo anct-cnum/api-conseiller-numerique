@@ -1,3 +1,5 @@
+const { ObjectID } = require('mongodb');
+
 function filterUserActif(isUserActif) {
   if (isUserActif === 'true') {
     return {
@@ -22,9 +24,12 @@ function filterGroupeCRA(groupeCRA) {
   }
   return {};
 }
+const filterNom = nom => nom ? { nom: new RegExp(`^${nom}$`, 'i') } : {};
+const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
+
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
-const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif) => {
+const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId) => {
   const conseillers = db.collection('conseillers').aggregate([
     {
       $match: {
@@ -34,7 +39,9 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
           { datePrisePoste: { $lt: dateFin } },
         ],
         ...filterUserActif(isUserActif),
-        ...filterGroupeCRA(groupeCRA)
+        ...filterGroupeCRA(groupeCRA),
+        ...filterNom(nom),
+        ...filterStructureId(structureId)
       }
     },
     {
@@ -54,6 +61,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
         'email': 1,
         'emailCN': 1,
         'codePostal': 1,
+        'codeDepartement': 1,
         'structureId': 1,
         'datePrisePoste': 1,
         'dateFinFormation': 1,

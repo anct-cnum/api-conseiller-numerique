@@ -25,7 +25,7 @@ const {
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
-const { getStatsCnfs, getStatsCnfsFilterStructure, userConnected } = require('./export-cnfs/core/export-cnfs.core');
+const { getStatsCnfs, userConnected } = require('./export-cnfs/core/export-cnfs.core');
 const {
   buildExportCnfsCsvFileContent,
   validateExportCnfsSchema,
@@ -387,8 +387,13 @@ exports.DataExports = class DataExports {
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
-        const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
-        const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
+        if (user?.roles.includes('structure_coop') && user?.entity?.oid?.toString() !== query.structureId) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: user._id
+          }).toJSON());
+          return;
+        }
+        const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
