@@ -1,5 +1,4 @@
 const { ObjectID } = require('mongodb');
-const getPersonnesAccompagnees = require('../../../../services/stats/cras/personnesAccompagnees');
 
 function filterUserActif(isUserActif) {
   if (isUserActif === 'true') {
