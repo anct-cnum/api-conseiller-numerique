@@ -11,6 +11,7 @@ program.option('-f, --file <file>', 'Excel file path');
 program.parse(process.argv);
 
 const conseillersToExcelFileHeaders = [
+  'idPG',
   'nom',
   'prenom',
   'email',
@@ -25,6 +26,7 @@ const writeConseillersToExcelInCSVFile = conseillersToExcel => {
 
   conseillersToExcel.forEach(conseillerToExcel => {
     const fileLine = [
+      conseillerToExcel.idPG,
       conseillerToExcel.nom,
       conseillerToExcel.prenom,
       conseillerToExcel.email,
