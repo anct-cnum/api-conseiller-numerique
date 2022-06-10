@@ -56,6 +56,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     {
       $project: {
         '_id': 1,
+        'idPG': 1,
         'prenom': 1,
         'nom': 1,
         'email': 1,
