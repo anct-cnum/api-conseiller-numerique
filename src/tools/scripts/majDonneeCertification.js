@@ -4,6 +4,7 @@ const ExcelJS = require('exceljs');
 const fs = require('fs');
 const path = require('path');
 const { execute } = require('../utils');
+const { exit } = require('process');
 
 program.option('-f, --file <file>', 'Excel file path');
 
@@ -58,6 +59,9 @@ const readExcel = async file => {
   const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
   const listConseiller = [];
   for await (const worksheetReader of workbookReader) {
+    if (!worksheetReader.name.includes('CCP1 REMN')) {
+      continue;
+    }
     let i = 0;
     for await (const row of worksheetReader) {
       if (++i < start) {
@@ -82,19 +86,27 @@ const readExcel = async file => {
 execute(__filename, async ({ logger, db }) => {
   let promises = [];
   readExcel(program.file).then(async conseillers => {
+    if (!conseillers.length) {
+      logger.info('le fichier ne corespond pas au fichier attendu');
+      exit();
+    }
     const pathCsvFile = writeConseillersToExcelInCSVFile(conseillers);
     readCSV(pathCsvFile).then(async conseillers => {
       conseillers.forEach(conseiller => {
         promises.push(new Promise(async resolve => {
-          const existConseillerWithStatut = await db.collection('conseillers').findOne({ 'email': conseiller.email, 'statut': 'RECRUTE' });
+          const existConseillerWithStatut = await db.collection('conseillers').findOne({
+            'email': conseiller.email,
+            'statut': 'RECRUTE',
+            'certifie': { $exists: false }
+          });
           if (existConseillerWithStatut !== null) {
-            await db.collection('conseillers').updateOne({ email: conseiller.email, certifie: { $exists: false } }, { $set: { certifie: true } });
+            await db.collection('conseillers').updateOne({ email: conseiller.email }, { $set: { certifie: true } });
             resolve();
           }
         }));
       });
     });
+    await Promise.all(promises);
+    logger.info('mis à jour de la certification des conseillers');
   });
-  await Promise.all(promises);
-  logger.info('mis à jour de la certification des conseillers');
 });
