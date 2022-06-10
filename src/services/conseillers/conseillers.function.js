@@ -306,7 +306,7 @@ const getConseillerByCoordinateurId = db => async (idCoordinateur, page, dateDeb
     default:
       break;
   }
-  console.log(query);
+
   conseillers.data = await getConseillersListe(db)(query, ordreNom, ordre, page, options.paginate.default);
   conseillers.total = await countConseillers(db)(query);
   conseillers.limit = options.paginate.default;

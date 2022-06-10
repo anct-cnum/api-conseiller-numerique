@@ -234,9 +234,13 @@ describe('export cnfs utils', () => {
 
     expect(fileContent).toEqual(
       // eslint-disable-next-line max-len
-      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Id de la structure;Nom de la structure;Email de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique\n' +
+      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Id de la structure;Nom de la structure;Email de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique;Historique des groupes CRA\n' +
       // eslint-disable-next-line max-len
-      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;1234;Association pour laccès au numérique;test@mail.fr;12 avenue du pont;69000;69005;27/01/2021;12/03/2021;0;Non;Non;12;;;;;""'
+      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;1234;Association pour laccès au numérique;test@mail.fr;12 avenue du pont;69000;69005;27/01/2021;12/03/2021;0;Non;Non;12;;;;;"";'
     );
   });
 });
+/*
+
+
+*/

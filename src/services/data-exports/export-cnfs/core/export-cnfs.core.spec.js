@@ -74,7 +74,7 @@ describe('export cnfs core', () => {
       {
         prenom: 'John',
         nom: 'Doe',
-        structureId: '98dbc77b988c970031479ba1',
+        structureId: undefined,
         nomStructure: 'Association pour l\'accès au numérique',
         emailStructure: undefined,
         adresseStructure: '     ',
@@ -83,6 +83,7 @@ describe('export cnfs core', () => {
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
         groupeCRA: 0,
+        groupeCRAHistorique: undefined,
         certifie: 'Non',
         isUserActif: 'Non'
       }
@@ -99,7 +100,7 @@ describe('export cnfs core', () => {
       {
         prenom: 'John',
         nom: 'Doe',
-        structureId: '98dbc77b988c970031479ba1',
+        structureId: undefined,
         nomStructure: 'Association pour l\'accès au numérique',
         emailStructure: undefined,
         adresseStructure: '     ',
@@ -108,6 +109,7 @@ describe('export cnfs core', () => {
         datePrisePoste: '27/01/2021',
         dateFinFormation: '12/03/2021',
         groupeCRA: 0,
+        groupeCRAHistorique: undefined,
         certifie: 'Non',
         isUserActif: 'Oui'
       }

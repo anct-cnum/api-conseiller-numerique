@@ -112,10 +112,8 @@ const getStatsCnfsCoordinateur = db => async (dateDebut, dateFin, nomOrdre, ordr
 
   const functionCraCount = db => async conseillers => {
     for (let conseiller of conseillers) {
-      console.log(conseiller);
       const result = await getCraCount(db)(conseiller);
       conseiller.craCount = result;
-      console.log(result);
       arrayConseillers.push(conseiller);
     }
   };
