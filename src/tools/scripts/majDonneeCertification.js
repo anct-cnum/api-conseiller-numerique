@@ -51,10 +51,11 @@ const readCSV = async filePath => {
 const readExcel = async file => {
   const start = 2;
   // Colonnes Excel
-  const NOM = 1;
-  const PRENOM = 2;
-  const EMAIL = 3;
-  const CERTIFIE = 4;
+  const IDPG = 1;
+  const NOM = 2;
+  const PRENOM = 3;
+  const EMAIL = 4;
+  const CERTIFIE = 5;
 
   const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
   const listConseiller = [];
@@ -67,11 +68,13 @@ const readExcel = async file => {
       if (++i < start) {
         continue;
       }
+      const idPG = row.getCell(IDPG).value;
       const nom = row.getCell(NOM).value;
       const prenom = row.getCell(PRENOM).value;
       const email = row.getCell(EMAIL).value;
       const certifie = row.getCell(CERTIFIE).value;
       listConseiller.push({
+        'idPG': idPG,
         'nom': nom,
         'prenom': prenom,
         'email': email,
@@ -95,12 +98,12 @@ execute(__filename, async ({ logger, db }) => {
       conseillers.forEach(conseiller => {
         promises.push(new Promise(async resolve => {
           const existConseillerWithStatut = await db.collection('conseillers').findOne({
-            'email': conseiller.email,
+            'idPG': conseiller.idPG,
             'statut': 'RECRUTE',
             'certifie': { $exists: false }
           });
           if (existConseillerWithStatut !== null) {
-            await db.collection('conseillers').updateOne({ email: conseiller.email }, { $set: { certifie: true } });
+            await db.collection('conseillers').updateOne({ idPG: conseiller.idPG }, { $set: { certifie: true } });
             resolve();
           }
         }));
