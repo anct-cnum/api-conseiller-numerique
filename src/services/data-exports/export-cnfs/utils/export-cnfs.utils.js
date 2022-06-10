@@ -77,6 +77,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders.splice(10, 0, 'Code département de la structure');
     fileHeaders.splice(12, 0, 'Code département du conseiller');
     fileHeaders.splice(15, 0, 'GroupeCRA');
+    fileHeaders.splice(20, 0, 'Nombre de personne accompagné');
     fileHeaders.push('Nom Supérieur hiérarchique');
     fileHeaders.push('Prénom supérieur hiérarchique');
     fileHeaders.push('Fonction supérieur hiérarchique');
@@ -107,6 +108,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.certifie,
         statCnfs.isUserActif,
         statCnfs.craCount,
+        statCnfs.countPersonnesAccompagnees,
         statCnfs?.supHierarchique?.nom,
         statCnfs?.supHierarchique?.prenom,
         statCnfs?.supHierarchique?.fonction,

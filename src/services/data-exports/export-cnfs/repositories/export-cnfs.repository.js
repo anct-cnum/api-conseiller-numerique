@@ -1,4 +1,5 @@
 const { ObjectID } = require('mongodb');
+const getPersonnesAccompagnees = require('../../../../services/stats/cras/personnesAccompagnees');
 
 function filterUserActif(isUserActif) {
   if (isUserActif === 'true') {
@@ -28,6 +29,12 @@ const filterNom = nom => nom ? { nom: new RegExp(`^${nom}$`, 'i') } : {};
 const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
 
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
+
+const countGetPersonnesAccompagnees = db => async conseiller => await db.collection('cras').aggregate([
+  { $match: { 'conseiller.$id': conseiller._id } },
+  { $group: { _id: null, count: { $sum: '$cra.nbParticipants' } } },
+  { $project: { 'valeur': '$count' } }
+]).toArray();
 
 const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId) => {
   const conseillers = db.collection('conseillers').aggregate([
@@ -83,7 +90,10 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
   const functionCraCount = db => async conseillers => {
     for (let conseiller of conseillers) {
       const result = await getCraCount(db)(conseiller);
+      const countGetPA = await countGetPersonnesAccompagnees(db)(conseiller);
+      const { valeur } = { ...countGetPA[0] };
       conseiller.craCount = result;
+      conseiller.countPersonnesAccompagnees = valeur ?? 0;
       arrayConseillers.push(conseiller);
     }
   };
