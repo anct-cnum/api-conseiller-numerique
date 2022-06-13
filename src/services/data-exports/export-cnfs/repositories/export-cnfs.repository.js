@@ -90,9 +90,8 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     for (let conseiller of conseillers) {
       const result = await getCraCount(db)(conseiller);
       const countGetPA = await countGetPersonnesAccompagnees(db)(conseiller);
-      const { valeur } = { ...countGetPA[0] };
       conseiller.craCount = result;
-      conseiller.countPersonnesAccompagnees = valeur ?? 0;
+      conseiller.countPersonnesAccompagnees = countGetPA[0]?.valeur ?? 0;
       arrayConseillers.push(conseiller);
     }
   };

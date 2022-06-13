@@ -1,5 +1,6 @@
 const { buildExportCnfsCsvFileContent, exportCnfsQueryToSchema, getExportCnfsFileName } = require('./export-cnfs.utils');
 const { validateExportCnfsSchema } = require('./export-cnfs.utils');
+const { valueHistoryCra } = require('../core/export-cnfs.core');
 const { ValidationError } = require('joi');
 
 const statsCnfs = [
@@ -13,12 +14,16 @@ const statsCnfs = [
     dateFinFormation: '12/03/2021',
     certifie: 'Non',
     craCount: 12,
-    isUserActif: 'Non'
+    isUserActif: 'Non',
+    structure: {
+      nom: 'Association pour l\'accès au numérique',
+    },
   }
 ];
 
-const statsCnfsForAdminCoop = [
+let statsCnfsForAdminCoop = [
   {
+    idPG: 50,
     prenom: 'John',
     nom: 'Doe',
     email: 'john.doe@conseiller-numerique.fr',
@@ -38,7 +43,17 @@ const statsCnfsForAdminCoop = [
     craCount: 12,
     isUserActif: 'Non',
     groupeCRA: 0,
-    groupeCRAHistorique: '[{"numero":0,"dateDeChangement":"2022-04-25T09:35:15.699Z"}]'
+    groupeCRAHistorique: [
+      {
+        numero: 0,
+        dateDeChangement: new Date('2022-04-25T09:35:15.699Z')
+      },
+      {
+        numero: 1,
+        dateDeChangement: new Date('2022-04-25T09:35:15.699Z')
+      }
+    ],
+    countPersonnesAccompagnees: 10
   }
 ];
 
@@ -236,13 +251,14 @@ describe('export cnfs utils', () => {
 
   it('should build territoires csv file content for cnfs when user admin_coop role', async () => {
     const user = { roles: ['admin_coop'] };
+    statsCnfsForAdminCoop[0].groupeCRAHistorique = await valueHistoryCra(statsCnfsForAdminCoop[0].groupeCRAHistorique);
     const fileContent = await buildExportCnfsCsvFileContent(statsCnfsForAdminCoop, user);
 
     expect(fileContent).toEqual(
       // eslint-disable-next-line max-len
-      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Id de la structure;Nom de la structure;Email de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique;Historique des groupes CRA\n' +
+      'Id du conseiller;Prénom;Nom;Email;Email @conseiller-numerique.fr;Compte Activé;Id de la structure;Nom de la structure;Email de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Code département du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nombre de personne accompagné;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique;Historique des groupes CRA\n' +
       // eslint-disable-next-line max-len
-      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;1234;Association pour laccès au numérique;test@mail.fr;12 avenue du pont;69000;69005;27/01/2021;12/03/2021;0;Non;Non;12;;;;;"";[{"numero":0,"dateDeChangement":"2022-04-25T09:35:15.699Z"}]'
+      '50;John;Doe;john.doe@conseiller-numerique.fr;;Non;1234;Association pour laccès au numérique;test@mail.fr;12 avenue du pont;69000;69005;;27/01/2021;12/03/2021;0;Non;Non;12;10;;;;;"";"groupe 0 le 25/04/2022|groupe 1 le 25/04/2022"'
     );
   });
 });
