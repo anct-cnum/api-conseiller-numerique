@@ -100,12 +100,12 @@ execute(__filename, async ({ logger, db }) => {
       conseillers.forEach(conseiller => {
         promises.push(new Promise(async resolve => {
           const existConseillerWithStatut = await db.collection('conseillers').findOne({
-            'idPG': conseiller.idPG,
+            'idPG': parseInt(conseiller.idPG),
             'statut': 'RECRUTE',
             'certifie': { $exists: false }
           });
           if (existConseillerWithStatut !== null) {
-            await db.collection('conseillers').updateOne({ idPG: conseiller.idPG }, { $set: { certifie: true } });
+            await db.collection('conseillers').updateOne({ idPG: parseInt(conseiller.idPG) }, { $set: { certifie: true } });
             resolve();
           }
         }));
