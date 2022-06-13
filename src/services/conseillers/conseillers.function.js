@@ -283,7 +283,7 @@ const countConseillers = db => async query => {
   return await db.collection('conseillers').countDocuments(query);
 };
 
-const getConseillerByCoordinateurId = db => async (idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options) => {
+const getConseillersByCoordinateurId = db => async (idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options) => {
   const coordinateur = await db.collection('conseillers').findOne({ '_id': idCoordinateur });
   let conseillers = {};
 
@@ -328,6 +328,32 @@ const countCraConseiller = db => async (conseillerId, dateDebut, dateFin) => {
   return await db.collection('cras').countDocuments({ 'conseiller.$id': conseillerId, 'createdAt': { '$gte': dateDebut, '$lte': dateFin } });
 };
 
+const isSubordonne = db => async (coordinateurId, conseillerId) => {
+  const coordinateur = await db.collection('conseillers').findOne({ '_id': coordinateurId });
+  const conseiller = await db.collection('conseillers').findOne({ '_id': conseillerId });
+
+  let isSubordonne = false;
+  switch (coordinateur?.listeSubordonnes?.type) {
+    case 'conseillers':
+      coordinateur?.listeSubordonnes?.liste.forEach(cons => {
+        if (String(conseiller._id) === String(cons)) {
+          isSubordonne = true;
+        }
+      });
+      break;
+    case 'codeDepartement':
+      isSubordonne = coordinateur?.listeSubordonnes?.liste?.includes(conseiller.codeDepartement);
+      break;
+    case 'codeRegion':
+      isSubordonne = coordinateur?.listeSubordonnes?.liste?.includes(conseiller.codeRegion);
+      break;
+    default:
+      break;
+  }
+
+  return isSubordonne;
+};
+
 module.exports = {
   checkAuth,
   checkRoleCandidat,
@@ -344,6 +370,7 @@ module.exports = {
   checkFormulaire,
   checkRoleAdmin,
   candidatSupprimeEmailPix,
-  getConseillerByCoordinateurId,
-  countCraConseiller
+  getConseillersByCoordinateurId,
+  countCraConseiller,
+  isSubordonne
 };

@@ -30,8 +30,9 @@ const {
   suppressionCVConseiller,
   checkRoleAdmin,
   candidatSupprimeEmailPix,
-  getConseillerByCoordinateurId,
-  countCraConseiller } = require('./conseillers.function');
+  getConseillersByCoordinateurId,
+  countCraConseiller,
+  isSubordonne } = require('./conseillers.function');
 const {
   canActivate,
   authenticationGuard,
@@ -951,9 +952,9 @@ exports.Conseillers = class Conseillers extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user?._id, [Role.Coordinateur], () => user)
       ).then(async () => {
-        await getConseillerByCoordinateurId(db)(idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options).then(async conseillers => {
+        await getConseillersByCoordinateurId(db)(idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options).then(async conseillers => {
           const promises = [];
-          conseillers.data.forEach(conseiller => {
+          conseillers.data?.forEach(conseiller => {
             const p = new Promise(async resolve => {
               conseiller.craCount = await countCraConseiller(db)(conseiller._id, dateDebut, dateFin);
               resolve();
@@ -968,6 +969,29 @@ exports.Conseillers = class Conseillers extends Service {
           return res.status(500).send(new GeneralError('La recherche de conseillers a échoué, veuillez réessayer.').toJSON());
         });
 
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseiller/isSubordonne', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idCoordinateur = new ObjectId(req.query.idCoordinateur);
+      const idConseiller = new ObjectId(req.query.idConseiller);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Coordinateur], () => user)
+      ).then(async () => {
+        try {
+          const boolSubordonne = await isSubordonne(db)(idCoordinateur, idConseiller);
+          res.send({ 'isSubordonne': boolSubordonne });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }

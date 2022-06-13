@@ -3,7 +3,7 @@ module.exports = (db, mailer) => {
   const templateName = 'bienvenueCompteCoordinateur';
   const { utils } = mailer;
 
-  let render = () => {
+  const render = () => {
     return mailer.render(__dirname, templateName, { });
   };
 
@@ -12,13 +12,13 @@ module.exports = (db, mailer) => {
     render,
     send: async (email, id) => {
 
-      let onSuccess = async () => {
+      const onSuccess = async () => {
         await db.collection('users').updateOne(
           { '_id': id },
           { $set: { 'mailCoordinateurSent': true } });
       };
 
-      let onError = async err => {
+      const onError = async err => {
         utils.setSentryError(err);
       };
       return mailer.createMailer().sendEmail(

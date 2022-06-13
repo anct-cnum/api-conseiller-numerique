@@ -40,7 +40,7 @@ module.exports = {
           }
         }
 
-        //Restreindre les permissions : les conseillers ne peuvent voir que les informations de la structure associée
+        //Restreindre les permissions : les conseillers (non coordinateur) ne peuvent voir que les informations de la structure associée
         if (context.params?.user?.roles.includes('conseiller') && !context.params?.user?.roles.includes('coordinateur_coop')) {
           const conseiller = await context.app.service('conseillers').get(context.params?.user?.entity?.oid);
           if (context.id.toString() !== conseiller?.structureId.toString()) {

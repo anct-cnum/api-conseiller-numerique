@@ -3,11 +3,11 @@ const { ObjectID } = require('mongodb');
 function filterUserActif(isUserActif) {
   if (isUserActif === 'true') {
     return {
-      'mattermost.error': false
+      'mattermost.id': { $exists: true }
     };
   } else if (isUserActif === 'false') {
     return {
-      'mattermost.error': { '$in': [true, null] }
+      'mattermost.id': { $exists: false }
     };
   }
 
