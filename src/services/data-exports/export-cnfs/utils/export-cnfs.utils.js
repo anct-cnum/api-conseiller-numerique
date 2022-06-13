@@ -68,14 +68,16 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'CRA Saisis'
   ];
   if (user.roles.includes('admin_coop')) {
-    fileHeaders[5] = 'Code Postal du conseiller';
-    fileHeaders.splice(4, 0, 'Compte Activé');
-    fileHeaders.splice(5, 0, 'Id de la structure');
-    fileHeaders.splice(7, 0, 'Email de la structure');
-    fileHeaders.splice(8, 0, 'Adresse de la structure');
-    fileHeaders.splice(9, 0, 'Code département de la structure');
-    fileHeaders.splice(11, 0, 'Code département du conseiller');
-    fileHeaders.splice(14, 0, 'GroupeCRA');
+    fileHeaders.splice(0, 0, 'Id du conseiller');
+    fileHeaders[6] = 'Code Postal du conseiller';
+    fileHeaders.splice(5, 0, 'Compte Activé');
+    fileHeaders.splice(6, 0, 'Id de la structure');
+    fileHeaders.splice(8, 0, 'Email de la structure');
+    fileHeaders.splice(9, 0, 'Adresse de la structure');
+    fileHeaders.splice(10, 0, 'Code département de la structure');
+    fileHeaders.splice(12, 0, 'Code département du conseiller');
+    fileHeaders.splice(15, 0, 'GroupeCRA');
+    fileHeaders.splice(20, 0, 'Nombre de personne accompagné');
     fileHeaders.push('Nom Supérieur hiérarchique');
     fileHeaders.push('Prénom supérieur hiérarchique');
     fileHeaders.push('Fonction supérieur hiérarchique');
@@ -83,9 +85,11 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders.push('Numéro téléphone supérieur hiérarchique');
     fileHeaders.push('Historique des groupes CRA');
 
+
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
+        statCnfs.idPG,
         statCnfs.prenom,
         statCnfs.nom,
         statCnfs.email,
@@ -104,6 +108,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.certifie,
         statCnfs.isUserActif,
         statCnfs.craCount,
+        statCnfs.countPersonnesAccompagnees,
         statCnfs?.supHierarchique?.nom,
         statCnfs?.supHierarchique?.prenom,
         statCnfs?.supHierarchique?.fonction,
