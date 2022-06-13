@@ -27,6 +27,7 @@ const assignPermanence = (body, conseillerId, database) => {
   delete permanence.estCoordinateur;
   delete permanence.showPermanenceForm;
   delete permanence.hasPermanence;
+  delete permanence.idOldPermanence;
 
   permanence?.horaires?.forEach(horaires => {
     delete horaires.fermeture;
@@ -52,7 +53,7 @@ const assignPermanences = (permanences, conseillerId) => {
     });
     permanence.conseillersItinerants = conseillersItinerants;
 
-    permanence?.lieuPrincipalPour.forEach(conseiller => {
+    permanence?.lieuPrincipalPour?.forEach(conseiller => {
       lieuPrincipalPour.push(new ObjectId(conseiller));
     });
     permanence.lieuPrincipalPour = lieuPrincipalPour;

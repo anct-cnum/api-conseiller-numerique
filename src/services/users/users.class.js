@@ -359,6 +359,10 @@ exports.Users = class Users extends Service {
           res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé pour une structure').toJSON());
           return;
         }
+        const emailExistStructure = await db.collection('structures').countDocuments({ 'contact.email': email });
+        if (emailExistStructure !== 0) {
+          return res.status(409).send(new Conflict('L\'adresse email que vous avez renseigné existe déjà dans une autre structure').toJSON());
+        }
 
         try {
           const connection = app.get('mongodb');
@@ -428,10 +432,10 @@ exports.Users = class Users extends Service {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
           const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
           const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-          const login = `${prenom}.${nom}`;
+          const email = conseiller.emailCN.address;
+          const login = email.substring(0, email.lastIndexOf('@'));
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
-          const email = `${login}@${gandi.domain}`;
           await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
               name: email,
@@ -439,8 +443,9 @@ exports.Users = class Users extends Service {
             }
           });
           user.name = email;
-          createMailbox({ gandi, db, logger, Sentry: app.get('sentry') })({ conseillerId: user.entity.oid, login, password });
-          createAccount({
+          // La boite mail a été créée dans import-recrutes.js
+          await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
+          await createAccount({
             mattermost,
             conseiller,
             email,
@@ -454,12 +459,12 @@ exports.Users = class Users extends Service {
           });
 
           try {
-            //let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-            //await message.send(user, conseiller);
+            let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+            await message.send(user, conseiller);
 
             // Envoi d'un deuxième email pour l'inscription à Pix Orga
-            //let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-            //await messagePix.send(user, conseiller);
+            let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+            await messagePix.send(user, conseiller);
 
             res.send(user);
             return;

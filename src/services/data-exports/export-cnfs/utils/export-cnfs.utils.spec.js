@@ -22,18 +22,23 @@ const statsCnfsForAdminCoop = [
     prenom: 'John',
     nom: 'Doe',
     email: 'john.doe@conseiller-numerique.fr',
-    structureId: '1234',
-    nomStructure: 'Association pour l\'accès au numérique',
-    emailStructure: 'test@mail.fr',
+    structure: {
+      idPG: 1234,
+      codeDepartement: '69000',
+      contact: {
+        email: 'test@mail.fr',
+      },
+      nom: 'Association pour l\'accès au numérique',
+    },
     adresseStructure: '12 avenue du pont',
-    codeDepartement: 69000,
     codePostal: 69005,
     datePrisePoste: '27/01/2021',
     dateFinFormation: '12/03/2021',
     certifie: 'Non',
     craCount: 12,
     isUserActif: 'Non',
-    groupeCRA: 0
+    groupeCRA: 0,
+    groupeCRAHistorique: '[{"numero":0,"dateDeChangement":"2022-04-25T09:35:15.699Z"}]'
   }
 ];
 
@@ -223,8 +228,9 @@ describe('export cnfs utils', () => {
     const fileContent = await buildExportCnfsCsvFileContent(statsCnfs, user);
 
     expect(fileContent).toEqual(
-      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Nom de la structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé\n' +
-      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;Association pour laccès au numérique;69005;27/01/2021;12/03/2021;Non;Non'
+      // eslint-disable-next-line max-len
+      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Nom de la structure;Code Postal;Date de recrutement;Date de fin de formation;Certification;Activé;CRA Saisis\n' +
+      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;;69005;27/01/2021;12/03/2021;Non;Non;12'
     );
   });
 
@@ -234,9 +240,9 @@ describe('export cnfs utils', () => {
 
     expect(fileContent).toEqual(
       // eslint-disable-next-line max-len
-      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Id de la structure;Nom de la structure;Email de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique;Historique des groupes CRA\n' +
+      'Prénom;Nom;Email;Email @conseiller-numerique.fr;Compte Activé;Id de la structure;Nom de la structure;Email de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Code département du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique;Historique des groupes CRA\n' +
       // eslint-disable-next-line max-len
-      'John;Doe;john.doe@conseiller-numerique.fr;compte COOP non créé;1234;Association pour laccès au numérique;test@mail.fr;12 avenue du pont;69000;69005;27/01/2021;12/03/2021;0;Non;Non;12;;;;;"";'
+      'John;Doe;john.doe@conseiller-numerique.fr;;Non;1234;Association pour laccès au numérique;test@mail.fr;12 avenue du pont;69000;69005;;27/01/2021;12/03/2021;0;Non;Non;12;;;;;"";[{"numero":0|"dateDeChangement":"2022-04-25T09:35:15.699Z"}]'
     );
   });
 });

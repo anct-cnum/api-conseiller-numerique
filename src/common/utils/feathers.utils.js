@@ -8,7 +8,8 @@ const Role = {
   HubCoop: 'hub_coop',
   Coordinateur: 'coordinateur_coop',
   Conseiller: 'conseiller',
-  Candidat: 'candidat'
+  Candidat: 'candidat',
+  Prefet: 'prefet',
 };
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};

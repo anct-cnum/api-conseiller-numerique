@@ -1,4 +1,4 @@
-const { ObjectId } = require('mongodb');
+const { ObjectID } = require('mongodb');
 
 function filterUserActif(isUserActif) {
   if (isUserActif === 'true') {
@@ -24,90 +24,60 @@ function filterGroupeCRA(groupeCRA) {
   }
   return {};
 }
+const filterNom = nom => nom ? { nom: new RegExp(`^${nom}$`, 'i') } : {};
+const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
+
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
-const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif) => {
-  const conseillers = db.collection('conseillers').find({
-    statut: 'RECRUTE',
-    $and: [
-      { datePrisePoste: { $gt: dateDebut } },
-      { datePrisePoste: { $lt: dateFin } },
-    ],
-    ...filterUserActif(isUserActif),
-    ...filterGroupeCRA(groupeCRA)
-  }).project({
-    _id: 1,
-    prenom: 1,
-    nom: 1,
-    email: 1,
-    emailCN: 1,
-    structureId: 1,
-    codePostal: 1,
-    datePrisePoste: 1,
-    dateFinFormation: 1,
-    groupeCRA: 1,
-    groupeCRAHistorique: { $slice: 5 },
-    emailCNError: 1,
-    mattermost: 1,
-    supHierarchique: 1,
-  });
-  let arrayConseillers = [];
-
-  const functionCraCount = db => async conseillers => {
-    for (let conseiller of conseillers) {
-      const result = await getCraCount(db)(conseiller);
-      conseiller.craCount = result;
-      arrayConseillers.push(conseiller);
+const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId) => {
+  const conseillers = db.collection('conseillers').aggregate([
+    {
+      $match: {
+        statut: 'RECRUTE',
+        $and: [
+          { datePrisePoste: { $gt: dateDebut } },
+          { datePrisePoste: { $lt: dateFin } },
+        ],
+        ...filterUserActif(isUserActif),
+        ...filterGroupeCRA(groupeCRA),
+        ...filterNom(nom),
+        ...filterStructureId(structureId)
+      }
+    },
+    {
+      $lookup: {
+        localField: 'structureId',
+        from: 'structures',
+        foreignField: '_id',
+        as: 'structure'
+      }
+    },
+    { $unwind: '$structure' },
+    {
+      $project: {
+        '_id': 1,
+        'prenom': 1,
+        'nom': 1,
+        'email': 1,
+        'emailCN': 1,
+        'codePostal': 1,
+        'codeDepartement': 1,
+        'structureId': 1,
+        'datePrisePoste': 1,
+        'dateFinFormation': 1,
+        'groupeCRA': 1,
+        'groupeCRAHistorique': 1,
+        'emailCNError': 1,
+        'mattermost': 1,
+        'supHierarchique': 1,
+        'structure.idPG': 1,
+        'structure.contact.email': 1,
+        'structure.nom': 1,
+        'structure.insee': 1,
+        'structure.codeDepartement': 1,
+      }
     }
-  };
-  if (nomOrdre !== undefined && ordre !== undefined) {
-    const ordreResult = await conseillers
-    .sort({ [nomOrdre]: parseInt(ordre) })
-    .toArray();
-    await functionCraCount(db)(ordreResult);
-    return arrayConseillers;
-  }
-  await functionCraCount(db)(await conseillers.toArray());
-  return arrayConseillers;
-};
-
-const getStructureNameFromId = db => async id => db.collection('structures')
-.findOne({
-  _id: new ObjectId(id)
-}, {
-  projection: {
-    _id: 0,
-    nom: 1,
-    codeDepartement: 1,
-    insee: 1,
-    contact: 1,
-    idPG: 1
-  }
-});
-
-const getStatsCnfsCoordinateur = db => async (dateDebut, dateFin, nomOrdre, ordre, isUserActif) => {
-  const conseillers = db.collection('conseillers').find({
-    statut: 'RECRUTE',
-    $and: [
-      { datePrisePoste: { $gt: dateDebut } },
-      { datePrisePoste: { $lt: dateFin } },
-    ],
-    ...filterUserActif(isUserActif),
-  }).project({
-    _id: 1,
-    prenom: 1,
-    nom: 1,
-    email: 1,
-    emailCN: 1,
-    structureId: 1,
-    codePostal: 1,
-    datePrisePoste: 1,
-    dateFinFormation: 1,
-    emailCNError: 1,
-    mattermost: 1,
-    codeDepartement: 1,
-    codeRegion: 1
-  });
+  ]);
   let arrayConseillers = [];
 
   const functionCraCount = db => async conseillers => {
@@ -129,9 +99,7 @@ const getStatsCnfsCoordinateur = db => async (dateDebut, dateFin, nomOrdre, ordr
 };
 
 const statsCnfsRepository = db => ({
-  getStatsCnfs: getStatsCnfs(db),
-  getStructureNameFromId: getStructureNameFromId(db),
-  getStatsCnfsCoordinateur: getStatsCnfsCoordinateur(db)
+  getStatsCnfs: getStatsCnfs(db)
 });
 
 module.exports = {

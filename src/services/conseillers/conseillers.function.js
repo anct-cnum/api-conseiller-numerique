@@ -48,12 +48,22 @@ const suppressionCVConseiller = (db, conseiller) => {
       { $unset: {
         cv: ''
       } });
-    await db.collection('misesEnRelation').updateMany({ 'conseiller.email': conseiller.email },
+    await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
       { $unset: {
         'conseillerObj.cv': ''
       } });
     resolve();
   });
+};
+
+const checkCvExistsS3 = app => async conseiller => {
+  //initialisation AWS
+  const awsConfig = app.get('aws');
+  aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
+  const ep = new aws.Endpoint(awsConfig.endpoint);
+  const s3 = new aws.S3({ endpoint: ep });
+  let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
+  await s3.getObject(params).promise();
 };
 
 const verificationRoleUser = (db, decode, req, res) => async roles => {
@@ -323,6 +333,7 @@ module.exports = {
   checkRoleCandidat,
   checkRoleAdminCoop,
   checkConseillerExist,
+  checkCvExistsS3,
   checkConseillerHaveCV,
   suppressionCVConseiller,
   verificationRoleUser,

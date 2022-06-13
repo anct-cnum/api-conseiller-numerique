@@ -25,19 +25,22 @@ const {
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
-const {
-  getStatsCnfs,
-  getStatsCnfsFilterStructure,
-  getStatsCnfsCoordinateur,
-  getStatsCnfsFilterCoordinateur,
-  userConnected
-} = require('./export-cnfs/core/export-cnfs.core');
+const { getStatsCnfs, userConnected } = require('./export-cnfs/core/export-cnfs.core');
 const {
   buildExportCnfsCsvFileContent,
   validateExportCnfsSchema,
   exportCnfsQueryToSchema,
   getExportCnfsFileName
 } = require('./export-cnfs/utils/export-cnfs.utils');
+const {
+  findDepartementOrRegion,
+  buildExportHubCnfsCsvFileContent
+} = require('./export-cnfs-hub/utils/export-cnfs-hub.utils.js');
+const { exportCnfsHubRepository } = require('./export-cnfs-hub/repositories/export-cnfs-hub.repository.js');
+const { getStatsCnfsHubs } = require('./export-cnfs-hub/core/export-cnfs-hub.core.js');
+
+const { exportCnfsCoordinateurRepository } = require('./export-cnfs-coordinateur/repositories/export-cnfs-coordinateur.repository');
+const { getStatsCnfsCoordinateur } = require('./export-cnfs-coordinateur/core/export-cnfs-coordinateur.core');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -357,6 +360,27 @@ exports.DataExports = class DataExports {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
+    app.get('/exports/hubcoop/cnfs.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.HubCoop], userAuthenticationRepository(db))
+      ).then(async () => {
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const hubName = user.hub;
+        const hub = findDepartementOrRegion(hubName);
+        if (hub === undefined) {
+          res.status(404).send(new NotFound('Hub not found', {
+            hubName
+          }).toJSON());
+          return;
+        }
+        const statsCnfs = await getStatsCnfsHubs(hub, exportCnfsHubRepository(db));
+        csvFileResponse(res, `export-cnfs_${dayjs(new Date()).format('YYYY-MM-DD')}_${hubName}.csv`, `${await buildExportHubCnfsCsvFileContent(statsCnfs)}`);
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
     app.get('/exports/cnfs.csv', async (req, res) => {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
@@ -366,8 +390,13 @@ exports.DataExports = class DataExports {
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
-        const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
-        const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
+        if (user?.roles.includes('structure_coop') && user?.entity?.oid?.toString() !== query.structureId) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: user._id
+          }).toJSON());
+          return;
+        }
+        const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -382,8 +411,9 @@ exports.DataExports = class DataExports {
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
-        const statsCnfsNoFilter = await getStatsCnfsCoordinateur(query, statsCnfsRepository(db));
-        const statsCnfs = await getStatsCnfsFilterCoordinateur(db)(statsCnfsNoFilter, user);
+        query.user = user;
+        const statsCnfs = await getStatsCnfsCoordinateur(query, exportCnfsCoordinateurRepository(db));
+
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

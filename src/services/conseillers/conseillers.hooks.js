@@ -165,6 +165,9 @@ module.exports = {
 
                   if (dejaFinalisee === 1) {
                     conseiller.finalisee = true;
+                    conseiller.craCount = await db.collection('cras').countDocuments({
+                      'conseiller.$id': conseiller._id
+                    });
                   }
                   result.push(conseiller);
                 }
@@ -246,6 +249,13 @@ module.exports = {
               context.result.dateRecrutement = dateRecrutement;
               context.result.nomStructures = nomStructures;
             }
+            const possedeCompteCandidat = await db.collection('users').countDocuments(
+              {
+                'entity.$id': context.result._id,
+                'roles': { $in: ['candidat'] }
+              }
+            );
+            context.result.possedeCompteCandidat = possedeCompteCandidat > 0;
             return context;
           });
           resolve(result);
