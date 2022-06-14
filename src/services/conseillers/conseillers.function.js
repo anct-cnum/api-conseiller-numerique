@@ -291,10 +291,10 @@ const getConseillersByCoordinateurId = db => async (idCoordinateur, page, dateDe
 
   switch (filtreProfil) {
     case 'active':
-      query = { 'statut': 'RECRUTE', 'mattermost.error': false };
+      query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: true } };
       break;
     case 'inactive':
-      query = { 'statut': 'RECRUTE', 'mattermost.error': { '$in': [true, null] } };
+      query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: false } };
       break;
     default:
       query = { 'statut': 'RECRUTE' };

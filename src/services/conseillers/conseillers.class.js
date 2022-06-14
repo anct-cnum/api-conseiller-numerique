@@ -921,9 +921,8 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.get('/conseillers/subordonnes', async (req, res) => {
       checkAuth(req, res);
-      const accessToken = req.feathers?.authentication?.accessToken;
-      const userId = decode(accessToken).sub;
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const userId = userIdFromRequestJwt(req);
+      const getUserById = userAuthenticationRepository(db);
 
       const schema = Joi.object({
         idCoordinateur: Joi.string().required().error(new Error('L\'id coordinateur est invalide')),
@@ -950,7 +949,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user?._id, [Role.Coordinateur], () => user)
+        rolesGuard(userId, [Role.Coordinateur], getUserById)
       ).then(async () => {
         await getConseillersByCoordinateurId(db)(idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options).then(async conseillers => {
           const promises = [];
@@ -974,16 +973,14 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.get('/conseiller/isSubordonne', async (req, res) => {
       checkAuth(req, res);
-      const accessToken = req.feathers?.authentication?.accessToken;
-      const userId = decode(accessToken).sub;
-
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const userId = userIdFromRequestJwt(req);
+      const getUserById = userAuthenticationRepository(db);
       const idCoordinateur = new ObjectId(req.query.idCoordinateur);
       const idConseiller = new ObjectId(req.query.idConseiller);
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user?._id, [Role.Coordinateur], () => user)
+        rolesGuard(userId, [Role.Coordinateur], getUserById)
       ).then(async () => {
         try {
           const boolSubordonne = await isSubordonne(db)(idCoordinateur, idConseiller);

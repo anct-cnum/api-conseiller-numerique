@@ -73,7 +73,7 @@ module.exports = {
     ],
     get: [
       async context => {
-        //Restreindre les permissions : les conseillers et candidats ne peuvent voir que les informations les concernant
+        //Restreindre les permissions : les conseillers (non coordinateur) et candidats ne peuvent voir que les informations les concernant
         if ((context.params?.user?.roles.includes('conseiller') && !context.params?.user?.roles.includes('coordinateur_coop')) ||
           context.params?.user?.roles.includes('candidat')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
