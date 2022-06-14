@@ -47,5 +47,6 @@ const getStatsCnfs = async (
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
 module.exports = {
   getStatsCnfs,
-  userConnected
+  userConnected,
+  valueHistoryCra
 };
