@@ -25,9 +25,10 @@ const {
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
-const { getStatsCnfs, userConnected } = require('./export-cnfs/core/export-cnfs.core');
+const { getStatsCnfs, userConnected, getCnfsWithoutCRA } = require('./export-cnfs/core/export-cnfs.core');
 const {
   buildExportCnfsCsvFileContent,
+  buildExportCnfsWithoutCRACsvFileContent,
   validateExportCnfsSchema,
   exportCnfsQueryToSchema,
   getExportCnfsFileName
@@ -395,6 +396,29 @@ exports.DataExports = class DataExports {
         }
         const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports_without_cra/cnfs.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db))
+      ).then(async authentication => {
+        const user = await userConnected(db, authentication);
+        if (!user?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: user._id
+          }).toJSON());
+          return;
+        }
+        const datePlus1MoisEtDemi = new Date(dayjs(Date.now()).subtract(60, 'day'));
+        const conseillers = await getCnfsWithoutCRA(datePlus1MoisEtDemi, statsCnfsRepository(db));
+        if (conseillers.length) {
+          csvFileResponse(res, 'export_cnfs_m2.csv', `${await buildExportCnfsWithoutCRACsvFileContent(conseillers, user)}`);
+        } else {
+          res.status(404).send(new NotFound('Aucun conseillers')).toJSON();
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
