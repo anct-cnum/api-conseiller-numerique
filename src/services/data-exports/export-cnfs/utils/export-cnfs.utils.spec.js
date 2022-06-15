@@ -262,7 +262,3 @@ describe('export cnfs utils', () => {
     );
   });
 });
-/*
-
-
-*/
