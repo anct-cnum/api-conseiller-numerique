@@ -22,13 +22,13 @@ const readCSV = async filePath => {
 };
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
-  const updateConseillerPG = async (id, disponible) => {
+  const updateConseillerPG = async (email, disponible) => {
     try {
       const row = await pool.query(`
         UPDATE djapp_coach
         SET disponible = $2
         WHERE LOWER(email) = LOWER($1)`,
-      [id, disponible]);
+      [email, disponible]);
       return row;
     } catch (error) {
       Sentry.captureException(error);
@@ -46,7 +46,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
         for (const candidat of candidats) {
           try {
             // PG en premier, attention synchro
-            await updateConseillerPG(candidat.idPG, false);
+            await updateConseillerPG(candidat.email, false);
             await db.collection('conseillers').updateMany({ email: candidat.email }, { $set: { disponible: false } });
             await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': candidat.email }, {
               $set: {
