@@ -27,7 +27,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       const row = await pool.query(`
         UPDATE djapp_coach
         SET disponible = $2
-        WHERE id = $1`,
+        WHERE LOWER(email) = LOWER($1)`,
       [id, disponible]);
       return row;
     } catch (error) {
@@ -47,15 +47,15 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
           try {
             // PG en premier, attention synchro
             await updateConseillerPG(candidat.idPG, false);
-            await db.collection('conseillers').updateOne({ idPG: candidat.idPG }, { $set: { disponible: false } });
-            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.idPG': candidat.idPG }, {
+            await db.collection('conseillers').updateMany({ email: candidat.email }, { $set: { disponible: false } });
+            await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': candidat.email }, {
               $set: {
                 'conseillerObj.disponible': false
               }
             }, {});
             await db.collection('misesEnRelation').updateMany(
               {
-                'conseillerObj.idPG': candidat.idPG,
+                'conseillerObj.email': candidat.email,
                 'statut': 'nouvelle'
               },
               {
