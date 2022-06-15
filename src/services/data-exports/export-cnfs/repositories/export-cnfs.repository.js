@@ -29,8 +29,13 @@ const filterStructureId = structureId => structureId ? { structureId: { $eq: new
 
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
-const countGetPersonnesAccompagnees = db => async conseiller => await db.collection('cras').aggregate([
-  { $match: { 'conseiller.$id': conseiller._id } },
+const countGetPersonnesAccompagnees = db => async (conseiller, dateDebut, dateFin) => await db.collection('cras').aggregate([
+  { $match: { 'conseiller.$id': conseiller._id,
+    '$and': [
+      { 'cra.dateAccompagnement': { $gt: dateDebut } },
+      { 'cra.dateAccompagnement': { $lt: dateFin } }
+    ]
+  } },
   { $group: { _id: null, count: { $sum: '$cra.nbParticipants' } } },
   { $project: { 'valeur': '$count' } }
 ]).toArray();
@@ -89,7 +94,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
   const functionCraCount = db => async conseillers => {
     for (let conseiller of conseillers) {
       const result = await getCraCount(db)(conseiller);
-      const countGetPA = await countGetPersonnesAccompagnees(db)(conseiller);
+      const countGetPA = await countGetPersonnesAccompagnees(db)(conseiller, dateDebut, dateFin);
       conseiller.craCount = result;
       conseiller.countPersonnesAccompagnees = countGetPA[0]?.valeur ?? 0;
       arrayConseillers.push(conseiller);
@@ -99,7 +104,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     const ordreResult = await conseillers
     .sort({ [nomOrdre]: parseInt(ordre) })
     .toArray();
-    await functionCraCount(db)(ordreResult);
+    await functionCraCount(db)(ordreResult, dateDebut, dateFin);
     return arrayConseillers;
   }
   await functionCraCount(db)(await conseillers.toArray());
