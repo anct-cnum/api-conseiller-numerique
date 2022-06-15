@@ -141,8 +141,8 @@ const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
     'Nom',
     'Prénom',
     'Email @conseiller-numerique.fr',
-    'Code Postal',
-    'Code département',
+    'Code Postal du conseiller',
+    'Code département du conseiller',
     'Date d\'envoi du mail M+1',
     'Date d\'envoi du mail M+1,5'
   ];

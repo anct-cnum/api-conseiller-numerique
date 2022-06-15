@@ -399,7 +399,7 @@ exports.DataExports = class DataExports {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.get('/exports_without_cra/cnfs.csv', async (req, res) => {
+    app.get('/exports-without-cra/cnfs.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -412,8 +412,7 @@ exports.DataExports = class DataExports {
           }).toJSON());
           return;
         }
-        const datePlus1MoisEtDemi = new Date(dayjs(Date.now()).subtract(60, 'day'));
-        const conseillers = await getCnfsWithoutCRA(datePlus1MoisEtDemi, statsCnfsRepository(db));
+        const conseillers = await getCnfsWithoutCRA(statsCnfsRepository(db));
         if (conseillers.length) {
           csvFileResponse(res, 'export_cnfs_m2.csv', `${await buildExportCnfsWithoutCRACsvFileContent(conseillers, user)}`);
         } else {
