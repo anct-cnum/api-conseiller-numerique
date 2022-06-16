@@ -10,7 +10,8 @@ const validateExportCnfsSchema = exportTerritoiresInput => Joi.object({
   certifie: Joi.boolean().error(new Error('Le filtre certifie est invalide')),
   groupeCRA: Joi.number().error(new Error('Le filtre groupe CRA est invalide')),
   nom: Joi.string().error(new Error('le filtre nom est invalide')),
-  structureId: Joi.string().error(new Error('le filtre structureId est invalide'))
+  structureId: Joi.string().error(new Error('le filtre structureId est invalide')),
+  codeRegion: Joi.string().error(new Error('le filtre codeRegion est invalide'))
 }).validate(exportTerritoiresInput);
 
 const isUserActifIdDefined = isUserActif => isUserActif !== undefined ? { isUserActif } : {};
@@ -22,6 +23,8 @@ const groupeCRAIfDefined = groupeCRA => groupeCRA !== undefined ? { groupeCRA } 
 const byNameIfDefined = nom => nom !== undefined ? { nom } : {};
 
 const byStructureIdIfDefined = structureId => structureId !== undefined ? { structureId } : {};
+
+const byCodeRegionIfDefined = codeRegion => codeRegion ? { codeRegion } : {};
 
 const orderingDefined = sort => {
   if (sort === undefined) {
@@ -43,7 +46,8 @@ const exportCnfsQueryToSchema = query => {
     ...certifieIfDefined(query.certifie),
     ...groupeCRAIfDefined(query.groupeCRA),
     ...byNameIfDefined(query.$search),
-    ...byStructureIdIfDefined(query.structureId)
+    ...byStructureIdIfDefined(query.structureId),
+    ...byCodeRegionIfDefined(query.codeRegion)
   };
 };
 
