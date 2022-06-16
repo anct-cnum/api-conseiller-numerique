@@ -37,7 +37,7 @@ execute(__filename, async ({ db, exit }) => {
 
   await Promise.all(promises);
 
-  //Cas 2 : A créé plusieurs permanence secondaire mais aucune principal
+  //Cas 2 : A créé plusieurs permanences secondaires mais aucune principal
   const promiseCas2 = [];
   const users = await db.collection('users').find({ 'showPermanenceForm': false }).toArray();
   users.forEach(user => {
