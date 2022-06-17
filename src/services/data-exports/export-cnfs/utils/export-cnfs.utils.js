@@ -136,9 +136,34 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
   ].join(csvLineSeparator);
 };
 
+const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
+  const fileHeaders = [
+    'Nom',
+    'Prénom',
+    'Email @conseiller-numerique.fr',
+    'Code Postal du conseiller',
+    'Code département du conseiller',
+    'Date d\'envoi du mail M+1',
+    'Date d\'envoi du mail M+1,5'
+  ];
+  return [
+    fileHeaders.join(csvCellSeparator),
+    ...conseillers.map(conseiller => [
+      conseiller.nom,
+      conseiller.prenom,
+      conseiller.emailCN.address,
+      conseiller.codePostal,
+      conseiller.codeDepartement,
+      conseiller.date1Mois,
+      conseiller.date1MoisEtDemi
+    ].join(csvCellSeparator))
+  ].join(csvLineSeparator);
+};
+
 module.exports = {
   validateExportCnfsSchema,
   exportCnfsQueryToSchema,
   getExportCnfsFileName,
-  buildExportCnfsCsvFileContent
+  buildExportCnfsCsvFileContent,
+  buildExportCnfsWithoutCRACsvFileContent
 };
