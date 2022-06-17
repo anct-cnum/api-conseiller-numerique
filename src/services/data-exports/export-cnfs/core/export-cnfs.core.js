@@ -17,7 +17,7 @@ const formatAdresseStructure = insee => {
   return adresse.replace(/["']/g, '');
 };
 
-const getFormatHistoriqueGroupeCRA = groupeCRAHistorique => groupeCRAHistorique.slice(-3);
+const getFormatHistoriqueGroupeCRA = (nbSlice, groupeCRAHistorique) => groupeCRAHistorique.slice(nbSlice);
 
 const valueHistoryCra = groupeCRAHistorique =>
   JSON.stringify(`${groupeCRAHistorique.map(h => `${`groupe ${h.numero} le ${dayjs(h.dateDeChangement).format('DD/MM/YYYY')}`}`)}`);
@@ -31,9 +31,17 @@ const prettifyAndComplete = () => async statCnfs => {
     adresseStructure: nextStatCnfs.structure?.insee ? formatAdresseStructure(nextStatCnfs.structure.insee) : '',
     certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ?? '',
-    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? valueHistoryCra(getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique)) : '',
+    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? valueHistoryCra(getFormatHistoriqueGroupeCRA(-3, nextStatCnfs.groupeCRAHistorique)) : '',
     isUserActif: userActifStatus(mattermost, emailCNError),
     mattermost
+  };
+};
+
+const prettifyAndCompleteCnfsWithoutCRA = () => async CnfsWithoutCRA => {
+  return {
+    ...CnfsWithoutCRA,
+    date1MoisEtDemi: formatDate(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1,5']),
+    date1Mois: formatDate(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1'])
   };
 };
 
@@ -44,9 +52,13 @@ const getStatsCnfs = async (
     (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId, codeRegion)).map(prettifyAndComplete())
   );
 };
+
+const getCnfsWithoutCRA = async ({ getCnfsWithoutCRA }) => Promise.all((await getCnfsWithoutCRA()).map(prettifyAndCompleteCnfsWithoutCRA()));
+
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
 module.exports = {
   getStatsCnfs,
+  getCnfsWithoutCRA,
   userConnected,
   valueHistoryCra
 };
