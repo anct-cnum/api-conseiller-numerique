@@ -59,5 +59,6 @@ const userConnected = async (db, authentication) => await db.collection('users')
 module.exports = {
   getStatsCnfs,
   getCnfsWithoutCRA,
-  userConnected
+  userConnected,
+  valueHistoryCra
 };
