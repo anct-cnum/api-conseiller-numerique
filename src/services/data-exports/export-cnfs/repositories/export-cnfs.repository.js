@@ -1,3 +1,4 @@
+/* eslint-disable comma-spacing */
 const { ObjectID } = require('mongodb');
 
 function filterUserActif(isUserActif) {
@@ -123,8 +124,21 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
   return arrayConseillers;
 };
 
+const getCnfsWithoutCRA = db => async () => await db.collection('conseillers').find({
+  'groupeCRA': { $eq: 4 },
+  'statut': { $eq: 'RECRUTE' },
+  'groupeCRAHistorique': {
+    $elemMatch: {
+      'nbJourDansGroupe': { $exists: false },
+      'mailSendConseillerM+1,5': true,
+      'mailSendConseillerM+1': true
+    }
+  }
+}).toArray();
+
 const statsCnfsRepository = db => ({
-  getStatsCnfs: getStatsCnfs(db)
+  getStatsCnfs: getStatsCnfs(db),
+  getCnfsWithoutCRA: getCnfsWithoutCRA(db)
 });
 
 module.exports = {
