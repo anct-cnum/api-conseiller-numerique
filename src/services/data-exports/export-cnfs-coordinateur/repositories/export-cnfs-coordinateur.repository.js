@@ -51,7 +51,8 @@ const getStatsCnfsCoordinateur = db => async (dateDebut, dateFin, nomOrdre, ordr
     emailCNError: 1,
     mattermost: 1,
     codeDepartement: 1,
-    codeRegion: 1
+    codeRegion: 1,
+    certifie: 1
   });
   let arrayConseillers = [];
 
