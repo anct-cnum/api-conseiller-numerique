@@ -11,7 +11,6 @@ const {
 
 describe('Vérification du role candidat', () => {
   it('devrait être considérée comme valide lorsque l\'utilisateur contient bien candidat parmi ses roles', () => {
-
     const userCandidat = {
       entity:
         {

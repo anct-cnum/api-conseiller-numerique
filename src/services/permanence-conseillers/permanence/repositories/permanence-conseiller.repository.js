@@ -1,5 +1,28 @@
 const { ObjectId } = require('mongodb');
 
+const getPermanences = db => async () =>
+  await db.collection('permanences').aggregate([
+    {
+      $lookup: {
+        localField: 'structure.$id',
+        from: 'structures',
+        foreignField: '_id',
+        pipeline: [
+          {
+            $project: {
+              _id: 0,
+              siret: 1,
+              estLabelliseFranceServices: 1,
+              estLabelliseAidantsConnect: 1
+            }
+          }
+        ],
+        as: 'structure',
+      },
+    },
+    { $unwind: '$structure' },
+  ]).toArray();
+
 const getPermanenceById = db => async permanenceId => {
   return await db.collection('permanences').findOne({ '_id': new ObjectId(permanenceId) });
 };
@@ -112,6 +135,7 @@ const setReporterInsertion = db => async userId => {
     $inc: { reportPermanence: +1 }
   });
 };
+
 const updateConseillerStatut = db => async (userId, conseillerId) => {
   await db.collection('users').updateOne({
     _id: userId
@@ -126,6 +150,7 @@ const updateConseillerStatut = db => async (userId, conseillerId) => {
 };
 
 module.exports = {
+  getPermanences,
   getPermanenceById,
   getPermanencesByConseiller,
   getPermanencesByStructure,
