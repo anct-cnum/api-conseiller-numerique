@@ -65,7 +65,7 @@ module.exports = {
           context.params.query.structureId = new ObjectID(context.params.query.structureId);
         }
         if (context.params.query.codeRegion) {
-          // query utiliser dans le after
+          // partie de query utilisé pour le after (codeRegion pour la structure associée)
           context.params.query.codeRegion = { $ne: parseInt(context.params.query.codeRegion) };
         }
 
