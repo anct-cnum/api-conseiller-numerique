@@ -28,6 +28,16 @@ function filterGroupeCRA(groupeCRA) {
 const filterNom = nom => nom ? { nom: new RegExp(`^${nom}$`, 'i') } : {};
 const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
 
+const filterCertification = certifie => {
+  if (certifie === 'true') {
+    return { certifie: { $eq: true } };
+  } else if (certifie === 'false') {
+    return { certifie: { $exists: false } };
+  }
+
+  return {};
+};
+
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
 const countGetPersonnesAccompagnees = db => async (conseiller, dateDebut, dateFin) => await db.collection('cras').aggregate([
@@ -53,7 +63,8 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
         ...filterUserActif(isUserActif),
         ...filterGroupeCRA(groupeCRA),
         ...filterNom(nom),
-        ...filterStructureId(structureId)
+        ...filterStructureId(structureId),
+        ...filterCertification(certifie)
       }
     },
     {
@@ -76,6 +87,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
         'codePostal': 1,
         'codeDepartement': 1,
         'structureId': 1,
+        'certifie': 1,
         'datePrisePoste': 1,
         'dateFinFormation': 1,
         'groupeCRA': 1,

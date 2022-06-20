@@ -29,8 +29,8 @@ const prettifyAndComplete = () => async statCnfs => {
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
     adresseStructure: nextStatCnfs.structure?.insee ? formatAdresseStructure(nextStatCnfs.structure.insee) : '',
-    certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ?? '',
+    certifie: nextStatCnfs.certifie === true ? 'Oui' : 'Non',
     groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? valueHistoryCra(getFormatHistoriqueGroupeCRA(-3, nextStatCnfs.groupeCRAHistorique)) : '',
     isUserActif: userActifStatus(mattermost, emailCNError),
     mattermost
