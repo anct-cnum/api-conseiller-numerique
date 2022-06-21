@@ -17,7 +17,7 @@ const formatAdresseStructure = insee => {
   return adresse.replace(/["']/g, '');
 };
 
-const getFormatHistoriqueGroupeCRA = groupeCRAHistorique => groupeCRAHistorique.slice(-3);
+const getFormatHistoriqueGroupeCRA = (nbSlice, groupeCRAHistorique) => groupeCRAHistorique.slice(nbSlice);
 
 const valueHistoryCra = groupeCRAHistorique =>
   JSON.stringify(`${groupeCRAHistorique.map(h => `${`groupe ${h.numero} le ${dayjs(h.dateDeChangement).format('DD/MM/YYYY')}`}`)}`);
@@ -29,11 +29,19 @@ const prettifyAndComplete = () => async statCnfs => {
     datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
     dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
     adresseStructure: nextStatCnfs.structure?.insee ? formatAdresseStructure(nextStatCnfs.structure.insee) : '',
-    certifie: 'Non',
     groupeCRA: nextStatCnfs.groupeCRA ?? '',
-    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? valueHistoryCra(getFormatHistoriqueGroupeCRA(nextStatCnfs.groupeCRAHistorique)) : '',
+    certifie: nextStatCnfs.certifie === true ? 'Oui' : 'Non',
+    groupeCRAHistorique: nextStatCnfs.groupeCRAHistorique ? valueHistoryCra(getFormatHistoriqueGroupeCRA(-3, nextStatCnfs.groupeCRAHistorique)) : '',
     isUserActif: userActifStatus(mattermost, emailCNError),
     mattermost
+  };
+};
+
+const prettifyAndCompleteCnfsWithoutCRA = () => async CnfsWithoutCRA => {
+  return {
+    ...CnfsWithoutCRA,
+    date1MoisEtDemi: formatDate(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1,5']),
+    date1Mois: formatDate(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1'])
   };
 };
 
@@ -45,10 +53,13 @@ const getStatsCnfs = async (
   );
 };
 
+const getCnfsWithoutCRA = async ({ getCnfsWithoutCRA }) => Promise.all((await getCnfsWithoutCRA()).map(prettifyAndCompleteCnfsWithoutCRA()));
+
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
 
 module.exports = {
   getStatsCnfs,
+  getCnfsWithoutCRA,
   userConnected,
   valueHistoryCra
 };
