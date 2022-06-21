@@ -171,6 +171,11 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   resetPasswordCNError: ''
                 }
               });
+
+              await db.collection('permanences').updateMany({},
+                { $pull: { conseillers: conseillerCoop._id, conseillersItinerants: conseillerCoop._id } }
+              );
+              
               const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerCoop._id });
 
               //Mise à jour de la mise en relation avec la structure en rupture
