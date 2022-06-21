@@ -40,6 +40,9 @@ const {
 const { exportCnfsHubRepository } = require('./export-cnfs-hub/repositories/export-cnfs-hub.repository.js');
 const { getStatsCnfsHubs } = require('./export-cnfs-hub/core/export-cnfs-hub.core.js');
 
+const { exportCnfsCoordinateurRepository } = require('./export-cnfs-coordinateur/repositories/export-cnfs-coordinateur.repository');
+const { getStatsCnfsCoordinateur } = require('./export-cnfs-coordinateur/core/export-cnfs-coordinateur.core');
+
 exports.DataExports = class DataExports {
   constructor(options, app) {
     this.options = options || {};
@@ -396,6 +399,24 @@ exports.DataExports = class DataExports {
         }
         const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports/subordonnes.csv', async (req, res) => {
+      const query = exportCnfsQueryToSchema(req.query);
+      const db = await app.get('mongoClient');
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.Coordinateur], userAuthenticationRepository(db)),
+        schemaGuard(validateExportCnfsSchema(query))
+      ).then(async authentication => {
+        const user = await userConnected(db, authentication);
+        query.user = user;
+        const statsCnfs = await getStatsCnfsCoordinateur(query, exportCnfsCoordinateurRepository(db));
+
+        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
+
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 

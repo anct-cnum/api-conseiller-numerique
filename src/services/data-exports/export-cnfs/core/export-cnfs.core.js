@@ -56,6 +56,7 @@ const getStatsCnfs = async (
 const getCnfsWithoutCRA = async ({ getCnfsWithoutCRA }) => Promise.all((await getCnfsWithoutCRA()).map(prettifyAndCompleteCnfsWithoutCRA()));
 
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
+
 module.exports = {
   getStatsCnfs,
   getCnfsWithoutCRA,

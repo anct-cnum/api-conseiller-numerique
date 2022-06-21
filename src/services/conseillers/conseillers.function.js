@@ -272,6 +272,88 @@ const candidatSupprimeEmailPix = (db, app) => async candidat => {
   await emailPix.send(candidat);
 };
 
+const getConseillersListe = db => async (query, ordreNom, ordre, page, nbParpage) => {
+  return await db.collection('conseillers')
+  .find(query)
+  .sort({ [ordreNom]: ordre })
+  .skip(page > 0 ? ((page - 1) * nbParpage) : 0).limit(nbParpage).toArray();
+};
+
+const countConseillers = db => async query => {
+  return await db.collection('conseillers').countDocuments(query);
+};
+
+const getConseillersByCoordinateurId = db => async (idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options) => {
+  const coordinateur = await db.collection('conseillers').findOne({ '_id': idCoordinateur });
+  let conseillers = {};
+
+  let query = { };
+
+  switch (filtreProfil) {
+    case 'active':
+      query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: true } };
+      break;
+    case 'inactive':
+      query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: false } };
+      break;
+    default:
+      query = { 'statut': 'RECRUTE' };
+      break;
+  }
+
+  query.datePrisePoste = { '$gte': dateDebut, '$lte': dateFin };
+
+  switch (coordinateur.listeSubordonnes.type) {
+    case 'conseillers':
+      query._id = { '$in': coordinateur.listeSubordonnes.liste };
+      break;
+    case 'codeRegion':
+      query.codeRegion = { '$in': coordinateur.listeSubordonnes.liste };
+      break;
+    case 'codeDepartement':
+      query.codeDepartement = { '$in': coordinateur.listeSubordonnes.liste };
+      break;
+    default:
+      break;
+  }
+
+  conseillers.data = await getConseillersListe(db)(query, ordreNom, ordre, page, options.paginate.default);
+  conseillers.total = await countConseillers(db)(query);
+  conseillers.limit = options.paginate.default;
+  conseillers.skip = Number(page);
+  return conseillers;
+};
+
+const countCraConseiller = db => async (conseillerId, dateDebut, dateFin) => {
+  return await db.collection('cras').countDocuments({ 'conseiller.$id': conseillerId, 'createdAt': { '$gte': dateDebut, '$lte': dateFin } });
+};
+
+const isSubordonne = db => async (coordinateurId, conseillerId) => {
+  const coordinateur = await db.collection('conseillers').findOne({ '_id': coordinateurId });
+  const conseiller = await db.collection('conseillers').findOne({ '_id': conseillerId });
+
+  let isSubordonne = false;
+  switch (coordinateur?.listeSubordonnes?.type) {
+    case 'conseillers':
+      coordinateur?.listeSubordonnes?.liste.forEach(cons => {
+        if (String(conseiller._id) === String(cons)) {
+          isSubordonne = true;
+        }
+      });
+      break;
+    case 'codeDepartement':
+      isSubordonne = coordinateur?.listeSubordonnes?.liste?.includes(conseiller.codeDepartement);
+      break;
+    case 'codeRegion':
+      isSubordonne = coordinateur?.listeSubordonnes?.liste?.includes(conseiller.codeRegion);
+      break;
+    default:
+      break;
+  }
+
+  return isSubordonne;
+};
+
 module.exports = {
   checkAuth,
   checkRoleCandidat,
@@ -287,5 +369,8 @@ module.exports = {
   suppressionCv,
   checkFormulaire,
   checkRoleAdmin,
-  candidatSupprimeEmailPix
+  candidatSupprimeEmailPix,
+  getConseillersByCoordinateurId,
+  countCraConseiller,
+  isSubordonne
 };

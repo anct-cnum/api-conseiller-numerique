@@ -67,6 +67,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'Activé',
     'CRA Saisis'
   ];
+
   if (user.roles.includes('admin_coop')) {
     fileHeaders.splice(0, 0, 'Id du conseiller');
     fileHeaders[6] = 'Code Postal du conseiller';
@@ -118,6 +119,36 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
       ].join(csvCellSeparator))
     ].join(csvLineSeparator);
   }
+
+  if (user.roles.includes('coordinateur_coop')) {
+    fileHeaders.push('Nom Supérieur hiérarchique');
+    fileHeaders.push('Prénom supérieur hiérarchique');
+    fileHeaders.push('Fonction supérieur hiérarchique');
+    fileHeaders.push('Email supérieur hiérarchique');
+    fileHeaders.push('Numéro téléphone supérieur hiérarchique');
+    return [
+      fileHeaders.join(csvCellSeparator),
+      ...statsCnfs.map(statCnfs => [
+        statCnfs.prenom,
+        statCnfs.nom,
+        statCnfs.email,
+        statCnfs?.emailCN?.address ?? 'compte COOP non créé',
+        statCnfs?.nomStructure.replace(/["',]/g, ''),
+        statCnfs.codePostal,
+        statCnfs.datePrisePoste,
+        statCnfs.dateFinFormation,
+        statCnfs.certifie,
+        statCnfs.isUserActif,
+        statCnfs.craCount,
+        statCnfs?.supHierarchique?.nom,
+        statCnfs?.supHierarchique?.prenom,
+        statCnfs?.supHierarchique?.fonction,
+        statCnfs?.supHierarchique?.email,
+        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`
+      ].join(csvCellSeparator))
+    ].join(csvLineSeparator);
+  }
+
   return [
     fileHeaders.join(csvCellSeparator),
     ...statsCnfs.map(statCnfs => [
