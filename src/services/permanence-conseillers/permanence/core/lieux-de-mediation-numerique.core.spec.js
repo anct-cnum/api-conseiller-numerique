@@ -303,7 +303,7 @@ describe('lieux de médiation numérique', () => {
     ]);
   });
 
-  it('devrait filtrer les codes postaux nulles', async () => {
+  it('devrait filtrer les codes postaux nuls', async () => {
     const permanence = {
       siret: '43493312300029',
       nomEnseigne: 'Anonymal',
@@ -470,7 +470,7 @@ describe('lieux de médiation numérique', () => {
     expect(lieux).toStrictEqual([]);
   });
 
-  it('devrait filtrer une adresse dont la voie et le numéro de rue sont nulles', async () => {
+  it('devrait filtrer une adresse dont la voie et le numéro de rue sont nuls', async () => {
     const permanence = {
       siret: '43493312300029',
       nomEnseigne: 'Anonymal',
@@ -970,7 +970,7 @@ describe('lieux de médiation numérique', () => {
     ]);
   });
 
-  it('devrait avoir le label France Service', async () => {
+  it('devrait avoir le label France Services', async () => {
     const permanence = {
       siret: '43493312300029',
       nomEnseigne: 'Anonymal',
@@ -1036,7 +1036,7 @@ describe('lieux de médiation numérique', () => {
     ]);
   });
 
-  it('devrait avoir le label Aidants Connect et le label France Service', async () => {
+  it('devrait avoir le label Aidants Connect et le label France Services', async () => {
     const permanence = {
       siret: '43493312300029',
       nomEnseigne: 'Anonymal',
