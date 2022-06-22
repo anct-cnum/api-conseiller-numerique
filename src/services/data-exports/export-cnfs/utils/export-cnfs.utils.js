@@ -174,6 +174,7 @@ const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
     'Email @conseiller-numerique.fr',
     'Code Postal du conseiller',
     'Code département du conseiller',
+    'Numéro de téléphone du conseiller',
     'Date d\'envoi du mail M+1',
     'Date d\'envoi du mail M+1,5'
   ];
@@ -185,6 +186,7 @@ const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
       conseiller.emailCN.address,
       conseiller.codePostal,
       conseiller.codeDepartement,
+      conseiller.telephone,
       conseiller.date1Mois,
       conseiller.date1MoisEtDemi
     ].join(csvCellSeparator))
