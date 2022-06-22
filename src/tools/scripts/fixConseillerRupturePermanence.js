@@ -7,7 +7,7 @@ execute(__filename, async ({ logger, db }) => {
   const conseillers = await db.collection('conseillers').find({ statut: 'RUPTURE' }).toArray();
   let promises = [];
 
-  logger.info('Attache le CV sur l\'ensemble des doublons de conseillers...');
+  logger.info('Suppression des conseillers lié à des permanences avec le statut RUPTURE...');
   conseillers.forEach(conseiller => {
     promises.push(new Promise(async resolve => {
       await db.collection('permanences').updateMany({},
