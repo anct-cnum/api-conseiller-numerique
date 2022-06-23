@@ -12,10 +12,12 @@ execute(__filename, async ({ logger, db }) => {
     promises.push(new Promise(async resolve => {
       await db.collection('permanences').updateMany(
         {
-          $or: [
-            { 'structure.oid': { $ne: conseiller.structureId } },
-            { 'conseillers': { $elemMatch: { $eq: conseiller._id } } },
-            { 'conseillersItinerants': { $elemMatch: { $eq: conseiller._id } } }
+          $and: [
+            { 'structure.$id': { $ne: conseiller.structureId } },
+            { '$or': [
+              { 'conseillers': { $elemMatch: { $eq: conseiller._id } } },
+              { 'conseillersItinerants': { $elemMatch: { $eq: conseiller._id } } }
+            ] }
           ]
         },
         { $pull: { conseillers: conseiller._id, conseillersItinerants: conseiller._id } }
