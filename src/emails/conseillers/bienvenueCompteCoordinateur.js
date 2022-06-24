@@ -4,7 +4,9 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   const render = () => {
-    return mailer.render(__dirname, templateName, { });
+    return mailer.render(__dirname, templateName, {
+      link: utils.getEspaceCoopUrl(`/login`)
+    });
   };
 
   return {
@@ -20,6 +22,7 @@ module.exports = (db, mailer) => {
 
       const onError = async err => {
         utils.setSentryError(err);
+        console.log(err);
       };
       return mailer.createMailer().sendEmail(
         email,
