@@ -174,7 +174,8 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               datePrisePoste: date(datePrisePoste),
               dateFinFormation: date(dateFinFormation),
               structureId: structure._id,
-              userCreated: true
+              userCreated: true,
+              showPermanenceForm: true
             }, $unset: {
               userCreationError: ''
             } });
