@@ -46,10 +46,10 @@ const prettifyAndCompleteCnfsWithoutCRA = () => async CnfsWithoutCRA => {
 };
 
 const getStatsCnfs = async (
-  { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId },
+  { dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId, codeRegion },
   { getStatsCnfs }) => {
   return Promise.all(
-    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId)).map(prettifyAndComplete())
+    (await getStatsCnfs(dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId, codeRegion)).map(prettifyAndComplete())
   );
 };
 

@@ -27,6 +27,7 @@ function filterGroupeCRA(groupeCRA) {
 }
 const filterNom = nom => nom ? { nom: new RegExp(`^${nom}$`, 'i') } : {};
 const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
+const filterCodeRegion = codeRegion => codeRegion ? { 'structure.codeRegion': codeRegion } : {};
 
 const filterCertification = certifie => {
   if (certifie === 'true') {
@@ -51,7 +52,7 @@ const countGetPersonnesAccompagnees = db => async (conseiller, dateDebut, dateFi
   { $project: { 'valeur': '$count' } }
 ]).toArray();
 
-const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId) => {
+const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId, codeRegion) => {
   const conseillers = db.collection('conseillers').aggregate([
     {
       $match: {
@@ -76,6 +77,11 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
       }
     },
     { $unwind: '$structure' },
+    {
+      $match: {
+        ...filterCodeRegion(codeRegion)
+      }
+    },
     {
       $project: {
         '_id': 1,
