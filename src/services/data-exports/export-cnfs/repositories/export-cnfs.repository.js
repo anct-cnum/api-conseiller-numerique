@@ -25,7 +25,7 @@ function filterGroupeCRA(groupeCRA) {
   }
   return {};
 }
-const filterNom = nom => nom ? { nom: new RegExp(`^${nom}$`, 'i') } : {};
+const filterNom = nom => nom ? { '$text': { $search: `"${nom}"` } } : {};
 const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
 const filterCodeRegion = codeRegion => codeRegion ? { 'structure.codeRegion': codeRegion } : {};
 

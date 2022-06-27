@@ -140,9 +140,10 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     slugify.extend({ '-': ' ' });
     slugify.extend({ '\'': ' ' });
     const departements = require('../../data/imports/departements-region.json');
-    let departement = departements.find(d => `${d.num_dep}` === conseiller.codeDepartement);
+    const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
+    let departement = departements.find(d => `${d.num_dep}` === structure.codeDepartement);
     // Cas Saint Martin => on les regroupe au canal département 971 - guadeloupe
-    if (conseiller.codeDepartement === '00' && conseiller.codePostal === '97150') {
+    if (structure.codeDepartement === '00' && structure.codePostal === '97150') {
       departement = departements.find(d => `${d.num_dep}` === '971');
     }
 
@@ -187,7 +188,6 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
       logger.info(resultJoinChannel);
     });
 
-    const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
     const regionName = findDepartement(structure.codeDepartement)?.region_name;
     let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
     if (hub === null) {
