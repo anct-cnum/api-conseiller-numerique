@@ -22,7 +22,6 @@ module.exports = (db, mailer) => {
 
       const onError = async err => {
         utils.setSentryError(err);
-        console.log(err);
       };
       return mailer.createMailer().sendEmail(
         email,
