@@ -193,6 +193,7 @@ module.exports = {
           context.app.get('mongoClient').then(async db => {
             let promises = [];
             let result = [];
+            let total = 0;
             context.result.data.filter(async conseiller => {
               const p = new Promise(async resolve => {
                 const query = context.params.query.codeRegion ?
@@ -207,8 +208,10 @@ module.exports = {
                 }
                 if (context.params.query.codeRegion) {
                   if (structure) {
+                    total++;
                     result.push(conseiller);
                   }
+                  context.result.total = total;
                 } else {
                   result.push(conseiller);
                 }
