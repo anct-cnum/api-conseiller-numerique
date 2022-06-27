@@ -686,7 +686,7 @@ exports.Stats = class Stats extends Service {
           let query = {
             'cra.dateAccompagnement': {
               '$gte': dateDebut,
-              '$lt': dateFin,
+              '$lte': dateFin,
             },
             'conseiller.$id': { $in: ids },
           };
@@ -729,7 +729,7 @@ exports.Stats = class Stats extends Service {
         let query = {
           'cra.dateAccompagnement': {
             '$gte': dateDebut,
-            '$lt': dateFin,
+            '$lte': dateFin,
           },
           'conseiller.$id': { $in: conseillerIds },
         };
@@ -769,7 +769,7 @@ exports.Stats = class Stats extends Service {
         let query = {
           'cra.dateAccompagnement': {
             '$gte': dateDebut,
-            '$lt': dateFin,
+            '$lte': dateFin,
           }
         };
 
