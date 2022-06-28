@@ -13,10 +13,11 @@ const middleware = require('./middleware');
 const services = require('./services');
 const appHooks = require('./app.hooks');
 const channels = require('./channels');
-
 const authentication = require('./authentication');
 
 const mongodb = require('./mongodb');
+
+const mongoose = require('./mongoose');
 
 if (config().sentry.enabled === 'true') {
   Sentry.init({
@@ -39,16 +40,18 @@ if (config().sentry.enabled === 'true') {
   app.use(Sentry.Handlers.errorHandler());
   app.set('sentry', Sentry);
 } else {
-  app.set('sentry', { captureException: () => { } });
+  app.set('sentry', { captureException: () => {} });
 }
 
-app.use(helmet({
-  contentSecurityPolicy: false
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 
 const corsOptions = {
   origin: app.get('cors').whitelist,
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
 app.use(cors(corsOptions));
@@ -59,6 +62,7 @@ app.use(express.urlencoded({ extended: true }));
 app.configure(express.rest());
 
 app.configure(mongodb);
+app.configure(mongoose);
 
 app.configure(middleware);
 app.configure(authentication);
