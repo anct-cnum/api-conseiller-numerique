@@ -3,9 +3,8 @@ const checkPermissions = require('feathers-permissions');
 const { Forbidden } = require('@feathersjs/errors');
 const decode = require('jwt-decode');
 
-const {
-  hashPassword, protect
-} = require('@feathersjs/authentication-local').hooks;
+const { hashPassword, protect } =
+  require('@feathersjs/authentication-local').hooks;
 
 // protect : https://github.com/feathersjs-ecosystem/feathers-authentication-hooks / https://github.com/feathersjs-ecosystem/feathers-permissions
 module.exports = {
@@ -16,7 +15,7 @@ module.exports = {
       checkPermissions({
         roles: ['admin'],
         field: 'roles',
-      })
+      }),
     ],
     get: [
       authenticate('jwt'),
@@ -28,19 +27,24 @@ module.exports = {
         //Restreindre les permissions : les users non admin ne peuvent voir que les informations les concernant
         if (context.params.authentication !== undefined) {
           const user = await getUserBytoken(context);
-          let rolesUserAllowed = user?.roles.filter(role => ['admin'].includes(role));
-          if (rolesUserAllowed.length < 1 && context.id.toString() !== user?._id.toString()) {
+          let rolesUserAllowed = user?.roles.filter(role =>
+            ['admin'].includes(role)
+          );
+          if (
+            rolesUserAllowed.length < 1 &&
+            context.id.toString() !== user?._id.toString()
+          ) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
-      }
+      },
     ],
     create: [
       hashPassword('password'),
       checkPermissions({
         roles: ['admin'],
         field: 'roles',
-      })
+      }),
     ],
     update: [
       hashPassword('password'),
@@ -53,12 +57,17 @@ module.exports = {
         //Restreindre les permissions : les users non admin ne peuvent mettre à jour que les informations les concernant
         if (context.params.authentication !== undefined) {
           const user = await getUserBytoken(context);
-          let rolesUserAllowed = user?.roles.filter(role => ['admin'].includes(role));
-          if (rolesUserAllowed.length < 1 && context.id.toString() !== user?._id.toString()) {
+          let rolesUserAllowed = user?.roles.filter(role =>
+            ['admin'].includes(role)
+          );
+          if (
+            rolesUserAllowed.length < 1 &&
+            context.id.toString() !== user?._id.toString()
+          ) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
-      }
+      },
     ],
     patch: [
       hashPassword('password'),
@@ -71,19 +80,24 @@ module.exports = {
         //Restreindre les permissions : les users non admin ne peuvent mettre à jour que les informations les concernant
         if (context.params.authentication !== undefined) {
           const user = await getUserBytoken(context);
-          let rolesUserAllowed = user?.roles.filter(role => ['admin'].includes(role));
-          if (rolesUserAllowed.length < 1 && context.id.toString() !== user?._id.toString()) {
+          let rolesUserAllowed = user?.roles.filter(role =>
+            ['admin'].includes(role)
+          );
+          if (
+            rolesUserAllowed.length < 1 &&
+            context.id.toString() !== user?._id.toString()
+          ) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
-      }
+      },
     ],
     remove: [
       authenticate('jwt'),
       checkPermissions({
         roles: ['admin'],
         field: 'roles',
-      })
+      }),
     ],
   },
 
@@ -91,14 +105,14 @@ module.exports = {
     all: [
       // Make sure the password field is never sent to the client
       // Always must be the last hook
-      protect('password')
+      protect('password'),
     ],
     find: [],
     get: [],
     create: [],
     update: [],
     patch: [],
-    remove: []
+    remove: [],
   },
 
   error: {
@@ -108,8 +122,8 @@ module.exports = {
     create: [],
     update: [],
     patch: [],
-    remove: []
-  }
+    remove: [],
+  },
 };
 
 //Get User by Token
