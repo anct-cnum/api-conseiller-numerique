@@ -10,13 +10,13 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       })
     ],
     find: [
       checkPermissions({
-        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop'],
+        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop', 'coordinateur_coop'],
         field: 'roles',
       }),
       context => {
@@ -64,6 +64,10 @@ module.exports = {
         if (context.params.query.structureId) {
           context.params.query.structureId = new ObjectID(context.params.query.structureId);
         }
+        if (context.params.query.codeRegion) {
+          // partie de query utilisé pour le after (codeRegion pour la structure associée)
+          context.params.query.codeRegion = { $ne: parseInt(context.params.query.codeRegion) };
+        }
 
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
@@ -73,8 +77,9 @@ module.exports = {
     ],
     get: [
       async context => {
-        //Restreindre les permissions : les conseillers et candidats ne peuvent voir que les informations les concernant
-        if (context.params?.user?.roles.includes('conseiller') || context.params?.user?.roles.includes('candidat')) {
+        //Restreindre les permissions : les conseillers (non coordinateur) et candidats ne peuvent voir que les informations les concernant
+        if ((context.params?.user?.roles.includes('conseiller') && !context.params?.user?.roles.includes('coordinateur_coop')) ||
+          context.params?.user?.roles.includes('candidat')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
@@ -89,7 +94,7 @@ module.exports = {
     ],
     update: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -103,7 +108,7 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -188,11 +193,12 @@ module.exports = {
           context.app.get('mongoClient').then(async db => {
             let promises = [];
             let result = [];
+            let total = 0;
             context.result.data.filter(async conseiller => {
               const p = new Promise(async resolve => {
-                const structure = await db.collection('structures').findOne({
-                  '_id': conseiller.structureId
-                });
+                const query = context.params.query.codeRegion ?
+                  { '_id': conseiller.structureId, 'codeRegion': context.params.query.codeRegion['$ne'].toString() } : { '_id': conseiller.structureId };
+                const structure = await db.collection('structures').findOne(query);
                 const nombreCra = await db.collection('cras').countDocuments({
                   'conseiller.$id': conseiller._id
                 });
@@ -200,7 +206,15 @@ module.exports = {
                   conseiller.nomStructure = structure?.nom;
                   conseiller.craCount = nombreCra;
                 }
-                result.push(conseiller);
+                if (context.params.query.codeRegion) {
+                  if (structure) {
+                    total++;
+                    result.push(conseiller);
+                  }
+                  context.result.total = total;
+                } else {
+                  result.push(conseiller);
+                }
                 resolve();
               });
               promises.push(p);

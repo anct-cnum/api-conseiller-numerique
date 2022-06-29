@@ -9,7 +9,7 @@ module.exports = {
       search({ escape: false })],
     get: [authenticate('jwt'),
       checkPermissions({
-        roles: ['conseiller', 'admin_coop', 'structure_coop', 'hub_coop'],
+        roles: ['conseiller', 'admin_coop', 'structure_coop', 'hub_coop', 'coordinateur_coop'],
         field: 'roles',
       })],
     create: [],

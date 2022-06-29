@@ -10,7 +10,8 @@ const validateExportCnfsSchema = exportTerritoiresInput => Joi.object({
   certifie: Joi.boolean().error(new Error('Le filtre certifie est invalide')),
   groupeCRA: Joi.number().error(new Error('Le filtre groupe CRA est invalide')),
   nom: Joi.string().error(new Error('le filtre nom est invalide')),
-  structureId: Joi.string().error(new Error('le filtre structureId est invalide'))
+  structureId: Joi.string().error(new Error('le filtre structureId est invalide')),
+  codeRegion: Joi.string().error(new Error('le filtre codeRegion est invalide'))
 }).validate(exportTerritoiresInput);
 
 const isUserActifIdDefined = isUserActif => isUserActif !== undefined ? { isUserActif } : {};
@@ -22,6 +23,8 @@ const groupeCRAIfDefined = groupeCRA => groupeCRA !== undefined ? { groupeCRA } 
 const byNameIfDefined = nom => nom !== undefined ? { nom } : {};
 
 const byStructureIdIfDefined = structureId => structureId !== undefined ? { structureId } : {};
+
+const byCodeRegionIfDefined = codeRegion => codeRegion ? { codeRegion } : {};
 
 const orderingDefined = sort => {
   if (sort === undefined) {
@@ -43,7 +46,8 @@ const exportCnfsQueryToSchema = query => {
     ...certifieIfDefined(query.certifie),
     ...groupeCRAIfDefined(query.groupeCRA),
     ...byNameIfDefined(query.$search),
-    ...byStructureIdIfDefined(query.structureId)
+    ...byStructureIdIfDefined(query.structureId),
+    ...byCodeRegionIfDefined(query.codeRegion)
   };
 };
 
@@ -67,6 +71,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'Activé',
     'CRA Saisis'
   ];
+
   if (user.roles.includes('admin_coop')) {
     fileHeaders.splice(0, 0, 'Id du conseiller');
     fileHeaders[6] = 'Code Postal du conseiller';
@@ -118,6 +123,36 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
       ].join(csvCellSeparator))
     ].join(csvLineSeparator);
   }
+
+  if (user.roles.includes('coordinateur_coop')) {
+    fileHeaders.push('Nom Supérieur hiérarchique');
+    fileHeaders.push('Prénom supérieur hiérarchique');
+    fileHeaders.push('Fonction supérieur hiérarchique');
+    fileHeaders.push('Email supérieur hiérarchique');
+    fileHeaders.push('Numéro téléphone supérieur hiérarchique');
+    return [
+      fileHeaders.join(csvCellSeparator),
+      ...statsCnfs.map(statCnfs => [
+        statCnfs.prenom,
+        statCnfs.nom,
+        statCnfs.email,
+        statCnfs?.emailCN?.address ?? 'compte COOP non créé',
+        statCnfs?.nomStructure.replace(/["',]/g, ''),
+        statCnfs.codePostal,
+        statCnfs.datePrisePoste,
+        statCnfs.dateFinFormation,
+        statCnfs.certifie,
+        statCnfs.isUserActif,
+        statCnfs.craCount,
+        statCnfs?.supHierarchique?.nom,
+        statCnfs?.supHierarchique?.prenom,
+        statCnfs?.supHierarchique?.fonction,
+        statCnfs?.supHierarchique?.email,
+        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`
+      ].join(csvCellSeparator))
+    ].join(csvLineSeparator);
+  }
+
   return [
     fileHeaders.join(csvCellSeparator),
     ...statsCnfs.map(statCnfs => [
@@ -136,9 +171,36 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
   ].join(csvLineSeparator);
 };
 
+const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
+  const fileHeaders = [
+    'Nom',
+    'Prénom',
+    'Email @conseiller-numerique.fr',
+    'Code Postal du conseiller',
+    'Code département du conseiller',
+    'Numéro de téléphone du conseiller',
+    'Date d\'envoi du mail M+1',
+    'Date d\'envoi du mail M+1,5'
+  ];
+  return [
+    fileHeaders.join(csvCellSeparator),
+    ...conseillers.map(conseiller => [
+      conseiller.nom,
+      conseiller.prenom,
+      conseiller.emailCN.address,
+      conseiller.codePostal,
+      conseiller.codeDepartement,
+      conseiller.telephone,
+      conseiller.date1Mois,
+      conseiller.date1MoisEtDemi
+    ].join(csvCellSeparator))
+  ].join(csvLineSeparator);
+};
+
 module.exports = {
   validateExportCnfsSchema,
   exportCnfsQueryToSchema,
   getExportCnfsFileName,
-  buildExportCnfsCsvFileContent
+  buildExportCnfsCsvFileContent,
+  buildExportCnfsWithoutCRACsvFileContent
 };

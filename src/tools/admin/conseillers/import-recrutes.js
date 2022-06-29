@@ -174,7 +174,8 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               datePrisePoste: date(datePrisePoste),
               dateFinFormation: date(dateFinFormation),
               structureId: structure._id,
-              userCreated: true
+              userCreated: true,
+              showPermanenceForm: true
             }, $unset: {
               userCreationError: ''
             } });
@@ -220,9 +221,9 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             const nom = slugify(`${conseillerUpdated.nom}`, { replacement: '-', lower: true, strict: true });
             const prenom = slugify(`${conseillerUpdated.prenom}`, { replacement: '-', lower: true, strict: true });
             const login = await fixHomonymesCreateMailbox(gandi, nom, prenom, db);
-            const password = uuidv4() + 'AZEdsf;+:'; // Sera choisi par le conseiller via invitation
+            const password = uuidv4() + 'AZEdsf;+:!'; // Sera choisi par le conseiller via invitation
             await createMailbox({ gandi, db, logger, Sentry: Sentry })({ conseillerId: conseillerUpdated._id, login, password });
-            await sleep(1000);
+            await sleep(6000);
 
             count++;
           }

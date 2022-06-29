@@ -15,9 +15,11 @@ const {
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { updatePermanenceToSchema, updatePermanencesToSchema } = require('./permanence/utils/update-permanence.utils');
 const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
-  deleteConseillerPermanence, updatePermanences, updateConseillerStatut } = require('./permanence/repositories/permanence-conseiller.repository');
+  deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences
+} = require('./permanence/repositories/permanence-conseiller.repository');
 
 const axios = require('axios');
+const { lieuxDeMediationNumerique } = require('./permanence/core/lieux-de-mediation-numerique.core');
 
 exports.PermanenceConseillers = class Sondages extends Service {
   constructor(options, app) {
@@ -25,6 +27,17 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.get('mongoClient').then(db => {
       this.Model = db.collection('permanences');
+    });
+
+    app.get('/permanences/', async (req, res) => {
+      const db = await app.get('mongoClient');
+
+      await lieuxDeMediationNumerique({
+        getPermanences: getPermanences(db)
+      }).then(lieux => res.send(lieux)).catch(error => {
+        app.get('sentry').captureException(error);
+        logger.error(error);
+      });
     });
 
     app.get('/permanences/:id', async (req, res) => {

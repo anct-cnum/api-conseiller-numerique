@@ -67,7 +67,7 @@ const getPersonnesAccompagnees = db => async (dateDebut, dateFin, conseillerIds)
   'conseiller.$id': {
     $in: conseillerIds
   },
-  'createdAt': {
+  'cra.dateAccompagnement': {
     $gte: dateDebut,
     $lte: dateFin,
   }

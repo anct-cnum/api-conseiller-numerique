@@ -9,6 +9,7 @@ const motDePasseOublie = require('./commun/motDePasseOublie');
 const renouvellementCompte = require('./commun/renouvellementCompte');
 const candidatPointRecrutement = require('./conseillers/candidatPointRecrutement');
 const bienvenueCompteConseiller = require('./conseillers/bienvenueCompteConseiller');
+const bienvenueCompteCoordinateur = require('./conseillers/bienvenueCompteCoordinateur');
 const candidatPixEnAttente = require('./conseillers/candidatPixEnAttente');
 const creationCompteConseiller = require('./conseillers/creationCompteConseiller');
 const confirmeNouveauEmail = require('./confirmeChangeEmail/confirmeNouveauEmail');
@@ -49,6 +50,7 @@ module.exports = (db, mailer, app, logger) => {
     renouvellementCompte(db, mailer),
     candidatPointRecrutement(db, mailer),
     bienvenueCompteConseiller(db, mailer),
+    bienvenueCompteCoordinateur(db, mailer),
     candidatPixEnAttente(db, mailer),
     creationCompteConseiller(db, mailer),
     pixOrgaConseiller(db, mailer),
