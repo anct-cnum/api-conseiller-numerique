@@ -7,7 +7,7 @@ const { execute } = require('../utils');
 
 execute(__filename, async ({ logger, db }) => {
   const conseillersids = await db.collection('cras').distinct('conseiller.$id', { 'cra.themes': { $in: ['demarche en ligne'] } });
-  console.log('conseillersids:', conseillersids);
+
   let promises = [];
 
   logger.info(`Generating CSV file...`);
