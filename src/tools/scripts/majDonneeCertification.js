@@ -113,8 +113,8 @@ execute(__filename, async ({ logger, db }) => {
               }
               totalConseillersExecution++;
               if (totalConseillersExecution === conseillers.length) {
-                logger.info('conseiller certifié: ' + nbCertifieAndNonCertifie[0]);
-                logger.info('conseiller non certifié: ' + nbCertifieAndNonCertifie[1]);
+                logger.info('conseillers certifié: ' + nbCertifieAndNonCertifie[0]);
+                logger.info('conseillers non certifié: ' + nbCertifieAndNonCertifie[1]);
                 logger.info('mis à jour de la certification des conseillers');
                 exit();
               }
