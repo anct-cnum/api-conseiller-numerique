@@ -64,9 +64,9 @@ module.exports = {
         if (context.params.query.structureId) {
           context.params.query.structureId = new ObjectID(context.params.query.structureId);
         }
-        if (context.params.query.codeRegion) {
+        if (context.params.query.codeRegionBystructure) {
           // partie de query utilisé pour le after (codeRegion pour la structure associée)
-          context.params.query.codeRegion = { $ne: parseInt(context.params.query.codeRegion) };
+          context.params.query.codeRegionBystructure = context.params.query.codeRegionBystructure.toString();
         }
 
         if (context.params.query.$search) {
@@ -195,9 +195,7 @@ module.exports = {
             let result = [];
             context.result.data.filter(async conseiller => {
               const p = new Promise(async resolve => {
-                const query = context.params.query.codeRegion ?
-                  { '_id': conseiller.structureId, 'codeRegion': context.params.query.codeRegion['$ne'].toString() } : { '_id': conseiller.structureId };
-                const structure = await db.collection('structures').findOne(query);
+                const structure = await db.collection('structures').findOne({ '_id': conseiller.structureId });
                 const nombreCra = await db.collection('cras').countDocuments({
                   'conseiller.$id': conseiller._id
                 });
@@ -205,14 +203,7 @@ module.exports = {
                   conseiller.nomStructure = structure?.nom;
                   conseiller.craCount = nombreCra;
                 }
-                if (context.params.query.codeRegion) {
-                  if (structure) {
-                    result.push(conseiller);
-                  }
-
-                } else {
-                  result.push(conseiller);
-                }
+                result.push(conseiller);
                 resolve();
               });
               promises.push(p);
