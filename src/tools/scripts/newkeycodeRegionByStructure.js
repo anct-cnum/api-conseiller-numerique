@@ -17,6 +17,6 @@ execute(__filename, async ({ logger, db }) => {
     }));
   });
   await Promise.all(promises);
-  logger.info(`Tout les conseillers ont bien eut la nouvelle clé ( ${count} au total )`);
+  logger.info(`Tous les conseillers ont bien eu la nouvelle clé région ( ${count} au total )`);
 });
 
