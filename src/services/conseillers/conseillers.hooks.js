@@ -64,9 +64,9 @@ module.exports = {
         if (context.params.query.structureId) {
           context.params.query.structureId = new ObjectID(context.params.query.structureId);
         }
-        if (context.params.query.codeRegionBystructure) {
+        if (context.params.query.codeRegionStructure) {
           // partie de query utilisé pour le after (codeRegion pour la structure associée)
-          context.params.query.codeRegionBystructure = context.params.query.codeRegionBystructure.toString();
+          context.params.query.codeRegionStructure = context.params.query.codeRegionStructure.toString();
         }
 
         if (context.params.query.$search) {

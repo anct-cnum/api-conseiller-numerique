@@ -169,7 +169,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             }
             await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, { $set: {
               statut: 'RECRUTE',
-              codeRegionBystructure: structure.codeRegion,
+              codeRegionStructure: structure.codeRegion,
               disponible: false,
               estRecrute: true,
               datePrisePoste: date(datePrisePoste),
