@@ -12,9 +12,8 @@ program.parse(process.argv);
 
 const conseillersToExcelFileHeaders = [
   'idPG',
-  'nom',
   'prenom',
-  'email',
+  'nom',
   'certifie'
 ];
 
@@ -27,9 +26,8 @@ const writeConseillersToExcelInCSVFile = conseillersToExcel => {
   conseillersToExcel.forEach(conseillerToExcel => {
     const fileLine = [
       conseillerToExcel.idPG,
-      conseillerToExcel.nom,
       conseillerToExcel.prenom,
-      conseillerToExcel.email,
+      conseillerToExcel.nom,
       conseillerToExcel.certifie
     ];
 
@@ -54,10 +52,9 @@ const readExcel = async file => {
   const start = 2;
   // Colonnes Excel
   const IDPG = 1;
-  const NOM = 2;
-  const PRENOM = 3;
-  const EMAIL = 4;
-  const CERTIFIE = 5;
+  const PRENOM = 2;
+  const NOM = 3;
+  const CERTIFIE = 4;
 
   const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
   const listConseiller = [];
@@ -71,15 +68,13 @@ const readExcel = async file => {
         continue;
       }
       const idPG = row.getCell(IDPG).value;
-      const nom = row.getCell(NOM).value;
       const prenom = row.getCell(PRENOM).value;
-      const email = row.getCell(EMAIL).value;
+      const nom = row.getCell(NOM).value;
       const certifie = row.getCell(CERTIFIE).value;
       listConseiller.push({
         'idPG': idPG,
-        'nom': nom,
         'prenom': prenom,
-        'email': email,
+        'nom': nom,
         'certifie': certifie
       });
     }
@@ -90,28 +85,45 @@ const readExcel = async file => {
 
 execute(__filename, async ({ logger, db }) => {
   let promises = [];
-  readExcel(program.file).then(async conseillers => {
-    if (!conseillers.length) {
-      logger.info('le fichier ne correspond pas au fichier attendu');
-      exit();
-    }
-    const pathCsvFile = writeConseillersToExcelInCSVFile(conseillers);
-    readCSV(pathCsvFile).then(async conseillers => {
-      conseillers.forEach(conseiller => {
-        promises.push(new Promise(async resolve => {
-          const existConseillerWithStatut = await db.collection('conseillers').findOne({
-            'idPG': parseInt(conseiller.idPG),
-            'statut': 'RECRUTE',
-            'certifie': { $exists: false }
+  let totalConseillersExecution = 0;
+  await new Promise(() => {
+    readExcel(program.file).then(async conseillers => {
+      if (!conseillers.length) {
+        logger.info('le fichier ne correspond pas au fichier attendu');
+        exit();
+      }
+      const pathCsvFile = writeConseillersToExcelInCSVFile(conseillers);
+      const nbCertifieAndNonCertifie = [0, 0];
+      await new Promise(() => {
+        readCSV(pathCsvFile).then(async conseillers => {
+          conseillers.forEach(conseiller => {
+            let promise = new Promise(async () => {
+              const existConseillerWithStatut = await db.collection('conseillers').findOne({
+                'idPG': parseInt(conseiller.idPG),
+                'statut': { $in: ['RECRUTE', 'RUPTURE'] }
+              });
+              if (existConseillerWithStatut !== null && conseiller.certifie === 'oui') {
+                nbCertifieAndNonCertifie[0] += 1;
+                await db.collection('conseillers').updateOne({ idPG: parseInt(conseiller.idPG) }, { $set: { certifie: true } });
+              } else if (existConseillerWithStatut !== null && conseiller.certifie === 'non') {
+                nbCertifieAndNonCertifie[1] += 1;
+                await db.collection('conseillers').updateOne({ idPG: parseInt(conseiller.idPG) }, { $unset: { certifie: '' } });
+              } else {
+                logger.warn(conseiller.idPG);
+              }
+              totalConseillersExecution++;
+              if (totalConseillersExecution === conseillers.length) {
+                logger.info('conseillers certifié: ' + nbCertifieAndNonCertifie[0]);
+                logger.info('conseillers non certifié: ' + nbCertifieAndNonCertifie[1]);
+                logger.info('mis à jour de la certification des conseillers');
+                exit();
+              }
+            });
+            promises.push(promise);
           });
-          if (existConseillerWithStatut !== null) {
-            await db.collection('conseillers').updateOne({ idPG: parseInt(conseiller.idPG) }, { $set: { certifie: true } });
-            resolve();
-          }
-        }));
+        });
       });
     });
-    await Promise.all(promises);
-    logger.info('mis à jour de la certification des conseillers');
   });
+  await Promise.all(promises);
 });
