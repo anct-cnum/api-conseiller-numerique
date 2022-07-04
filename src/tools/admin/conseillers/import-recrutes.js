@@ -163,7 +163,8 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                     '$ref': `${role}s`,
                     '$id': conseillerOriginal._id, //nécessaire si compte candidat pas sur le même doublon
                     '$db': dbName
-                  }
+                  },
+                  showPermanenceForm: true
                 }
               });
             }
@@ -175,8 +176,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               datePrisePoste: date(datePrisePoste),
               dateFinFormation: date(dateFinFormation),
               structureId: structure._id,
-              userCreated: true,
-              showPermanenceForm: true
+              userCreated: true
             }, $unset: {
               userCreationError: ''
             } });
