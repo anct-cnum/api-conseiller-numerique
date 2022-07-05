@@ -36,6 +36,7 @@ module.exports = {
         }
 
         context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
+        context.data.dateFinDeContrat = parseStringToDate(context.data.dateFinDeContrat);
 
         return context;
       }
@@ -78,8 +79,31 @@ module.exports = {
             }
           }
         }
+
+        if (context.data?.statut === 'nouvelle_rupture') {
+          const structureId = context.params?.user?.entity?.oid;
+          const structure = await context.app.service('structures').get(structureId);
+          //Vérification si structure non null
+          if (structure === null) {
+            throw new NotFound('Structure introuvable avec l\'id : ', structureId);
+          }
+          //Vérification de la présence d'une date de recrutement
+          const misesEnRelationNouvelleRupture = await context.app.service('misesEnRelation').find({
+            query: { '_id': new ObjectID(context.id) }
+          });
+          if (misesEnRelationNouvelleRupture.data[0].dateFinDeContrat === null) {
+            throw new BadRequest('La date de fin de contrat doit être obligatoirement renseignée.');
+          }
+          if (misesEnRelationNouvelleRupture.data[0].motifFinDeContrat === null) {
+            throw new BadRequest('Le motif de fin de contrat doit être obligatoirement renseigné.');
+          }
+        }
+
         if (context.data.dateRecrutement) {
           context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
+        }
+        if (context.data.dateFinDeContrat) {
+          context.data.dateFinDeContrat = parseStringToDate(context.data.dateFinDeContrat);
         }
         return context;
       }
