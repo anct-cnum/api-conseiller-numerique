@@ -37,14 +37,14 @@ execute(__filename, async ({ db, logger, exit }) => {
               {
                 $set: { estCoordinateur: true }
               });
-            count++;
           } else {
             await db.collection('conseillers').updateOne({ idPG: parseInt(conseiller.idPG) }, { $unset: { estCoordinateur: '' } });
           }
+          count++;
         }
 
         if (count === conseillers.length) {
-          logger.info(`${count} conseillers sont devenus coordinateur`);
+          logger.info('mis à jour des conseillers qui ont le rôle coordinateur');
           exit();
         }
       });
