@@ -175,12 +175,9 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
 
               await db.collection('permanences').updateMany(
                 {
-                  $and: [
-                    { 'structure.$id': { $ne: conseillerCoop.structureId } },
-                    { '$or': [
-                      { 'conseillers': { $elemMatch: { $eq: conseillerCoop._id } } },
-                      { 'conseillersItinerants': { $elemMatch: { $eq: conseillerCoop._id } } }
-                    ] }
+                  $or: [
+                    { 'conseillers': { $elemMatch: { $eq: conseillerCoop._id } } },
+                    { 'conseillersItinerants': { $elemMatch: { $eq: conseillerCoop._id } } }
                   ]
                 },
                 { $pull: { conseillers: conseillerCoop._id, conseillersItinerants: conseillerCoop._id } }
