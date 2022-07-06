@@ -1,27 +1,35 @@
 const { ObjectId } = require('mongodb');
 
-const getPermanences = db => async () =>
-  await db.collection('permanences').aggregate([
-    {
-      $lookup: {
-        localField: 'structure.$id',
-        from: 'structures',
-        foreignField: '_id',
-        pipeline: [
-          {
-            $project: {
-              _id: 0,
-              siret: 1,
-              estLabelliseFranceServices: 1,
-              estLabelliseAidantsConnect: 1
-            }
+const getPermanences = db => async () => await db.collection('permanences').aggregate([
+  {
+    $addFields: {
+      'entity': {
+        $arrayElemAt: [{ $objectToArray: '$structure' }, 1]
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: 'structures',
+      let: { idStructure: '$entity.v' },
+      as: 'structure',
+      pipeline: [
+        {
+          $match: { $expr: { $eq: ['$$idStructure', '$_id'] } },
+        },
+        {
+          $project: {
+            '_id': 0,
+            'siret': 1,
+            'estLabelliseFranceServices': 1,
+            'estLabelliseAidantsConnect': 1
           }
-        ],
-        as: 'structure',
-      },
-    },
-    { $unwind: '$structure' },
-  ]).toArray();
+        }
+      ]
+    }
+  },
+  { $unwind: '$structure' }
+]).toArray();
 
 const getPermanenceById = db => async permanenceId => {
   return await db.collection('permanences').findOne({ '_id': new ObjectId(permanenceId) });
