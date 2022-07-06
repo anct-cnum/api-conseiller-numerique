@@ -9,14 +9,9 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
     }
   },
   {
-    $addFields: {
-      'entity': '$entity.v'
-    }
-  },
-  {
     $lookup: {
       from: 'structures',
-      let: { idStructure: '$entity' },
+      let: { idStructure: '$entity.v' },
       as: 'structure',
       pipeline: [
         {
