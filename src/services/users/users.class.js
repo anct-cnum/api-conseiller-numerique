@@ -206,7 +206,7 @@ exports.Users = class Users extends Service {
     app.patch('/users/sendEmailUpdate/:id', async (req, res) => {
       const nouveauEmail = req.body.name;
       const idUser = req.params.id;
-      const emailValidation = Joi.string().email().error(new Error('Le format de l\'email est invalide')).validate(nouveauEmail);
+      const emailValidation = Joi.string().email().required().error(new Error('Le format de l\'email est invalide')).validate(nouveauEmail);
       if (emailValidation.error) {
         res.status(400).json(new BadRequest(emailValidation.error));
         return;
