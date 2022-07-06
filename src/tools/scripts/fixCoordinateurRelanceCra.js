@@ -28,18 +28,14 @@ execute(__filename, async ({ db, logger, exit }) => {
     readCSV(program.csv).then(async conseillers => {
       await new Promise(async () => {
         for (const conseiller of conseillers) {
-          if (conseiller.estCoordinateur === 'oui') {
-            await db.collection('conseillers').updateOne(
-              {
-                idPG: parseInt(conseiller.idPG),
-                estCoordinateur: { $exists: false }
-              },
-              {
-                $set: { estCoordinateur: true }
-              });
-          } else {
-            await db.collection('conseillers').updateOne({ idPG: parseInt(conseiller.idPG) }, { $unset: { estCoordinateur: '' } });
-          }
+          await db.collection('conseillers').updateOne(
+            {
+              idPG: parseInt(conseiller.idPG),
+              estCoordinateur: { $exists: false }
+            },
+            {
+              $set: { estCoordinateur: true }
+            });
           count++;
         }
 
