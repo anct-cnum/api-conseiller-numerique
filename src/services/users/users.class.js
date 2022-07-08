@@ -679,6 +679,12 @@ exports.Users = class Users extends Service {
         return;
       }
       const password = req.body.password;
+      // eslint-disable-next-line max-len
+      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
+      if (passwordValidation.error) {
+        res.status(400).json(new BadRequest(passwordValidation.error));
+        return;
+      }
       const conseillerId = user?.entity?.oid;
       const gandi = app.get('gandi');
       const Sentry = app.get('sentry');
