@@ -356,7 +356,14 @@ exports.Users = class Users extends Service {
     app.post('/users/inviteStructure', async (req, res) => {
       const email = req.body.email;
       const structureId = req.body.structureId;
-
+      const schema = Joi.object({
+        email: Joi.string().email().required().error(new Error('Le format de l\'email est invalide')),
+        structureId: Joi.string().required().error(new Error('Id de la structure est invalide')),
+      }).validate(req.body);
+      if (schema.error) {
+        res.status(400).json(new BadRequest(schema.error));
+        return;
+      }
       app.get('mongoClient').then(async db => {
         const verificationEmail = await db.collection('users').countDocuments({ name: email });
         if (verificationEmail !== 0) {
