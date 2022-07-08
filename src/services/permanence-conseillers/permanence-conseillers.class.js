@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { Conflict, GeneralError } = require('@feathersjs/errors');
+const { Conflict, GeneralError, BadRequest } = require('@feathersjs/errors');
 const logger = require('../../logger');
 
 const {
@@ -13,7 +13,7 @@ const {
 } = require('../../common/utils/feathers.utils');
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
-const { updatePermanenceToSchema, updatePermanencesToSchema } = require('./permanence/utils/update-permanence.utils');
+const { updatePermanenceToSchema, updatePermanencesToSchema, validationPermamences } = require('./permanence/utils/update-permanence.utils');
 const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
   deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences
 } = require('./permanence/repositories/permanence-conseiller.repository');
@@ -115,31 +115,37 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
       const conseillerId = req.params.id;
       const { showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
+        rolesGuard(user._id, [Role.Conseiller], () => user),
       ).then(async () => {
-        await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
-          if (idOldPermanence) {
-            deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
-              return res.send({ isCreated: true });
-            }).catch(error => {
-              app.get('sentry').captureException(error);
-              logger.error(error);
-              return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
-            });
-          } else {
-            return res.send({ isCreated: true });
+        await validationPermamences({ ...query, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur }).then(error => {
+          if (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            return res.status(409).send(new BadRequest(error).toJSON());
           }
-
+          return createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+            if (idOldPermanence) {
+              // eslint-disable-next-line max-nested-callbacks
+              return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
+                return res.send({ isCreated: true });
+              // eslint-disable-next-line max-nested-callbacks
+              }).catch(error => {
+                app.get('sentry').captureException(error);
+                logger.error(error);
+                return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+              });
+            } else {
+              return res.send({ isCreated: true });
+            }
+          });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(409).send(new Conflict('La création de permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
-
     });
 
     app.patch('/permanences/conseiller/:id/update/:idPermanence', async (req, res) => {
