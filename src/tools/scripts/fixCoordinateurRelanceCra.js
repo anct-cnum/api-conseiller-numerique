@@ -25,13 +25,13 @@ execute(__filename, async ({ db, logger, exit }) => {
   let count = 0;
 
   await new Promise(() => {
-    readCSV(program.csv).then(async conseillers => {
+    readCSV(program.csv).then(async ressources => {
       await new Promise(async () => {
-        for (const conseiller of conseillers) {
+        for (const ressource of ressources) {
           await db.collection('conseillers').updateOne(
             {
-              idPG: parseInt(conseiller.idPG),
-              estCoordinateur: { $exists: false }
+              'emailCN.address': ressource.conseiller,
+              'estCoordinateur': { $exists: false }
             },
             {
               $set: { estCoordinateur: true }
@@ -39,8 +39,7 @@ execute(__filename, async ({ db, logger, exit }) => {
           count++;
         }
 
-        if (count === conseillers.length) {
-          logger.info('mis à jour des conseillers qui ont le rôle coordinateur');
+        if (count === ressources.length) {
           exit();
         }
       });
