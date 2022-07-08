@@ -40,6 +40,7 @@ execute(__filename, async ({ db, logger, exit }) => {
         }
 
         if (count === ressources.length) {
+          logger.info(`${count} conseillers ont obtenu le flag coordinateur`);
           exit();
         }
       });
