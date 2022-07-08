@@ -3,6 +3,8 @@ const dayjs = require('dayjs');
 
 const formatDate = dateFin => dayjs(new Date(dateFin)).format('DD/MM/YYYY');
 
+const formatDateAndAdd15days = dateFin => dayjs(new Date(dateFin)).add(15, 'day').format('DD/MM/YYYY');
+
 const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined && emailCNError !== undefined ? 'Oui' : 'Non';
 
 const formatAdresseStructure = insee => {
@@ -40,8 +42,8 @@ const prettifyAndComplete = () => async statCnfs => {
 const prettifyAndCompleteCnfsWithoutCRA = () => async CnfsWithoutCRA => {
   return {
     ...CnfsWithoutCRA,
-    date1MoisEtDemi: formatDate(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1,5']),
-    date1Mois: formatDate(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1'])
+    date1MoisEtDemi: formatDateAndAdd15days(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1,5']),
+    date1Mois: formatDateAndAdd15days(getFormatHistoriqueGroupeCRA(-1, CnfsWithoutCRA.groupeCRAHistorique)[0]['dateMailSendConseillerM+1'])
   };
 };
 
