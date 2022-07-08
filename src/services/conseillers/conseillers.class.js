@@ -789,6 +789,11 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { disponible } = req.body;
+      const disponibleValidation = Joi.boolean().required().error(new Error('Le format de la disponibilité est invalide')).validate(disponible);
+      if (disponibleValidation.error) {
+        res.status(400).json(new BadRequest(disponibleValidation.error));
+        return;
+      }
       const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
       if (!conseiller) {
         res.status(404).send(new NotFound('Conseiller n\'existe pas', {
