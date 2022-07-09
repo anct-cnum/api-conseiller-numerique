@@ -87,7 +87,7 @@ module.exports = {
           if (structure === null) {
             throw new NotFound('Structure introuvable avec l\'id : ', structureId);
           }
-          //Vérification de la présence d'une date de recrutement
+          //Vérification de la présence d'une date de fin de contrat et d'un motif
           const misesEnRelationNouvelleRupture = await context.app.service('misesEnRelation').find({
             query: { '_id': new ObjectID(context.id) }
           });
