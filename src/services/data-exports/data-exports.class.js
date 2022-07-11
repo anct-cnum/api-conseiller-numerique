@@ -437,7 +437,7 @@ exports.DataExports = class DataExports {
         if (conseillers.length) {
           csvFileResponse(res, 'export_cnfs_m2.csv', `${await buildExportCnfsWithoutCRACsvFileContent(conseillers, user)}`);
         } else {
-          res.status(404).send(new NotFound('Aucun conseillers')).toJSON();
+          res.status(404).send(new NotFound('Aucun conseillers'));
         }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

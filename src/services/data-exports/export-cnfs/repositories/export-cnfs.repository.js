@@ -131,7 +131,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
   return arrayConseillers;
 };
 
-const getCnfsWithoutCRA = db => async () => await db.collection('conseillers').find({
+const getCnfsWithoutCRA = db => async datePlus15jours => await db.collection('conseillers').find({
   'groupeCRA': { $eq: 4 },
   'statut': { $eq: 'RECRUTE' },
   'estCoordinateur': { $exists: false },
@@ -139,6 +139,7 @@ const getCnfsWithoutCRA = db => async () => await db.collection('conseillers').f
     $elemMatch: {
       'nbJourDansGroupe': { $exists: false },
       'mailSendConseillerM+1,5': true,
+      'dateMailSendConseillerM+1,5': { $lte: datePlus15jours },
       'mailSendConseillerM+1': true
     }
   }
