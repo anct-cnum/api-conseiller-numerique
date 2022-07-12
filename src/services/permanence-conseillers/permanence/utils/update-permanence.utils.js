@@ -79,7 +79,7 @@ const validationPermanences = permanences => {
   const regExpSiteWeb = new RegExp(/(https?):\/\/[a-z0-9\\/:%_+.,#?!@&=-]+/);
   const regExpSiret = new RegExp(/^$|^[0-9]{14}$/);
   const { error } = Joi.object({
-    estCoordinateur: Joi.boolean().required().allow(true, false).error(new Error('Votre rôle doit obligatoirement être saisie')),
+    estCoordinateur: Joi.boolean().required().allow(true, false).error(new Error('Votre rôle doit obligatoirement être saisi')),
     estStructure: Joi.boolean().allow(true, false).required().error(new Error('Un lieu d\'activité doit obligatoirement être saisi')),
     numeroTelephone: Joi.string().trim().allow('', null).pattern(regExpNumero).error(new Error('Un numéro de téléphone valide doit être saisi')),
     nomEnseigne: Joi.string().trim().required().error(new Error('Un lieu d\'activité doit obligatoirement être saisi')),
