@@ -21,6 +21,7 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
   const conseillers = await db.collection('conseillers').find({
     'groupeCRA': { $eq: 4 },
     'statut': { $eq: 'RECRUTE' },
+    'estCoordinateur': { $exists: false },
     'groupeCRAHistorique': {
       $elemMatch: {
         'nbJourDansGroupe': { $exists: false },
