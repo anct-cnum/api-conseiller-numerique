@@ -224,7 +224,7 @@
       ],
       "max-nested-callbacks": [
         1,
-        4
+        5
       ],
       "max-statements-per-line": "error",
       "new-cap": [
