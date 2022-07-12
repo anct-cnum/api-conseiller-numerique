@@ -119,25 +119,24 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await validationPermamences({ ...query, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur }).then(async error => {
-          if (error) {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            return res.status(409).send(new BadRequest(error).toJSON());
-          }
-          await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
-            if (idOldPermanence) {
-              return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
-                return res.send({ isCreated: true });
-              }).catch(error => {
-                app.get('sentry').captureException(error);
-                logger.error(error);
-                return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
-              });
-            } else {
+        const error = await validationPermamences({ ...query, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur });
+        if (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(409).send(new BadRequest(error).toJSON());
+        }
+        await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+          if (idOldPermanence) {
+            return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isCreated: true });
-            }
-          });
+            }).catch(error => {
+              app.get('sentry').captureException(error);
+              logger.error(error);
+              return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+            });
+          } else {
+            return res.send({ isCreated: true });
+          }
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
@@ -161,27 +160,26 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await validationPermamences({ ...query, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur }).then( async error => {
-          if (error) {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            return res.status(409).send(new BadRequest(error).toJSON());
-          }
-          await setPermanence(db)(permanenceId, query, conseillerId, user._id, showPermanenceForm, hasPermanence,
-            telephonePro, emailPro, estCoordinateur).then(() => {
+        const error = await validationPermamences({ ...query, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur });
+        if (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(409).send(new BadRequest(error).toJSON());
+        }
+        await setPermanence(db)(permanenceId, query, conseillerId, user._id, showPermanenceForm, hasPermanence,
+          telephonePro, emailPro, estCoordinateur).then(() => {
 
-            if (idOldPermanence) {
-              deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
-                return res.send({ isUpdated: true });
-              }).catch(error => {
-                app.get('sentry').captureException(error);
-                logger.error(error);
-                return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
-              });
-            } else {
+          if (idOldPermanence) {
+            deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isUpdated: true });
-            }
-          });
+            }).catch(error => {
+              app.get('sentry').captureException(error);
+              logger.error(error);
+              return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+            });
+          } else {
+            return res.send({ isUpdated: true });
+          }
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
