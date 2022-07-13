@@ -59,6 +59,45 @@ const getPermanenceById = db => async id => db.collection('permanences').aggrega
   }
 ]).toArray();
 
+const checkMultipleStructureInLocation = db => async coordinates => db.collection('permanences').countDocuments(
+  { 'location.coordinates': coordinates }
+);
+
+const getPermanenceBylocation = db => async coordinates => db.collection('permanences').aggregate([
+  {
+    $match: {
+      'location.coordinates': coordinates
+    }
+  },
+  {
+    $lookup:
+      {
+        from: 'conseillers',
+        localField: 'conseillers',
+        foreignField: '_id',
+        as: 'conseillers'
+      }
+  },
+  {
+    $project: {
+      _id: 0,
+      horaires: 1,
+      conseillers: {
+        $map: {
+          input: '$conseillers',
+          as: 'conseiller',
+          in: {
+            prenom: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.prenom', 'Anonyme'] },
+            nom: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.nom', ''] },
+            email: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.emailPro', ''] },
+            phone: { $cond: [{ $ne: ['$$conseiller.nonAffichageCarto', true] }, '$$conseiller.telephonePro', ''] },
+          }
+        }
+      }
+    }
+  }
+]).toArray();
+
 const getStructureById = db => async id => db.collection('structures').findOne({
   _id: new ObjectId(id),
 }, {
@@ -92,6 +131,8 @@ const permanenceRepository = db => ({
   getConseillerById: getConseillerById(db),
   getPermanenceById: getPermanenceById(db),
   getStructureById: getStructureById(db),
+  checkMultipleStructureInLocation: checkMultipleStructureInLocation(db),
+  getPermanenceBylocation: getPermanenceBylocation(db),
   getCnfs: getCnfs(db),
 });
 
