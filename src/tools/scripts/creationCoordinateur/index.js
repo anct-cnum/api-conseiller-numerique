@@ -28,6 +28,13 @@ const updateUserRole = db => async idConseiller => {
   );
 };
 
+const updateConseillerIsCoordinateur = db => async idConseiller => {
+  await db.collection('conseillers').updateOne(
+    { '_id': idConseiller },
+    { $set: { estCoordinateur: true } }
+  );
+};
+
 const getListeExistante = db => async idConseiller => {
   const conseiller = await db.collection('conseillers').findOne({
     '_id': idConseiller
@@ -125,6 +132,8 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
               listFinale = setListeFinale(idSubordonnes, listeExistante);
               await addListSubordonnes(db)(idCoordinateur, listFinale, 'conseillers');
+            } else {
+              await updateConseillerIsCoordinateur(db)(idCoordinateur);
             }
 
             resolve();

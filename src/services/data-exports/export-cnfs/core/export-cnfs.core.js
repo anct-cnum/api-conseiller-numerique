@@ -53,7 +53,10 @@ const getStatsCnfs = async (
   );
 };
 
-const getCnfsWithoutCRA = async ({ getCnfsWithoutCRA }) => Promise.all((await getCnfsWithoutCRA()).map(prettifyAndCompleteCnfsWithoutCRA()));
+const getCnfsWithoutCRA = async ({ getCnfsWithoutCRA }) => {
+  const dateMoins15jours = new Date(dayjs(Date.now()).subtract(15, 'day'));
+  return Promise.all((await getCnfsWithoutCRA(dateMoins15jours)).map(prettifyAndCompleteCnfsWithoutCRA()));
+};
 
 const userConnected = async (db, authentication) => await db.collection('users').findOne({ _id: new ObjectID(authentication[1]) });
 
