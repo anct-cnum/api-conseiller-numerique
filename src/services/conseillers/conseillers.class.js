@@ -637,7 +637,13 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
-      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
+      
+      if (hasMultipleStructure > 1) {
+        const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
+        permanence = await aggregationByLocation(permanencesByLocation, permanence);
+      }
 
       canActivate(
         existGuard(conseiller ?? permanence),
@@ -654,11 +660,11 @@ exports.Conseillers = class Conseillers extends Service {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
       let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
 
-      const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.localisation.coordinates);
       if (hasMultipleStructure > 1) {
         const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
-        permanence = aggregationByLocation(permanencesByLocation, permanence);
+        permanence = await aggregationByLocation(permanencesByLocation, permanence);
       }
 
       canActivate(
