@@ -36,7 +36,7 @@ module.exports = {
         }
 
         context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
-        context.data.dateFinDeContrat = parseStringToDate(context.data.dateFinDeContrat);
+        context.data.dateRupture = parseStringToDate(context.data.dateRupture);
 
         return context;
       }
@@ -91,19 +91,31 @@ module.exports = {
           const misesEnRelationNouvelleRupture = await context.app.service('misesEnRelation').find({
             query: { '_id': new ObjectID(context.id) }
           });
-          if (misesEnRelationNouvelleRupture.data[0].dateFinDeContrat === null) {
-            throw new BadRequest('La date de fin de contrat doit être obligatoirement renseignée.');
+          if (misesEnRelationNouvelleRupture.data[0].dateRupture === null) {
+            throw new BadRequest('La date de rupture doit être obligatoirement renseignée.');
           }
-          if (misesEnRelationNouvelleRupture.data[0].motifFinDeContrat === null) {
-            throw new BadRequest('Le motif de fin de contrat doit être obligatoirement renseigné.');
+          if (misesEnRelationNouvelleRupture.data[0].motifRupture === null) {
+            throw new BadRequest('Le motif de rupture doit être obligatoirement renseigné.');
           }
+
+          context.data.emetteurRupture = {
+            email: context.params.user.name,
+            date: new Date()
+          };
+        }
+
+        // Cas annulation de la demande de rupture
+        if (context.data?.statut === 'finalisee') {
+          context.data.emetteurRupture = null;
+          context.data.dateRupture = null;
+          context.data.motifRupture = null;
         }
 
         if (context.data.dateRecrutement) {
           context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
         }
-        if (context.data.dateFinDeContrat) {
-          context.data.dateFinDeContrat = parseStringToDate(context.data.dateFinDeContrat);
+        if (context.data.dateRupture) {
+          context.data.dateRupture = parseStringToDate(context.data.dateRupture);
         }
         return context;
       }
