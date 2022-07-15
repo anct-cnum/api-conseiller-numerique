@@ -60,7 +60,7 @@ const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
-const { permanenceDetailsFromStructureId, permanenceDetails } = require('./permanence/core/permanence-details.core');
+const { permanenceDetailsFromStructureId, permanenceDetails, aggregationByLocation } = require('./permanence/core/permanence-details.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -637,7 +637,13 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
-      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
+      
+      if (hasMultipleStructure > 1) {
+        const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
+        permanence = await aggregationByLocation(permanencesByLocation, permanence);
+      }
 
       canActivate(
         existGuard(conseiller ?? permanence),
@@ -653,7 +659,13 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
-      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
+
+      if (hasMultipleStructure > 1) {
+        const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
+        permanence = await aggregationByLocation(permanencesByLocation, permanence);
+      }
 
       canActivate(
         existGuard(conseiller ?? permanence),
