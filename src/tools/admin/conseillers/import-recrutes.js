@@ -164,7 +164,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                     '$id': conseillerOriginal._id, //nécessaire si compte candidat pas sur le même doublon
                     '$db': dbName
                   },
-                  showPermanenceForm: true
                 }
               });
             }

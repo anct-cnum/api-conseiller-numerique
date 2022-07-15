@@ -114,13 +114,13 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
 
       const conseillerId = req.params.id;
-      const { showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
+      const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await createPermanence(db)(query, conseillerId, user._id, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await createPermanence(db)(query, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
           if (idOldPermanence) {
             deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isCreated: true });
@@ -151,13 +151,13 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
       const conseillerId = req.params.id;
       const permanenceId = req.params.idPermanence;
-      const { showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
+      const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await setPermanence(db)(permanenceId, query, conseillerId, user._id, showPermanenceForm, hasPermanence,
+        await setPermanence(db)(permanenceId, query, conseillerId, hasPermanence,
           telephonePro, emailPro, estCoordinateur).then(() => {
 
           if (idOldPermanence) {
@@ -316,7 +316,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await updateConseillerStatut(db)(user._id, conseillerId).then(() => {
+        await updateConseillerStatut(db)(conseillerId).then(() => {
           return res.send({ isUpdated: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
