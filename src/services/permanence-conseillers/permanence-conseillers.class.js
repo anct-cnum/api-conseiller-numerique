@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { Conflict, GeneralError } = require('@feathersjs/errors');
+const { Conflict, GeneralError, BadRequest } = require('@feathersjs/errors');
 const logger = require('../../logger');
 
 const {
@@ -13,7 +13,7 @@ const {
 } = require('../../common/utils/feathers.utils');
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
-const { updatePermanenceToSchema, updatePermanencesToSchema } = require('./permanence/utils/update-permanence.utils');
+const { updatePermanenceToSchema, updatePermanencesToSchema, validationPermamences } = require('./permanence/utils/update-permanence.utils');
 const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
   deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences
 } = require('./permanence/repositories/permanence-conseiller.repository');
@@ -120,9 +120,15 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
+        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
+        if (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(409).send(new BadRequest(error).toJSON());
+        }
         await createPermanence(db)(query, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
           if (idOldPermanence) {
-            deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
+            return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isCreated: true });
             }).catch(error => {
               app.get('sentry').captureException(error);
@@ -132,14 +138,12 @@ exports.PermanenceConseillers = class Sondages extends Service {
           } else {
             return res.send({ isCreated: true });
           }
-
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(409).send(new Conflict('La création de permanence a échoué, veuillez réessayer.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
-
     });
 
     app.patch('/permanences/conseiller/:id/update/:idPermanence', async (req, res) => {
@@ -157,7 +161,13 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await setPermanence(db)(permanenceId, query, conseillerId, hasPermanence,
+        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
+        if (error) {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(409).send(new BadRequest(error).toJSON());
+        }
+        await setPermanence(db)(permanenceId, query, conseillerId, user._id, hasPermanence,
           telephonePro, emailPro, estCoordinateur).then(() => {
 
           if (idOldPermanence) {
