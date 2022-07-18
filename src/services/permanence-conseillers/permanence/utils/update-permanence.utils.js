@@ -26,7 +26,6 @@ const assignPermanence = (body, conseillerId, database) => {
   delete permanence.telephonePro;
   delete permanence.emailPro;
   delete permanence.estCoordinateur;
-  delete permanence.showPermanenceForm;
   delete permanence.hasPermanence;
   delete permanence.idOldPermanence;
 
@@ -106,7 +105,6 @@ const validationPermanences = permanences => {
     structure: Joi.object().error(new Error('Erreur sur le format de la structure')),
     updatedAt: Joi.date().error(new Error('Erreur sur le format du updateAt')),
     updatedBy: Joi.object().error(new Error('Erreur sur le format du updatedBy')),
-    showPermanenceForm: Joi.boolean().error(new Error('Erreur sur le format du showPermanenceForm')),
     hasPermanence: Joi.boolean().error(new Error('Erreur sur le format du hasPermanence')),
   }).validate(permanences);
   return error;
