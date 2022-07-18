@@ -4,6 +4,7 @@ const { BadRequest, NotFound, Forbidden, NotAuthenticated, GeneralError, Conflic
 
 const { Service } = require('feathers-mongodb');
 
+const Joi = require('joi');
 const axios = require('axios');
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
@@ -327,7 +328,11 @@ exports.Structures = class Structures extends Service {
         }).toJSON());
         return;
       }
-
+      const emailValidation = Joi.string().email().required().error(new Error('Le format de l\'email est invalide')).validate(email);
+      if (emailValidation.error) {
+        res.status(400).json(new BadRequest(emailValidation.error));
+        return;
+      }
       const structure = await db.collection('structures').findOne({ _id: new ObjectID(structureId) });
       if (!structure) {
         return res.status(404).send(new NotFound('Structure not found', {

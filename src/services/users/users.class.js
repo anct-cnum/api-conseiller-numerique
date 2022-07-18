@@ -356,7 +356,14 @@ exports.Users = class Users extends Service {
     app.post('/users/inviteStructure', async (req, res) => {
       const email = req.body.email;
       const structureId = req.body.structureId;
-
+      const schema = Joi.object({
+        email: Joi.string().email().required().error(new Error('Le format de l\'email est invalide')),
+        structureId: Joi.string().required().error(new Error('Id de la structure est invalide')),
+      }).validate(req.body);
+      if (schema.error) {
+        res.status(400).json(new BadRequest(schema.error));
+        return;
+      }
       app.get('mongoClient').then(async db => {
         const verificationEmail = await db.collection('users').countDocuments({ name: email });
         if (verificationEmail !== 0) {
@@ -672,6 +679,12 @@ exports.Users = class Users extends Service {
         return;
       }
       const password = req.body.password;
+      // eslint-disable-next-line max-len
+      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
+      if (passwordValidation.error) {
+        res.status(400).json(new BadRequest(passwordValidation.error));
+        return;
+      }
       const conseillerId = user?.entity?.oid;
       const gandi = app.get('gandi');
       const Sentry = app.get('sentry');
