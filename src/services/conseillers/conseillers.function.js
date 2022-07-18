@@ -286,41 +286,48 @@ const countConseillers = db => async query => {
 const getConseillersByCoordinateurId = db => async (idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options) => {
   const coordinateur = await db.collection('conseillers').findOne({ '_id': idCoordinateur });
   let conseillers = {};
+  if (coordinateur?.listeSubordonnes?.type) {
+    let query = { };
 
-  let query = { };
+    switch (filtreProfil) {
+      case 'active':
+        query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: true } };
+        break;
+      case 'inactive':
+        query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: false } };
+        break;
+      default:
+        query = { 'statut': 'RECRUTE' };
+        break;
+    }
 
-  switch (filtreProfil) {
-    case 'active':
-      query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: true } };
-      break;
-    case 'inactive':
-      query = { 'statut': 'RECRUTE', 'mattermost.id': { $exists: false } };
-      break;
-    default:
-      query = { 'statut': 'RECRUTE' };
-      break;
+    query.datePrisePoste = { '$gte': dateDebut, '$lte': dateFin };
+
+    switch (coordinateur.listeSubordonnes.type) {
+      case 'conseillers':
+        query._id = { '$in': coordinateur.listeSubordonnes.liste };
+        break;
+      case 'codeRegion':
+        query.codeRegion = { '$in': coordinateur.listeSubordonnes.liste };
+        break;
+      case 'codeDepartement':
+        query.codeDepartement = { '$in': coordinateur.listeSubordonnes.liste };
+        break;
+      default:
+        break;
+    }
+
+    conseillers.data = await getConseillersListe(db)(query, ordreNom, ordre, page, Number(options.paginate.default));
+    conseillers.total = await countConseillers(db)(query);
+    conseillers.limit = options.paginate.default;
+    conseillers.skip = Number(page);
+  } else {
+    conseillers.data = [];
+    conseillers.total = 0;
+    conseillers.limit = 0;
+    conseillers.skip = 0;
   }
 
-  query.datePrisePoste = { '$gte': dateDebut, '$lte': dateFin };
-
-  switch (coordinateur.listeSubordonnes.type) {
-    case 'conseillers':
-      query._id = { '$in': coordinateur.listeSubordonnes.liste };
-      break;
-    case 'codeRegion':
-      query.codeRegion = { '$in': coordinateur.listeSubordonnes.liste };
-      break;
-    case 'codeDepartement':
-      query.codeDepartement = { '$in': coordinateur.listeSubordonnes.liste };
-      break;
-    default:
-      break;
-  }
-
-  conseillers.data = await getConseillersListe(db)(query, ordreNom, ordre, page, Number(options.paginate.default));
-  conseillers.total = await countConseillers(db)(query);
-  conseillers.limit = options.paginate.default;
-  conseillers.skip = Number(page);
   return conseillers;
 };
 
