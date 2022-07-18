@@ -336,7 +336,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       //Verification existence CV du conseiller
       if (!conseiller.cv?.file) {
-        res.status(404).send(new NotFound('le CV du conseiller n\'existe pas', {
+        res.status(404).send(new NotFound('Le CV du conseiller n\'existe plus', {
           conseillerId: user.entity.oid
         }).toJSON());
         return;
