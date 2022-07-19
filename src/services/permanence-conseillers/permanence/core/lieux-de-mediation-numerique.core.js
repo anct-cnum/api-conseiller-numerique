@@ -5,9 +5,16 @@ const URL_REGEXP = /^(?:https?:\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\
 
 const removeAllSpaces = string => string?.replaceAll(' ', '') ?? null;
 
-const removeAllSpacesAndDots = telephone => removeAllSpaces(telephone.replaceAll('.', ''));
+const formatPhone = telephone => removeAllSpaces(
+  telephone
+  .replaceAll('.', '')
+  .replaceAll('+330', '+33')
+);
 
 const removeAllSpacesAndDuplicateHttpPrefix = siteWeb => removeAllSpaces(siteWeb?.replace('https://www.http', 'http'));
+
+const addMissingHttpsPrefix = siteWeb =>
+  siteWeb && (siteWeb.startsWith('https://') || siteWeb.startsWith('http://')) ? siteWeb : `https://${siteWeb}`;
 
 const removeSuperfluousSpaces = string => string?.trim().replaceAll(/\s+/g, ' ') ?? null;
 
@@ -34,7 +41,7 @@ const coordonneesGPSIfAny = coordinates => coordinates ? {
 } : {};
 
 const telephoneIfAny = telephone => telephone ? {
-  telephone: removeAllSpacesAndDots(telephone)
+  telephone: formatPhone(telephone)
 } : {};
 
 const courrielIfAny = courriel => courriel ? {
@@ -42,7 +49,7 @@ const courrielIfAny = courriel => courriel ? {
 } : {};
 
 const siteWebIfAny = siteWeb => {
-  const fixedSiteWeb = removeAllSpacesAndDuplicateHttpPrefix(siteWeb);
+  const fixedSiteWeb = addMissingHttpsPrefix(removeAllSpacesAndDuplicateHttpPrefix(siteWeb));
 
   return fixedSiteWeb && URL_REGEXP.test(fixedSiteWeb) ? {
     site_web: fixedSiteWeb

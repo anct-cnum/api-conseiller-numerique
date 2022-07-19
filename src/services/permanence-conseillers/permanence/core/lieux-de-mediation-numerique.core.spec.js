@@ -614,6 +614,37 @@ describe('lieux de médiation numérique', () => {
     ]);
   });
 
+  it('devrait avoir un numéro de téléphone avec indicatif international sans 0 supplémentaire', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      numeroTelephone: '+330562636539'
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        telephone: '+33562636539',
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
+      }
+    ]);
+  });
+
   it('devrait avoir une adresse email', async () => {
     const permanence = {
       _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
@@ -687,6 +718,37 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: 'https://www.laquincaillerie.tl/',
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        site_web: 'https://www.laquincaillerie.tl/',
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
+      }
+    ]);
+  });
+
+  it('devrait avoir un site web avec un préfix https', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      siteWeb: 'www.laquincaillerie.tl/',
     };
 
     const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
