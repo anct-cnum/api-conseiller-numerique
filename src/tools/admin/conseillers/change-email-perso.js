@@ -9,6 +9,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.option('-t, --type <type>', `type: candidat ou conseiller`);
   program.option('-u, --user', `user: changement également dans user`);
+  program.option('-ech, --echange', `echange: echange des emails entre les 2 profils`);
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -16,6 +17,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   let email = program.email;
   let type = program.type;
   let user = program.user;
+  let echange = program.echange ?? false;
 
   if (id === 0 || !email) {
     exit('Paramètres invalides. Veuillez préciser un id et le nouveau email à changer');
@@ -25,14 +27,21 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     exit('Paramètres invalides. Veuillez préciser un type: candidat ou conseiller');
     return;
   }
+  const conseiller = await db.collection('conseillers').findOne({ idPG: id });
   if (type === 'candidat' || user) {
-    const emailCount = await db.collection('users').countDocuments({ name: email });
-    if (emailCount === 1) {
-      exit(`L'email : ${email} est dédà existant dans la collection users`);
+    let emailCount = await db.collection('users').countDocuments({ name: email });
+    if (emailCount === 1 && !echange) {
+      exit(`L'email : ${email} est déjà existant dans la collection users`);
       return;
     }
+    // Au cas où si il y a un doublon qui empeche le changement, temporaire le met un 'change'pour éviter d'etre bloqué lors du changement plus bas
+    if (echange) {
+      const compteExistants = await db.collection('users').findOne({ name: email });
+      await db.collection('conseillers').updateOne({ _id: compteExistants.entity.oid }, { '$set': { email: `change${conseiller.email}` } });
+      await db.collection('users').updateOne({ _id: compteExistants._id }, { '$set': { name: `change${conseiller.email}` } });
+    }
   }
-  const conseiller = await db.collection('conseillers').findOne({ idPG: id });
+
   const { roles } = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
 
   if (conseiller === null) {
@@ -63,7 +72,10 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     if (type === 'candidat' || user) {
       await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { name: email } });
     }
-
+    if (echange) {
+      await db.collection('conseillers').updateOne({ email: `change${conseiller.email}` }, { '$set': { email: `${conseiller.email}` } });
+      await db.collection('users').updateOne({ name: `change${conseiller.email}` }, { '$set': { name: `${conseiller.email}` } });
+    }
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
