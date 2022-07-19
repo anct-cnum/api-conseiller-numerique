@@ -106,6 +106,25 @@ module.exports = {
 
         // Cas annulation de la demande de rupture
         if (context.data?.statut === 'finalisee') {
+          //Limite du nombre de candidats à recruter
+          const structureId = context.params?.user?.entity?.oid;
+          const structure = await context.app.service('structures').get(structureId);
+          const dernierCoselec = utils.getCoselec(structure);
+          if (dernierCoselec !== null) {
+            //Nombre de candidats déjà recrutés pour cette structure
+            const misesEnRelationRecrutees = await context.app.service('misesEnRelation').find({
+              query: {
+                'statut': { $in: ['recrutee', 'finalisee'] },
+                'structure.$id': new ObjectID(structureId)
+              },
+              paginate: false //important pour ne pas être limité par la pagination
+            });
+            if (misesEnRelationRecrutees.length >= dernierCoselec.nombreConseillersCoselec) {
+              //eslint-disable-next-line max-len
+              throw new Forbidden('Action non autorisée : quota atteint de conseillers validés par rapport au nombre de postes attribués', dernierCoselec.nombreConseillersCoselec);
+            }
+          }
+
           context.data.emetteurRupture = null;
           context.data.dateRupture = null;
           context.data.motifRupture = null;
