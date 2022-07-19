@@ -28,6 +28,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
   const conseiller = await db.collection('conseillers').findOne({ idPG: id });
+  const compteExistants = await db.collection('users').findOne({ name: email });
   if (type === 'candidat' || user) {
     let emailCount = await db.collection('users').countDocuments({ name: email });
     if (emailCount === 1 && !echange) {
@@ -36,7 +37,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     }
     // Au cas où si il y a un doublon qui empeche le changement, temporaire le met un 'change'pour éviter d'etre bloqué lors du changement plus bas
     if (echange) {
-      const compteExistants = await db.collection('users').findOne({ name: email });
       await db.collection('conseillers').updateOne({ _id: compteExistants.entity.oid }, { '$set': { email: `change${conseiller.email}` } });
       await db.collection('users').updateOne({ _id: compteExistants._id }, { '$set': { name: `change${conseiller.email}` } });
     }
@@ -75,6 +75,10 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     if (echange) {
       await db.collection('conseillers').updateOne({ email: `change${conseiller.email}` }, { '$set': { email: `${conseiller.email}` } });
       await db.collection('users').updateOne({ name: `change${conseiller.email}` }, { '$set': { name: `${conseiller.email}` } });
+      await db.collection('misesEnRelation').updateMany(
+        { 'conseiller.$id': compteExistants._id },
+        { $set: { 'conseillerObj.email': conseiller.email }
+        });
     }
   } catch (error) {
     logger.error(error);
