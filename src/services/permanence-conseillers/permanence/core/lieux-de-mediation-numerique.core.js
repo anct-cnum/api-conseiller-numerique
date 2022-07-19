@@ -5,9 +5,16 @@ const URL_REGEXP = /^(?:https?:\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\
 
 const removeAllSpaces = string => string?.replaceAll(' ', '') ?? null;
 
-const removeAllSpacesAndDots = telephone => removeAllSpaces(telephone.replaceAll('.', ''));
+const formatPhone = telephone => removeAllSpaces(
+  telephone
+  .replaceAll('.', '')
+  .replaceAll('+330', '+33')
+);
 
 const removeAllSpacesAndDuplicateHttpPrefix = siteWeb => removeAllSpaces(siteWeb?.replace('https://www.http', 'http'));
+
+const addMissingHttpsPrefix = siteWeb =>
+  siteWeb && (siteWeb.startsWith('https://') || siteWeb.startsWith('http://')) ? siteWeb : `https://${siteWeb}`;
 
 const removeSuperfluousSpaces = string => string?.trim().replaceAll(/\s+/g, ' ') ?? null;
 
@@ -24,13 +31,17 @@ const removeNullStrings = string => string
 .replaceAll('null null', '')
 .replaceAll('null ', '');
 
+const pivotIfAny = pivot => pivot ? {
+  pivot: removeAllSpaces(pivot)
+} : {};
+
 const coordonneesGPSIfAny = coordinates => coordinates ? {
   latitude: coordinates[1],
   longitude: coordinates[0]
 } : {};
 
 const telephoneIfAny = telephone => telephone ? {
-  telephone: removeAllSpacesAndDots(telephone)
+  telephone: formatPhone(telephone)
 } : {};
 
 const courrielIfAny = courriel => courriel ? {
@@ -38,7 +49,7 @@ const courrielIfAny = courriel => courriel ? {
 } : {};
 
 const siteWebIfAny = siteWeb => {
-  const fixedSiteWeb = removeAllSpacesAndDuplicateHttpPrefix(siteWeb);
+  const fixedSiteWeb = addMissingHttpsPrefix(removeAllSpacesAndDuplicateHttpPrefix(siteWeb));
 
   return fixedSiteWeb && URL_REGEXP.test(fixedSiteWeb) ? {
     site_web: fixedSiteWeb
@@ -72,45 +83,37 @@ const CNFS_COMMON_SERVICES = [
   'Approfondir ma culture numérique'
 ].join(', ');
 
-const structureParenteIfAny = (siretStructure, siret) => siretStructure && siretStructure !== siret ? {
-  structure_parente: siretStructure.substring(0, 9)
-} : {};
-
 const dateMajIfAny = updatedAt => updatedAt ? {
   date_maj: updatedAt.toISOString().substring(0, 10)
 } : {};
 
 
-const labelsNationauxIfAny = structure => {
-  const labelsNationaux = [
+const labelsNationauxIfAny = structure => ({
+  labels_nationaux: [
+    'CNFS',
     ...(structure?.estLabelliseAidantsConnect === 'OUI') ? ['Aidants Connect'] : [],
     ...(structure?.estLabelliseFranceServices === 'OUI') ? ['France Services'] : []
-  ].join(', ');
-
-  return labelsNationaux ? {
-    labels_nationaux: labelsNationaux
-  } : {};
-};
+  ].join(', ')
+});
 
 const lieuxDeMediationNumerique = async ({ getPermanences }) =>
   (await getPermanences()).map(permanence => ({
-    id: removeAllSpaces(permanence.siret),
+    id: permanence._id,
     nom: removeSuperfluousSpaces(permanence.nomEnseigne),
     commune: removeSuperfluousSpaces(permanence.adresse?.ville),
     code_postal: removeAllSpaces(permanence.adresse?.codePostal),
-    code_insee: 'MISSING',
     adresse: removeSuperfluousSpaces(removeNullStrings([permanence.adresse.numeroRue, permanence.adresse.rue].join(' '))),
-    services: CNFS_COMMON_SERVICES,
     ...coordonneesGPSIfAny(permanence.location?.coordinates),
     ...telephoneIfAny(permanence.numeroTelephone),
     ...courrielIfAny(permanence.email),
     ...siteWebIfAny(permanence.siteWeb),
     ...osmOpeningHoursIfAny(toTimeTable(permanence.horaires)),
     source: 'conseiller-numerique',
-    ...structureParenteIfAny(permanence.structure?.siret, permanence.siret),
     ...dateMajIfAny(permanence.updatedAt),
-    modalites_access: 'Gratuit',
+    services: CNFS_COMMON_SERVICES,
+    conditions_access: 'Gratuit',
     ...labelsNationauxIfAny(permanence.structure),
+    ...pivotIfAny(permanence.siret),
   })).filter(invalidLieux);
 
 module.exports = {

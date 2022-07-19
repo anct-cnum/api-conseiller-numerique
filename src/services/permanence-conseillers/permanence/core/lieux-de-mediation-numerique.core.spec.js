@@ -3,6 +3,36 @@ const { lieuxDeMediationNumerique, CNFS_COMMON_SERVICES } = require('./lieux-de-
 describe('lieux de médiation numérique', () => {
   it('devrait avoir les informations obligatoires du schéma de médiation numérique', async () => {
     const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      }
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
+      }
+    ]);
+  });
+
+  it('devrait avoir un pivot avec le siret comme valeur', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       siret: '43493312300029',
       nomEnseigne: 'Anonymal',
       adresse: {
@@ -17,21 +47,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        pivot: '43493312300029',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
-  it('devrait avoir un id qui ne contient aucun espace', async () => {
+  it('devrait avoir un pivot qui ne contient aucun espace', async () => {
     const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       siret: '4349331 2300029 ',
       nomEnseigne: 'Anonymal',
       adresse: {
@@ -46,61 +78,27 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        pivot: '43493312300029',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
-  it('devrait exclure les lieux dont l\'id est null', async () => {
-    const permanence = {
-      siret: null,
-      nomEnseigne: 'Anonymal',
-      adresse: {
-        ville: 'Reims',
-        codePostal: '51100',
-        numeroRue: '12 BIS',
-        rue: 'RUE DE LECLERCQ'
-      }
-    };
-
-    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
-
-    expect(lieux).toStrictEqual([]);
-  });
-
-  it('devrait exclure les lieux dont l\'id est vide', async () => {
-    const permanence = {
-      siret: '',
-      nomEnseigne: 'Anonymal',
-      adresse: {
-        ville: 'Reims',
-        codePostal: '51100',
-        numeroRue: '12 BIS',
-        rue: 'RUE DE LECLERCQ'
-      }
-    };
-
-    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
-
-    expect(lieux).toStrictEqual([]);
-  });
-
   it('devrait avoir un nom', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
         codePostal: '51100',
-        code_insee: 'MISSING',
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       }
@@ -110,27 +108,26 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un nom sans espaces superflus', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: ' Association  Anonymal  ',
       adresse: {
         ville: 'Reims',
         codePostal: '51100',
-        code_insee: 'MISSING',
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       }
@@ -140,22 +137,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Association Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait exclure les lieux dont le nom est null', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: null,
       adresse: {
         ville: 'Reims',
@@ -172,7 +169,7 @@ describe('lieux de médiation numérique', () => {
 
   it('devrait exclure les lieux dont le nom est vide', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: '',
       adresse: {
         ville: 'Reims',
@@ -189,7 +186,7 @@ describe('lieux de médiation numérique', () => {
 
   it('devrait avoir une commune', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -203,22 +200,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une commune sans espaces superflus', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: ' Villeneuve  sur Eure  ',
@@ -232,22 +229,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Villeneuve sur Eure',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un code postal', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -261,22 +258,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un code postal sans espaces', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -290,22 +287,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait filtrer les codes postaux nuls', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -322,7 +319,7 @@ describe('lieux de médiation numérique', () => {
 
   it('devrait filtrer les codes postaux vides', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -339,7 +336,7 @@ describe('lieux de médiation numérique', () => {
 
   it('devrait avoir un code INSEE', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -353,22 +350,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une adresse', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -382,22 +379,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une adresse sans espaces superflus', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -411,22 +408,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une adresse sans le motif "null "', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -440,22 +437,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une adresse sans le motif "null null"', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -472,7 +469,7 @@ describe('lieux de médiation numérique', () => {
 
   it('devrait filtrer une adresse dont la voie et le numéro de rue sont nuls', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -489,7 +486,7 @@ describe('lieux de médiation numérique', () => {
 
   it('devrait avoir une latitude et une longitude', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -509,24 +506,24 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         latitude: 43.52609,
         longitude: 5.41423,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un numéro de téléphone', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -541,23 +538,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         telephone: '+33180059880',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un numéro de téléphone sans espaces', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -572,23 +569,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         telephone: '+33180059880',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un numéro de téléphone sans points', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -603,23 +600,54 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         telephone: '+33180059880',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
+      }
+    ]);
+  });
+
+  it('devrait avoir un numéro de téléphone avec indicatif international sans 0 supplémentaire', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      numeroTelephone: '+330562636539'
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        telephone: '+33562636539',
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une adresse email', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -634,23 +662,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         courriel: 'contact@laquincaillerie.tl',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une adresse email sans espaces', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -665,23 +693,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         courriel: 'contact@laquincaillerie.tl',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un site web', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -696,23 +724,54 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         site_web: 'https://www.laquincaillerie.tl/',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
+      }
+    ]);
+  });
+
+  it('devrait avoir un site web avec un préfix https', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      siteWeb: 'www.laquincaillerie.tl/',
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        site_web: 'https://www.laquincaillerie.tl/',
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un site web sans espaces', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -727,23 +786,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         site_web: 'https://www.laquincaillerie.tl/',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir un site web avec un seul préfixe http(s)://', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -758,23 +817,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         site_web: 'https://www.laquincaillerie.tl/',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait convertir les horaires au format OSM pour une permanence qui ouvre tous les jours à des heures différentes', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -860,88 +919,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         horaires: 'Mo 09:30-10:45; Tu 11:15-12:45; We 13:30-14:25; Th 8:00-9:25,15:00-16:05; Fr 16:20-17:15; Sa 18:30-19:00; Su 19:50-23:55',
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
-      }
-    ]);
-  });
-
-  it('devrait avoir une structure parente quand un siret est défini pour la structure liée à la permanence', async () => {
-    const permanence = {
-      siret: '43493312300029',
-      nomEnseigne: 'Anonymal',
-      adresse: {
-        ville: 'Reims',
-        codePostal: '51100',
-        numeroRue: '12 BIS',
-        rue: 'RUE DE LECLERCQ'
-      },
-      structure: {
-        siret: '13000548100012'
-      }
-    };
-
-    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
-
-    expect(lieux).toStrictEqual([
-      {
-        id: '43493312300029',
-        nom: 'Anonymal',
-        commune: 'Reims',
-        code_postal: '51100',
-        code_insee: 'MISSING',
-        adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
-        source: 'conseiller-numerique',
-        modalites_access: 'Gratuit',
-        structure_parente: '130005481'
-      }
-    ]);
-  });
-
-  it('devrait pas avoir une structure parente quand le siret est de la structure correspond à celui de la permanence', async () => {
-    const permanence = {
-      siret: '43493312300029',
-      nomEnseigne: 'Anonymal',
-      adresse: {
-        ville: 'Reims',
-        codePostal: '51100',
-        numeroRue: '12 BIS',
-        rue: 'RUE DE LECLERCQ'
-      },
-      structure: {
-        siret: '43493312300029'
-      }
-    };
-
-    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
-
-    expect(lieux).toStrictEqual([
-      {
-        id: '43493312300029',
-        nom: 'Anonymal',
-        commune: 'Reims',
-        code_postal: '51100',
-        code_insee: 'MISSING',
-        adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
-        source: 'conseiller-numerique',
-        modalites_access: 'Gratuit'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir une date de mise à jour', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -956,23 +950,23 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit',
-        date_maj: '2022-06-02'
+        conditions_access: 'Gratuit',
+        date_maj: '2022-06-02',
+        labels_nationaux: 'CNFS'
       }
     ]);
   });
 
   it('devrait avoir le label France Services', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -989,23 +983,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit',
-        labels_nationaux: 'France Services'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS, France Services'
       }
     ]);
   });
 
   it('devrait avoir le label Aidants Connect', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -1022,23 +1015,22 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit',
-        labels_nationaux: 'Aidants Connect'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS, Aidants Connect'
       }
     ]);
   });
 
   it('devrait avoir le label Aidants Connect et le label France Services', async () => {
     const permanence = {
-      siret: '43493312300029',
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
@@ -1056,16 +1048,15 @@ describe('lieux de médiation numérique', () => {
 
     expect(lieux).toStrictEqual([
       {
-        id: '43493312300029',
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
         commune: 'Reims',
         code_postal: '51100',
-        code_insee: 'MISSING',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: CNFS_COMMON_SERVICES,
         source: 'conseiller-numerique',
-        modalites_access: 'Gratuit',
-        labels_nationaux: 'Aidants Connect, France Services'
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS, Aidants Connect, France Services'
       }
     ]);
   });
