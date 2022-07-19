@@ -129,6 +129,44 @@ exports.DataExports = class DataExports {
       res.send();
     });
 
+    app.get('/exports/ruptures.csv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      //verify user role admin
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!adminUser?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+      let miseEnrelations;
+
+      miseEnrelations = await db.collection('misesEnRelation').find({
+        'statut': { $eq: 'nouvelle_rupture' }
+      }).toArray();
+
+      let promises = [];
+
+      res.write('Prénom;Nom;Email;Id CNFS;Nom Structure;Id Structure;Date rupture;Motif de rupture\n');
+      const formatDate = date => dayjs(date).format('DD/MM/YYYY');
+      miseEnrelations.forEach(miseEnrelation => {
+        promises.push(new Promise(async resolve => {
+          let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
+          let structure = await db.collection('structures').findOne({ _id: miseEnrelation.structure.oid });
+          // eslint-disable-next-line max-len
+          res.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email};${conseiller.idPG};${structure.nom};${structure.idPG};${formatDate(miseEnrelation.dateRupture)};${miseEnrelation.motifRupture}\n`);
+          resolve();
+        }));
+      });
+
+      await Promise.all(promises);
+      res.send();
+    });
+
     app.get('/exports/embauches.csv', async (req, res) => {
       if (req.feathers?.authentication === undefined) {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
