@@ -155,8 +155,8 @@ exports.DataExports = class DataExports {
       const formatDate = date => dayjs(date).format('DD/MM/YYYY');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
-          let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
-          let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
+          let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
+          let structure = await db.collection('structures').findOne({ _id: miseEnrelation.structure.oid });
           // eslint-disable-next-line max-len
           res.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email};${conseiller.idPG};${structure.nom};${structure.idPG};${formatDate(miseEnrelation.dateRupture)};${miseEnrelation.motifRupture}\n`);
           resolve();
