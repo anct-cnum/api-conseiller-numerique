@@ -35,7 +35,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       exit(`L'email : ${email} est déjà existant dans la collection users`);
       return;
     }
-    // Au cas où si il y a un doublon qui empeche le changement, temporaire le met un 'change'pour éviter d'etre bloqué lors du changement plus bas
+    // Au cas où si il y a un doublon qui empeche le changement, temporairement je met un 'change'pour éviter d'etre bloqué lors du changement plus bas
     if (echange) {
       await db.collection('conseillers').updateOne({ _id: compteExistants.entity.oid }, { '$set': { email: `change${conseiller.email}` } });
       await db.collection('users').updateOne({ _id: compteExistants._id }, { '$set': { name: `change${conseiller.email}` } });
