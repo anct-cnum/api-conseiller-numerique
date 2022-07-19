@@ -37,7 +37,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     }
     // Au cas où si il y a un doublon qui empeche le changement, temporairement je met un 'change'pour éviter d'etre bloqué lors du changement plus bas
     if (echange) {
-      await db.collection('conseillers').updateOne({ _id: compteExistants.entity.oid }, { '$set': { email: `change${conseiller.email}` } });
       await db.collection('users').updateOne({ _id: compteExistants._id }, { '$set': { name: `change${conseiller.email}` } });
     }
   }
@@ -73,7 +72,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { name: email } });
     }
     if (echange) {
-      await db.collection('conseillers').updateOne({ email: `change${conseiller.email}` }, { '$set': { email: `${conseiller.email}` } });
+      await db.collection('conseillers').updateOne({ _id: compteExistants.entity.oid }, { '$set': { email: `${conseiller.email}` } });
       await db.collection('users').updateOne({ name: `change${conseiller.email}` }, { '$set': { name: `${conseiller.email}` } });
       await db.collection('misesEnRelation').updateMany(
         { 'conseiller.$id': compteExistants._id },
