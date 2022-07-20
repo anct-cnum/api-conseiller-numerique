@@ -167,7 +167,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
           logger.error(error);
           return res.status(409).send(new BadRequest(error).toJSON());
         }
-        await setPermanence(db)(permanenceId, query, conseillerId, user._id, hasPermanence,
+        await setPermanence(db)(permanenceId, query, conseillerId, hasPermanence,
           telephonePro, emailPro, estCoordinateur).then(() => {
 
           if (idOldPermanence) {
