@@ -12,14 +12,18 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let idCNFS = new ObjectID(program.id);
-  let ancienneSA = new ObjectID(program.ancienne);
-  let nouvelleSA = new ObjectID(program.nouvelle);
+  let idCNFS = program.id;
+  let ancienneSA = program.ancienne;
+  let nouvelleSA = program.nouvelle;
 
   if (!idCNFS || !ancienneSA || !nouvelleSA) {
     exit('Paramètres invalides. Veuillez préciser un id du conseiller ainsi qu\'un id de la structure actuelle et un id de la structure destinataire');
     return;
   }
+
+  idCNFS = new ObjectID(program.id);
+  ancienneSA = new ObjectID(program.ancienne);
+  nouvelleSA = new ObjectID(program.nouvelle);
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
   if (!cnfsRecrute) {
