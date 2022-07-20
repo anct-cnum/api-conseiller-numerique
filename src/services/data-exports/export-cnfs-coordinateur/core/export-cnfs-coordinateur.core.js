@@ -1,4 +1,6 @@
-const formatDate = dateFin => new Intl.DateTimeFormat('fr-FR', { month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }).format(dateFin);
+const dayjs = require('dayjs');
+
+const formatDate = date => dayjs(new Date(date.getTime() - date.getTimezoneOffset() * 60000)).format('DD/MM/YYYY');
 
 const userActifStatus = mattermost => mattermost?.error === false ? 'Oui' : 'Non';
 
