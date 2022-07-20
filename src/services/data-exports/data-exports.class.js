@@ -2,6 +2,8 @@
 
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
+const formatDate = date => new Intl.DateTimeFormat('fr-FR', { month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }).format(date);
+
 const utils = require('../../utils/index.js');
 const decode = require('jwt-decode');
 const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
@@ -72,7 +74,6 @@ exports.DataExports = class DataExports {
         $or: [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }, { 'statut': { $eq: 'nouvelle_rupture' } }]
       }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
-      const formatDate = date => dayjs(date).format('DD/MM/YYYY');
       // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection; Demande de rupture; Date de la rupture; Motif de la rupture\n');
 
@@ -82,7 +83,7 @@ exports.DataExports = class DataExports {
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
           // eslint-disable-next-line max-len
-          res.write(`${formatDate(conseiller.createdAt)};${miseEnrelation.dateRecrutement === null ? 'non renseignée' : formatDate(miseEnrelation.dateRecrutement)};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};${miseEnrelation.statut === 'nouvelle_rupture' ? 'oui' : 'non'};${miseEnrelation.dateRupture ? formatDate(miseEnrelation.dateRupture) : ''};${miseEnrelation.motifRupture ?? ''}\n`);
+          res.write(`${formatDate(conseiller.createdAt)};${miseEnrelation.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};${miseEnrelation.statut === 'nouvelle_rupture' ? 'oui' : 'non'};${miseEnrelation.dateRupture ? formatDate(miseEnrelation.dateRupture) : ''};${miseEnrelation.motifRupture ?? ''}\n`);
           resolve();
         }));
       });
@@ -120,7 +121,7 @@ exports.DataExports = class DataExports {
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
           // eslint-disable-next-line max-len
-          res.write(`${dayjs(conseiller.createdAt).format('DD/MM/YYYY')};${miseEnrelation.dateRecrutement === null ? 'non renseignée' : dayjs(miseEnrelation.dateRecrutement).format('DD/MM/YYYY')};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
+          res.write(`${formatDate(conseiller.createdAt)};${miseEnrelation.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
           resolve();
         }));
       });
@@ -166,7 +167,6 @@ exports.DataExports = class DataExports {
 
       // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;Date d’entrée en formation;Date de sortie de formation;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
-      const formatDate = date => dayjs(date).format('DD/MM/YYYY');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
