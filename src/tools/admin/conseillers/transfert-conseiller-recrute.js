@@ -13,19 +13,19 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let id = new ObjectID(program.id);
+  let idCNFS = new ObjectID(program.id);
   let ancienneSA = new ObjectID(program.ancienne);
   let nouvelleSA = new ObjectID(program.nouvelle);
 
-  if (!id || !ancienneSA || !nouvelleSA) {
+  if (!idCNFS || !ancienneSA || !nouvelleSA) {
     exit('Paramètres invalides. Veuillez préciser un id et un nombre en kilomètre');
     return;
   }
 
   // Phase de contrôle :
-  const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': id, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
+  const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
   if (!cnfsRecrute) {
-    exit(`Le Cnfs avec l'id ${id} n'est pas recruté.`);
+    exit(`Le Cnfs avec l'id ${idCNFS} n'est pas recruté.`);
     return;
   }
   const structureDestination = await db.collection('structures').findOne({ '_id': nouvelleSA });
@@ -46,5 +46,11 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   }
   // Checker si conseiller bien recruté avec la structure d'origine (statut finalisee)
   // Checker si la structure de destination existe bien + bien validée Coselec + quota
+
+  // Modification du document conseiller
+  await db.collection('conseillers').updateOne({ _id: idCNFS }, { $set: { structureId: nouvelleSA } });
+  await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj.structureId': nouvelleSA } });
+  // Mise à jour du champ structureId avec le nouveau OID
+  // Mise à jour du cache conseillerObj dans les mises en relation pour ce champ structureId avec le nouveau OID
   exit();
 });
