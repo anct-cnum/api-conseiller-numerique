@@ -1,7 +1,7 @@
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 
-const formatDate = dateFin => new Intl.DateTimeFormat('fr-FR', { month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }).format(dateFin);
+const formatDate = date => dayjs(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).format('DD/MM/YYYY');
 
 const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined && emailCNError !== undefined ? 'Oui' : 'Non';
 

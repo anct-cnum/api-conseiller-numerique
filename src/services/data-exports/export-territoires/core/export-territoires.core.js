@@ -1,3 +1,5 @@
+const dayjs = require('dayjs');
+
 const Territoire = {
   Departement: 'codeDepartement',
   Region: 'codeRegion'
@@ -14,7 +16,7 @@ const countPersonnesAccompagnees = async (dateDebut, dateFin, conseillerIds, get
 
 const getTauxActivation = (nombreConseillersCoselec, cnfsActives) => nombreConseillersCoselec ? Math.round(cnfsActives * 100 / nombreConseillersCoselec) : 0;
 
-const formatDate = dateFin => new Intl.DateTimeFormat('fr-FR', { month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }).format(dateFin);
+const formatDate = date => dayjs(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).format('DD/MM/YYYY');
 
 const statsTerritoiresForDepartement = async (dateDebut, dateFin, statsTerritoires, getPersonnesAccompagnees) =>
   await Promise.all(
