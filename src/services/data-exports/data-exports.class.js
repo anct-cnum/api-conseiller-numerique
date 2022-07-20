@@ -3,6 +3,7 @@
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 const formatDate = date => dayjs(new Date(date.getTime() - date.getTimezoneOffset() * 60000)).format('DD/MM/YYYY');
+const logger = require('../../logger');
 
 const utils = require('../../utils/index.js');
 const decode = require('jwt-decode');
@@ -158,6 +159,8 @@ exports.DataExports = class DataExports {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
           let structure = await db.collection('structures').findOne({ _id: miseEnrelation.structure.oid });
+          logger.info(new Intl.DateTimeFormat('fr-FR', { month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }).format(new Date()));
+          logger.info(new Intl.DateTimeFormat('fr-FR', { month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }).format(new Date(miseEnrelation.dateRupture)));
           // eslint-disable-next-line max-len
           res.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email};${conseiller.idPG};${structure.nom};${structure.idPG};${formatDate(miseEnrelation.dateRupture)};${miseEnrelation.motifRupture}\n`);
           resolve();
