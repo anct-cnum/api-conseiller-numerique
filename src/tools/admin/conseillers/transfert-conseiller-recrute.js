@@ -63,7 +63,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
 
   const misesEnrelationNouvelleSA = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': nouvelleSA });
   const transfert = {
-    'ancienneStructureId': nouvelleSA,
+    'ancienneStructureId': ancienneSA,
     'date': new Date()
   };
 
