@@ -6,7 +6,7 @@ require('dotenv').config();
 
 execute(__filename, async ({ db, logger, exit, app }) => {
 
-  program.option('-i, --id <id>', 'id: id Mongo du conseiller à transferer');
+  program.option('-i, --id <id>', 'id: id Mongo du conseiller à transférer');
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: structure de destination');
   program.helpOption('-e', 'HELP command');
@@ -17,7 +17,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   let nouvelleSA = new ObjectID(program.nouvelle);
 
   if (!idCNFS || !ancienneSA || !nouvelleSA) {
-    exit('Paramètres invalides. Veuillez préciser un id et un nombre en kilomètre');
+    exit('Paramètres invalides. Veuillez préciser un id du conseiller ainsi qu\'un id de la structure actuelle et un id de la structure destinataire');
     return;
   }
 
@@ -28,7 +28,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   }
   const structureDestination = await db.collection('structures').findOne({ '_id': nouvelleSA });
 
-  if (structureDestination.statut !== 'VALIDATION_COSELEC') {
+  if (structureDestination?.statut !== 'VALIDATION_COSELEC') {
     exit(`La structure destinataire n'est pas 'VALIDATION_COSELEC' mais ${structureDestination.statut}`);
     return;
   }
@@ -39,7 +39,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   });
   if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec) {
     //eslint-disable-next-line max-len
-    exit(`La structure destinataire est seulement autorisé à ${dernierCoselec.nombreConseillersCoselec} et à déjà ${misesEnRelationRecrutees} validé(s)/recrutée(s)`);
+    exit(`La structure destinataire est seulement autorisé  à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recrutée(s)`);
     return;
   }
 
@@ -63,11 +63,11 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     'date': new Date()
   };
 
-  if (misesEnrelationNouvelleSA) {
+  if (!misesEnrelationNouvelleSA) {
     const connection = app.get('mongodb');
     const database = connection.substr(connection.lastIndexOf('/') + 1);
-    let conseiller = await db.collection('conseillers').findOne({ _id: idCNFS });
-    let structure = await db.collection('structures').findOne({ _id: nouvelleSA });
+    const conseiller = await db.collection('conseillers').findOne({ _id: idCNFS });
+    const structure = await db.collection('structures').findOne({ _id: nouvelleSA });
 
     await db.collection('misesEnRelation').insertOne({
       conseiller: new DBRef('conseillers', idCNFS, database),
@@ -88,6 +88,6 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       });
   }
 
-  logger.info(`Le conseiller id: ${idCNFS} a été transférer par la structure: ${ancienneSA} vers la structure: ${nouvelleSA}`);
+  logger.info(`Le conseiller id: ${idCNFS} a été transféré de la structure: ${ancienneSA} vers la structure: ${nouvelleSA}`);
   exit();
 });
