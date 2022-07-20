@@ -1,8 +1,7 @@
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 
-const formatDate = date => dayjs(new Date(date.getTime() - date.getTimezoneOffset() * 60000)).format('DD/MM/YYYY');
-
+const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
 const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined && emailCNError !== undefined ? 'Oui' : 'Non';
 
 const formatAdresseStructure = insee => {
