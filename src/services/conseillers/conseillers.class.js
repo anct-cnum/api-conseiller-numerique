@@ -638,11 +638,13 @@ exports.Conseillers = class Conseillers extends Service {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
       let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
-      const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
-      
-      if (hasMultipleStructure > 1) {
-        const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
-        permanence = await aggregationByLocation(permanencesByLocation, permanence);
+
+      if (permanence) {
+        const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
+        if (hasMultipleStructure > 1) {
+          const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
+          permanence = await aggregationByLocation(permanencesByLocation, permanence);
+        }
       }
 
       canActivate(
@@ -660,11 +662,12 @@ exports.Conseillers = class Conseillers extends Service {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
       let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
-      const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
-
-      if (hasMultipleStructure > 1) {
-        const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
-        permanence = await aggregationByLocation(permanencesByLocation, permanence);
+      if (permanence) {
+        const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
+        if (hasMultipleStructure > 1) {
+          const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
+          permanence = await aggregationByLocation(permanencesByLocation, permanence);
+        }
       }
 
       canActivate(
