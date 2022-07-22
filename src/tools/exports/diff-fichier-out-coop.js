@@ -6,7 +6,7 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const { execute } = require('../utils');
 const dayjs = require('dayjs');
-const { PRIORITY_BELOW_NORMAL } = require('constants');
+
 
 require('dotenv').config();
 
@@ -28,7 +28,7 @@ execute(__filename, async ({ logger, db }) => {
   let promises = [];
   logger.info(`Generating CSV file...`);
   let csvFile = path.join(__dirname, '../../../data/exports', 'cnfs-manquant_out_coop.csv');
-  const formatDate = date => dayjs(date).format('DD/MM/YYYY');
+  const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
 
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
