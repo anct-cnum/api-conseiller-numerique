@@ -103,6 +103,9 @@ const aggregationByLocation = async (permanencesByLocation, permanenceById) => {
   const conseillersAgreges = [];
 
   permanencesByLocation.forEach(permanence => {
+    if (permanence.horaires === undefined) {
+      return;
+    }
     permanence.horaires.forEach((horaires, i) => {
       if (!horairesAgregees[i]) {
         horairesAgregees.push(horaires);
