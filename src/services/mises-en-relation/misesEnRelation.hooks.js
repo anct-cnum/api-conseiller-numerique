@@ -36,6 +36,7 @@ module.exports = {
         }
 
         context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
+        context.data.dateRupture = parseStringToDate(context.data.dateRupture);
 
         return context;
       }
@@ -78,8 +79,62 @@ module.exports = {
             }
           }
         }
+
+        if (context.data?.statut === 'nouvelle_rupture') {
+          const structureId = context.params?.user?.entity?.oid;
+          const structure = await context.app.service('structures').get(structureId);
+          //Vérification si structure non null
+          if (structure === null) {
+            throw new NotFound('Structure introuvable avec l\'id : ', structureId);
+          }
+          //Vérification de la présence d'une date de fin de contrat et d'un motif
+          const misesEnRelationNouvelleRupture = await context.app.service('misesEnRelation').find({
+            query: { '_id': new ObjectID(context.id) }
+          });
+          if (misesEnRelationNouvelleRupture.data[0].dateRupture === null) {
+            throw new BadRequest('La date de rupture doit être obligatoirement renseignée.');
+          }
+          if (misesEnRelationNouvelleRupture.data[0].motifRupture === null) {
+            throw new BadRequest('Le motif de rupture doit être obligatoirement renseigné.');
+          }
+
+          context.data.emetteurRupture = {
+            email: context.params.user.name,
+            date: new Date()
+          };
+        }
+
+        // Cas annulation de la demande de rupture
+        if (context.data?.statut === 'finalisee') {
+          //Limite du nombre de candidats à recruter
+          const structureId = context.params?.user?.entity?.oid;
+          const structure = await context.app.service('structures').get(structureId);
+          const dernierCoselec = utils.getCoselec(structure);
+          if (dernierCoselec !== null) {
+            //Nombre de candidats déjà recrutés pour cette structure
+            const misesEnRelationRecrutees = await context.app.service('misesEnRelation').find({
+              query: {
+                'statut': { $in: ['recrutee', 'finalisee'] },
+                'structure.$id': new ObjectID(structureId)
+              },
+              paginate: false //important pour ne pas être limité par la pagination
+            });
+            if (misesEnRelationRecrutees.length >= dernierCoselec.nombreConseillersCoselec) {
+              //eslint-disable-next-line max-len
+              throw new Forbidden('Action non autorisée : quota atteint de conseillers validés par rapport au nombre de postes attribués', dernierCoselec.nombreConseillersCoselec);
+            }
+          }
+
+          context.data.emetteurRupture = null;
+          context.data.dateRupture = null;
+          context.data.motifRupture = null;
+        }
+
         if (context.data.dateRecrutement) {
           context.data.dateRecrutement = parseStringToDate(context.data.dateRecrutement);
+        }
+        if (context.data.dateRupture) {
+          context.data.dateRupture = parseStringToDate(context.data.dateRupture);
         }
         return context;
       }

@@ -23,8 +23,8 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
       const login = await fixHomonymesCreateMailbox(gandi, nom, prenom, db);
-      const password = uuidv4() + 'AZEdsf;+:'; // pour respecter la règle de complexité de mot de passe
-      createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
+      const password = uuidv4() + 'AZEdsf;+:!'; // pour respecter la règle de complexité de mot de passe
+      await createMailbox({ gandi, db, logger, Sentry })({ conseillerId: conseiller._id, login, password });
 
       count++;
     } catch (e) {
@@ -33,7 +33,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
     }
 
     // To avoid overload Gandi API
-    await sleep(500);
+    await sleep(6000);
   }
 
   logger.info(`[GANDI MAILBOX]] ${count} comptes conseillers créés`);

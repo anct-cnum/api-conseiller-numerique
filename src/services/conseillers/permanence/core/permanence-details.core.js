@@ -89,7 +89,59 @@ const permanenceDetails = async permanence => ({
   cnfs: permanence.conseillers ?? []
 });
 
+const compare = (horairesAgregees, horaires) => {
+  let timeA = new Date();
+  timeA.setHours(horairesAgregees.split(':')[0], horairesAgregees.split(':')[1], '00');
+  let timeB = new Date();
+  timeB.setHours(horaires.split(':')[0], horaires.split(':')[1], '00');
+  return timeA > timeB;
+};
+
+const aggregationByLocation = async (permanencesByLocation, permanenceById) => {
+
+  const horairesAgregees = [];
+  const conseillersAgreges = [];
+
+  permanencesByLocation.forEach(permanence => {
+    if (permanence.horaires === undefined) {
+      return;
+    }
+    permanence.horaires.forEach((horaires, i) => {
+      if (!horairesAgregees[i]) {
+        horairesAgregees.push(horaires);
+      } else if (horairesAgregees[i] !== horaires) {
+        if (horairesAgregees[i].matin[0] === 'Fermé') {
+          horairesAgregees[i].matin = horaires.matin;
+        } else if (horaires.matin[0] !== 'Fermé' && compare(horairesAgregees[i].matin[0], horaires.matin[0])) {
+          horairesAgregees[i].matin[0] = horaires.matin[0];
+        } else if (horaires.matin[1] !== 'Fermé' && !compare(horairesAgregees[i].matin[1], horaires.matin[1])) {
+          horairesAgregees[i].matin[1] = horaires.matin[1];
+        }
+
+        if (horairesAgregees[i].apresMidi[0] === 'Fermé') {
+          horairesAgregees[i].apresMidi = horaires.apresMidi;
+        } else if (horaires.apresMidi[0] !== 'Fermé' && compare(horairesAgregees[i].apresMidi[0], horaires.apresMidi[0])) {
+          horairesAgregees[i].apresMidi[0] = horaires.apresMidi[0];
+        } else if (horaires.apresMidi[1] !== 'Fermé' && !compare(horairesAgregees[i].apresMidi[1], horaires.apresMidi[1])) {
+          horairesAgregees[i].apresMidi[1] = horaires.apresMidi[1];
+        }
+      }
+    });
+
+    permanence.conseillers.forEach(conseiller => {
+      conseillersAgreges.push(conseiller);
+    });
+  });
+
+  permanenceById.horaires = horairesAgregees;
+  permanenceById.conseillers = conseillersAgreges;
+
+  return permanenceById;
+};
+
+
 module.exports = {
   permanenceDetailsFromStructureId,
-  permanenceDetails
+  permanenceDetails,
+  aggregationByLocation
 };

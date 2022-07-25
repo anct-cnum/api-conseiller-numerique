@@ -20,6 +20,7 @@ const {
   checkRoleCandidat,
   checkRoleAdminCoop,
   checkConseillerExist,
+  checkCvExistsS3,
   checkConseillerHaveCV,
   verificationRoleUser,
   verificationCandidaturesRecrutee,
@@ -28,7 +29,10 @@ const {
   suppressionCv,
   suppressionCVConseiller,
   checkRoleAdmin,
-  candidatSupprimeEmailPix } = require('./conseillers.function');
+  candidatSupprimeEmailPix,
+  getConseillersByCoordinateurId,
+  countCraConseiller,
+  isSubordonne } = require('./conseillers.function');
 const {
   canActivate,
   authenticationGuard,
@@ -56,7 +60,7 @@ const { countConseillersDoubles, setConseillerSexeAndDateDeNaissance } = require
 const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geolocation-par-region.core');
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
-const { permanenceDetailsFromStructureId, permanenceDetails } = require('./permanence/core/permanence-details.core');
+const { permanenceDetailsFromStructureId, permanenceDetails, aggregationByLocation } = require('./permanence/core/permanence-details.core');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -275,31 +279,36 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
       checkAuth(req, res);
-
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-
       if (!checkRoleCandidat(user, req)) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
+        return;
       }
-
       const conseiller = await checkConseillerExist(db, req.params.id, user, res);
+
       if (!checkConseillerHaveCV(conseiller)) {
         res.status(404).send(new NotFound('CV not found for this conseiller', {
           conseillerId: user.entity.oid
         }).toJSON());
+        return;
       }
-      suppressionCv(conseiller.cv, app).then(() => {
-        return suppressionCVConseiller(db, conseiller);
-      }).then(() => {
-        res.send({ deleteSuccess: true });
-      }).catch(error => {
-        logger.error(error);
+      try {
+        await checkCvExistsS3(app)(conseiller);
+        await suppressionCv(conseiller.cv, app);
+        await suppressionCVConseiller(db, conseiller);
+        return res.send({ deleteSuccess: true });
+      } catch (error) {
+        if (conseiller?.cv?.file) {
+          await suppressionCVConseiller(db, conseiller);
+          return res.send({ deleteSuccess: true });
+        }
         app.get('sentry').captureException(error);
+        logger.error(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression du CV').toJSON());
-      });
+      }
     });
 
     app.get('/conseillers/:id/cv', async (req, res) => {
@@ -327,7 +336,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       //Verification existence CV du conseiller
       if (!conseiller.cv?.file) {
-        res.status(404).send(new NotFound('CV not found for this conseiller', {
+        res.status(404).send(new NotFound('Le CV du conseiller n\'existe plus', {
           conseillerId: user.entity.oid
         }).toJSON());
         return;
@@ -371,7 +380,7 @@ exports.Conseillers = class Conseillers extends Service {
         }
         let userId = decode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop];
+        const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
@@ -628,7 +637,15 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
-      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+
+      if (permanence) {
+        const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
+        if (hasMultipleStructure > 1) {
+          const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
+          permanence = await aggregationByLocation(permanencesByLocation, permanence);
+        }
+      }
 
       canActivate(
         existGuard(conseiller ?? permanence),
@@ -644,7 +661,14 @@ exports.Conseillers = class Conseillers extends Service {
     app.get('/conseillers/geolocalisation/permanence/:id/localisation', async (req, res) => {
       const db = await app.get('mongoClient');
       const conseiller = await permanenceRepository(db).getConseillerById(req.params.id);
-      const permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      let permanence = (await permanenceRepository(db).getPermanenceById(req.params.id))[0];
+      if (permanence) {
+        const hasMultipleStructure = await permanenceRepository(db).checkMultipleStructureInLocation(permanence.location.coordinates);
+        if (hasMultipleStructure > 1) {
+          const permanencesByLocation = await permanenceRepository(db).getPermanenceBylocation(permanence.location.coordinates);
+          permanence = await aggregationByLocation(permanencesByLocation, permanence);
+        }
+      }
 
       canActivate(
         existGuard(conseiller ?? permanence),
@@ -780,6 +804,11 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { disponible } = req.body;
+      const disponibleValidation = Joi.boolean().required().error(new Error('Le format de la disponibilité est invalide')).validate(disponible);
+      if (disponibleValidation.error) {
+        res.status(400).json(new BadRequest(disponibleValidation.error));
+        return;
+      }
       const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
       if (!conseiller) {
         res.status(404).send(new NotFound('Conseiller n\'existe pas', {
@@ -907,6 +936,80 @@ exports.Conseillers = class Conseillers extends Service {
         }
         res.send({ 'emailPro': conseiller.mailProAModifier, 'isEmailPro': true });
       }
+    });
+
+
+    app.get('/conseillers/subordonnes', async (req, res) => {
+      checkAuth(req, res);
+      const userId = userIdFromRequestJwt(req);
+      const getUserById = userAuthenticationRepository(db);
+
+      const schema = Joi.object({
+        idCoordinateur: Joi.string().required().error(new Error('L\'id coordinateur est invalide')),
+        page: Joi.string().required().error(new Error('La page est invalide')),
+        dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+        dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
+        filtreProfil: Joi.string().optional().allow(null).error(new Error('Le profil est invalide')),
+        ordreNom: Joi.string().optional().allow(null).error(new Error('Le nom de l\'ordre est invalide')),
+        ordre: Joi.string().optional().allow(null).error(new Error('L\'ordre est invalide')),
+      }).validate(req.query);
+
+      if (schema.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
+      }
+
+      const idCoordinateur = new ObjectId(req.query.idCoordinateur);
+      const page = req.query.page;
+      const dateDebut = new Date(req.query.dateDebut);
+      const dateFin = new Date(req.query.dateFin);
+      const filtreProfil = req.query.filtreProfil;
+      const ordreNom = req.query.ordreNom === 'undefined' ? null : req.query.ordreNom;
+      const ordre = Number(req.query.ordre);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Coordinateur], getUserById)
+      ).then(async () => {
+        await getConseillersByCoordinateurId(db)(idCoordinateur, page, dateDebut, dateFin, filtreProfil, ordreNom, ordre, options).then(async conseillers => {
+          const promises = [];
+          conseillers.data?.forEach(conseiller => {
+            const p = new Promise(async resolve => {
+              conseiller.craCount = await countCraConseiller(db)(conseiller._id, dateDebut, dateFin);
+              resolve();
+            });
+            promises.push(p);
+          });
+          await Promise.all(promises);
+          return res.send({ conseillers });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(500).send(new GeneralError('La recherche de conseillers a échoué, veuillez réessayer.').toJSON());
+        });
+
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseiller/isSubordonne', async (req, res) => {
+      checkAuth(req, res);
+      const userId = userIdFromRequestJwt(req);
+      const getUserById = userAuthenticationRepository(db);
+      const idCoordinateur = new ObjectId(req.query.idCoordinateur);
+      const idConseiller = new ObjectId(req.query.idConseiller);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Coordinateur], getUserById)
+      ).then(async () => {
+        try {
+          const boolSubordonne = await isSubordonne(db)(idCoordinateur, idConseiller);
+          res.send({ 'isSubordonne': boolSubordonne });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
 };

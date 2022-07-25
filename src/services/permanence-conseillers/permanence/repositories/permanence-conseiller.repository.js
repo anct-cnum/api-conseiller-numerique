@@ -1,14 +1,49 @@
 const { ObjectId } = require('mongodb');
 
-const getPermanenceByConseiller = db => async conseillerId => {
-  return await db.collection('permanences').findOne({ 'conseiller.$id': new ObjectId(conseillerId) });
+const getPermanences = db => async () => await db.collection('permanences').aggregate([
+  {
+    $addFields: {
+      'entity': {
+        $arrayElemAt: [{ $objectToArray: '$structure' }, 1]
+      }
+    }
+  },
+  {
+    $lookup: {
+      from: 'structures',
+      let: { idStructure: '$entity.v' },
+      as: 'structure',
+      pipeline: [
+        {
+          $match: { $expr: { $eq: ['$$idStructure', '$_id'] } },
+        },
+        {
+          $project: {
+            '_id': 0,
+            'siret': 1,
+            'estLabelliseFranceServices': 1,
+            'estLabelliseAidantsConnect': 1
+          }
+        }
+      ]
+    }
+  },
+  { $unwind: '$structure' }
+]).toArray();
+
+const getPermanenceById = db => async permanenceId => {
+  return await db.collection('permanences').findOne({ '_id': new ObjectId(permanenceId) });
+};
+
+const getPermanencesByConseiller = db => async conseillerId => {
+  return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
 };
 
 const getPermanencesByStructure = db => async structureId => {
   return await db.collection('permanences').find({ 'structure.$id': new ObjectId(structureId) }).toArray();
 };
 
-const createPermanence = db => async (permanence, conseillerId, userId, showPermanenceForm, hasPermanence, telephonePro, emailPro, estCoordinateur) => {
+const createPermanence = db => async (permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur) => {
   await db.collection('permanences').insertOne(
     permanence
   );
@@ -23,17 +58,9 @@ const createPermanence = db => async (permanence, conseillerId, userId, showPerm
       estCoordinateur,
     }
   });
-
-  await db.collection('users').updateOne({
-    _id: new ObjectId(userId)
-  }, {
-    $set: {
-      showPermanenceForm
-    }
-  });
 };
 
-const setPermanence = db => async (permanenceId, permanence, conseillerId, userId, showPermanenceForm, hasPermanence,
+const setPermanence = db => async (permanenceId, permanence, conseillerId, hasPermanence,
   telephonePro, emailPro, estCoordinateur) => {
   await db.collection('permanences').updateOne({
     _id: new ObjectId(permanenceId)
@@ -49,14 +76,6 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, userI
       telephonePro,
       emailPro,
       estCoordinateur,
-    }
-  });
-
-  await db.collection('users').updateOne({
-    _id: new ObjectId(userId)
-  }, {
-    $set: {
-      showPermanenceForm
     }
   });
 };
@@ -89,6 +108,7 @@ const deletePermanence = db => async permanenceId => {
 };
 
 const deleteConseillerPermanence = db => async (permanenceId, conseillerId) => {
+  conseillerId = typeof (conseillerId) === 'string' ? new ObjectId(conseillerId) : conseillerId;
   await db.collection('permanences').updateOne({
     _id: new ObjectId(permanenceId)
   }, {
@@ -108,8 +128,18 @@ const setReporterInsertion = db => async userId => {
   });
 };
 
+const updateConseillerStatut = db => async conseillerId => {
+  await db.collection('conseillers').updateOne({
+    _id: new ObjectId(conseillerId)
+  }, {
+    $set: { hasPermanence: true }
+  });
+};
+
 module.exports = {
-  getPermanenceByConseiller,
+  getPermanences,
+  getPermanenceById,
+  getPermanencesByConseiller,
   getPermanencesByStructure,
   setPermanence,
   createPermanence,
@@ -117,4 +147,5 @@ module.exports = {
   deletePermanence,
   deleteConseillerPermanence,
   setReporterInsertion,
+  updateConseillerStatut,
 };

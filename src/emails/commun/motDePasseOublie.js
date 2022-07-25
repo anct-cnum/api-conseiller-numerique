@@ -4,7 +4,8 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   let render = async user => {
-    if (user.roles[0] === 'conseiller' || user.roles[0] === 'hub_coop') {
+    const rolesCoop = ['conseiller', 'hub_coop', 'coordinateur_coop'];
+    if (rolesCoop.includes(user.roles[0])) {
       return mailer.render(__dirname, templateName, {
         user,
         link: utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`)

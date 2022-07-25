@@ -10,13 +10,13 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       })
     ],
     find: [
       checkPermissions({
-        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop'],
+        roles: ['admin', 'structure', 'admin_coop', 'prefet', 'structure_coop', 'coordinateur_coop'],
         field: 'roles',
       }),
       context => {
@@ -64,6 +64,10 @@ module.exports = {
         if (context.params.query.structureId) {
           context.params.query.structureId = new ObjectID(context.params.query.structureId);
         }
+        if (context.params.query.codeRegionStructure) {
+          // partie de query utilisé pour le after (codeRegion pour la structure associée)
+          context.params.query.codeRegionStructure = context.params.query.codeRegionStructure.toString();
+        }
 
         if (context.params.query.$search) {
           context.params.query.$search = '"' + context.params.query.$search + '"';
@@ -73,8 +77,9 @@ module.exports = {
     ],
     get: [
       async context => {
-        //Restreindre les permissions : les conseillers et candidats ne peuvent voir que les informations les concernant
-        if (context.params?.user?.roles.includes('conseiller') || context.params?.user?.roles.includes('candidat')) {
+        //Restreindre les permissions : les conseillers (non coordinateur) et candidats ne peuvent voir que les informations les concernant
+        if ((context.params?.user?.roles.includes('conseiller') && !context.params?.user?.roles.includes('coordinateur_coop')) ||
+          context.params?.user?.roles.includes('candidat')) {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
@@ -89,7 +94,7 @@ module.exports = {
     ],
     update: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -103,7 +108,7 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'candidat'],
+        roles: ['admin', 'conseiller', 'admin_coop', 'structure_coop', 'coordinateur_coop', 'candidat'],
         field: 'roles',
       }),
       async context => {
@@ -190,9 +195,7 @@ module.exports = {
             let result = [];
             context.result.data.filter(async conseiller => {
               const p = new Promise(async resolve => {
-                const structure = await db.collection('structures').findOne({
-                  '_id': conseiller.structureId
-                });
+                const structure = await db.collection('structures').findOne({ '_id': conseiller.structureId });
                 const nombreCra = await db.collection('cras').countDocuments({
                   'conseiller.$id': conseiller._id
                 });
@@ -248,6 +251,13 @@ module.exports = {
               context.result.dateRecrutement = dateRecrutement;
               context.result.nomStructures = nomStructures;
             }
+            const possedeCompteCandidat = await db.collection('users').countDocuments(
+              {
+                'entity.$id': context.result._id,
+                'roles': { $in: ['candidat'] }
+              }
+            );
+            context.result.possedeCompteCandidat = possedeCompteCandidat > 0;
             return context;
           });
           resolve(result);

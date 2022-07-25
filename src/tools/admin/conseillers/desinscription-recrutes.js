@@ -168,9 +168,21 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   emailCNError: '',
                   emailCN: '',
                   mattermost: '',
-                  resetPasswordCNError: ''
+                  resetPasswordCNError: '',
+                  codeRegionStructure: '',
                 }
               });
+
+              await db.collection('permanences').updateMany(
+                {
+                  $or: [
+                    { 'conseillers': { $elemMatch: { $eq: conseillerCoop._id } } },
+                    { 'conseillersItinerants': { $elemMatch: { $eq: conseillerCoop._id } } }
+                  ]
+                },
+                { $pull: { conseillers: conseillerCoop._id, conseillersItinerants: conseillerCoop._id } }
+              );
+
               const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerCoop._id });
 
               //Mise à jour de la mise en relation avec la structure en rupture

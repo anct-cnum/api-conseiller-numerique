@@ -2,6 +2,7 @@
 
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
+
 const utils = require('../../utils/index.js');
 const decode = require('jwt-decode');
 const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
@@ -25,9 +26,10 @@ const {
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { statsCnfsRepository } = require('./export-cnfs/repositories/export-cnfs.repository');
-const { getStatsCnfs, getStatsCnfsFilterStructure, userConnected } = require('./export-cnfs/core/export-cnfs.core');
+const { getStatsCnfs, userConnected, getCnfsWithoutCRA } = require('./export-cnfs/core/export-cnfs.core');
 const {
   buildExportCnfsCsvFileContent,
+  buildExportCnfsWithoutCRACsvFileContent,
   validateExportCnfsSchema,
   exportCnfsQueryToSchema,
   getExportCnfsFileName
@@ -38,6 +40,9 @@ const {
 } = require('./export-cnfs-hub/utils/export-cnfs-hub.utils.js');
 const { exportCnfsHubRepository } = require('./export-cnfs-hub/repositories/export-cnfs-hub.repository.js');
 const { getStatsCnfsHubs } = require('./export-cnfs-hub/core/export-cnfs-hub.core.js');
+
+const { exportCnfsCoordinateurRepository } = require('./export-cnfs-coordinateur/repositories/export-cnfs-coordinateur.repository');
+const { getStatsCnfsCoordinateur } = require('./export-cnfs-coordinateur/core/export-cnfs-coordinateur.core');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -65,20 +70,20 @@ exports.DataExports = class DataExports {
       }
 
       const miseEnrelations = await db.collection('misesEnRelation').find({
-        $or: [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }]
+        $or: [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }, { 'statut': { $eq: 'nouvelle_rupture' } }]
       }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
-
       // eslint-disable-next-line max-len
-      res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
+      res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection; Demande de rupture; Date de la rupture; Motif de la rupture\n');
 
+      const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
           // eslint-disable-next-line max-len
-          res.write(`${dayjs(conseiller.createdAt).format('DD/MM/YYYY')};${miseEnrelation.dateRecrutement === null ? 'non renseignée' : dayjs(miseEnrelation.dateRecrutement).format('DD/MM/YYYY')};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
+          res.write(`${formatDate(conseiller.createdAt)};${miseEnrelation.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};${miseEnrelation.statut === 'nouvelle_rupture' ? 'oui' : 'non'};${miseEnrelation.dateRupture ? formatDate(miseEnrelation.dateRupture) : ''};${miseEnrelation.motifRupture ?? ''}\n`);
           resolve();
         }));
       });
@@ -110,13 +115,52 @@ exports.DataExports = class DataExports {
       // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
 
+      const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
           // eslint-disable-next-line max-len
-          res.write(`${dayjs(conseiller.createdAt).format('DD/MM/YYYY')};${miseEnrelation.dateRecrutement === null ? 'non renseignée' : dayjs(miseEnrelation.dateRecrutement).format('DD/MM/YYYY')};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
+          res.write(`${formatDate(conseiller.createdAt)};${miseEnrelation.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
+          resolve();
+        }));
+      });
+
+      await Promise.all(promises);
+      res.send();
+    });
+
+    app.get('/exports/ruptures.csv', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
+      //verify user role admin
+      let userId = decode(req.feathers.authentication.accessToken).sub;
+      const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
+      if (!adminUser?.roles.includes('admin')) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId: adminUser
+        }).toJSON());
+        return;
+      }
+      let miseEnrelations;
+
+      miseEnrelations = await db.collection('misesEnRelation').find({
+        'statut': { $eq: 'nouvelle_rupture' }
+      }).toArray();
+
+      let promises = [];
+
+      res.write('Prénom;Nom;Email;Id CNFS;Nom Structure;Id Structure;Date rupture;Motif de rupture\n');
+      const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
+      miseEnrelations.forEach(miseEnrelation => {
+        promises.push(new Promise(async resolve => {
+          let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
+          let structure = await db.collection('structures').findOne({ _id: miseEnrelation.structure.oid });
+          // eslint-disable-next-line max-len
+          res.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email};${conseiller.idPG};${structure.nom};${structure.idPG};${formatDate(miseEnrelation.dateRupture)};${miseEnrelation.motifRupture}\n`);
           resolve();
         }));
       });
@@ -162,14 +206,15 @@ exports.DataExports = class DataExports {
 
       // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;Date d’entrée en formation;Date de sortie de formation;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
-      const formatDate = date => dayjs(date).format('DD/MM/YYYY');
+
+      const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
           // eslint-disable-next-line max-len
-          res.write(`${formatDate(conseiller.createdAt)};${formatDate(miseEnrelation.dateRecrutement) ?? 'non renseignée'};${formatDate(conseiller.datePrisePoste) ?? 'non renseignée'};${formatDate(conseiller.dateFinFormation) ?? 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
+          res.write(`${formatDate(conseiller.createdAt)};${miseEnrelation.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${formatDate(conseiller.datePrisePoste) ?? 'non renseignée'};${formatDate(conseiller.dateFinFormation) ?? 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
           resolve();
         }));
       });
@@ -387,9 +432,54 @@ exports.DataExports = class DataExports {
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
-        const statsCnfsNoFilter = await getStatsCnfs(query, statsCnfsRepository(db));
-        const statsCnfs = await getStatsCnfsFilterStructure(db)(statsCnfsNoFilter, user);
+        if (user?.roles.includes('structure_coop') && user?.entity?.oid?.toString() !== query.structureId) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: user._id
+          }).toJSON());
+          return;
+        }
+        const statsCnfs = await getStatsCnfs(query, statsCnfsRepository(db));
         csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports/subordonnes.csv', async (req, res) => {
+      const query = exportCnfsQueryToSchema(req.query);
+      const db = await app.get('mongoClient');
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.Coordinateur], userAuthenticationRepository(db)),
+        schemaGuard(validateExportCnfsSchema(query))
+      ).then(async authentication => {
+        const user = await userConnected(db, authentication);
+        query.user = user;
+        const statsCnfs = await getStatsCnfsCoordinateur(query, exportCnfsCoordinateurRepository(db));
+
+        csvFileResponse(res, getExportCnfsFileName(query.dateDebut, query.dateFin), `${await buildExportCnfsCsvFileContent(statsCnfs, user)}`);
+
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/exports-without-cra/cnfs.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db))
+      ).then(async authentication => {
+        const user = await userConnected(db, authentication);
+        if (!user?.roles.includes('admin_coop')) {
+          res.status(403).send(new Forbidden('User not authorized', {
+            userId: user._id
+          }).toJSON());
+          return;
+        }
+        const conseillers = await getCnfsWithoutCRA(statsCnfsRepository(db));
+        if (conseillers.length) {
+          csvFileResponse(res, 'export_cnfs_m2.csv', `${await buildExportCnfsWithoutCRACsvFileContent(conseillers, user)}`);
+        } else {
+          res.status(404).send(new NotFound('Aucun conseillers'));
+        }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }

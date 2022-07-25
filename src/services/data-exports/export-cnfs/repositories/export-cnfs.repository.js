@@ -1,3 +1,6 @@
+/* eslint-disable comma-spacing */
+const { ObjectID } = require('mongodb');
+
 function filterUserActif(isUserActif) {
   if (isUserActif === 'true') {
     return {
@@ -22,9 +25,34 @@ function filterGroupeCRA(groupeCRA) {
   }
   return {};
 }
+const filterNom = nom => nom ? { '$text': { $search: `"${nom}"` } } : {};
+const filterStructureId = structureId => structureId ? { structureId: { $eq: new ObjectID(structureId) } } : {};
+const filterCodeRegion = codeRegion => codeRegion ? { 'structure.codeRegion': codeRegion } : {};
+
+const filterCertification = certifie => {
+  if (certifie === 'true') {
+    return { certifie: { $eq: true } };
+  } else if (certifie === 'false') {
+    return { certifie: { $exists: false } };
+  }
+
+  return {};
+};
+
 const getCraCount = db => async conseiller => await db.collection('cras').countDocuments({ 'conseiller.$id': conseiller._id });
 
-const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif) => {
+const countGetPersonnesAccompagnees = db => async (conseiller, dateDebut, dateFin) => await db.collection('cras').aggregate([
+  { $match: { 'conseiller.$id': conseiller._id,
+    '$and': [
+      { 'cra.dateAccompagnement': { $gt: dateDebut } },
+      { 'cra.dateAccompagnement': { $lt: dateFin } }
+    ]
+  } },
+  { $group: { _id: null, count: { $sum: '$cra.nbParticipants' } } },
+  { $project: { 'valeur': '$count' } }
+]).toArray();
+
+const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie, groupeCRA, isUserActif, nom, structureId, codeRegion) => {
   const conseillers = db.collection('conseillers').aggregate([
     {
       $match: {
@@ -34,7 +62,10 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
           { datePrisePoste: { $lt: dateFin } },
         ],
         ...filterUserActif(isUserActif),
-        ...filterGroupeCRA(groupeCRA)
+        ...filterGroupeCRA(groupeCRA),
+        ...filterNom(nom),
+        ...filterStructureId(structureId),
+        ...filterCertification(certifie)
       }
     },
     {
@@ -47,14 +78,22 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     },
     { $unwind: '$structure' },
     {
+      $match: {
+        ...filterCodeRegion(codeRegion)
+      }
+    },
+    {
       $project: {
         '_id': 1,
+        'idPG': 1,
         'prenom': 1,
         'nom': 1,
         'email': 1,
         'emailCN': 1,
         'codePostal': 1,
+        'codeDepartement': 1,
         'structureId': 1,
+        'certifie': 1,
         'datePrisePoste': 1,
         'dateFinFormation': 1,
         'groupeCRA': 1,
@@ -71,10 +110,13 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     }
   ]);
   let arrayConseillers = [];
+
   const functionCraCount = db => async conseillers => {
     for (let conseiller of conseillers) {
       const result = await getCraCount(db)(conseiller);
+      const countGetPA = await countGetPersonnesAccompagnees(db)(conseiller, dateDebut, dateFin);
       conseiller.craCount = result;
+      conseiller.countPersonnesAccompagnees = countGetPA[0]?.valeur ?? 0;
       arrayConseillers.push(conseiller);
     }
   };
@@ -82,15 +124,30 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     const ordreResult = await conseillers
     .sort({ [nomOrdre]: parseInt(ordre) })
     .toArray();
-    await functionCraCount(db)(ordreResult);
+    await functionCraCount(db)(ordreResult, dateDebut, dateFin);
     return arrayConseillers;
   }
   await functionCraCount(db)(await conseillers.toArray());
   return arrayConseillers;
 };
 
+const getCnfsWithoutCRA = db => async dateMoins15jours => await db.collection('conseillers').find({
+  'groupeCRA': { $eq: 4 },
+  'statut': { $eq: 'RECRUTE' },
+  'estCoordinateur': { $exists: false },
+  'groupeCRAHistorique': {
+    $elemMatch: {
+      'nbJourDansGroupe': { $exists: false },
+      'mailSendConseillerM+1,5': true,
+      'dateMailSendConseillerM+1,5': { $lte: dateMoins15jours },
+      'mailSendConseillerM+1': true
+    }
+  }
+}).toArray();
+
 const statsCnfsRepository = db => ({
-  getStatsCnfs: getStatsCnfs(db)
+  getStatsCnfs: getStatsCnfs(db),
+  getCnfsWithoutCRA: getCnfsWithoutCRA(db)
 });
 
 module.exports = {

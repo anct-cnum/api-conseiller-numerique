@@ -14,13 +14,13 @@ module.exports = {
     all: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'admin_coop', 'structure', 'prefet', 'conseiller'],
+        roles: ['admin', 'admin_coop', 'structure', 'prefet', 'conseiller', 'coordinateur_coop'],
         field: 'roles',
       })
     ],
     find: [
       checkPermissions({
-        roles: ['admin', 'admin_coop', 'prefet'],
+        roles: ['admin', 'admin_coop', 'prefet', 'coordinateur_coop'],
         field: 'roles',
       }),
       async context => {
@@ -40,8 +40,8 @@ module.exports = {
           }
         }
 
-        //Restreindre les permissions : les conseillers ne peuvent voir que les informations de la structure associée
-        if (context.params?.user?.roles.includes('conseiller')) {
+        //Restreindre les permissions : les conseillers (non coordinateur) ne peuvent voir que les informations de la structure associée
+        if (context.params?.user?.roles.includes('conseiller') && !context.params?.user?.roles.includes('coordinateur_coop')) {
           const conseiller = await context.app.service('conseillers').get(context.params?.user?.entity?.oid);
           if (context.id.toString() !== conseiller?.structureId.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');

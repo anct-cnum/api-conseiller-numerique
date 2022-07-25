@@ -8,7 +8,10 @@ const validateExportCnfsSchema = exportTerritoiresInput => Joi.object({
   ordre: Joi.number().error(new Error('L\'ordre est invalide')),
   isUserActif: Joi.boolean().error(new Error('Le filtre actif est invalide')),
   certifie: Joi.boolean().error(new Error('Le filtre certifie est invalide')),
-  groupeCRA: Joi.number().error(new Error('Le filtre groupe CRA est invalide'))
+  groupeCRA: Joi.number().error(new Error('Le filtre groupe CRA est invalide')),
+  nom: Joi.string().error(new Error('le filtre nom est invalide')),
+  structureId: Joi.string().error(new Error('le filtre structureId est invalide')),
+  codeRegion: Joi.string().error(new Error('le filtre codeRegion est invalide'))
 }).validate(exportTerritoiresInput);
 
 const isUserActifIdDefined = isUserActif => isUserActif !== undefined ? { isUserActif } : {};
@@ -16,6 +19,12 @@ const isUserActifIdDefined = isUserActif => isUserActif !== undefined ? { isUser
 const certifieIfDefined = certifie => certifie !== undefined ? { certifie } : {};
 
 const groupeCRAIfDefined = groupeCRA => groupeCRA !== undefined ? { groupeCRA } : {};
+
+const byNameIfDefined = nom => nom !== undefined ? { nom } : {};
+
+const byStructureIdIfDefined = structureId => structureId !== undefined ? { structureId } : {};
+
+const byCodeRegionIfDefined = codeRegion => codeRegion ? { codeRegion } : {};
 
 const orderingDefined = sort => {
   if (sort === undefined) {
@@ -35,7 +44,10 @@ const exportCnfsQueryToSchema = query => {
     ...orderingDefined(query.$sort),
     ...isUserActifIdDefined(query.isUserActif),
     ...certifieIfDefined(query.certifie),
-    ...groupeCRAIfDefined(query.groupeCRA)
+    ...groupeCRAIfDefined(query.groupeCRA),
+    ...byNameIfDefined(query.$search),
+    ...byStructureIdIfDefined(query.structureId),
+    ...byCodeRegionIfDefined(query.codeRegion)
   };
 };
 
@@ -59,35 +71,76 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     'Activé',
     'CRA Saisis'
   ];
+
   if (user.roles.includes('admin_coop')) {
-    fileHeaders[5] = 'Code Postal du conseiller';
-    fileHeaders.splice(4, 0, 'Id de la structure');
-    fileHeaders.splice(6, 0, 'Email de la structure');
-    fileHeaders.splice(7, 0, 'Adresse de la structure');
-    fileHeaders.splice(8, 0, 'Code département de la structure');
-    fileHeaders.splice(12, 0, 'GroupeCRA');
+    fileHeaders.splice(0, 0, 'Id du conseiller');
+    fileHeaders[6] = 'Code Postal du conseiller';
+    fileHeaders.splice(5, 0, 'Compte Activé');
+    fileHeaders.splice(6, 0, 'Id de la structure');
+    fileHeaders.splice(8, 0, 'Email de la structure');
+    fileHeaders.splice(9, 0, 'Adresse de la structure');
+    fileHeaders.splice(10, 0, 'Code département de la structure');
+    fileHeaders.splice(12, 0, 'Code département du conseiller');
+    fileHeaders.splice(15, 0, 'GroupeCRA');
+    fileHeaders.splice(20, 0, 'Nombre de personnes accompagnées');
     fileHeaders.push('Nom Supérieur hiérarchique');
     fileHeaders.push('Prénom supérieur hiérarchique');
     fileHeaders.push('Fonction supérieur hiérarchique');
     fileHeaders.push('Email supérieur hiérarchique');
     fileHeaders.push('Numéro téléphone supérieur hiérarchique');
     fileHeaders.push('Historique des groupes CRA');
+
+
     return [
       fileHeaders.join(csvCellSeparator),
       ...statsCnfs.map(statCnfs => [
+        statCnfs.idPG,
         statCnfs.prenom,
         statCnfs.nom,
         statCnfs.email,
-        statCnfs.mattermost?.id ? statCnfs.emailCN?.address : 'compte COOP non créé',
+        statCnfs.mattermost?.id ? statCnfs.emailCN?.address : '',
+        statCnfs.mattermost?.id ? 'Oui' : 'Non',
         statCnfs.structure?.idPG,
         statCnfs.structure?.nom.replace(/["',]/g, ''),
         statCnfs.structure?.contact?.email,
         statCnfs.adresseStructure,
         statCnfs.structure?.codeDepartement,
         statCnfs.codePostal,
+        statCnfs.codeDepartement,
         statCnfs.datePrisePoste,
         statCnfs.dateFinFormation,
         statCnfs?.groupeCRA,
+        statCnfs.certifie,
+        statCnfs.isUserActif,
+        statCnfs.craCount,
+        statCnfs.countPersonnesAccompagnees,
+        statCnfs?.supHierarchique?.nom,
+        statCnfs?.supHierarchique?.prenom,
+        statCnfs?.supHierarchique?.fonction,
+        statCnfs?.supHierarchique?.email,
+        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`,
+        statCnfs?.groupeCRAHistorique.replace(/[,]/g, '|')
+      ].join(csvCellSeparator))
+    ].join(csvLineSeparator);
+  }
+
+  if (user.roles.includes('coordinateur_coop')) {
+    fileHeaders.push('Nom Supérieur hiérarchique');
+    fileHeaders.push('Prénom supérieur hiérarchique');
+    fileHeaders.push('Fonction supérieur hiérarchique');
+    fileHeaders.push('Email supérieur hiérarchique');
+    fileHeaders.push('Numéro téléphone supérieur hiérarchique');
+    return [
+      fileHeaders.join(csvCellSeparator),
+      ...statsCnfs.map(statCnfs => [
+        statCnfs.prenom,
+        statCnfs.nom,
+        statCnfs.email,
+        statCnfs?.emailCN?.address ?? 'compte COOP non créé',
+        statCnfs?.nomStructure.replace(/["',]/g, ''),
+        statCnfs.codePostal,
+        statCnfs.datePrisePoste,
+        statCnfs.dateFinFormation,
         statCnfs.certifie,
         statCnfs.isUserActif,
         statCnfs.craCount,
@@ -95,11 +148,11 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs?.supHierarchique?.prenom,
         statCnfs?.supHierarchique?.fonction,
         statCnfs?.supHierarchique?.email,
-        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`,
-        statCnfs?.groupeCRAHistorique
+        `"${statCnfs?.supHierarchique?.numeroTelephone ?? ''}"`
       ].join(csvCellSeparator))
     ].join(csvLineSeparator);
   }
+
   return [
     fileHeaders.join(csvCellSeparator),
     ...statsCnfs.map(statCnfs => [
@@ -107,7 +160,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
       statCnfs.nom,
       statCnfs.email,
       statCnfs.mattermost?.id ? statCnfs.emailCN?.address : 'compte COOP non créé',
-      statCnfs.nomStructure.replace(/["',]/g, ''),
+      statCnfs.structure?.nom.replace(/["',]/g, ''),
       statCnfs.codePostal,
       statCnfs.datePrisePoste,
       statCnfs.dateFinFormation,
@@ -118,9 +171,36 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
   ].join(csvLineSeparator);
 };
 
+const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
+  const fileHeaders = [
+    'Nom',
+    'Prénom',
+    'Email @conseiller-numerique.fr',
+    'Code Postal du conseiller',
+    'Code département du conseiller',
+    'Numéro de téléphone du conseiller',
+    'Date d\'envoi du mail M+1',
+    'Date d\'envoi du mail M+1,5'
+  ];
+  return [
+    fileHeaders.join(csvCellSeparator),
+    ...conseillers.map(conseiller => [
+      conseiller.nom,
+      conseiller.prenom,
+      conseiller.emailCN.address,
+      conseiller.codePostal,
+      conseiller.codeDepartement,
+      conseiller.telephone,
+      conseiller.date1Mois,
+      conseiller.date1MoisEtDemi
+    ].join(csvCellSeparator))
+  ].join(csvLineSeparator);
+};
+
 module.exports = {
   validateExportCnfsSchema,
   exportCnfsQueryToSchema,
   getExportCnfsFileName,
-  buildExportCnfsCsvFileContent
+  buildExportCnfsCsvFileContent,
+  buildExportCnfsWithoutCRACsvFileContent
 };
