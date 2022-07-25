@@ -130,20 +130,46 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
   await functionCraCount(db)(await conseillers.toArray());
   return arrayConseillers;
 };
-
-const getCnfsWithoutCRA = db => async dateMoins15jours => await db.collection('conseillers').find({
-  'groupeCRA': { $eq: 4 },
-  'statut': { $eq: 'RECRUTE' },
-  'estCoordinateur': { $exists: false },
-  'groupeCRAHistorique': {
-    $elemMatch: {
-      'nbJourDansGroupe': { $exists: false },
-      'mailSendConseillerM+1,5': true,
-      'dateMailSendConseillerM+1,5': { $lte: dateMoins15jours },
-      'mailSendConseillerM+1': true
+const getCnfsWithoutCRA = db => async dateMoins15jours => await db.collection('conseillers').aggregate([
+  {
+    $match: {
+      'groupeCRA': { $eq: 4 },
+      'statut': { $eq: 'RECRUTE' },
+      'estCoordinateur': { $exists: false },
+      'groupeCRAHistorique': {
+        $elemMatch: {
+          'nbJourDansGroupe': { $exists: false },
+          'mailSendConseillerM+1,5': true,
+          'dateMailSendConseillerM+1,5': { $lte: dateMoins15jours },
+          'mailSendConseillerM+1': true
+        }
+      }
+    }
+  },
+  {
+    $lookup: {
+      localField: 'structureId',
+      from: 'structures',
+      foreignField: '_id',
+      as: 'structure'
+    }
+  },
+  { $unwind: '$structure' },
+  {
+    $project: {
+      'prenom': 1,
+      'nom': 1,
+      'emailCN': 1,
+      'codePostal': 1,
+      'codeDepartement': 1,
+      'telephone': 1,
+      'groupeCRAHistorique': 1,
+      'structure.idPG': 1,
+      'structure.siret': 1,
+      'structure.nom': 1,
     }
   }
-}).toArray();
+]).toArray();
 
 const statsCnfsRepository = db => ({
   getStatsCnfs: getStatsCnfs(db),
