@@ -1,6 +1,5 @@
 const dayjs = require('dayjs');
-
-const formatDate = date => dayjs(new Date(date.getTime() + date.getTimezoneOffset() * 60000)).format('DD/MM/YYYY');
+const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
 
 const userActifStatus = mattermost => mattermost?.error === false ? 'Oui' : 'Non';
 
