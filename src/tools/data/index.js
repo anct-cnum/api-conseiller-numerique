@@ -9,8 +9,14 @@ const {
   updateMiseEnRelationAndUserStructure
 } = require('./tasks/structure');
 
+const {
+  countStatutNonDispoMisesEnRelation,
+  deleteStatutNonDispoMisesEnRelation
+} = require('./tasks/requete-mongo');
+
 program.option('-l, --limit <limit>', 'limit: définir un nombre');
 program.option('-c, --collection <collection>', 'collection: conseiller ou structure');
+program.option('-d, --delete', 'delete: suprimer toute les mises en relation avec le statut non disponible ou finalisee_non_disponible');
 program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
@@ -19,17 +25,28 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   await new Promise(async (resolve, reject) => {
     const limit = ~~program.limit;
     const collection = program.collection;
+    const deleteDataNonDispo = program.delete;
     const whiteList = ['local', 'recette'];
     const mongodb = app.get('mongodb');
     if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra'))) {
       exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;
     }
-    if (!['conseiller', 'structure'].includes(collection)) {
-      exit('Veuillez choisir au moins une option la collection: conseiller ou structure');
-      return;
+    if (!deleteDataNonDispo) {
+      if (!['conseiller', 'structure'].includes(collection)) {
+        exit('Veuillez choisir au moins une option la collection: conseiller ou structure');
+        return;
+      }
     }
     try {
+      if (deleteDataNonDispo) {
+        const countMiseEnRelationNonDipo = await countStatutNonDispoMisesEnRelation(db);
+        if (countMiseEnRelationNonDipo === 0) {
+          exit('Il y a zéro mise en relation avec un statut finalisee_non_disponible ou non_disponible');
+          return;
+        }
+        await deleteStatutNonDispoMisesEnRelation(db);
+      }
       if (collection === 'conseiller') {
         // ETAPE 1 ANONYMISER LES CONSEILLERS
         await anonymisationConseiller(db, logger, limit);
