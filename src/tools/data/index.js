@@ -10,7 +10,6 @@ const {
 } = require('./tasks/structure');
 
 const {
-  countStatutNonDispoMisesEnRelation,
   deleteStatutNonDispoMisesEnRelation
 } = require('./tasks/requete-mongo');
 
@@ -40,11 +39,6 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     }
     try {
       if (deleteDataNonDispo) {
-        const countMiseEnRelationNonDipo = await countStatutNonDispoMisesEnRelation(db);
-        if (countMiseEnRelationNonDipo === 0) {
-          exit('Il y a zéro mise en relation avec un statut finalisee_non_disponible ou non_disponible');
-          return;
-        }
         await deleteStatutNonDispoMisesEnRelation(db);
       }
       if (collection === 'conseiller') {

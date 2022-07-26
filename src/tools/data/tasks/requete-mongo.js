@@ -122,10 +122,6 @@ const conseillerPG = pool => async dataAnonyme => {
 const deleteStatutNonDispoMisesEnRelation = async db =>
   await db.collection(`misesEnRelation${suffix}`).deleteMany({ statut: { $in: ['non_disponible', 'finalisee_non_disponible'] } });
 
-const countStatutNonDispoMisesEnRelation = async db =>
-  await db.collection(`misesEnRelation${suffix}`).countDocuments({ statut: { $in: ['non_disponible', 'finalisee_non_disponible'] } });
-
-
 module.exports = {
   // Structures
   getTotalStructures,
@@ -158,6 +154,5 @@ module.exports = {
   updateIdMongoSondages,
   conseillerPG,
   // requetes spécifiques
-  countStatutNonDispoMisesEnRelation,
   deleteStatutNonDispoMisesEnRelation
 };
