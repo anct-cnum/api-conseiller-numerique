@@ -490,7 +490,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       const miseEnRelation = await db.collection('misesEnRelation').findOne({
         'conseiller.$id': new ObjectId(id),
-        'statut': 'finalisee'
+        'statut': { $in: ['finalisee', 'nouvelle_rupture'] }
       });
 
       if (miseEnRelation === null) {
