@@ -20,7 +20,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       try {
         const nombreMiseEnRelation = await db.collection('misesEnRelation').countDocuments({
           'structure.$id': user.entity.oid,
-          'statut': { $in: ['interessee', 'recrutee', 'finalisee', 'nonInteressee', 'finalisee_rupture']
+          'statut': { $in: ['interessee', 'recrutee', 'finalisee', 'nonInteressee', 'finalisee_rupture', 'nouvelle_rupture']
           } }
         );
         const structureEmailContact = await db.collection('structures').countDocuments({

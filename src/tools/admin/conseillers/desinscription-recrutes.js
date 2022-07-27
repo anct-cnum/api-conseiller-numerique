@@ -109,7 +109,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
           const miseEnRelation = await db.collection('misesEnRelation').findOne({
             'conseiller.$id': conseillerCoop?._id,
             'structure.$id': conseillerCoop?.structureId,
-            'statut': 'finalisee'
+            'statut': { $in: ['finalisee', 'nouvelle_rupture'] }
           });
           const userCoop = await db.collection('users').findOne({
             'roles': { $in: ['conseiller'] },
@@ -189,7 +189,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               await db.collection('misesEnRelation').updateOne(
                 { 'conseiller.$id': conseillerCoop._id,
                   'structure.$id': conseillerCoop.structureId,
-                  'statut': 'finalisee'
+                  'statut': { $in: ['finalisee', 'nouvelle_rupture'] }
                 },
                 {
                   $set: {
