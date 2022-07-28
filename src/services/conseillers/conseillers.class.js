@@ -32,7 +32,8 @@ const {
   candidatSupprimeEmailPix,
   getConseillersByCoordinateurId,
   countCraConseiller,
-  isSubordonne } = require('./conseillers.function');
+  isSubordonne,
+  deleteMailSib } = require('./conseillers.function');
 const {
   canActivate,
   authenticationGuard,
@@ -555,7 +556,8 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }).then(() => {
         if (motif !== 'doublon') {
-          return candidatSupprimeEmailPix(db, app)(candidat);
+          candidatSupprimeEmailPix(db, app)(candidat);
+          deleteMailSib(app)(candidat.email);
         }
         return;
       }).then(() => {
