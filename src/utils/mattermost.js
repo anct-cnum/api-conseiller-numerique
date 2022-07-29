@@ -85,14 +85,14 @@ const getUsersChannel = async (mattermost, token, idChannel) => {
   });
 };
 
-const getUsersTeams = async (mattermost, token, idTeam) => {
+const getUsersTeams = async (mattermost, token, idTeam, numberPage) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
 
   return await axios({
     method: 'GET',
-    url: `${mattermost.endPoint}/api/v4/users?active=true&in_team=${idTeam}`,
+    url: `${mattermost.endPoint}/api/v4/users?active=true&in_team=${idTeam}&page=${numberPage}&per_page=200`,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`

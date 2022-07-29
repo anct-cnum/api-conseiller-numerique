@@ -15,19 +15,21 @@ require('dotenv').config();
 
 execute(__filename, async ({ logger, exit, app }) => {
   program.option('-t, --team <team>', 'team: id de la Team');
+  program.option('-p, --page <page>', 'page: indiqué la page');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   const idTeam = program.team;
+  const numberPage = program.page;
   let promises = [];
-  if (!idTeam) {
-    exit('Veuillez définir l\'id de la Team');
+  if (!idTeam && !numberPage) {
+    exit('Veuillez définir l\'id de la Team Et un numéro de page');
     return;
   }
   const mattermost = app.get('mattermost');
   const token = await loginAPI({ mattermost });
   const resultNomTeam = await getTeam(mattermost, token, idTeam);
-  const { data } = await getUsersTeams(mattermost, token, idTeam);
+  const { data } = await getUsersTeams(mattermost, token, idTeam, numberPage);
   const resultData = `Il y ${data.length} membres dans la Team : ${resultNomTeam.data.name}`;
   if (data.length === 0) {
     exit(resultData);
@@ -38,7 +40,7 @@ execute(__filename, async ({ logger, exit, app }) => {
   const emailTeams = data.map(user => user.email);
 
   logger.info(`Generating CSV file...`);
-  let csvFile = path.join(__dirname, '../../../data/exports', `${resultNomTeam.data.name}.csv`);
+  let csvFile = path.join(__dirname, '../../../data/exports', `${resultNomTeam.data.name}-page-${numberPage}.csv`);
   let file = fs.createWriteStream(csvFile, { flags: 'w' });
 
   file.write(`Email ${resultNomTeam.data.name}\n`);
