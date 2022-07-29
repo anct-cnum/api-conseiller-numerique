@@ -36,6 +36,22 @@ const getChannel = async (mattermost, token, channelName) => {
   });
 };
 
+const getTeam = async (mattermost, token, idTeam) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'get',
+    url: `${mattermost.endPoint}/api/v4/teams/${idTeam}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+
 const joinChannel = async (mattermost, token, idChannel, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
@@ -69,14 +85,14 @@ const getUsersChannel = async (mattermost, token, idChannel) => {
   });
 };
 
-const getUsersTeams = async (mattermost, token, idTeams) => {
+const getUsersTeams = async (mattermost, token, idTeam) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
 
   return await axios({
     method: 'GET',
-    url: `${mattermost.endPoint}/api/v4/users?active=true&in_team=${idTeams}`,
+    url: `${mattermost.endPoint}/api/v4/users?active=true&in_team=${idTeam}`,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -440,6 +456,7 @@ module.exports = {
   slugifyName,
   loginAPI,
   getChannel,
+  getTeam,
   createAccount,
   updateAccountPassword,
   deleteAccount,
