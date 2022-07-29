@@ -69,6 +69,21 @@ const getUsersChannel = async (mattermost, token, idChannel) => {
   });
 };
 
+const getUsersTeams = async (mattermost, token, idTeams) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'GET',
+    url: `${mattermost.endPoint}/api/v4/users?active=true&in_team=${idTeams}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 const deleteUserChannel = async (mattermost, token, idChannel, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
@@ -431,6 +446,7 @@ module.exports = {
   createChannel,
   joinChannel,
   getUsersChannel,
+  getUsersTeams,
   deleteUserChannel,
   joinTeam,
   deleteArchivedChannels,
