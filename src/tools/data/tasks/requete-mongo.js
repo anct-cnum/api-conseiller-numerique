@@ -3,6 +3,8 @@
 // ...............................................
 const suffix = '_faker';
 
+const getValidationStructure = async db => await db.collection(`structures${suffix}`).findOne({ statut: 'VALIDATION_COSELEC' });
+
 const getTotalStructures = (db, limit) => async query =>
   await db.collection(`structures${suffix}`).find({ faker: { '$exists': false }, ...query }).limit(limit).toArray();
 
@@ -60,6 +62,10 @@ const structurePG = pool => async dataAnonyme => {
 // Concernant les CONSEILLERS
 // ...............................................
 
+const getCnfsRecrute = async db => await db.collection(`conseillers${suffix}`).findOne({ statut: 'RECRUTE' });
+
+const getCnfsNonRecrute = async db => await db.collection(`conseillers${suffix}`).findOne({ statut: { '$ne': 'RECRUTE' } });
+
 const getTotalConseillers = async (db, limit) => await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': false } }).limit(limit).toArray();
 
 const getTotalConseillersAnonyme = async (db, limit) => await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': true } }).limit(limit).toArray();
@@ -115,15 +121,17 @@ const conseillerPG = pool => async dataAnonyme => {
   [idPG, prenom, nom, email, telephone, dateDisponibilite, distanceMax]);
 };
 
-
 // ...............................................
 // Concernant des requetes spécifiques
 // ...............................................
 const deleteStatutNonDispoMisesEnRelation = async db =>
   await db.collection(`misesEnRelation${suffix}`).deleteMany({ statut: { $in: ['non_disponible', 'finalisee_non_disponible'] } });
 
+const createUser = db => async body => await db.collection(`users${suffix}`).insertOne(body);
+
 module.exports = {
   // Structures
+  getValidationStructure,
   getTotalStructures,
   getTotalStructuresAnonyme,
   updateIdMongoStructure,
@@ -139,6 +147,8 @@ module.exports = {
   updateIdMongoStructureConseillerRupture,
   structurePG,
   // Conseillers
+  getCnfsRecrute,
+  getCnfsNonRecrute,
   getTotalConseillers,
   getTotalConseillersAnonyme,
   updateIdMongoConseiller,
@@ -154,5 +164,6 @@ module.exports = {
   updateIdMongoSondages,
   conseillerPG,
   // requetes spécifiques
-  deleteStatutNonDispoMisesEnRelation
+  deleteStatutNonDispoMisesEnRelation,
+  createUser
 };

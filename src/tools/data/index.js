@@ -1,5 +1,6 @@
 const { program } = require('commander');
 const { execute } = require('../utils');
+const bcrypt = require('bcryptjs');
 const {
   anonymisationConseiller,
   updateMiseEnRelationAndUserConseiller
@@ -8,7 +9,17 @@ const {
   anonymisationStructure,
   updateMiseEnRelationAndUserStructure
 } = require('./tasks/structure');
-
+const {
+  createCompteFixPrefetDepartement,
+  createCompteFixPrefetRegion,
+  createCompteFixAdmin,
+  createCompteFixCandidat,
+  createCompteFixCnfs,
+  createCompteFixCoordo,
+  createCompteFixCnfsCoordo,
+  createCompteFixStructure,
+  createCompteFixCHub
+} = require('./tasks/compte-fix');
 const {
   deleteStatutNonDispoMisesEnRelation
 } = require('./tasks/requete-mongo');
@@ -16,6 +27,8 @@ const {
 program.option('-l, --limit <limit>', 'limit: définir un nombre');
 program.option('-c, --collection <collection>', 'collection: conseiller ou structure');
 program.option('-d, --delete', 'delete: suprimer toute les mises en relation avec le statut non disponible ou finalisee_non_disponible');
+program.option('-f, --fix', 'fix: creation compte de test fixe');
+program.option('-p, --password <password>', 'password: password pour les comptes fix');
 program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
@@ -25,21 +38,43 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     const limit = ~~program.limit;
     const collection = program.collection;
     const deleteDataNonDispo = program.delete;
+    const compteFix = program.fix;
+    let password = program.password;
     const whiteList = ['local', 'recette'];
     const mongodb = app.get('mongodb');
     if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra'))) {
       exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;
     }
-    if (!deleteDataNonDispo) {
+    if (!deleteDataNonDispo && !compteFix) {
       if (!['conseiller', 'structure'].includes(collection)) {
         exit('Veuillez choisir au moins une option la collection: conseiller ou structure');
+        return;
+      }
+    }
+    if (compteFix) {
+      if (!password) {
+        exit('Veuillez choisir un mot de passe');
         return;
       }
     }
     try {
       if (deleteDataNonDispo) {
         await deleteStatutNonDispoMisesEnRelation(db);
+      }
+      if (compteFix) {
+        const connection = app.get('mongodb');
+        const database = connection.substr(connection.lastIndexOf('/') + 1);
+        password = await bcrypt.hashSync(password);
+        await createCompteFixPrefetDepartement(db, logger, password);
+        await createCompteFixPrefetRegion(db, logger, password);
+        await createCompteFixAdmin(db, logger, password);
+        await createCompteFixCandidat(db, logger, password, database);
+        await createCompteFixCnfs(db, logger, password, database);
+        await createCompteFixCoordo(db, logger, password);
+        await createCompteFixCnfsCoordo(db, logger, password, database);
+        await createCompteFixStructure(db, logger, password, database);
+        await createCompteFixCHub(db, logger, password);
       }
       if (collection === 'conseiller') {
         // ETAPE 1 ANONYMISER LES CONSEILLERS
