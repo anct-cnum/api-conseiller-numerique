@@ -60,6 +60,6 @@ execute(__filename, async ({ logger, db, exit }) => {
     logger.error(error);
   }
   await Promise.all(promises);
-  logger.info(`${countConseillerDelete} ont été supprimé de la liste des contacts`);
+  logger.info(`${countConseillerDelete} ont été supprimés de la liste des contacts`);
   exit();
 });

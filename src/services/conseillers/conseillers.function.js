@@ -186,7 +186,7 @@ const deleteMailSib = app => async emailPerso => {
     await apiInstance.deleteContact(emailPerso);
   } catch (error) {
     logger.error(`Erreur DB for delete Conseiller : ${error.message}`);
-    app.get('sentry').captureException(error);
+    app.get('sentry').captureException(error.message);
   }
 };
 
