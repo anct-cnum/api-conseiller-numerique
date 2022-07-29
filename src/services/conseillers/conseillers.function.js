@@ -12,11 +12,6 @@ const createMailer = require('../../mailer');
 const { Role } = require('../../common/utils/feathers.utils');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-const defaultClient = SibApiV3Sdk.ApiClient.instance;
-let apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = 'YOUR API KEY'; //TO REPLACE
-const apiInstance = new SibApiV3Sdk.ContactsApi();
-
 const checkAuth = (req, res) => {
   if (req.feathers?.authentication === undefined) {
     res.status(401).send(new NotAuthenticated('User not authenticated'));
@@ -183,6 +178,10 @@ const archiverLaSuppression = app => async (tableauCandidat, user, motif, action
 
 const deleteMailSib = app => async emailPerso => {
   try {
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    let apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = app.get('sib_api_key');
+    const apiInstance = new SibApiV3Sdk.ContactsApi();
     await apiInstance.deleteContact(emailPerso);
   } catch (error) {
     logger.error(`Erreur DB for delete Conseiller : ${error.message}`);
