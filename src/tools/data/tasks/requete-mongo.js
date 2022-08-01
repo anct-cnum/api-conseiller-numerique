@@ -127,6 +127,9 @@ const conseillerPG = pool => async dataAnonyme => {
 const deleteStatutNonDispoMisesEnRelation = async db =>
   await db.collection(`misesEnRelation${suffix}`).deleteMany({ statut: { $in: ['non_disponible', 'finalisee_non_disponible'] } });
 
+const deleteUsersSolo = async db =>
+  await db.collection(`users${suffix}`).deleteMany({ roles: { $in: ['prefet', 'hub_coop', 'admin', 'coordinateur_coop'] } });
+
 const createUser = db => async body => await db.collection(`users${suffix}`).insertOne(body);
 
 module.exports = {
@@ -165,5 +168,6 @@ module.exports = {
   conseillerPG,
   // requetes spécifiques
   deleteStatutNonDispoMisesEnRelation,
+  deleteUsersSolo,
   createUser
 };

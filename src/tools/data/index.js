@@ -21,7 +21,8 @@ const {
   createCompteFixCHub
 } = require('./tasks/compte-fix');
 const {
-  deleteStatutNonDispoMisesEnRelation
+  deleteStatutNonDispoMisesEnRelation,
+  deleteUsersSolo
 } = require('./tasks/requete-mongo');
 
 program.option('-l, --limit <limit>', 'limit: définir un nombre');
@@ -37,7 +38,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   await new Promise(async (resolve, reject) => {
     const limit = ~~program.limit;
     const collection = program.collection;
-    const deleteDataNonDispo = program.delete;
+    const deleteDataNonDispoAndUsersExterne = program.delete;
     const compteFix = program.fix;
     let password = program.password;
     const whiteList = ['local', 'recette'];
@@ -46,7 +47,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
       exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;
     }
-    if (!deleteDataNonDispo && !compteFix) {
+    if (!deleteDataNonDispoAndUsersExterne && !compteFix) {
       if (!['conseiller', 'structure'].includes(collection)) {
         exit('Veuillez choisir au moins une option la collection: conseiller ou structure');
         return;
@@ -59,8 +60,9 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
       }
     }
     try {
-      if (deleteDataNonDispo) {
+      if (deleteDataNonDispoAndUsersExterne) {
         await deleteStatutNonDispoMisesEnRelation(db);
+        await deleteUsersSolo(db);
       }
       if (compteFix) {
         const connection = app.get('mongodb');
