@@ -18,6 +18,9 @@ const updateIdMongoStructure = db => async (id, dataAnonyme) => {
 const updateMiseEnrelationStructure = db => async (id, structureObj) =>
   await db.collection(`misesEnRelation${suffix}`).updateMany({ 'structure.$id': id }, { $set: { ...structureObj } });
 
+const updateMajEffectuer = db => async id =>
+  await db.collection(`structures${suffix}`).updateOne({ '_id': id }, { $set: { 'fakerUser': true } });
+
 const getStructure = db => async id => await db.collection(`structures${suffix}`).findOne({ _id: id });
 
 const getUserStructure = db => async id => await db.collection(`users${suffix}`).findOne({ 'entity.$id': id });
@@ -156,6 +159,7 @@ module.exports = {
   getTotalConseillersAnonyme,
   updateIdMongoConseiller,
   updateMiseEnRelationConseiller,
+  updateMajEffectuer,
   getUserConseiller,
   updateUserConseiller,
   updateIdMongoConseillerMisesEnRelation,

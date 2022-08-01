@@ -3,6 +3,7 @@ const {
   getTotalStructuresAnonyme,
   updateMiseEnrelationStructure,
   updateIdMongoStructure,
+  updateMajEffectuer,
   getUserStructure,
   updateUserStructure,
   getUserMulticompteStructure,
@@ -30,11 +31,11 @@ const anonymisationStructure = async (db, logger, limit) => {
       ...str,
       _id: newIdMongo,
       contact: {
-        nom: data.nom,
-        prenom: data.prenom,
-        email: data.email,
-        telephone: data.telephone,
-        fonction: str.contact.fonction ?? 'non renseignée'
+        nom: data?.nom,
+        prenom: data?.prenom,
+        email: data?.email,
+        telephone: data?.telephone,
+        fonction: str.contact?.fonction ?? 'non renseignée'
       },
       faker: true
     };
@@ -53,7 +54,8 @@ const anonymisationStructure = async (db, logger, limit) => {
 const updateMiseEnRelationAndUserStructure = async (db, logger, limit) => {
   let query = {
     'statut': 'VALIDATION_COSELEC',
-    'userCreated': true
+    'userCreated': true,
+    'fakerUser': { '$exists': false }
   };
   const getStructureAnonyme = await getTotalStructuresAnonyme(db, limit)(query);
   for (const structureObjOriginal of getStructureAnonyme) {
@@ -67,22 +69,24 @@ const updateMiseEnRelationAndUserStructure = async (db, logger, limit) => {
 
     // findOne d'un compte user d'une structure
     const resultUser = await getUserStructure(db)(id);
-    if (resultUser) {
+    if (resultUser !== null) {
       // _id mongo doc user
       const idMongo = resultUser._id;
       const email = structureObj.contact.email;
       const { token, password, tokenCreatedAt } = await fakeData({});
       await updateUserStructure(db)(idMongo, email, token, password, tokenCreatedAt);
+      // ici on gère le multicompte , on change l'email + token des multicomptes uniquement
+      const idMongoUserIgnore = resultUser._id;
+      const multicompte = await getUserMulticompteStructure(db)(id, idMongoUserIgnore);
+      if (multicompte.length !== 0) {
+        for (const m of multicompte) {
+          const { email, token, password, tokenCreatedAt } = await fakeData({});
+          const idMongoUser = m._id;
+          await updateUserMulticompteStructure(db)(id, idMongoUser, email, token, password, tokenCreatedAt);
+        }
+      }
     }
-    // ici on gère le multicompte , on change l'email + token des multicomptes uniquement
-    const idMongoUserIgnore = resultUser._id;
-    const multicompte = await getUserMulticompteStructure(db)(id, idMongoUserIgnore);
-    for (const m of multicompte) {
-      const { email, token, password, tokenCreatedAt } = await fakeData({});
-      const idMongoUser = m._id;
-      await updateUserMulticompteStructure(db)(id, idMongoUser, email, token, password, tokenCreatedAt);
-    }
-
+    await updateMajEffectuer(db)(id);
   }
   logger.info(`${getStructureAnonyme.length} structures mis à jour dans les mises en relation (VALIDATION_COSELEC)`);
 };

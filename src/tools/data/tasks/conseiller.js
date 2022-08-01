@@ -49,6 +49,17 @@ const anonymisationConseiller = async (db, logger, limit) => {
       dataAnonyme.cv.file = `${newIdMongo.toString()}.pdf`;
     }
     if (conseiller.statut === 'RECRUTE') {
+      if (valueExists(conseiller, 'telephonePro')) {
+        dataAnonyme.telephonePro = data.telephone;
+      }
+      if (valueExists(conseiller, 'mailProAModifier')) {
+        dataAnonyme.mailProAModifier = data.email;
+        dataAnonyme.tokenChangementMailPro = data.token;
+      }
+      if (valueExists(conseiller, 'mailAModifier')) {
+        dataAnonyme.mailAModifier = data.email;
+        dataAnonyme.tokenChangementMail = data.token;
+      }
       if (valueExists(conseiller, 'supHierarchique')) {
         const dataFakeHierarchique = await fakeData({});
         dataAnonyme.supHierarchique = {
