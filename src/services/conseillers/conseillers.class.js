@@ -554,10 +554,10 @@ exports.Conseillers = class Conseillers extends Service {
           });
         }
         return;
-      }).then(() => {
+      }).then(async () => {
         if (motif !== 'doublon') {
           candidatSupprimeEmailPix(db, app)(candidat);
-          deleteMailSib(app)(candidat.email);
+          await deleteMailSib(app)(candidat.email);
         }
         return;
       }).then(() => {

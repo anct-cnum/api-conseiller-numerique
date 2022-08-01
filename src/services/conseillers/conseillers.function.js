@@ -184,7 +184,7 @@ const deleteMailSib = app => async emailPerso => {
     const apiInstance = new SibApiV3Sdk.ContactsApi();
     await apiInstance.deleteContact(emailPerso);
   } catch (error) {
-    logger.error(`Erreur DB for delete Conseiller : ${error.message}`);
+    logger.error(`Erreur contact SIB : ${error.message}`);
     app.get('sentry').captureException(error.message);
   }
 };
