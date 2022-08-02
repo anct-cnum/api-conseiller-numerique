@@ -94,7 +94,6 @@ const anonymisationConseiller = async (db, logger, limit) => {
   logger.info(`${cnfs.length} conseillers anonymisers`);
 };
 
-
 const updateMiseEnRelationAndUserConseiller = async (db, logger, limit) => {
   const cnfs = await getTotalConseillersAnonyme(db, limit);
   for (const conseillerObj of cnfs) {

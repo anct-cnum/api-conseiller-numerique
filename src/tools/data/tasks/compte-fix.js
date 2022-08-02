@@ -32,7 +32,7 @@ const createCompteFixPrefetRegion = async (db, logger, password) => {
     name: `region.11@prefet.fr`,
     roles: Array('prefet'),
     password: password,
-    departement: '11',
+    region: '11',
     token: uuidv4(),
     ...state
   };
@@ -75,20 +75,6 @@ const createCompteFixCnfs = async (db, logger, password, database) => {
     roles: Array('conseiller'),
     entity: new DBRef('conseillers', _id, database),
     password: password,
-    token: uuidv4(),
-    ...state
-  };
-  await createUser(db)(body);
-  logger.info(`Insert => ${body.name}`);
-};
-const createCompteFixCoordo = async (db, logger, password) => {
-  const fake = await fakeData({});
-  const body = {
-    name: `coordo@coordo.fr`,
-    nom: fake.nom,
-    prenom: fake.prenom,
-    roles: Array('coordinateur_coop'),
-    password,
     token: uuidv4(),
     ...state
   };
@@ -144,7 +130,6 @@ module.exports = {
   createCompteFixAdmin,
   createCompteFixCandidat,
   createCompteFixCnfs,
-  createCompteFixCoordo,
   createCompteFixCnfsCoordo,
   createCompteFixStructure,
   createCompteFixCHub,

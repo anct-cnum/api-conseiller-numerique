@@ -15,7 +15,6 @@ const {
   createCompteFixAdmin,
   createCompteFixCandidat,
   createCompteFixCnfs,
-  createCompteFixCoordo,
   createCompteFixCnfsCoordo,
   createCompteFixStructure,
   createCompteFixCHub
@@ -73,7 +72,6 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
         await createCompteFixAdmin(db, logger, password);
         await createCompteFixCandidat(db, logger, password, database);
         await createCompteFixCnfs(db, logger, password, database);
-        await createCompteFixCoordo(db, logger, password);
         await createCompteFixCnfsCoordo(db, logger, password, database);
         await createCompteFixStructure(db, logger, password, database);
         await createCompteFixCHub(db, logger, password);
