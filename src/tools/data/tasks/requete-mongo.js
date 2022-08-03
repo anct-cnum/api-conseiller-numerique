@@ -108,6 +108,13 @@ const updateIdMongoConseillerRuptures = db => async (idOriginal, newIdMongo) =>
 const updateIdMongoSondages = db => async (idOriginal, newIdMongo) =>
   await db.collection(`sondages${suffix}`).updateMany({ 'conseiller.$id': idOriginal }, { $set: { 'conseiller.$id': newIdMongo } });
 
+const updateIdMongoPermanenceConseiller = db => async (idOriginal, newIdMongo) =>
+  await db.collection(`permanences${suffix}`).updateMany({ 'conseillers': { '$in': [idOriginal] } }, { $set: { 'conseillers.$': newIdMongo } });
+
+const updateIdMongoPermanencesItinerant = db => async (idOriginal, newIdMongo) =>
+  await db.collection(`permanences${suffix}`).updateMany({ 'conseillersItinerants': { '$in': [idOriginal] } },
+    { $set: { 'conseillersItinerants.$': newIdMongo } });
+
 const conseillerPG = pool => async dataAnonyme => {
   const { idPG, prenom, nom, email, telephone, dateDisponibilite, distanceMax } = dataAnonyme;
   await pool.query(`UPDATE djapp_coach
@@ -169,6 +176,8 @@ module.exports = {
   updateIdMongoStatsConseillersCras,
   updateIdMongoConseillerRuptures,
   updateIdMongoSondages,
+  updateIdMongoPermanenceConseiller,
+  updateIdMongoPermanencesItinerant,
   conseillerPG,
   // requetes spécifiques
   deleteStatutNonDispoMisesEnRelation,

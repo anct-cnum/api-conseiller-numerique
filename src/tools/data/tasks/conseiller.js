@@ -12,6 +12,8 @@ const {
   updateIdMongoStatsConseillersCras,
   updateIdMongoConseillerRuptures,
   updateIdMongoSondages,
+  updateIdMongoPermanenceConseiller,
+  updateIdMongoPermanencesItinerant,
   conseillerPG
 } = require('./requete-mongo');
 
@@ -89,6 +91,8 @@ const anonymisationConseiller = async (db, logger, limit) => {
     await updateIdMongoConseillerStatsTerritoires(db)(idOriginal, newIdMongo);
     await updateIdMongoStatsConseillersCras(db)(idOriginal, newIdMongo);
     await updateIdMongoConseillerRuptures(db)(idOriginal, newIdMongo);
+    await updateIdMongoPermanenceConseiller(db)(idOriginal, newIdMongo);
+    await updateIdMongoPermanencesItinerant(db)(idOriginal, newIdMongo);
     await updateIdMongoSondages(db)(idOriginal, newIdMongo);
   }
   logger.info(`${cnfs.length} conseillers anonymisers`);
