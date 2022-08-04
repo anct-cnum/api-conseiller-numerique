@@ -279,7 +279,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Retraité;4\n' +
       'Non renseigné;0\n' +
       '\n' +
-      'Évolution des comptes rendu d\'activité\n' +
+      'Évolution des comptes rendus d\'activité\n' +
       '2021\n' +
       'Juillet;485\n' +
       'Août;1476\n' +

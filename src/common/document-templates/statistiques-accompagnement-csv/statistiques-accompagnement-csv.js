@@ -73,7 +73,7 @@ const statsUsagers = statistiques => [
 const mois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const statsEvolutions = statistiques => [
-  'Évolution des comptes rendu d\'activité',
+  'Évolution des comptes rendus d\'activité',
   ...Object.keys(statistiques.statsEvolutions).map(year => [
     year,
     ...statistiques.statsEvolutions[year]
