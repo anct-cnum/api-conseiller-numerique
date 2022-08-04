@@ -230,7 +230,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Total des participants aux ateliers;0\n' +
       'Accompagnements individuels;10\n' +
       'Demandes ponctuelles;13\n' +
-      'Usagers qui ont bénéficiés d\'un accompagnement poursuivi;21\n' +
+      'Accompagnments avec suivi;21\n' +
       'Pourcentage du total des usagers accompagnés sur cette période;91\n' +
       'Accompagnements individuels;11\n' +
       'Accompagnements en atelier collectif;0\n' +
@@ -279,7 +279,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Retraité;4\n' +
       'Non renseigné;0\n' +
       '\n' +
-      'Évolution des accompagnements\n' +
+      'Évolution des comptes rendu d\'activité\n' +
       '2021\n' +
       'Juillet;485\n' +
       'Août;1476\n' +

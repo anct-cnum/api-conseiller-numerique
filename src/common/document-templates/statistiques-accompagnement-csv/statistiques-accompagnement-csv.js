@@ -11,7 +11,7 @@ const general = statistiques => [
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
   `Accompagnements individuels;${statistiques.nbAccompagnementPerso}`,
   `Demandes ponctuelles;${statistiques.nbDemandePonctuel}`,
-  `Usagers qui ont bénéficiés d'un accompagnement poursuivi;${statistiques.nbUsagersBeneficiantSuivi}`,
+  `Accompagnments avec suivi;${statistiques.nbUsagersBeneficiantSuivi}`,
   `Pourcentage du total des usagers accompagnés sur cette période;${statistiques.tauxTotalUsagersAccompagnes}`,
   `Accompagnements individuels;${statistiques.nbUsagersAccompagnementIndividuel}`,
   `Accompagnements en atelier collectif;${statistiques.nbUsagersAtelierCollectif}`,
@@ -73,7 +73,7 @@ const statsUsagers = statistiques => [
 const mois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 const statsEvolutions = statistiques => [
-  'Évolution des accompagnements',
+  'Évolution des comptes rendu d\'activité',
   ...Object.keys(statistiques.statsEvolutions).map(year => [
     year,
     ...statistiques.statsEvolutions[year]
