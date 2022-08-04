@@ -230,7 +230,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Total des participants aux ateliers;0\n' +
       'Accompagnements individuels;10\n' +
       'Demandes ponctuelles;13\n' +
-      'Accompagnments avec suivi;21\n' +
+      'Accompagnements avec suivi;21\n' +
       'Pourcentage du total des usagers accompagnés sur cette période;91\n' +
       'Accompagnements individuels;11\n' +
       'Accompagnements en atelier collectif;0\n' +

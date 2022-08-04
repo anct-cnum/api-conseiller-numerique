@@ -11,7 +11,7 @@ const general = statistiques => [
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
   `Accompagnements individuels;${statistiques.nbAccompagnementPerso}`,
   `Demandes ponctuelles;${statistiques.nbDemandePonctuel}`,
-  `Accompagnments avec suivi;${statistiques.nbUsagersBeneficiantSuivi}`,
+  `Accompagnements avec suivi;${statistiques.nbUsagersBeneficiantSuivi}`,
   `Pourcentage du total des usagers accompagnés sur cette période;${statistiques.tauxTotalUsagersAccompagnes}`,
   `Accompagnements individuels;${statistiques.nbUsagersAccompagnementIndividuel}`,
   `Accompagnements en atelier collectif;${statistiques.nbUsagersAtelierCollectif}`,
