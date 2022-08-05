@@ -2,11 +2,6 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-const defaultClient = SibApiV3Sdk.ApiClient.instance;
-let apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = 'YOUR API KEY'; //TO REPLACE
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
 program
 .option('-c, --csv <path>', 'CSV file path');
 
@@ -26,7 +21,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const { execute } = require('../utils');
 
-execute(__filename, async ({ logger }) => {
+execute(__filename, async ({ logger, app }) => {
+  const defaultClient = SibApiV3Sdk.ApiClient.instance;
+  let apiKey = defaultClient.authentications['api-key'];
+  apiKey.apiKey = app.get('sib_api_key');
+  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
   await new Promise(() => {
     readCSV(program.csv).then(async emails => {
 

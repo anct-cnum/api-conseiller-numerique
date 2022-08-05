@@ -10,6 +10,7 @@ const decode = require('jwt-decode');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { Role } = require('../../common/utils/feathers.utils');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 const checkAuth = (req, res) => {
   if (req.feathers?.authentication === undefined) {
@@ -172,6 +173,19 @@ const archiverLaSuppression = app => async (tableauCandidat, user, motif, action
   } catch (error) {
     logger.error(error);
     app.get('sentry').captureException(error);
+  }
+};
+
+const deleteMailSib = app => async emailPerso => {
+  try {
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    let apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = app.get('sib_api_key');
+    const apiInstance = new SibApiV3Sdk.ContactsApi();
+    await apiInstance.deleteContact(emailPerso);
+  } catch (error) {
+    logger.error(`Erreur contact SIB : ${error.message}`);
+    app.get('sentry').captureException(error.message);
   }
 };
 
@@ -379,5 +393,6 @@ module.exports = {
   candidatSupprimeEmailPix,
   getConseillersByCoordinateurId,
   countCraConseiller,
-  isSubordonne
+  isSubordonne,
+  deleteMailSib
 };
