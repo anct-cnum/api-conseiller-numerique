@@ -21,7 +21,8 @@ const {
 } = require('./tasks/compte-fix');
 const {
   deleteStatutNonDispoMisesEnRelation,
-  deleteUsersSolo
+  deleteUsersSolo,
+  indexMongoConseillers
 } = require('./tasks/requete-mongo');
 
 program.option('-l, --limit <limit>', 'limit: définir un nombre');
@@ -51,6 +52,11 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
         exit('Veuillez choisir au moins une option la collection: conseiller ou structure');
         return;
       }
+    }
+    const findIndexMongo = await indexMongoConseillers(db);
+    if (findIndexMongo.length <= 5) {
+      exit('Veuillez créee les indexes mongo de chaque collections');
+      return;
     }
     if (compteFix) {
       if (!password) {

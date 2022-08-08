@@ -141,6 +141,10 @@ const deleteUsersSolo = async db =>
   await db.collection(`users${suffix}`).deleteMany({ roles: { $in: ['prefet', 'hub_coop', 'admin', 'coordinateur_coop'] } });
 
 const createUser = db => async body => await db.collection(`users${suffix}`).insertOne(body);
+const indexMongoConseillers = async db => await db.collection(`conseillers${suffix}`).aggregate([
+  { $indexStats: {} }
+]).toArray();
+
 
 module.exports = {
   // Structures
@@ -182,5 +186,6 @@ module.exports = {
   // requetes spécifiques
   deleteStatutNonDispoMisesEnRelation,
   deleteUsersSolo,
-  createUser
+  createUser,
+  indexMongoConseillers
 };
