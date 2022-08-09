@@ -55,7 +55,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     }
     const findIndexMongo = await indexMongoConseillers(db);
     if (findIndexMongo.length <= 5) {
-      exit('Veuillez créer les indexes mongo de chaques collections');
+      exit('Veuillez créer les indexes mongo de chaque collection');
       return;
     }
     if (compteFix) {
