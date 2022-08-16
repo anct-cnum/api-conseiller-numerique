@@ -62,7 +62,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
 
   const verificationDoublonFichier = conseillers => {
     // verification si le fichier contient des doublons de ligne (même conseiller)
-    const arrayIds = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']));
+    const arrayIds = conseillers.map(conseiller => parseInt(conseiller['ID du CNFS']) + ' & ' + parseInt(conseiller['ID de la structure']));
     const arrFichierAvecDoublon = [...new Set(arrayIds)];
     let idDoublon = [...arrayIds];
     arrFichierAvecDoublon.forEach(item => {
@@ -81,7 +81,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
       const arrayDoublon = await verificationDoublonFichier(conseillers);
       if (program.verif || arrayDoublon.length > 0) {
         // eslint-disable-next-line max-len
-        exit(`Le fichier comporte ${arrayDoublon.length} doublon(s). ${arrayDoublon.length > 0 ? ` Et concerne(nt) le(s) conseillers(s) => [${arrayDoublon}]` : ''}`);
+        exit(`Le fichier comporte ${arrayDoublon.length} doublon(s). ${arrayDoublon.length > 0 ? ` Et concerne(nt) le(s) couple(s) Id conseiller & Id structure => [${arrayDoublon}]` : ''}`);
         return;
       }
       const total = conseillers.length;
