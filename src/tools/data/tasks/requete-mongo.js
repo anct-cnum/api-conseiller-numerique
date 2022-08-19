@@ -6,7 +6,7 @@ const suffix = '';
 const getValidationStructure = async db => await db.collection(`structures${suffix}`).findOne({ statut: 'VALIDATION_COSELEC' });
 
 const getTotalStructures = (db, limit) => async query =>
-  await db.collection(`structures${suffix}`).find({ faker: { '$exists': false }, seed: { '$exists': false }, ...query }).limit(limit).toArray();
+  await db.collection(`structures${suffix}`).find({ faker: { '$exists': true }, seed: { '$exists': false }, ...query }).limit(limit).toArray();
 
 const getTotalStructuresAnonyme = (db, limit) => async query =>
   await db.collection(`structures${suffix}`).find({ faker: { '$exists': true }, ...query }).limit(limit).toArray();
