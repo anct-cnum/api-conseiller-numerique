@@ -24,7 +24,7 @@ const anonymisationStructure = async (db, logger, limit) => {
   for (const str of getStructure) {
     const idOriginal = str._id;
     const idPG = str.idPG;
-    const data = await fakeData({ idPG });
+    const data = await fakeData({ });
     const newIdMongo = new ObjectId();
     delete str.historique;
     let dataAnonyme = {
@@ -37,7 +37,8 @@ const anonymisationStructure = async (db, logger, limit) => {
         telephone: data?.telephone,
         fonction: str.contact?.fonction ?? 'non renseignée'
       },
-      faker: true
+      faker: true,
+      seed: false
     };
     // Update Côté PG
     await structurePG(pool)(dataAnonyme);
