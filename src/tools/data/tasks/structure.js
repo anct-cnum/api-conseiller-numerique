@@ -37,7 +37,8 @@ const anonymisationStructure = async (db, logger, limit) => {
         telephone: data?.telephone,
         fonction: str.contact?.fonction ?? 'non renseignée'
       },
-      faker: true
+      faker: true,
+      seed: false
     };
     // Update Côté PG
     await structurePG(pool)(dataAnonyme);
