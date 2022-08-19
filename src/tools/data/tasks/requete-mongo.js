@@ -71,7 +71,8 @@ const getCnfsNonRecrute = async db => await db.collection(`conseillers${suffix}`
 
 const getTotalConseillers = async (db, limit) => await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': false } }).limit(limit).toArray();
 
-const getTotalConseillersAnonyme = async (db, limit) => await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': true } }).limit(limit).toArray();
+const getTotalConseillersAnonyme = async (db, limit) =>
+  await db.collection(`conseillers${suffix}`).find({ faker: { '$exists': true }, majUser: { '$exists': false } }).limit(limit).toArray();
 
 const updateIdMongoConseiller = db => async (idOriginal, dataAnonyme) => {
   await db.collection(`conseillers${suffix}`).insertOne({ ...dataAnonyme });
@@ -82,6 +83,11 @@ const updateMiseEnRelationConseiller = db => async (id, conseillerObj) =>
   await db.collection(`misesEnRelation${suffix}`).updateMany({ 'conseiller.$id': id }, { $set: { conseillerObj } });
 
 const getUserConseiller = db => async id => await db.collection(`users${suffix}`).findOne({ 'entity.$id': id });
+
+const getUserName = db => async email => await db.collection(`users${suffix}`).findOne({ 'name': email });
+
+const updateMiseEnRelationOK = db => async idMongo =>
+  await db.collection(`conseillers${suffix}`).updateOne({ '_id': idMongo }, { $set: { 'majUser': true } });
 
 const updateUserConseiller = db => async (idMongo, name, token, nom, prenom, password, tokenCreatedAt) =>
   await db.collection(`users${suffix}`).updateOne({ _id: idMongo }, { $set: { name, token, nom, prenom, password, tokenCreatedAt } });
@@ -172,6 +178,8 @@ module.exports = {
   updateMiseEnRelationConseiller,
   updateMajEffectuer,
   getUserConseiller,
+  getUserName,
+  updateMiseEnRelationOK,
   updateUserConseiller,
   updateIdMongoConseillerMisesEnRelation,
   updateIdMongoConseillerUser,

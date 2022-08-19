@@ -4,6 +4,8 @@ const {
   updateIdMongoConseiller,
   updateMiseEnRelationConseiller,
   getUserConseiller,
+  getUserName,
+  updateMiseEnRelationOK,
   updateUserConseiller,
   updateIdMongoConseillerMisesEnRelation,
   updateIdMongoConseillerUser,
@@ -111,7 +113,13 @@ const updateMiseEnRelationAndUserConseiller = async (db, logger, limit) => {
       const name = conseillerObj.emailCN?.address ?? conseillerObj.email;
       const nom = conseillerObj.nom.toUpperCase();
       const prenom = conseillerObj.prenom.toUpperCase();
-      await updateUserConseiller(db)(idMongo, name, token, nom, prenom, password, tokenCreatedAt);
+      const existsName = await getUserName(db)(name);
+      if (!existsName) {
+        await updateUserConseiller(db)(idMongo, name, token, nom, prenom, password, tokenCreatedAt);
+      } else {
+        logger.info(`${name} existe déjà.`);
+      }
+      await updateMiseEnRelationOK(db)(id);
     }
   }
   logger.info(`${cnfs.length} conseillers mis à jour dans les mises en relation & dans les users (recruté et non recruté)`);
