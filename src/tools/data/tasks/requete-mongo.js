@@ -1,7 +1,7 @@
 // ...............................................
 // Consernant les STRUCTURES
 // ...............................................
-const suffix = '_faker';
+const suffix = '';
 
 const getValidationStructure = async db => await db.collection(`structures${suffix}`).findOne({ statut: 'VALIDATION_COSELEC' });
 
