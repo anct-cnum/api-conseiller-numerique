@@ -331,7 +331,7 @@
 
 "@faker-js/faker@6.1.2":
   version "6.1.2"
-  resolved "https://registry.yarnpkg.com/@faker-js/faker/-/faker-6.1.2.tgz#7093ea65e6d78eae388918a46968c083366bd621"
+  resolved "https://registry.npmjs.org/@faker-js/faker/-/faker-6.1.2.tgz"
   integrity sha512-QSvmexHCxeRUk1/yKmoEDaWB5Hohjvtim5g2JJwy8S/l0L4b3y/GxSpE6vN4SBoVGGahEQW21uqyRr7EofI35A==
 
 "@fast-csv/format@4.3.5":
