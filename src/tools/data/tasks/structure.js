@@ -24,7 +24,7 @@ const anonymisationStructure = async (db, logger, limit) => {
   for (const str of getStructure) {
     const idOriginal = str._id;
     const idPG = str.idPG;
-    const data = await fakeData({ idPG });
+    const data = await fakeData({ });
     const newIdMongo = new ObjectId();
     delete str.historique;
     let dataAnonyme = {
