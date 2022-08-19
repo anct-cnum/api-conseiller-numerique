@@ -117,7 +117,7 @@ const updateMiseEnRelationAndUserConseiller = async (db, logger, limit) => {
       if (!existsName) {
         await updateUserConseiller(db)(idMongo, name, token, nom, prenom, password, tokenCreatedAt);
       } else {
-        logger.info(`${name} existe déjà.`);
+        logger.info(`${existsName?.name} existe déjà.`);
       }
       await updateMiseEnRelationOK(db)(id);
     }
