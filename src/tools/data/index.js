@@ -43,7 +43,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     let password = program.password;
     const whiteList = ['local', 'recette'];
     const mongodb = app.get('mongodb');
-    if (process.env.ANONYME_FAKER === false) {
+    if (process.env.CAN_ANONYMIZE_FAKER === false) {
       exit('Script non autorisé à être éxécuter !');
       return;
     }
