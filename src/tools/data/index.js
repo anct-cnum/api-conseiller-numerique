@@ -44,7 +44,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     const whiteList = ['local', 'recette'];
     const mongodb = app.get('mongodb');
     if (process.env.CAN_ANONYMIZE_FAKER === false) {
-      exit('Script non autorisé à être éxécuter !');
+      exit('Script non autorisé à être exécuter!');
       return;
     }
     if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra'))) {
