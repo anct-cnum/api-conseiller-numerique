@@ -43,11 +43,8 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     let password = program.password;
     const whiteList = ['local', 'recette'];
     const mongodb = app.get('mongodb');
-    if (process.env.CAN_ANONYMIZE_FAKER === false) {
-      exit('Script non autorisé à être éxécuter !');
-      return;
-    }
-    if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra'))) {
+    // eslint-disable-next-line max-len
+    if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra')) || (process.env.CAN_ANONYMIZE_FAKER === false)) {
       exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;
     }
