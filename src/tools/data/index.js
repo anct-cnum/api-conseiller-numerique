@@ -25,6 +25,14 @@ const {
   indexMongoConseillers
 } = require('./tasks/requete-mongo');
 
+const configPG = {
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  db: process.env.PGDATABASE,
+  port: process.env.PGPORT,
+  sslMode: process.env.PGSSLMODE,
+  host: process.env.PGHOST
+};
 program.option('-l, --limit <limit>', 'limit: définir un nombre');
 program.option('-c, --collection <collection>', 'collection: conseiller ou structure');
 program.option('-d, --delete', 'delete: suprimer toute les mises en relation avec le statut non disponible ou finalisee_non_disponible');
@@ -43,8 +51,12 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     let password = program.password;
     const whiteList = ['local', 'recette'];
     const mongodb = app.get('mongodb');
+    if (Object.values(configPG).includes(undefined)) {
+      exit(`ATTENTION : les 6 vars d'env PG n'ont pas été configurées`);
+      return;
+    }
     // eslint-disable-next-line max-len
-    if (!whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra')) || (process.env.CAN_ANONYMIZE_FAKER !== 'true')) {
+    if ((!process.env.PGHOST.includes('local') && !process.env.PGHOST.includes('test')) || !whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra')) || (process.env.CAN_ANONYMIZE_FAKER !== 'true')) {
       exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;
     }
