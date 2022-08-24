@@ -21,6 +21,14 @@ const getIdConseillerByMail = db => async emailConseiller => {
   return user?.entity?.oid ?? null;
 };
 
+const getIdSubordonneByMail = db => async emailConseiller => {
+  const conseiller = await db.collection('conseillers').findOne({
+    'emailCN.address': emailConseiller.replace(/\s/g, ''),
+    'statut': 'RECRUTE'
+  });
+  return conseiller?._id ?? null;
+};
+
 const updateUserRole = db => async idConseiller => {
   await db.collection('users').updateOne(
     { 'entity.$id': idConseiller },
@@ -92,6 +100,11 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
   await new Promise(resolve => {
     readCSV(program.csv).then(async ressources => {
+
+      let ok = 0;
+      let error = 0;
+      const total = ressources.length;
+
       ressources.forEach(ressource => {
         let p = new Promise(async (resolve, reject) => {
           const estCoordinateur = await isAlreadyCoordinateur(db)(ressource.conseiller);
@@ -117,12 +130,12 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               const idSubordonnes = [];
               emailsSubordonnes.forEach(email => {
                 let p = new Promise(async (resolve, reject) => {
-                  const idSubordonne = await getIdConseillerByMail(db)(email);
+                  const idSubordonne = await getIdSubordonneByMail(db)(email);
                   if (idSubordonne) {
                     idSubordonnes.push(idSubordonne);
                     resolve();
                   } else {
-                    logger.error('Erreur : Le conseiller avec l\'adresse email : ' + email + ' n\'existe pas !');
+                    logger.error('Erreur : Le subordonné recruté avec l\'adresse email : ' + email + ' n\'existe pas !');
                     reject();
                   }
                 });
@@ -130,30 +143,32 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               });
               await Promise.allSettled(promisesEmails);
 
-              listFinale = setListeFinale(idSubordonnes, listeExistante);
-              await addListSubordonnes(db)(idCoordinateur, listFinale, 'conseillers');
+              //Maj avec la nouvelle liste des subordonnés directement (au cas où rupture entre temps par exemple)
+              await addListSubordonnes(db)(idCoordinateur, idSubordonnes, 'conseillers');
             } else {
               await updateConseillerIsCoordinateur(db)(idCoordinateur);
             }
-
+            ok++;
             resolve();
           } else {
+            error++;
             logger.error('Erreur : Le coordinateur avec l\'adresse email : ' + ressource.conseiller + ' n\'existe pas !');
             reject();
+          }
+          if (total === ok + error) {
+            logger.info(`Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d'import : ${ok} traité(s) & ${error} en erreur`);
+            exit();
           }
         });
         promises.push(p);
       });
-
+      resolve();
     }).catch(error => {
       logger.error(error);
       Sentry.captureException(error);
     });
-    resolve();
   });
 
   await Promise.allSettled(promises);
-
-  logger.info('Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
   exit();
 });
