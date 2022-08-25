@@ -173,6 +173,21 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 }
               });
 
+              //Suppression dans la liste d'un coordinateur si présent
+              await db.collection('conseillers').updateMany(
+                {
+                  'estCoordinateur': true,
+                  'statut': 'RECRUTE',
+                  'listeSubordonnes.type': 'conseillers',
+                  'listeSubordonnes.liste': { $elemMatch: { $eq: conseillerCoop._id } }
+                },
+                {
+                  $pull: {
+                    'listeSubordonnes.liste': conseillerCoop._id
+                  }
+                }
+              );
+
               await db.collection('permanences').updateMany(
                 {
                   $or: [
