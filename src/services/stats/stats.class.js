@@ -236,7 +236,7 @@ exports.Stats = class Stats extends Service {
 
       app.get('mongoClient').then(async db => {
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('prefet')) {
+        if (!user?.roles.includes('prefet') && !user?.roles.includes('admin')) {
           const structureIdByUser = user.entity.oid;
           if (!user?.roles.includes('structure_coop') && structureIdByUser !== idStructureParams) {
             res.status(403).send(new Forbidden('Utilisateur non autorisé', {
@@ -516,10 +516,12 @@ exports.Stats = class Stats extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
+
       app.get('mongoClient').then(async db => {
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!statsFct.checkRole(adminUser?.roles, 'prefet')) {
+        //update pour la nouvelle API
+        if (!statsFct.checkRole(adminUser?.roles, 'prefet') && !statsFct.checkRole(adminUser?.roles, 'admin')) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
           }).toJSON());
@@ -536,6 +538,8 @@ exports.Stats = class Stats extends Service {
           code = { 'codeDepartement': String(adminUser.departement) };
         } else if (adminUser.region) {
           code = { 'codeRegion': String(adminUser.region) };
+        } else {
+          code = { 'statut': 'VALIDATION_COSELEC' };
         }
         const countStructures = await statsFct.countStructures(code, statsRepository(db));
         const structures = await statsFct.getStructuresByPrefetCode(
@@ -545,6 +549,7 @@ exports.Stats = class Stats extends Service {
           res,
           statsRepository(db)
         );
+
         const structuresStatistiques = [];
         await Promise.all(structures.map(async structure => {
 
@@ -707,7 +712,7 @@ exports.Stats = class Stats extends Service {
         //Verification role structure_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        if (!user?.roles.includes('prefet')) {
+        if (!user?.roles.includes('prefet') && !user?.roles.includes('admin')) {
           const structureId = user.entity.oid;
           if (!user?.roles.includes('structure_coop') && structureId !== req.query.idStructure) {
             res.status(403).send(new Forbidden('User not authorized', {
@@ -736,7 +741,9 @@ exports.Stats = class Stats extends Service {
         if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
           query['cra.codePostal'] = req.query?.codePostal;
         }
-        stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
+        const rolesAllowed = [Role.Admin, Role.Prefet, Role.AdminCoop];
+
+        stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, rolesAllowed));
         res.send(stats);
       });
     });
