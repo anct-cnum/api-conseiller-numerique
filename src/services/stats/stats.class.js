@@ -352,7 +352,6 @@ exports.Stats = class Stats extends Service {
         } else {
           userFinal = user;
         }
-
         if (query.type !== 'structure') {
           ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
         } else {
@@ -360,14 +359,16 @@ exports.Stats = class Stats extends Service {
           const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
 
           const structure = await getStructureAssociatedWithUser(await getUserById(userFinal._id));
-          const structureId = structure._id;
+          const structureId = structure?._id;
           ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
         }
+
         const { stats, type, idType } = await getStatistiquesToExport(
           query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
           exportStatistiquesRepository(db),
           statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
         );
+
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len

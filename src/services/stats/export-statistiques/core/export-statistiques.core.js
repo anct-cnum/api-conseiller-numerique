@@ -44,7 +44,7 @@ const getStatistiquesToExport = async (
     return await statistiquesNationales(dateDebut, dateFin, type, { getStatsNationales }, isAdminCoop);
   }
   // ici c'est forcément de type codedepartement ou codeRegion
-  if (codePostal) {
+  if (codePostal && codePostal !== 'undefined') {
     // eslint-disable-next-line max-len
     return await statistiquesDepartementalRegionalWithCodePostal(dateDebut, dateFin, idType, type, codePostal, ids, { getStatsDepartementalRegionalWithCodePostal }, isAdminCoop);
   } else {
