@@ -357,7 +357,6 @@ exports.Stats = class Stats extends Service {
         } else {
           const getUserById = userAuthenticationRepository(db);
           const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
-
           const structure = await getStructureAssociatedWithUser(await getUserById(userFinal._id));
           const structureId = structure?._id;
           ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
@@ -373,6 +372,47 @@ exports.Stats = class Stats extends Service {
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
+        );
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    //A migrer dans le dashboard
+    app.get('/stats/statistiques.csv', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = exportStatistiquesQueryToSchema(req.query);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur],
+          userAuthenticationRepository(db)),
+        schemaGuard(validateExportStatistiquesSchema(query))
+      ).then(async () => {
+        let ids = [];
+        let userFinal = {};
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
+        if (user.roles.includes(Role.Prefet)) {
+          userFinal = await db.collection('users').findOne({ 'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
+        } else {
+          userFinal = user;
+        }
+        if (query.type !== 'structure') {
+          ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        } else {
+          const structureId = new ObjectID(query?.idType);
+          ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
+        }
+
+        const { stats, type, idType } = await getStatistiquesToExport(
+          query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
+          exportStatistiquesRepository(db),
+          statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
+        );
+
+        csvFileResponse(res,
+          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
+          // eslint-disable-next-line max-len
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, type === 'structure' ? '' : idType, query.codePostal, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

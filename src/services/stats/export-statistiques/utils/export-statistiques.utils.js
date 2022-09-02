@@ -8,7 +8,7 @@ const exportStatistiquesQueryToSchema = query => {
     dateFin: new Date(query.dateFin),
     type: query.type,
     idType: query.idType === 'undefined' ? undefined : query.idType,
-    codePostal: query.codePostal,
+    codePostal: query.codePostal === 'undefined' ? undefined : query.codePostal,
     conseillerIds: query.conseillerIds === 'undefined' ? undefined : query.conseillerIds
   };
 };
