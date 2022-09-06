@@ -8,13 +8,13 @@ const { ObjectID } = require('mongodb');
 require('dotenv').config();
 
 const { execute } = require('../../utils');
-const { createAccount } = require('../../../utils/mattermost');
+const { createAccount, updateAccountPassword } = require('../../../utils/mattermost');
 
 execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
 
   program.option('-p, --password <password>', 'password: clear text');
   program.option('-i, --id <id>', 'id: MongoDB ObjecID');
-  program.option('-a, --operation <operation>', 'operation: create');
+  program.option('-a, --operation <operation>', 'operation: create ou update');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -27,7 +27,7 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
     return;
   }
 
-  if (!['create'].includes(operation)) {
+  if (!['create', 'update'].includes(operation)) {
     exit('Action non reconnu');
     return;
   }
@@ -49,5 +49,8 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
   const mattermost = app.get('mattermost');
   if (operation === 'create') {
     await createAccount({ mattermost, conseiller, email, login, nom, prenom, password, db, logger, Sentry });
+  }
+  if (operation === 'update') {
+    await updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
   }
 });
