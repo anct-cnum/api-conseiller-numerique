@@ -2,10 +2,17 @@ const dayjs = require('dayjs');
 const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${separator}MM${separator}YYYY`);
 const labelsCorrespondance = require('../../../services/stats/data/themesCorrespondances.json');
 
+const resultPersonnesTotal = statistiques => {
+  const totalenregistres = statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
+  statistiques.nbDemandePonctuel;
+  if (totalenregistres > statistiques.nbParticipantsRecurrents) {
+    return totalenregistres - statistiques.nbParticipantsRecurrents;
+  }
+  return statistiques.nbParticipantsRecurrents - totalenregistres;
+};
 const general = statistiques => [
   'Général',
-  `Personnes totales accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
-    statistiques.nbDemandePonctuel - statistiques.nbParticipantsRecurrents}`,
+  `Personnes totales accompagnées durant cette période;${resultPersonnesTotal(statistiques)}`,
   `Accompagnements total enregistrés (dont récurrent);${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,
   `Ateliers réalisés;${statistiques.nbAteliers}`,
   `Total des participants aux ateliers;${statistiques.nbTotalParticipant}`,
