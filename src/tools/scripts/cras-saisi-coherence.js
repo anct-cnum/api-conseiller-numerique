@@ -27,7 +27,7 @@ execute(__filename, async ({ logger, db }) => {
             activite: cra.cra.activite,
             nbParticipants: cra.cra.nbParticipants,
             nbParticipantsRecurrents: cra.cra.nbParticipantsRecurrents,
-            action: `changer le nbr de récurrent de ${cra.cra?.nbParticipantsRecurrents} à ${cra.cra.nbParticipants}`
+            action: `changer le nbr de récurrent de ${cra.cra?.nbParticipantsRecurrents}  en  ${cra.cra.nbParticipants}`
           });
           await db.collection('cras').updateOne(
             { _id: cra._id },
@@ -39,6 +39,6 @@ execute(__filename, async ({ logger, db }) => {
     }));
   });
   logger.info(conseillerCraSaisi);
-  logger.info(`${count} CRA(s) incohérente(s) et ${countFix} CRA(s) corrigé(s)`);
+  logger.info(`${count} CRA(s) incohérent(s) et ${countFix} CRA(s) corrigé(s)`);
   await Promise.all(promises);
 });
