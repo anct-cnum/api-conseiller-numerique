@@ -21,9 +21,10 @@ jobs:
     - uses: actions/checkout@v2
     - run: git fetch --prune --unshallow
 
-    - uses: 47ng/actions-clever-cloud@v1
+    - uses: 47ng/actions-clever-cloud@v1.2.0
       with:
         appID: ${{ secrets.CLEVER_APP_API_RECETTE_ID }}
+        timeout: 300 #5 minutes before move on (in case of never exit even though a deployment is successful)
       env:
         CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
         CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
