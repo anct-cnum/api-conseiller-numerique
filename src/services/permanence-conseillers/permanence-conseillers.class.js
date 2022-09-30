@@ -13,7 +13,7 @@ const {
 } = require('../../common/utils/feathers.utils');
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
-const { updatePermanenceToSchema, updatePermanencesToSchema, validationPermamences } = require('./permanence/utils/update-permanence.utils');
+const { updatePermanenceToSchema, updatePermanencesToSchema, validationPermamences, locationDefault } = require('./permanence/utils/update-permanence.utils');
 const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
   deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences
 } = require('./permanence/repositories/permanence-conseiller.repository');
@@ -112,7 +112,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-
+      let permanence = {
+        ...query
+      };
       const conseillerId = req.params.id;
       const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
 
@@ -126,7 +128,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
           logger.error(error);
           return res.status(409).send(new BadRequest(error).toJSON());
         }
-        await createPermanence(db)(query, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await locationDefault(permanence);
+        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
           if (idOldPermanence) {
             return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isCreated: true });
@@ -152,7 +155,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-
+      let permanence = {
+        ...query
+      };
       const conseillerId = req.params.id;
       const permanenceId = req.params.idPermanence;
       const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
@@ -167,7 +172,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
           logger.error(error);
           return res.status(409).send(new BadRequest(error).toJSON());
         }
-        await setPermanence(db)(permanenceId, query, conseillerId, hasPermanence,
+        await locationDefault(permanence);
+        await setPermanence(db)(permanenceId, permanence, conseillerId, hasPermanence,
           telephonePro, emailPro, estCoordinateur).then(() => {
 
           if (idOldPermanence) {
@@ -206,7 +212,10 @@ exports.PermanenceConseillers = class Sondages extends Service {
             object: 'checkSiret',
           };
           const result = await axios.get(urlSiret, { params: params });
-          return res.send({ 'adresseParSiret': result?.data?.etablissement?.adresse });
+          const adresse = JSON.stringify(result?.data?.etablissement?.adresse,
+            (key, value) => (value === null) ? '' : value
+          );
+          return res.send({ 'adresseParSiret': JSON.parse(adresse) });
         } catch (error) {
           if (!error.response.data?.gateway_error) {
             logger.error(error);
