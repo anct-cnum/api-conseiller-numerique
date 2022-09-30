@@ -44,7 +44,6 @@ const getPermanencesByStructure = db => async structureId => {
 };
 
 const createPermanence = db => async (permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur) => {
-  console.log('DEFAULT OK', permanence.location);
   await db.collection('permanences').insertOne(
     permanence
   );
