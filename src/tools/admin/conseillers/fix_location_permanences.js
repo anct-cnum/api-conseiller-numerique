@@ -32,9 +32,11 @@ execute(__filename, async ({ logger, exit, db }) => {
     exit('Permanence non trouvé ');
     return;
   }
-  let adressePostale = adresse ? adresse : JSON.stringify(permanence?.adresse,
+  const convertAdresse = JSON.stringify(permanence?.adresse,
     (key, value) => (value === null) ? '' : value
   );
+  const { numeroRue, rue, codePostal, ville } = JSON.parse(convertAdresse);
+  let adressePostale = adresse ? adresse : `${numeroRue} ${rue} ${ville} ${codePostal}`;
   adressePostale = encodeURI(adressePostale);
   const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}`;
   const result = await axios.get(urlAPI, { params: {} });
