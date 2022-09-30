@@ -115,9 +115,16 @@ const updatePermanencesToSchema = async (body, conseillerId) => await assignPerm
 
 const validationPermamences = async body => await validationPermanences(body);
 
+const locationDefault = permanence => {
+  if (JSON.stringify(permanence.location.coordinates) === JSON.stringify([1.849121, 46.6241])) {
+    permanence.location = null;
+  }
+};
+
 module.exports = {
   assignPermanence,
   updatePermanenceToSchema,
   updatePermanencesToSchema,
-  validationPermamences
+  validationPermamences,
+  locationDefault
 };
