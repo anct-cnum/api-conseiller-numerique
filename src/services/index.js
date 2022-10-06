@@ -9,6 +9,7 @@ const cras = require('./cras/cras.service.js');
 const sondages = require('./sondages/sondages.service.js');
 const permanenceConseillers = require('./permanence-conseillers/permanence-conseillers.service.js');
 const geocode = require('./geocode/geocode.service.js');
+const historiqueCras = require('./historique-cras/historique-cras.service.js');
 
 module.exports = function(app) {
   app.configure(users);
@@ -22,4 +23,5 @@ module.exports = function(app) {
   app.configure(sondages);
   app.configure(permanenceConseillers);
   app.configure(geocode);
+  app.configure(historiqueCras);
 };
