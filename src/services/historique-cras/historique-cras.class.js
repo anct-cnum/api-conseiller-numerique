@@ -40,7 +40,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       try {
         const cras = await db.collection('cras').find(query).sort({ 'cra.dateAccompagnement': -1, 'createdAt': -1 }).toArray();
         if (cras.length === 0) {
-          res.status(404).send(new NotFound('Cras not found for Conseiller').toJSON());
+          res.status(404).send(new NotFound('Aucun CRA').toJSON());
           return;
         }
         res.send({ cras });
