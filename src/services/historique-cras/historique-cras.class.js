@@ -6,6 +6,7 @@ const dayjs = require('dayjs');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { userIdFromRequestJwt } = require('../../common/utils/feathers.utils');
 const statsCras = require('../stats/cras');
+const logger = require('../../logger');
 
 exports.HistoriqueCras = class HistoriqueCras extends Service {
   constructor(options, app) {
@@ -19,23 +20,15 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const maxDate = new Date(dayjs().subtract(1, 'month'));
-      const theme = req.query.theme !== 'null' ? req.query.theme : null;
+      const theme = req.query.theme;
       let query = {
         'conseiller.$id': new ObjectId(user.entity.oid),
         'createdAt': {
           '$gte': maxDate
         }
       };
-      if (theme) {
-        query = {
-          'cra.themes': {
-            '$in': [theme]
-          },
-          'conseiller.$id': new ObjectId(user.entity.oid),
-          'createdAt': {
-            '$gte': maxDate
-          }
-        };
+      if (theme !== 'null') {
+        query = { ...query, 'cra.themes': { '$in': [theme] } };
       }
       try {
         const cras = await db.collection('cras').find(query).sort({ 'cra.dateAccompagnement': -1, 'createdAt': -1 }).toArray();
@@ -45,10 +38,9 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
         }
         res.send({ cras });
       } catch (error) {
-        console.log(error);
+        app.get('sentry').captureException(error);
+        logger.error(error);
       }
-
-
     });
 
     app.get('/historique-cras/thematiques', async (req, res) => {
@@ -61,15 +53,19 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
           '$gte': maxDate
         }
       };
-      const listThemes = await statsCras.getStatsThemes(db, query);
-      const themes = [];
-      listThemes?.forEach(theme => {
-        if (theme.valeur >= 1) {
-          themes.push(theme.nom);
-        }
-      });
-      res.send({ themes });
+      try {
+        const listThemes = await statsCras.getStatsThemes(db, query);
+        const themes = [];
+        listThemes?.forEach(theme => {
+          if (theme.valeur >= 1) {
+            themes.push(theme.nom);
+          }
+        });
+        res.send({ themes });
+      } catch (error) {
+        app.get('sentry').captureException(error);
+        logger.error(error);
+      }
     });
   }
 };
-
