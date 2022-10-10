@@ -77,12 +77,13 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders[6] = 'Code Postal du conseiller';
     fileHeaders.splice(5, 0, 'Compte Activé');
     fileHeaders.splice(6, 0, 'Id de la structure');
-    fileHeaders.splice(8, 0, 'Email de la structure');
-    fileHeaders.splice(9, 0, 'Adresse de la structure');
-    fileHeaders.splice(10, 0, 'Code département de la structure');
-    fileHeaders.splice(12, 0, 'Code département du conseiller');
-    fileHeaders.splice(15, 0, 'GroupeCRA');
-    fileHeaders.splice(20, 0, 'Nombre de personnes accompagnées');
+    fileHeaders.splice(7, 0, 'Id long de la structure');
+    fileHeaders.splice(9, 0, 'Email de la structure');
+    fileHeaders.splice(10, 0, 'Adresse de la structure');
+    fileHeaders.splice(11, 0, 'Code département de la structure');
+    fileHeaders.splice(13, 0, 'Code département du conseiller');
+    fileHeaders.splice(16, 0, 'GroupeCRA');
+    fileHeaders.splice(21, 0, 'Nombre de personnes accompagnées');
     fileHeaders.push('Nom Supérieur hiérarchique');
     fileHeaders.push('Prénom supérieur hiérarchique');
     fileHeaders.push('Fonction supérieur hiérarchique');
@@ -101,6 +102,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.mattermost?.id ? statCnfs.emailCN?.address : '',
         statCnfs.mattermost?.id ? 'Oui' : 'Non',
         statCnfs.structure?.idPG,
+        statCnfs.structure?._id.toString(),
         statCnfs.structure?.nom.replace(/["',]/g, ''),
         statCnfs.structure?.contact?.email,
         statCnfs.adresseStructure,
