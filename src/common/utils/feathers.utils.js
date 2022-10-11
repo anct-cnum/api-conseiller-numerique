@@ -16,6 +16,8 @@ const authenticationFromRequest = req => req.feathers?.authentication ?? {};
 
 const userIdFromRequestJwt = req => decode(req.feathers.authentication.accessToken).sub;
 
+const userIdSubordonnee = req => req.query?.userSubordonne === 'null' ? null : req.query?.userSubordonne;
+
 const abort = (res, error) => res.status(error.code).send(error.toJSON());
 
 const csvFileResponse = (res, fileName, fileContent) => {
@@ -54,6 +56,7 @@ module.exports = {
   Role,
   authenticationFromRequest,
   userIdFromRequestJwt,
+  userIdSubordonnee,
   abort,
   csvFileResponse,
   authenticationGuard,

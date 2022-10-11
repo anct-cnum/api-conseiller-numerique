@@ -40,6 +40,7 @@ const {
   authenticationFromRequest,
   rolesGuard,
   userIdFromRequestJwt,
+  userIdSubordonnee,
   Role,
   schemaGuard,
   abort,
@@ -428,24 +429,29 @@ exports.Conseillers = class Conseillers extends Service {
       const query = exportStatistiquesQueryToSchema(req.query);
       const getUserById = userAuthenticationRepository(db);
       const userId = userIdFromRequestJwt(req);
-
+      const usersubordonne = userIdSubordonnee(req);
+      let conseiller = {};
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userId, [Role.Conseiller], getUserById),
+        rolesGuard(userId, [Role.Conseiller, Role.Coordinateur], getUserById),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
-        const { getConseillerAssociatedWithUser } = exportStatistiquesRepository(db);
-        const conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
-
+        const { getConseillerAssociatedWithUser, getConseillerSubordonee, getConseiller } = exportStatistiquesRepository(db);
+        conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
+        if (usersubordonne !== null) {
+          const getSubordonneExacte = await getConseillerSubordonee(await getUserById(userId), usersubordonne);
+          if (getSubordonneExacte !== null) {
+            conseiller = await getConseiller(usersubordonne);
+          }
+        }
         let statsQuery = {
           'conseiller.$id': conseiller._id,
           'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
         };
         if (query.codePostal !== '') {
           statsQuery = {
-            'conseiller.$id': conseiller._id,
-            'cra.codePostal': req.query?.codePostal,
-            'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
+            ...statsQuery,
+            'cra.codePostal': req.query?.codePostal
           };
         }
 
