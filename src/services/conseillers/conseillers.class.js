@@ -40,7 +40,7 @@ const {
   authenticationFromRequest,
   rolesGuard,
   userIdFromRequestJwt,
-  userIdSubordonnee,
+  idSubordonne,
   Role,
   schemaGuard,
   abort,
@@ -429,20 +429,20 @@ exports.Conseillers = class Conseillers extends Service {
       const query = exportStatistiquesQueryToSchema(req.query);
       const getUserById = userAuthenticationRepository(db);
       const userId = userIdFromRequestJwt(req);
-      const usersubordonne = userIdSubordonnee(req);
+      const conseillerSubordonne = idSubordonne(req);
       let conseiller = {};
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.Conseiller, Role.Coordinateur], getUserById),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
-        const { getConseillerAssociatedWithUser, getConseillerSubordonee, getConseiller } = exportStatistiquesRepository(db);
-        conseiller = await getConseillerAssociatedWithUser(await getUserById(userId));
-        if (usersubordonne !== null) {
-          const getSubordonneExacte = await getConseillerSubordonee(await getUserById(userId), usersubordonne);
-          if (getSubordonneExacte !== null) {
-            conseiller = await getConseiller(usersubordonne);
-          }
+        const userById = await getUserById(userId);
+        const { getConseillerAssociatedWithUser, getCoordinateur, getConseiller } = exportStatistiquesRepository(db);
+        if (conseillerSubordonne !== null) {
+          conseiller = await getCoordinateur(userById, conseillerSubordonne) ?
+            await getConseiller(conseillerSubordonne) : await getConseillerAssociatedWithUser(userById);
+        } else {
+          conseiller = await getConseillerAssociatedWithUser(userById);
         }
         let statsQuery = {
           'conseiller.$id': conseiller._id,
@@ -455,7 +455,7 @@ exports.Conseillers = class Conseillers extends Service {
           };
         }
 
-        const isAdminCoop = checkRoleAdminCoop(await getUserById(userId));
+        const isAdminCoop = checkRoleAdminCoop(userById);
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         csvFileResponse(res,
