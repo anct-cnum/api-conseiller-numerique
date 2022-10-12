@@ -23,7 +23,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       const theme = req.query.theme;
       let query = {
         'conseiller.$id': new ObjectId(user.entity.oid),
-        'createdAt': {
+        'cra.dateAccompagnement': {
           '$gte': maxDate
         }
       };
