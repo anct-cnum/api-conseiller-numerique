@@ -8,6 +8,7 @@ module.exports = {
   structures: db => {
     return Promise.all([
       db.collection('structures').createIndex({ 'idPG': 1 }),
+      db.collection('structures').createIndex({ 'nom': 1 }),
       db.collection('structures').createIndex({ 'createdAt': -1 }),
       db.collection('structures').createIndex({ 'type': 1 }),
       db.collection('structures').createIndex({ 'statut': 1 }),
