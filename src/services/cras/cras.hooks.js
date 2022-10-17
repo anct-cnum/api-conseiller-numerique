@@ -109,10 +109,13 @@ module.exports = {
       })
     ],
     patch: [
-      checkPermissions({
-        roles: ['admin'],
-        field: 'roles',
-      })
+      context => {
+        //vérification du role conseiller du user
+        if (!context.params?.user?.roles.includes('conseiller')) {
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        }
+        return context;
+      }
     ],
     remove: [
       checkPermissions({
