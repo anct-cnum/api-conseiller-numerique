@@ -1,4 +1,18 @@
+const { Conflict, BadRequest } = require('@feathersjs/errors');
+const logger = require('../../logger');
 const { Service } = require('feathers-mongodb');
+const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
+const {
+  userIdFromRequestJwt,
+  abort, canActivate,
+  authenticationGuard,
+  authenticationFromRequest,
+  rolesGuard,
+  Role,
+} = require('../../common/utils/feathers.utils');
+const { getCraById, updateCra, updateStatistiquesCra } = require('./cra/repositories/cra.repository');
+const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
+const { validationCra } = require('./cra/utils/validationCra');
 
 exports.Cras = class Cras extends Service {
   constructor(options, app) {
@@ -6,6 +20,57 @@ exports.Cras = class Cras extends Service {
 
     app.get('mongoClient').then(db => {
       this.Model = db.collection('cras');
+    });
+
+    app.get('/cras/cra', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const craId = req.query.id;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await getCraById(db)(craId).then(cra => {
+          return res.send({ cra });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(404).send(new Conflict('La liste des cras n\'a pas pu être chargé.').toJSON());
+        });
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.patch('/cras', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const oldDateAccompagnement = new Date(req.body.cra.oldDateAccompagnement);
+      const cra = updateCraToSchema(req.body);
+      const conseillerId = req.body.conseillerId;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        if (!validationCra(cra)) {
+          await updateCra(db)(cra).then(async () => {
+            await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId).then(() => {
+              return res.send({ cra });
+            }).catch(error => {
+              app.get('sentry').captureException(error);
+              logger.error(error);
+              return res.status(409).send(new Conflict('La mise à jour des statistiques associées au cra a échoué, veuillez réessayer.').toJSON());
+            });
+          }).catch(error => {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            return res.status(409).send(new Conflict('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
+          });
+        } else {
+          return res.status(400).send(new BadRequest(validationCra(cra)));
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+
     });
   }
 };
