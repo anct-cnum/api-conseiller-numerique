@@ -75,7 +75,7 @@ module.exports = {
     ],
     patch: [
       context => {
-        //vérification du role conseiller du user
+        //vérification du rôle conseiller du user
         if (!context.params?.user?.roles.includes('conseiller')) {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
