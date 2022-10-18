@@ -1,5 +1,5 @@
 const { Conflict, BadRequest } = require('@feathersjs/errors');
-const { logger } = require('@sentry/utils');
+const logger = require('../../logger');
 const { Service } = require('feathers-mongodb');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const {
@@ -11,7 +11,8 @@ const {
   Role,
 } = require('../../common/utils/feathers.utils');
 const { getCraById, updateCra, updateStatistiquesCra } = require('./cra/repositories/cra.repository');
-const { updateCraToSchema, validationCra } = require('./cra/utils/update-cra.utils');
+const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
+const { validationCra } = require('./cra/utils/validationCra');
 
 exports.Cras = class Cras extends Service {
   constructor(options, app) {
@@ -66,7 +67,7 @@ exports.Cras = class Cras extends Service {
             return res.status(409).send(new Conflict('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
           });
         } else {
-          return res.status(409).send(new BadRequest(validationCra(cra)));
+          return res.status(400).send(new BadRequest(validationCra(cra)));
         }
       }).catch(routeActivationError => abort(res, routeActivationError));
 
