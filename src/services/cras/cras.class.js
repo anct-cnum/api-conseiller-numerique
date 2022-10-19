@@ -13,6 +13,7 @@ const {
 const { getCraById, updateCra, updateStatistiquesCra } = require('./cra/repositories/cra.repository');
 const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
 const { validationCra } = require('./cra/utils/validationCra');
+const { validate } = require('uuid');
 
 exports.Cras = class Cras extends Service {
   constructor(options, app) {
@@ -26,7 +27,9 @@ exports.Cras = class Cras extends Service {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const craId = req.query.id;
-
+      if (!validate(craId)) {
+        return res.status(404).send(new Conflict('L\'id du cra est invalide.').toJSON());
+      }
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
@@ -36,7 +39,7 @@ exports.Cras = class Cras extends Service {
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          return res.status(404).send(new Conflict('La liste des cras n\'a pas pu être chargé.').toJSON());
+          return res.status(404).send(new Conflict('Le cra n\'a pas pu être chargé.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
