@@ -13,7 +13,7 @@ const {
 const { getCraById, updateCra, updateStatistiquesCra } = require('./cra/repositories/cra.repository');
 const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
 const { validationCra } = require('./cra/utils/validationCra');
-const { validate } = require('uuid');
+const { v4: validate } = require('uuid');
 
 exports.Cras = class Cras extends Service {
   constructor(options, app) {
