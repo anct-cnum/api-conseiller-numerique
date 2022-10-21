@@ -60,7 +60,6 @@ module.exports = {
 
         //Validation des données cra
         const schema = Joi.object({
-
           codePostal: Joi.string().required().min(5).max(5).error(new Error('Le code postal est invalide')),
           nomCommune: Joi.string().required().error(new Error('Le nom de la commune est invalide')),
           canal: Joi.string().required().valid('rattachement', 'autre', 'distance', 'domicile').error(new Error('Le canal est invalide')),
@@ -84,6 +83,7 @@ module.exports = {
           }),
           // eslint-disable-next-line max-len
           themes: Joi.array().required().min(1).max(13).items(Joi.string().required().valid('equipement informatique', 'vocabulaire', 'internet', 'securite', 'courriel', 'echanger', 'traitement texte', 'contenus numeriques', 'trouver emploi', 'tpe/pme', 'accompagner enfant', 'demarche en ligne', 'fraude et harcelement', 'sante', 'smartphone')).error(new Error('Le thème est invalide')),
+          sousThemes: Joi.array().allow(null).error(new Error('Le sous thème est invalide')),
           duree: Joi.any().required().error(new Error('La durée est invalide')),
           accompagnement: Joi.object({
             individuel: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements poursuivis en individuel est invalide')),
@@ -110,7 +110,7 @@ module.exports = {
     ],
     patch: [
       checkPermissions({
-        roles: ['admin'],
+        roles: ['admin', 'conseiller'],
         field: 'roles',
       })
     ],
