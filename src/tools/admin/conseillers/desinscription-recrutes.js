@@ -98,6 +98,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
         let p = new Promise(async (resolve, reject) => {
           const conseillerId = parseInt(conseiller['ID du CNFS']);
           const structureId = parseInt(conseiller['ID de la structure']);
+          const dateRupture = conseiller['Date de démission'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const regexDateRupture = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
           const structure = await db.collection('structures').findOne({ idPG: structureId });
           const conseillerCoop = await db.collection('conseillers').findOne({
@@ -129,12 +130,16 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
             logger.warn(`Format date rupture invalide : attendu DD/MM/YYYY pour le conseiller id ${conseillerId}`);
             errors++;
             reject();
+          } else if (formatDateDb(dateRupture) > new Date()) {
+            // eslint-disable-next-line max-len
+            logger.warn(`RUPTURE en STAND BY en raison d'un anti-daté => Date de rupture ${conseiller['Date de démission']} pour le CnFS ${conseiller['Mail du CNFS']} (${conseillerId})`);
+            errors++;
+            reject();
           } else if (conseiller['Motif de la sortie du dispositif (QCM)'] === '') {
             logger.warn(`Motif de sortie non renseigné pour le conseiller id ${conseillerId}`);
             errors++;
             reject();
           } else {
-            const dateRupture = conseiller['Date de démission'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
             const motifRupture = conseiller['Motif de la sortie du dispositif (QCM)'];
 
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)

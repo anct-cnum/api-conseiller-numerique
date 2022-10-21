@@ -126,7 +126,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         if (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
-          return res.status(409).send(new BadRequest(error).toJSON());
+          return res.status(400).send(new BadRequest(error).toJSON());
         }
         await locationDefault(permanence);
         await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
@@ -170,7 +170,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         if (error) {
           app.get('sentry').captureException(error);
           logger.error(error);
-          return res.status(409).send(new BadRequest(error).toJSON());
+          return res.status(400).send(new BadRequest(error).toJSON());
         }
         await locationDefault(permanence);
         await setPermanence(db)(permanenceId, permanence, conseillerId, hasPermanence,
