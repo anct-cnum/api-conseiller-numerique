@@ -752,7 +752,7 @@ exports.Stats = class Stats extends Service {
         //Verification role admin_coop
         let userId = decode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
-        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
+        const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur, Role.Conseiller];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
           res.status(403).send(new Forbidden('User not authorized', {
             userId: userId
