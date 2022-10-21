@@ -112,7 +112,15 @@ module.exports = {
       checkPermissions({
         roles: ['admin', 'conseiller'],
         field: 'roles',
-      })
+      }), context => {
+        context.data.cra.dateAccompagnement = new Date(context.data.cra.dateAccompagnement);
+        context.data.updatedAt = new Date();
+        context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
+        context.data.cra.nomCommune = context.data.cra.cp.slice(6);
+        delete context.data.cra.datePickerStatus;
+        delete context.data.idConseiller;
+        delete context.data.cra.cp;
+      }
     ],
     remove: [
       checkPermissions({
