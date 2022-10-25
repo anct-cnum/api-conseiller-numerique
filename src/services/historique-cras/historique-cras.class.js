@@ -20,7 +20,8 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const maxDate = new Date(dayjs().subtract(1, 'month'));
-      const theme = req.query.theme;
+      const { theme, page } = req.query;
+
       let query = {
         'conseiller.$id': new ObjectId(user.entity.oid),
         'cra.dateAccompagnement': {
@@ -31,12 +32,21 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
         query = { ...query, 'cra.themes': { '$in': [theme] } };
       }
       try {
-        const cras = await db.collection('cras').find(query).sort({ 'cra.dateAccompagnement': -1, 'createdAt': -1 }).toArray();
+        let items = {};
+        const cras = await db.collection('cras').find(query).sort({ 'cra.dateAccompagnement': -1, 'createdAt': -1 })
+        .skip(page > 0 ? ((page - 1) * 30) : 0).limit(30).toArray();
+
         if (cras.length === 0) {
           res.status(404).send(new NotFound('Aucun CRA').toJSON());
           return;
         }
-        res.send({ cras });
+
+        items.total = await db.collection('cras').countDocuments(query);
+        items.data = cras;
+        items.limit = 30;
+        items.skip = page;
+
+        res.send({ items });
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
