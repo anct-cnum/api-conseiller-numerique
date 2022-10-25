@@ -46,7 +46,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
         items.limit = 30;
         items.skip = page;
 
-        res.send({ items: items });
+        res.send({ items });
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
