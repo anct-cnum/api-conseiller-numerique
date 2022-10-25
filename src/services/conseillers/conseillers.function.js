@@ -321,10 +321,12 @@ const getConseillersByCoordinateurId = db => async (idCoordinateur, page, dateDe
         query._id = { '$in': coordinateur.listeSubordonnes.liste };
         break;
       case 'codeRegion':
-        query.codeRegion = { '$in': coordinateur.listeSubordonnes.liste };
+        // query.codeRegion = { '$in': coordinateur.listeSubordonnes.liste };
+        query.codeRegionStructure = { '$in': coordinateur.listeSubordonnes.liste };
         break;
       case 'codeDepartement':
-        query.codeDepartement = { '$in': coordinateur.listeSubordonnes.liste };
+        // query.codeDepartement = { '$in': coordinateur.listeSubordonnes.liste };
+        query.codeDepartementStructure = { '$in': coordinateur.listeSubordonnes.liste };
         break;
       default:
         break;

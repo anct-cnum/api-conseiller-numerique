@@ -28,8 +28,8 @@
         "departements": ["973"]
     },
     {
-        "name": "RhinOcc",
-        "departements": ["11", "31", "32", "65"]
+      "name": "RhinOcc",
+      "region_names": ["Occitanie"]
     },
     {
         "name": "Francil-in",
