@@ -25,6 +25,7 @@ const validationCra = ObjectCra => {
     }),
     // eslint-disable-next-line max-len
     themes: Joi.array().required().min(1).max(13).items(Joi.string().required().valid('equipement informatique', 'vocabulaire', 'internet', 'securite', 'courriel', 'echanger', 'traitement texte', 'contenus numeriques', 'trouver emploi', 'tpe/pme', 'accompagner enfant', 'demarche en ligne', 'fraude et harcelement', 'sante', 'smartphone')).error(new Error('Le thème est invalide')),
+    sousThemes: Joi.array().allow(null).error(new Error('Le sous thème est invalide')),
     duree: Joi.any().required().error(new Error('La durée est invalide')),
     accompagnement: Joi.object({
       individuel: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements poursuivis en individuel est invalide')),
