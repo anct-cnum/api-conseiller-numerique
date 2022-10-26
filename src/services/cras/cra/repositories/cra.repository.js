@@ -37,7 +37,7 @@ const updateStatistiquesCra = db => async (cra, oldDateAccompagnement, conseille
   const testMonth = newMonth === oldMonth;
   const stats = await getStatsConseillerCras(db)(new ObjectId(conseillerId));
 
-  if (testYear && !testMonth || !testYear) {
+  if (stats && (testYear && !testMonth || !testYear)) {
     const options = { upsert: true };
 
     let oldTotal = stats[String(oldYear)]?.find(stat => stat.mois === oldMonth)?.totalCras;
