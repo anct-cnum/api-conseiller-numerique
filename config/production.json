@@ -6,6 +6,7 @@
   "espace_coop_hostname": "ESPACE_COOP_HOSTNAME",
   "espace_candidat_hostname": "ESPACE_CANDIDAT_HOSTNAME",
   "metabase_public_url": "METABASE_PUBLIC_URL",
+  "api_rdv_aide_num": "API_RDV_AIDE_NUM",
   "pix": {
     "hostname": "PIX_HOSTNAME",
     "contactMailing": "PIX_CONTACT_MAILING",
