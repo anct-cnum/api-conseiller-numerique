@@ -74,6 +74,7 @@ module.exports = {
       db.collection('cras').createIndex({ 'cra.duree': 1 }),
       db.collection('cras').createIndex({ 'cra.codePostal': 1 }),
       db.collection('cras').createIndex({ 'cra.themes': 1 }),
+      db.collection('cras').createIndex({ 'cra.dateAccompagnement': 1 }),
     ]);
   },
   stats_conseillers_cras: db => {
