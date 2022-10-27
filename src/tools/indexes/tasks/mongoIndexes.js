@@ -19,6 +19,7 @@ module.exports = {
       db.collection('structures').createIndex({ 'prefet.avisPrefet': 1 }),
       db.collection('structures').createIndex({ 'coselec.avisCoselec': 1 }),
       db.collection('structures').createIndex({ 'reseau': 1 }),
+      db.collection('structures').createIndex({ 'urlPriseRdv': 1 }),
       db.collection('structures').createIndex({
         'siret': 'text',
         'nom': 'text',
@@ -64,7 +65,9 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'estRecrute': 1 }),
       db.collection('conseillers').createIndex({ 'dateFinFormation': 1 }),
       db.collection('conseillers').createIndex({ 'structureId': 1 }),
-      db.collection('conseillers').createIndex({ 'emailCN.address': 1 })
+      db.collection('conseillers').createIndex({ 'emailCN.address': 1 }),
+      db.collection('conseillers').createIndex({ 'codeRegionStructure': 1 }),
+      db.collection('conseillers').createIndex({ 'codeDepartementStructure': 1 })
     ]);
   },
   cras: db => {
@@ -73,6 +76,8 @@ module.exports = {
       db.collection('cras').createIndex({ 'createdAt': 1 }),
       db.collection('cras').createIndex({ 'cra.duree': 1 }),
       db.collection('cras').createIndex({ 'cra.codePostal': 1 }),
+      db.collection('cras').createIndex({ 'cra.themes': 1 }),
+      db.collection('cras').createIndex({ 'cra.dateAccompagnement': 1 }),
     ]);
   },
   stats_conseillers_cras: db => {
