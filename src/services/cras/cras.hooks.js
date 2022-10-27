@@ -36,7 +36,7 @@ module.exports = {
       }
     ],
     create: [
-      context => {
+      async context => {
         //vérification du role conseiller du user
         if (!context.params?.user?.roles.includes('conseiller')) {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
@@ -44,6 +44,9 @@ module.exports = {
 
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
         context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.idConseiller), database);
+        //Creation DBRef structure rattacher
+        const structureId = await context.app.service('conseillers').get(context.data.idConseiller).structureId;
+        context.data.structure = new DBRef('structures', new ObjectId(structureId), database);
 
         //Separation CP / ville et suppression de cp plus utile
         context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
