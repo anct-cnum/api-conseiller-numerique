@@ -18,21 +18,28 @@ execute(__filename, async ({ logger, exit, app, db }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
+  let query = {};
   const nameHub = program.hub;
   if (!nameHub) {
     exit('Paramètres invalides, veuillez saisir un nom de HUB');
     return;
   }
-  let localite = infoHub.find(obj => obj.name === nameHub);
+  const localite = infoHub.find(obj => obj.name === nameHub);
   if (!localite) {
     exit(`Paramètres invalides, veuillez saisir un nom de HUB valide parmi cette liste [${infoHub.map(h => h.name)}]`);
     return;
   }
   const hub = await db.collection('hubs').findOne(localite);
-  const codeRegionAtHub = codeRegion.find(code => code.nom === hub.region_names[0]).code;
+  if (hub?.region_names) {
+    const codeRegionAtHub = codeRegion.find(code => code.nom === hub.region_names[0]).code;
+    query = { 'codeRegionStructure': codeRegionAtHub };
+  } else {
+    query = { 'codeDepartementStructure': { '$in': hub?.departements } };
+  }
+
   const arrayUtilisateur = await db.collection('conseillers').distinct('mattermost.id', {
     'statut': 'RECRUTE',
-    'codeRegionStructure': codeRegionAtHub
+    ...query
   });
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
