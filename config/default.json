@@ -6,6 +6,7 @@
   "espace_coop_hostname": "https://beta.coop.conseiller-numerique.gouv.fr",
   "espace_candidat_hostname": "https://beta.candidat.conseiller-numerique.gouv.fr",
   "metabase_public_url": "https://metabase.conseiller-numerique.gouv.fr/api/public/dashboard/446208c4-cae2-4c0c-be19-44cb14ce7d06",
+  "api_rdv_aide_num": "API_RDV_AIDE_NUM",
   "pix": {
     "hostname": "https://pix.fr/abc-pix-cnfs/",
     "contactMailing": "PIX_CONTACT_MAILING",
