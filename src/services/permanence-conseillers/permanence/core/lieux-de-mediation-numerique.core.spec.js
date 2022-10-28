@@ -1060,4 +1060,136 @@ describe('lieux de médiation numérique', () => {
       }
     ]);
   });
+
+  it('devrait avoir une url de prise de rdv', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      structure: {
+        urlPriseRdv: 'https://www.url-rdv.fr/org/1234'
+      }
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS',
+        prise_rdv: 'https://www.url-rdv.fr/org/1234'
+      }
+    ]);
+  });
+
+  it('devrait avoir une url de prise de rdv avec un préfix https', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      structure: {
+        urlPriseRdv: 'www.url-rdv.fr/org/1234'
+      }
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS',
+        prise_rdv: 'https://www.url-rdv.fr/org/1234'
+      }
+    ]);
+  });
+
+  it('devrait avoir une url de prise de rdv sans espaces', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      structure: {
+        urlPriseRdv: 'https://  www.url-rdv.fr/org/1234  '
+      }
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS',
+        prise_rdv: 'https://www.url-rdv.fr/org/1234'
+      }
+    ]);
+  });
+
+  it('devrait avoir une url de prise de rdv avec un seul préfixe https://', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      structure: {
+        urlPriseRdv: 'https://www.https://www.url-rdv.fr/org/1234'
+      }
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: CNFS_COMMON_SERVICES,
+        source: 'conseiller-numerique',
+        conditions_access: 'Gratuit',
+        labels_nationaux: 'CNFS',
+        prise_rdv: 'https://www.url-rdv.fr/org/1234'
+      }
+    ]);
+  });
 });
