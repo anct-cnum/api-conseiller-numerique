@@ -35,6 +35,14 @@ const pivotIfAny = pivot => pivot ? {
   pivot: removeAllSpaces(pivot)
 } : {};
 
+const priseRdvIfAny = priseRdv => {
+  const fixedPriseRdv = addMissingHttpsPrefix(removeAllSpacesAndDuplicateHttpPrefix(priseRdv));
+
+  return fixedPriseRdv && URL_REGEXP.test(fixedPriseRdv) ? {
+    prise_rdv: fixedPriseRdv
+  } : {};
+};
+
 const coordonneesGPSIfAny = coordinates => coordinates ? {
   latitude: coordinates[1],
   longitude: coordinates[0]
@@ -113,6 +121,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
     services: CNFS_COMMON_SERVICES,
     conditions_access: 'Gratuit',
     ...labelsNationauxIfAny(permanence.structure),
+    ...priseRdvIfAny(permanence.structure?.urlPriseRdv),
     ...pivotIfAny(permanence.siret),
   })).filter(invalidLieux);
 
