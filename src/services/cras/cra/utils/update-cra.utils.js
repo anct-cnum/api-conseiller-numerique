@@ -1,8 +1,7 @@
-const { ObjectId } = require('mongodb');
+const { DBRef, ObjectId } = require('mongodb');
 
-const assignCra = body => {
+const assignCra = (body, database) => {
   let objectCra = Object.assign({}, body);
-  
   //Ajout de l'id
   objectCra._id = new ObjectId(objectCra.cra.id);
   //Separation CP / ville
@@ -12,6 +11,10 @@ const assignCra = body => {
   objectCra.cra.dateAccompagnement = new Date(objectCra.cra.dateAccompagnement);
   //Ajout de la date de mise à jour
   objectCra.updatedAt = new Date();
+  //Mise à jour de l'idPermanence
+  if (database) {
+    objectCra.permanence = new DBRef('permanences', new ObjectId(objectCra.cra.idPermanence), database);
+  }
   //Suppression des champs en trop
   delete objectCra.cra.updatedAt;
   delete objectCra.cra.datePickerStatus;
@@ -19,12 +22,14 @@ const assignCra = body => {
   delete objectCra.cra.id;
   delete objectCra.cra.loading;
   delete objectCra.cra.oldDateAccompagnement;
+  delete objectCra.cra.idPermanence;
+  delete objectCra.cra.idStructure;
   delete objectCra.conseillerId;
 
   return objectCra;
 };
 
-const updateCraToSchema = body => assignCra(body);
+const updateCraToSchema = (body, database = null) => assignCra(body, database);
 
 module.exports = {
   assignCra,
