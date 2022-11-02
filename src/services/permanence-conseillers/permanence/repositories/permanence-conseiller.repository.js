@@ -36,7 +36,8 @@ const getPermanenceById = db => async permanenceId => {
 };
 
 const getPermanencesByConseiller = db => async conseillerId => {
-  return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
+  return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } })
+  .sort({ 'adresse.codePostal': 1, 'adresse.ville': 1 }).toArray();
 };
 
 const getPermanencesByStructure = db => async structureId => {
