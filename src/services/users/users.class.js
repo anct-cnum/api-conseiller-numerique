@@ -447,6 +447,11 @@ exports.Users = class Users extends Service {
           const login = email.substring(0, email.lastIndexOf('@'));
           const gandi = app.get('gandi');
           const mattermost = app.get('mattermost');
+          await db.collection('users').updateOne({ _id: user._id }, {
+            $set: {
+              name: email
+            }
+          });
           user.name = email;
           // La boite mail a été créée dans import-recrutes.js
           await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
