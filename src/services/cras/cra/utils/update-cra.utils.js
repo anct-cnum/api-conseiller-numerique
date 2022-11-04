@@ -12,6 +12,7 @@ const assignCra = (body, database) => {
   //Ajout de la date de mise à jour
   objectCra.updatedAt = new Date();
   //Mise à jour de l'idPermanence
+  objectCra.permanence = null;
   if (objectCra.cra.idPermanence) {
     objectCra.permanence = new DBRef('permanences', new ObjectId(objectCra.cra.idPermanence), database);
   }
