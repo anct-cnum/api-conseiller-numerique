@@ -12,7 +12,7 @@ const assignCra = (body, database) => {
   //Ajout de la date de mise à jour
   objectCra.updatedAt = new Date();
   //Mise à jour de l'idPermanence
-  if (database) {
+  if (objectCra.cra.idPermanence) {
     objectCra.permanence = new DBRef('permanences', new ObjectId(objectCra.cra.idPermanence), database);
   }
   //Suppression des champs en trop
@@ -29,7 +29,7 @@ const assignCra = (body, database) => {
   return objectCra;
 };
 
-const updateCraToSchema = (body, database = null) => assignCra(body, database);
+const updateCraToSchema = (body, database) => assignCra(body, database);
 
 module.exports = {
   assignCra,
