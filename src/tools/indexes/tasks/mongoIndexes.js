@@ -2,7 +2,11 @@ module.exports = {
   users: db => {
     return Promise.all([
       db.collection('users').createIndex({ 'name': 1 }, { unique: true }),
-      db.collection('users').createIndex({ 'roles': 1 })
+      db.collection('users').createIndex({ 'roles': 1 }),
+      db.collection('users').createIndex({ 'token': 1 }),
+      db.collection('users').createIndex({ 'tokenCreatedAt': 1 }),
+      db.collection('users').createIndex({ 'mailSentDate': 1 }),
+      db.collection('users').createIndex({ 'passwordCreated': 1 }),
     ]);
   },
   structures: db => {
@@ -67,7 +71,10 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'structureId': 1 }),
       db.collection('conseillers').createIndex({ 'emailCN.address': 1 }),
       db.collection('conseillers').createIndex({ 'codeRegionStructure': 1 }),
-      db.collection('conseillers').createIndex({ 'codeDepartementStructure': 1 })
+      db.collection('conseillers').createIndex({ 'codeDepartementStructure': 1 }),
+      db.collection('conseillers').createIndex({ 'estCoordinateur': 1 }),
+      db.collection('conseillers').createIndex({ 'listeSubordonnes.type': 1 }),
+      db.collection('conseillers').createIndex({ 'listeSubordonnes.liste': 1 })
     ]);
   },
   cras: db => {
@@ -108,6 +115,14 @@ module.exports = {
   hubs: db => {
     return Promise.all([
       db.collection('hubs').createIndex({ 'region_name': 1 }),
+    ]);
+  },
+  permanences: db => {
+    return Promise.all([
+      db.collection('permanences').createIndex({ 'conseillers': 1 }),
+      db.collection('permanences').createIndex({ 'conseillersItinerants': 1 }),
+      db.collection('permanences').createIndex({ 'lieuPrincipalPour': 1 }),
+      db.collection('permanences').createIndex({ 'structure.$id': 1 })
     ]);
   },
 };
