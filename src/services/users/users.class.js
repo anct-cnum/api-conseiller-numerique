@@ -436,7 +436,7 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       const role = user.roles[0];
-      app.service('users').patch(user._id, { password: password, passwordCreated: true, passwordCreatedAt: new Date() });
+      app.service('users').patch(user._id, { password: password, passwordCreated: true, passwordCreatedAt: new Date(), token: null, tokenCreatedAt: null });
 
       if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
@@ -449,8 +449,7 @@ exports.Users = class Users extends Service {
           const mattermost = app.get('mattermost');
           await db.collection('users').updateOne({ _id: user._id }, {
             $set: {
-              name: email,
-              token: uuidv4()
+              name: email
             }
           });
           user.name = email;
