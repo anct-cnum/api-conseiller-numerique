@@ -19,6 +19,9 @@ exports.Cras = class Cras extends Service {
   constructor(options, app) {
     super(options);
 
+    const connection = app.get('mongodb');
+    const database = connection.substr(connection.lastIndexOf('/') + 1);
+
     app.get('mongoClient').then(db => {
       this.Model = db.collection('cras');
     });
@@ -48,7 +51,7 @@ exports.Cras = class Cras extends Service {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const oldDateAccompagnement = new Date(req.body.cra.oldDateAccompagnement);
-      const cra = updateCraToSchema(req.body);
+      const cra = updateCraToSchema(req.body, database);
       const conseillerId = req.body.conseillerId;
 
       canActivate(
