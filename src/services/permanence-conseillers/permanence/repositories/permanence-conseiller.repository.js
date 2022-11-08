@@ -127,7 +127,7 @@ const deleteCraPermanence = db => async permanenceId => {
     'permanence.$id': new ObjectId(permanenceId)
   }, {
     $unset: { permanence: null }
-});
+  });
 };
 
 const setReporterInsertion = db => async userId => {
