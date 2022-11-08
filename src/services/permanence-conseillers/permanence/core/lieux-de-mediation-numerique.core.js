@@ -25,7 +25,8 @@ const invalidLieux = lieu =>
   !nullOrEmpty(lieu.nom) &&
   !nullOrEmpty(lieu.commune) &&
   !nullOrEmpty(lieu.code_postal) &&
-  !nullOrEmpty(lieu.adresse);
+  !nullOrEmpty(lieu.adresse) &&
+  lieu.hasOwnProperty('aidants');
 
 const removeNullStrings = string => string
 .replaceAll('null null', '')
@@ -104,6 +105,33 @@ const labelsNationauxIfAny = structure => ({
   ].join(', ')
 });
 
+const formatNomAidant = (prenom, nom) => ({
+  nom: (prenom + ' ' + nom).toLowerCase().replace(/(^\w{1})|([\s,-]+\w{1})/g, letter => letter.toUpperCase())
+});
+
+const removeDuplicates = array => {
+  const seen = new Set();
+  return array.filter(el => {
+    const duplicate = seen.has(el._id);
+    seen.add(el._id);
+    return !duplicate;
+  });
+};
+
+const aidantsIfAny = aidants =>
+  // Retire les aidants souhaitant être "anonyme"
+  aidants?.filter(aidant => aidant.nonAffichageCarto !== true)?.length > 0 ? {
+    aidants:
+    removeDuplicates(aidants)
+    .map(aidant => ({
+      ...formatNomAidant(aidant.prenom, aidant.nom),
+      ...courrielIfAny(aidant.emailPro),
+      ...telephoneIfAny(aidant.telephonePro)
+    }))
+    // eslint-disable-next-line no-nested-ternary
+    .sort((aidant1, aidant2) => (aidant1.nom > aidant2.nom) ? 1 : ((aidant2.nom > aidant1.nom) ? -1 : 0))
+  } : {};
+
 const lieuxDeMediationNumerique = async ({ getPermanences }) =>
   (await getPermanences()).map(permanence => ({
     id: permanence._id,
@@ -123,6 +151,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
     ...labelsNationauxIfAny(permanence.structure),
     ...priseRdvIfAny(permanence.structure?.urlPriseRdv),
     ...pivotIfAny(permanence.siret),
+    ...aidantsIfAny(permanence.aidants),
   })).filter(invalidLieux);
 
 module.exports = {
