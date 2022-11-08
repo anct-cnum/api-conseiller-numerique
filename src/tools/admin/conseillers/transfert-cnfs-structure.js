@@ -45,8 +45,9 @@ const majMiseEnRelationStructureNouvelle = (db, app) => async (idCNFS, nouvelleS
       structure: new DBRef('structures', nouvelleSA, database),
       statut: 'finalisee',
       createdAt: new Date(),
-      conseillerObj: {}, // mise à jour faite à la fin..
-      structureObj: structureDestination
+      conseillerObj: {},
+      structureObj: structureDestination,
+      dateRecrutement: dateEmbauche
     });
   } else {
     await db.collection('misesEnRelation').updateOne(
@@ -62,7 +63,6 @@ const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauc
       datePrisePoste: dateEmbauche,
       codeRegionStructure: structureDestination.codeRegion,
       codeDepartementStructure: structureDestination.codeDepartement,
-      // date de formation normalement toujours la meme..
     },
     $push: { ruptures: {
       structureId: ancienneSA,
@@ -81,6 +81,15 @@ const craCoherenceDateEmbauche = db => async (idCNFS, nouvelleSA, dateEmbauche) 
   }, {
     $set: { 'structure.$id': nouvelleSA }
   });
+const updatePermanences = db => async idCNFS => await db.collection('permanences').updateMany(
+  {
+    $or: [
+      { 'conseillers': { $elemMatch: { $eq: idCNFS } } },
+      { 'conseillersItinerants': { $elemMatch: { $eq: idCNFS } } }
+    ]
+  },
+  { $pull: { conseillers: idCNFS, conseillersItinerants: idCNFS } }
+);
 
 execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
 
@@ -88,24 +97,27 @@ execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
   program.option('-r, --rupture <rupture>', 'rupture: date de rupture AAAA/MM/DD');
   program.option('-m, --motif <motif>', 'motif: motif de la rupture');
-  program.option('-n, --nouvelle <nouvelle>', 'nouvelle: structure de destination');
+  program.option('-n, --nouvelle <nouvelle>', 'nouvelle: id mongo structure de destination');
   program.option('-e, --embauche <embauche>', 'embauche: date de embauche AAAA/MM/DD');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let { id, ancienne, nouvelle, rupture, embauche, motif } = program;
+  const { id, ancienne, nouvelle, rupture, embauche, motif } = program;
   if (!id || !ancienne || !nouvelle || !rupture || !embauche || !motif) {
-    exit('Paramètres invalides. Veuillez entrez les 6 commandes requises');
+    exit('Paramètres invalides. Veuillez entrez les 6 paramètres requis');
     return;
   }
-  let idCNFS = new ObjectID(program.id);
-  let ancienneSA = new ObjectID(program.ancienne);
-  let nouvelleSA = new ObjectID(program.nouvelle);
-  let dateRupture = formatDate(program.rupture);
-  let dateEmbauche = formatDate(program.embauche);
-  let motifRupture = program.motif;
+  const idCNFS = new ObjectID(id);
+  const ancienneSA = new ObjectID(ancienne);
+  const nouvelleSA = new ObjectID(nouvelle);
+  const dateRupture = formatDate(rupture);
+  const dateEmbauche = formatDate(embauche);
+  const motifRupture = motif;
 
-  const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
+  const cnfsRecrute = await db.collection('misesEnRelation').findOne(
+    { 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA,
+      'statut': { $in: ['finalisee', 'nouvelle_rupture'] }
+    });
   if (!cnfsRecrute) {
     exit(`Le Cnfs avec l'id ${idCNFS} n'est pas recruté.`);
     return;
@@ -122,7 +134,7 @@ execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
   });
   if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec) {
     //eslint-disable-next-line max-len
-    exit(`La structure destinataire est seulement autorisé  à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recrutée(s)`);
+    exit(`La structure destinataire est seulement autorisé à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recruté(s)`);
     return;
   }
   try {
@@ -132,6 +144,7 @@ execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
     await majDataCnfsStructureNouvelle(db)(idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination);
     await majConseillerObj(db)(idCNFS);
     await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateEmbauche);
+    await updatePermanences(db)(idCNFS);
   } catch (error) {
     logger.error(error.message);
     Sentry.captureException(error);
