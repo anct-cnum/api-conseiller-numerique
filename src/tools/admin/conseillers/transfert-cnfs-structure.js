@@ -6,7 +6,7 @@ const dayjs = require('dayjs');
 
 require('dotenv').config();
 
-const formatDate = date => (dayjs(date, 'YYYY-MM-DD').toDate()).replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
+const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
 
 const majMiseEnRelationStructureRupture = db => async (idCNFS, nouvelleSA, ancienneSA, dateRupture, motifRupture) => {
   await db.collection('misesEnRelation').updateOne(
@@ -85,10 +85,11 @@ const updatePermanences = db => async idCNFS => await db.collection('permanences
   {
     $or: [
       { 'conseillers': { $elemMatch: { $eq: idCNFS } } },
-      { 'conseillersItinerants': { $elemMatch: { $eq: idCNFS } } }
+      { 'conseillersItinerants': { $elemMatch: { $eq: idCNFS } } },
+      { 'lieuPrincipalPour': { $elemMatch: { $eq: idCNFS } } }
     ]
   },
-  { $pull: { conseillers: idCNFS, conseillersItinerants: idCNFS } }
+  { $pull: { conseillers: idCNFS, conseillersItinerants: idCNFS, lieuPrincipalPour: idCNFS } }
 );
 
 execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
@@ -138,7 +139,7 @@ execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
     return;
   }
   try {
-    await majMiseEnRelationStructureRupture(db, app)(idCNFS, nouvelleSA, dateEmbauche);
+    await majMiseEnRelationStructureRupture(db)(idCNFS, nouvelleSA, ancienneSA, dateRupture, motifRupture);
     await historiseCollectionRupture(db)(idCNFS, ancienneSA, dateRupture, motifRupture);
     await majMiseEnRelationStructureNouvelle(db, app)(idCNFS, nouvelleSA, dateEmbauche, structureDestination);
     await majDataCnfsStructureNouvelle(db)(idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination);
