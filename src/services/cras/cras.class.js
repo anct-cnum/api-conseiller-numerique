@@ -10,7 +10,7 @@ const {
   rolesGuard,
   Role,
 } = require('../../common/utils/feathers.utils');
-const { getCraById, updateCra, updateStatistiquesCra } = require('./cra/repositories/cra.repository');
+const { getCraById, updateCra, updateStatistiquesCra, countCraByPermanenceId } = require('./cra/repositories/cra.repository');
 const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
 const { validationCra } = require('./cra/utils/validationCra');
 const { v4: validate } = require('uuid');
@@ -76,7 +76,25 @@ exports.Cras = class Cras extends Service {
           return res.status(400).send(new BadRequest(validationCra(cra)));
         }
       }).catch(routeActivationError => abort(res, routeActivationError));
+    });
 
+    app.get('/cras/countByPermanence', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const permanenceId = req.query.permanenceId;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await countCraByPermanenceId(db)(permanenceId).then(count => {
+          return res.send({ id: permanenceId, count: count });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(404).send(new Conflict('Le comptage de cras pour cette permanence a échoué.').toJSON());
+        });
+      }).catch(routeActivationError => abort(res, routeActivationError));
     });
   }
 };

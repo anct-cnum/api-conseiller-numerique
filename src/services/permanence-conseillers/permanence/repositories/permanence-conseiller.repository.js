@@ -122,6 +122,14 @@ const deleteConseillerPermanence = db => async (permanenceId, conseillerId) => {
   });
 };
 
+const deleteCraPermanence = db => async permanenceId => {
+  await db.collection('cras').updateMany({
+    'permanence.$id': new ObjectId(permanenceId)
+  }, {
+    $unset: { permanence: '' }
+  });
+};
+
 const setReporterInsertion = db => async userId => {
   await db.collection('users').updateOne({
     _id: userId
@@ -148,6 +156,7 @@ module.exports = {
   updatePermanences,
   deletePermanence,
   deleteConseillerPermanence,
+  deleteCraPermanence,
   setReporterInsertion,
   updateConseillerStatut,
 };
