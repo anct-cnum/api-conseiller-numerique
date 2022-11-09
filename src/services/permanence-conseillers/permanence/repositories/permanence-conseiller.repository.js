@@ -126,7 +126,7 @@ const deleteCraPermanence = db => async permanenceId => {
   await db.collection('cras').updateMany({
     'permanence.$id': new ObjectId(permanenceId)
   }, {
-    $unset: { permanence: null }
+    $unset: { permanence: '' }
   });
 };
 
