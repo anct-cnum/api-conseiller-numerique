@@ -277,8 +277,14 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await deletePermanence(db)(idPermanence).then(() => {
-          return res.send({ isDeleted: true });
+        await deletePermanence(db)(idPermanence).then(async () => {
+          await deleteCraPermanence(db)(idPermanence).then(() => {
+            return res.send({ isDeleted: true });
+          }).catch(error => {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            return res.status(409).send(new Conflict('La suppression de la permanence dans les cras existants a échoué, veuillez réessayer.').toJSON());
+          });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
