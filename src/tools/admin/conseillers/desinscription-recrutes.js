@@ -198,10 +198,11 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 {
                   $or: [
                     { 'conseillers': { $elemMatch: { $eq: conseillerCoop._id } } },
-                    { 'conseillersItinerants': { $elemMatch: { $eq: conseillerCoop._id } } }
+                    { 'conseillersItinerants': { $elemMatch: { $eq: conseillerCoop._id } } },
+                    { 'lieuPrincipalPour': { $elemMatch: { $eq: conseillerCoop._id } } }
                   ]
                 },
-                { $pull: { conseillers: conseillerCoop._id, conseillersItinerants: conseillerCoop._id } }
+                { $pull: { conseillers: conseillerCoop._id, conseillersItinerants: conseillerCoop._id, lieuPrincipalPour: conseillerCoop._id } }
               );
 
               const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerCoop._id });

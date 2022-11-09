@@ -9,6 +9,19 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
     }
   },
   {
+    $addFields: {
+      'listConseillersIds': {
+        $concatArrays: ['$conseillers', '$conseillersItinerants', '$lieuPrincipalPour'] } }
+  },
+  {
+    $lookup: {
+      from: 'conseillers',
+      localField: 'listConseillersIds',
+      foreignField: '_id',
+      as: 'aidants'
+    }
+  },
+  {
     $lookup: {
       from: 'structures',
       let: { idStructure: '$entity.v' },
@@ -29,7 +42,25 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
       ]
     }
   },
-  { $unwind: '$structure' }
+  { $unwind: '$structure' },
+  { $project: {
+    'nomEnseigne': 1,
+    'horaires': 1,
+    'adresse': 1,
+    'location': 1,
+    'numeroTelephone': 1,
+    'email': 1,
+    'siteWeb': 1,
+    'updatedAt': 1,
+    'structure': 1,
+    'siret': 1,
+    'aidants._id': 1,
+    'aidants.nom': 1,
+    'aidants.prenom': 1,
+    'aidants.emailPro': 1,
+    'aidants.telephonePro': 1,
+    'aidants.nonAffichageCarto': 1
+  } }
 ]).toArray();
 
 const getPermanenceById = db => async permanenceId => {
