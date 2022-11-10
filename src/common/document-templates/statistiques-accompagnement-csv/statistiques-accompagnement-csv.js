@@ -25,7 +25,7 @@ const statsThemes = statistiques => [
 ];
 
 const statsLieux = (statistiques, isAdminCoop) => [
-  `Lieux des accompagnements${isAdminCoop === true ? ' (en %)' : ''}`,
+  `Canaux d'accompagnements${isAdminCoop === true ? ' (en %)' : ''}`,
   ...[
     'À domicile',
     'À distance',
