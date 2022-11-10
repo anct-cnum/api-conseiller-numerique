@@ -26,7 +26,8 @@ const invalidLieux = lieu =>
   !nullOrEmpty(lieu.commune) &&
   !nullOrEmpty(lieu.code_postal) &&
   !nullOrEmpty(lieu.adresse) &&
-  lieu.hasOwnProperty('aidants');
+  lieu.hasOwnProperty('aidants') &&
+  !nullOrEmpty(lieu.structureId);
 
 const removeNullStrings = string => string
 .replaceAll('null null', '')
@@ -124,6 +125,7 @@ const aidantsIfAny = aidants =>
     aidants:
     removeDuplicates(aidants)
     .map(aidant => ({
+      aidantId: aidant._id,
       ...formatNomAidant(aidant.prenom, aidant.nom),
       ...courrielIfAny(aidant.emailPro),
       ...telephoneIfAny(aidant.telephonePro)
@@ -151,6 +153,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
     ...labelsNationauxIfAny(permanence.structure),
     ...priseRdvIfAny(permanence.structure?.urlPriseRdv),
     ...pivotIfAny(permanence.siret),
+    structureId: permanence.structure?._id,
     ...aidantsIfAny(permanence.aidants),
   })).filter(invalidLieux);
 

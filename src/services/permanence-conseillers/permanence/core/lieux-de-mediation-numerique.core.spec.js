@@ -1,7 +1,7 @@
 const { lieuxDeMediationNumerique, CNFS_COMMON_SERVICES } = require('./lieux-de-mediation-numerique.core');
 
 describe('lieux de médiation numérique', () => {
-  it('devrait avoir les informations obligatoires du schéma de médiation numérique', async () => {
+  it('devrait avoir les informations obligatoires du schéma de médiation numérique avec extension CnFS', async () => {
     const permanence = {
       _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
@@ -11,8 +11,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -29,8 +32,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -47,8 +51,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -66,8 +73,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -84,8 +92,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -103,8 +114,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -120,8 +132,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -138,8 +153,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -155,8 +171,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -173,8 +192,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -190,8 +210,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -210,8 +233,31 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([]);
+  });
+
+  it('devrait exclure les lieux dont l\'id structure n\'est pas renseignée', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: '',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -230,8 +276,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -248,8 +297,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -265,8 +315,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -283,8 +336,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -300,8 +354,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -318,8 +375,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -335,8 +393,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -353,8 +414,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -370,8 +432,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -388,11 +453,14 @@ describe('lieux de médiation numérique', () => {
         ville: 'Reims',
         codePostal: '',
         numeroRue: '12 BIS',
-        rue: 'RUE DE LECLERCQ',
-        aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
-        ]
-      }
+        rue: 'RUE DE LECLERCQ'
+      },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
+      aidants: [
+        { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+      ]
     };
 
     const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
@@ -410,8 +478,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -428,8 +499,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -445,8 +517,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -463,8 +538,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -480,8 +556,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: ' 12  BIS ',
         rue: '  RUE DE  LECLERCQ '
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -498,8 +577,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -515,8 +595,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: ' 12 null',
         rue: '  RUE DE LECLERCQ '
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -533,8 +616,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -550,8 +634,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: 'null',
         rue: 'null'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -570,8 +657,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: null,
         rue: null
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -596,8 +686,11 @@ describe('lieux de médiation numérique', () => {
           43.52609
         ]
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -616,8 +709,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -634,8 +728,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '+33180059880',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -653,8 +750,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -671,8 +769,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: ' +33 1 80 05 98 80 ',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -690,8 +791,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -708,8 +810,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '+33.1.80.05.98.80',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -727,8 +832,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -745,8 +851,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '+330562636539',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -764,8 +873,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -782,8 +892,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       email: 'contact@laquincaillerie.tl',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -801,8 +914,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -819,8 +933,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       email: ' contact@laquincaillerie.tl   ',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -838,8 +955,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -856,8 +974,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: 'https://www.laquincaillerie.tl/',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -875,8 +996,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -893,8 +1015,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: 'www.laquincaillerie.tl/',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -912,8 +1037,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -930,8 +1056,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: '  https://  www.laquincaillerie.tl/  ',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -949,8 +1078,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -967,8 +1097,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: 'https://www.https://www.laquincaillerie.tl/',
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -986,8 +1119,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1075,8 +1209,11 @@ describe('lieux de médiation numérique', () => {
           ]
         }
       ],
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1094,8 +1231,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1112,8 +1250,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       updatedAt: new Date('2022-06-02T12:23:00.442Z'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1131,8 +1272,9 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         date_maj: '2022-06-02',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1149,10 +1291,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         estLabelliseFranceServices: 'OUI'
       },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1169,8 +1312,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS, France Services',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1187,10 +1331,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         estLabelliseAidantsConnect: 'OUI'
       },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1207,8 +1352,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS, Aidants Connect',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1225,11 +1371,12 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         estLabelliseAidantsConnect: 'OUI',
         estLabelliseFranceServices: 'OUI'
       },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1246,8 +1393,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS, Aidants Connect, France Services',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1264,10 +1412,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         urlPriseRdv: 'https://www.url-rdv.fr/org/1234'
       },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1285,8 +1434,9 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1303,10 +1453,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         urlPriseRdv: 'www.url-rdv.fr/org/1234'
       },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1324,8 +1475,9 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1342,10 +1494,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         urlPriseRdv: 'https://  www.url-rdv.fr/org/1234  '
       },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1363,8 +1516,9 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1381,10 +1535,11 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         urlPriseRdv: 'https://www.https://www.url-rdv.fr/org/1234'
       },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1402,8 +1557,9 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1418,6 +1574,9 @@ describe('lieux de médiation numérique', () => {
         codePostal: '51100',
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
+      },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
       },
       aidants: []
     };
@@ -1436,6 +1595,9 @@ describe('lieux de médiation numérique', () => {
         codePostal: '51100',
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
+      },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
       },
       aidants: [
         { _id: 1, nom: 'Jean', prenom: 'Dupond', nonAffichageCarto: true }
@@ -1457,8 +1619,11 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1475,8 +1640,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1492,9 +1658,12 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' },
-        { _id: 1, prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' },
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' },
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' },
       ]
     };
 
@@ -1511,8 +1680,9 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1528,10 +1698,14 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'JEAN claude', nom: 'de la rivière', emailPro: 'jean-claude@gouv.fr', telephonePro: '+33ZABPQMCDU' },
-        { _id: 2, prenom: 'jean', nom: 'DUPOND', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' },
-        { _id: 3, prenom: 'jean-pierre', nom: 'dupont-dupond', emailPro: 'jean-pierre.dupont@gouv.fr', telephonePro: '+33ZABPQMCDU' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'JEAN claude', nom: 'de la rivière', emailPro: 'jean-claude@gouv.fr', telephonePro: '+33ZABPQMCDU' },
+        { _id: 'bbb88891b3f44bdf86bb7bc2601d3ggg', prenom: 'jean', nom: 'DUPOND', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33ZABPQMCDU' },
+        // eslint-disable-next-line max-len
+        { _id: 'ccc88891b3f44bdf86bb7bc2601d3hhh', prenom: 'jean-pierre', nom: 'dupont-dupond', emailPro: 'jean-pierre.dupont@gouv.fr', telephonePro: '+33ZABPQMCDU' }
       ]
     };
 
@@ -1548,10 +1722,11 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Claude De La Rivière', courriel: 'jean-claude@gouv.fr', telephone: '+33ZABPQMCDU' },
-          { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' },
-          { nom: 'Jean-Pierre Dupont-Dupond', courriel: 'jean-pierre.dupont@gouv.fr', telephone: '+33ZABPQMCDU' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Claude De La Rivière', courriel: 'jean-claude@gouv.fr', telephone: '+33ZABPQMCDU' },
+          { aidantId: 'bbb88891b3f44bdf86bb7bc2601d3ggg', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33ZABPQMCDU' },
+          { aidantId: 'ccc88891b3f44bdf86bb7bc2601d3hhh', nom: 'Jean-Pierre Dupont-Dupond', courriel: 'jean-pierre.dupont@gouv.fr', telephone: '+33ZABPQMCDU' }
         ]
       }
     ]);
@@ -1567,10 +1742,13 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'JEAN claude', nom: 'de la rivière', telephonePro: '+33ZABPQMCDU' },
-        { _id: 2, prenom: 'jean', nom: 'DUPOND' },
-        { _id: 3, prenom: 'jean-pierre', nom: 'dupont-dupond', emailPro: 'jean-pierre.dupont@gouv.fr' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'JEAN claude', nom: 'de la rivière', telephonePro: '+33ZABPQMCDU' },
+        { _id: 'bbb88891b3f44bdf86bb7bc2601d3ggg', prenom: 'jean', nom: 'DUPOND' },
+        { _id: 'ccc88891b3f44bdf86bb7bc2601d3hhh', prenom: 'jean-pierre', nom: 'dupont-dupond', emailPro: 'jean-pierre.dupont@gouv.fr' }
       ]
     };
 
@@ -1587,10 +1765,11 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Jean Claude De La Rivière', telephone: '+33ZABPQMCDU' },
-          { nom: 'Jean Dupond' },
-          { nom: 'Jean-Pierre Dupont-Dupond', courriel: 'jean-pierre.dupont@gouv.fr' }
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Claude De La Rivière', telephone: '+33ZABPQMCDU' },
+          { aidantId: 'bbb88891b3f44bdf86bb7bc2601d3ggg', nom: 'Jean Dupond' },
+          { aidantId: 'ccc88891b3f44bdf86bb7bc2601d3hhh', nom: 'Jean-Pierre Dupont-Dupond', courriel: 'jean-pierre.dupont@gouv.fr' }
         ]
       }
     ]);
@@ -1606,11 +1785,14 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+      },
       aidants: [
-        { _id: 1, prenom: 'zebulon', nom: 'DUPOND' },
-        { _id: 2, prenom: 'zebulon', nom: 'DUPOND' },
-        { _id: 3, prenom: 'jean-pierre', nom: 'dupont-dupond' },
-        { _id: 4, prenom: 'arthur', nom: 'de la rivière' }
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'zebulon', nom: 'DUPOND' },
+        { _id: 'bbb88891b3f44bdf86bb7bc2601d3ggg', prenom: 'zebulon', nom: 'DUPOND' },
+        { _id: 'ccc88891b3f44bdf86bb7bc2601d3hhh', prenom: 'jean-pierre', nom: 'dupont-dupond' },
+        { _id: 'ddd88891b3f44bdf86bb7bc2601d3iii', prenom: 'arthur', nom: 'de la rivière' }
       ]
     };
 
@@ -1627,11 +1809,12 @@ describe('lieux de médiation numérique', () => {
         source: 'conseiller-numerique',
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         aidants: [
-          { nom: 'Arthur De La Rivière' },
-          { nom: 'Jean-Pierre Dupont-Dupond' },
-          { nom: 'Zebulon Dupond' },
-          { nom: 'Zebulon Dupond' }
+          { aidantId: 'ddd88891b3f44bdf86bb7bc2601d3iii', nom: 'Arthur De La Rivière' },
+          { aidantId: 'ccc88891b3f44bdf86bb7bc2601d3hhh', nom: 'Jean-Pierre Dupont-Dupond' },
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Zebulon Dupond' },
+          { aidantId: 'bbb88891b3f44bdf86bb7bc2601d3ggg', nom: 'Zebulon Dupond' }
         ]
       }
     ]);
