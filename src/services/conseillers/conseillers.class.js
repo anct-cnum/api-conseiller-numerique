@@ -393,6 +393,7 @@ exports.Conseillers = class Conseillers extends Service {
         const dateDebut = dayjs(req.query.dateDebut).format('YYYY-MM-DD');
         const dateFin = dayjs(req.query.dateFin).format('YYYY-MM-DD');
         const codePostal = req.query?.codePostal ? req.query.codePostal : 'null';
+        const ville = req.query?.ville ? req.query.ville : 'null';
         user.role = user.roles[0];
         user.pdfGenerator = true;
         delete user.roles;
@@ -402,6 +403,7 @@ exports.Conseillers = class Conseillers extends Service {
           dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
           dateFin: Joi.date().required().error(new Error('La date de fin est invalide')),
           codePostal: Joi.required().error(new Error('Le code postal est invalide')),
+          ville: Joi.required().error(new Error('La ville est invalide')),
         }).validate(req.query);
 
         if (schema.error) {
@@ -409,7 +411,7 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        let finUrl = '/conseiller/' + user.entity.oid + '/' + dateDebut + '/' + dateFin + '/' + codePostal;
+        let finUrl = '/conseiller/' + user.entity.oid + '/' + dateDebut + '/' + dateFin + '/' + codePostal + '/' + ville;
 
         /** Ouverture d'un navigateur en headless afin de générer le PDF **/
         try {
@@ -454,14 +456,19 @@ exports.Conseillers = class Conseillers extends Service {
             'cra.codePostal': req.query?.codePostal
           };
         }
-
+        if (query.ville !== '') {
+          statsQuery = {
+            ...statsQuery,
+            'cra.nomCommune': req.query?.ville
+          };
+        }
         const isAdminCoop = checkRoleAdminCoop(userById);
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, isAdminCoop)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
