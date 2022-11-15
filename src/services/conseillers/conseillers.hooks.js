@@ -26,8 +26,8 @@ module.exports = {
 
           context.params.query = {
             ...context.params.query,
-            ...(departement ? { codeDepartement: departement.toString() } : {}),
-            ...(region ? { codeRegion: region.toString() } : {})
+            ...(departement ? { codeDepartementStructure: departement.toString() } : {}),
+            ...(region ? { codeRegionStructure: region.toString() } : {})
           };
         }
         if (context.params.query.$skip) {
