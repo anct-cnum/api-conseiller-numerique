@@ -79,7 +79,7 @@ execute(__filename, async ({ logger, db }) => {
       id: permanence._id.toString(),
       nom: conseiller.nom,
       prenom: conseiller.prenom,
-      telephone: conseiller.telephonePro ?? conseiller.structure.contact.telephone,
+      telephone: permanence.telephone ?? conseiller.telephonePro ?? conseiller.structure.contact.telephone,
       address: formatAddressFromPermanence(permanence.adresse),
       name: permanence.nomEnseigne,
       openingHours: formatOpeningHours(permanence.horaires)
