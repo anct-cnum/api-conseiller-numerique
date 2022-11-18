@@ -60,7 +60,7 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
     }
   });
 
-  listeDefinitive.sort(function(a, b) {
+  listeDefinitive.sort((a, b) => {
     if (a.id !== b.id) {
       return a.id - b.id;
     }
