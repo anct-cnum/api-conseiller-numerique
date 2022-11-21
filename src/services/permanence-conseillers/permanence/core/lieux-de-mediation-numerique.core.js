@@ -3,12 +3,15 @@ const { toOsmOpeningHours, OSM_DAYS_OF_WEEK } = require('../utils/osm-opening-ho
 // eslint-disable-next-line max-len
 const URL_REGEXP = /^(?:https?:\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4])|(?:[a-z\u00a1-\uffff\d]-*)*[a-z\u00a1-\uffff\d]+(?:\.(?:[a-z\u00a1-\uffff\d]-*)*[a-z\u00a1-\uffff\d]+)*\.[a-z\u00a1-\uffff]{2,})(?::\d{2,5})?(?:\/\S*)?$/;
 
+const PHONE_REGEX = /^(?:(?:\+)(33|590|596|594|262|269))(?:\d{3}){3}$/;
+
 const removeAllSpaces = string => string?.replaceAll(' ', '') ?? null;
 
 const formatPhone = telephone => removeAllSpaces(
   telephone
-  .replaceAll('.', '')
-  .replaceAll('+330', '+33')
+  ?.replaceAll('.', '')
+  ?.replaceAll('+33 ', '+33')
+  ?.replaceAll('+330', '+33')
 );
 
 const removeAllSpacesAndDuplicateHttpPrefix = siteWeb => removeAllSpaces(siteWeb?.replace('https://www.http', 'http'));
@@ -25,7 +28,9 @@ const invalidLieux = lieu =>
   !nullOrEmpty(lieu.nom) &&
   !nullOrEmpty(lieu.commune) &&
   !nullOrEmpty(lieu.code_postal) &&
-  !nullOrEmpty(lieu.adresse);
+  !nullOrEmpty(lieu.adresse) &&
+  lieu.hasOwnProperty('aidants') &&
+  !nullOrEmpty(lieu.structureId);
 
 const removeNullStrings = string => string
 .replaceAll('null null', '')
@@ -48,9 +53,16 @@ const coordonneesGPSIfAny = coordinates => coordinates ? {
   longitude: coordinates[0]
 } : {};
 
-const telephoneIfAny = telephone => telephone ? {
-  telephone: formatPhone(telephone)
-} : {};
+const checkLengthPhone = telephone =>
+  PHONE_REGEX.test(telephone) || (telephone.startsWith('0') && telephone.length === 10);
+
+const telephoneIfAny = telephone => {
+  const formattedTel = formatPhone(telephone);
+
+  return formattedTel && checkLengthPhone(formattedTel) ? {
+    telephone: formattedTel
+  } : {};
+};
 
 const courrielIfAny = courriel => courriel ? {
   courriel: removeAllSpaces(courriel)
@@ -104,6 +116,34 @@ const labelsNationauxIfAny = structure => ({
   ].join(', ')
 });
 
+const formatNomAidant = (prenom, nom) => ({
+  nom: (prenom + ' ' + nom).toLowerCase().replace(/(^\w{1})|([\s,-]+\w{1})/g, letter => letter.toUpperCase())
+});
+
+const removeDuplicates = array => {
+  const seen = new Set();
+  return array.filter(el => {
+    const duplicate = seen.has(el._id);
+    seen.add(el._id);
+    return !duplicate;
+  });
+};
+
+const aidantsIfAny = aidants =>
+  // Retire les aidants souhaitant être "anonyme"
+  aidants?.filter(aidant => aidant.nonAffichageCarto !== true)?.length > 0 ? {
+    aidants:
+    removeDuplicates(aidants)
+    .map(aidant => ({
+      aidantId: aidant._id,
+      ...formatNomAidant(aidant.prenom, aidant.nom),
+      ...courrielIfAny(aidant.emailPro),
+      ...telephoneIfAny(aidant.telephonePro)
+    }))
+    // eslint-disable-next-line no-nested-ternary
+    .sort((aidant1, aidant2) => (aidant1.nom > aidant2.nom) ? 1 : ((aidant2.nom > aidant1.nom) ? -1 : 0))
+  } : {};
+
 const lieuxDeMediationNumerique = async ({ getPermanences }) =>
   (await getPermanences()).map(permanence => ({
     id: permanence._id,
@@ -123,6 +163,8 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
     ...labelsNationauxIfAny(permanence.structure),
     ...priseRdvIfAny(permanence.structure?.urlPriseRdv),
     ...pivotIfAny(permanence.siret),
+    structureId: permanence.structure?._id,
+    ...aidantsIfAny(permanence.aidants),
   })).filter(invalidLieux);
 
 module.exports = {
