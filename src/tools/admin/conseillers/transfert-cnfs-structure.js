@@ -100,10 +100,11 @@ execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
   program.option('-m, --motif <motif>', 'motif: motif de la rupture');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: id mongo structure de destination');
   program.option('-e, --embauche <embauche>', 'embauche: date de embauche AAAA/MM/DD');
+  program.option('-c, --cota', 'cota: pour desactivé la verif du nombre de post autorisé');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { id, ancienne, nouvelle, rupture, embauche, motif } = program;
+  const { id, ancienne, nouvelle, rupture, embauche, motif, cota } = program;
   if (!id || !ancienne || !nouvelle || !rupture || !embauche || !motif) {
     exit('Paramètres invalides. Veuillez entrez les 6 paramètres requis');
     return;
@@ -133,7 +134,7 @@ execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
     'statut': { $in: ['recrutee', 'finalisee'] },
     'structure.$id': structureDestination._id
   });
-  if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec) {
+  if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec && !cota) {
     //eslint-disable-next-line max-len
     exit(`La structure destinataire est seulement autorisé à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recruté(s)`);
     return;
