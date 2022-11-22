@@ -63,6 +63,7 @@ const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauc
       datePrisePoste: dateEmbauche,
       codeRegionStructure: structureDestination.codeRegion,
       codeDepartementStructure: structureDestination.codeDepartement,
+      hasPermanence: false,
     },
     $push: { ruptures: {
       structureId: ancienneSA,
@@ -92,7 +93,19 @@ const updatePermanences = db => async idCNFS => await db.collection('permanences
   { $pull: { conseillers: idCNFS, conseillersItinerants: idCNFS, lieuPrincipalPour: idCNFS } }
 );
 
-execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
+const emailsStructureAncienne = db => async (emails, cnfsRecrute, ancienneSA) => {
+  const structure = await db.collection('structures').findOne({ _id: ancienneSA });
+  const messageStructure = emails.getEmailMessageByTemplateName('conseillerRuptureStructure');
+  await messageStructure.send(cnfsRecrute, structure.contact.email);
+};
+
+const emailsCnfsNotification = db => async (emails, idCNFS) => {
+  const conseiller = await db.collection('conseillers').findOne({ _id: idCNFS });
+  const messageConseillerTransfert = emails.getEmailMessageByTemplateName('conseillerTransfertStructure');
+  await messageConseillerTransfert.send(conseiller.emailCN.address);
+};
+
+execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
 
   program.option('-i, --id <id>', 'id: id Mongo du conseiller à transférer');
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
@@ -147,6 +160,8 @@ execute(__filename, async ({ db, logger, exit, app, Sentry }) => {
     await majConseillerObj(db)(idCNFS);
     await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateEmbauche);
     await updatePermanences(db)(idCNFS);
+    await emailsStructureAncienne(db)(emails, cnfsRecrute, ancienneSA);
+    await emailsCnfsNotification(db)(emails, idCNFS);
   } catch (error) {
     logger.error(error.message);
     Sentry.captureException(error);
