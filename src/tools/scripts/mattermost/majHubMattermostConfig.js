@@ -8,7 +8,8 @@ require('dotenv').config();
 const { execute } = require('../../utils');
 const {
   loginAPI,
-  joinChannel } = require('../../../utils/mattermost');
+  joinChannel,
+  joinTeam } = require('../../../utils/mattermost');
 const infoHub = require('../../../../data/imports/hubs.json');
 const codeRegion = require('../../../../data/imports/code_region.json');
 
@@ -48,6 +49,7 @@ execute(__filename, async ({ logger, exit, app, db }) => {
 
   if (arrayUtilisateur.length >= 1) {
     for (const member of arrayUtilisateur) {
+      await joinTeam(mattermost, token, mattermost.hubTeamId, member);
       await joinChannel(mattermost, token, hub.channelId, member);
       await db.collection('conseillers').updateOne({ 'mattermost.id': member }, {
         $set: { 'mattermost.hubJoined': true }

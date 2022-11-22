@@ -16,11 +16,12 @@ execute(__filename, async ({ logger, db }) => {
             { 'structure.$id': { $ne: conseiller.structureId } },
             { '$or': [
               { 'conseillers': { $elemMatch: { $eq: conseiller._id } } },
-              { 'conseillersItinerants': { $elemMatch: { $eq: conseiller._id } } }
+              { 'conseillersItinerants': { $elemMatch: { $eq: conseiller._id } } },
+              { 'lieuPrincipalPour': { $elemMatch: { $eq: conseiller._id } } }
             ] }
           ]
         },
-        { $pull: { conseillers: conseiller._id, conseillersItinerants: conseiller._id } }
+        { $pull: { conseillers: conseiller._id, conseillersItinerants: conseiller._id, lieuPrincipalPour: conseiller._id } }
       );
       resolve();
     }));

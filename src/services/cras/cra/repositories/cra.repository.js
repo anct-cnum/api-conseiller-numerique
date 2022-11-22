@@ -52,6 +52,10 @@ const updateStatistiquesCra = db => async (cra, oldDateAccompagnement, conseille
   }
 };
 
+const countCraByPermanenceId = db => async permanenceId => {
+  return await db.collection('cras').countDocuments({ 'permanence.$id': new ObjectId(permanenceId) });
+};
+
 const deleteCra = db => async craId => {
   await db.collection('cras').deleteOne({
     _id: new ObjectId(craId)
@@ -63,5 +67,6 @@ module.exports = {
   getCraById,
   updateCra,
   updateStatistiquesCra,
+  countCraByPermanenceId,
   deleteCra,
 };

@@ -9,6 +9,19 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
     }
   },
   {
+    $addFields: {
+      'listConseillersIds': {
+        $concatArrays: ['$conseillers', '$conseillersItinerants', '$lieuPrincipalPour'] } }
+  },
+  {
+    $lookup: {
+      from: 'conseillers',
+      localField: 'listConseillersIds',
+      foreignField: '_id',
+      as: 'aidants'
+    }
+  },
+  {
     $lookup: {
       from: 'structures',
       let: { idStructure: '$entity.v' },
@@ -19,7 +32,6 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
         },
         {
           $project: {
-            '_id': 0,
             'siret': 1,
             'estLabelliseFranceServices': 1,
             'estLabelliseAidantsConnect': 1,
@@ -29,7 +41,25 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
       ]
     }
   },
-  { $unwind: '$structure' }
+  { $unwind: '$structure' },
+  { $project: {
+    'nomEnseigne': 1,
+    'horaires': 1,
+    'adresse': 1,
+    'location': 1,
+    'numeroTelephone': 1,
+    'email': 1,
+    'siteWeb': 1,
+    'updatedAt': 1,
+    'structure': 1,
+    'siret': 1,
+    'aidants._id': 1,
+    'aidants.nom': 1,
+    'aidants.prenom': 1,
+    'aidants.emailPro': 1,
+    'aidants.telephonePro': 1,
+    'aidants.nonAffichageCarto': 1
+  } }
 ]).toArray();
 
 const getPermanenceById = db => async permanenceId => {
@@ -37,7 +67,8 @@ const getPermanenceById = db => async permanenceId => {
 };
 
 const getPermanencesByConseiller = db => async conseillerId => {
-  return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
+  return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } })
+  .sort({ 'adresse.codePostal': 1, 'adresse.ville': 1 }).toArray();
 };
 
 const getPermanencesByStructure = db => async structureId => {
@@ -121,6 +152,14 @@ const deleteConseillerPermanence = db => async (permanenceId, conseillerId) => {
   });
 };
 
+const deleteCraPermanence = db => async permanenceId => {
+  await db.collection('cras').updateMany({
+    'permanence.$id': new ObjectId(permanenceId)
+  }, {
+    $unset: { permanence: '' }
+  });
+};
+
 const setReporterInsertion = db => async userId => {
   await db.collection('users').updateOne({
     _id: userId
@@ -147,6 +186,7 @@ module.exports = {
   updatePermanences,
   deletePermanence,
   deleteConseillerPermanence,
+  deleteCraPermanence,
   setReporterInsertion,
   updateConseillerStatut,
 };
