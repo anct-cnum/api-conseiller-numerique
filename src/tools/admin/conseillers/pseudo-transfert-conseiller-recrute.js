@@ -9,21 +9,24 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   program.option('-i, --id <id>', 'id: id Mongo du conseiller à transférer');
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: structure de destination');
+  program.option('-d, --date <date>', 'date: date de recrutement');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   let idCNFS = program.id;
   let ancienneSA = program.ancienne;
   let nouvelleSA = program.nouvelle;
+  let dateEmbauche = program.date;
 
-  if (!idCNFS || !ancienneSA || !nouvelleSA) {
-    exit('Paramètres invalides. Veuillez préciser un id du conseiller ainsi qu\'un id de la structure actuelle et un id de la structure destinataire');
+  if (!idCNFS || !ancienneSA || !nouvelleSA || !dateEmbauche) {
+    exit('Paramètres invalides. Veuillez préciser un id du conseiller ainsi qu\'un id de la structure actuelle; un id de la structure destinataire et la date');
     return;
   }
 
   idCNFS = new ObjectID(program.id);
   ancienneSA = new ObjectID(program.ancienne);
   nouvelleSA = new ObjectID(program.nouvelle);
+  dateEmbauche = new Date(program.dateEmbauche);
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
   if (!cnfsRecrute) {
@@ -91,6 +94,12 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       }
       });
   }
+  await db.collection('cras').updateMany(
+    { 'conseiller.$id': idCNFS,
+      'cra.dateAccompagnement': { '$gte': dateEmbauche }
+    }, {
+      $set: { 'structure.$id': nouvelleSA }
+    });
 
   logger.info(`Le conseiller id: ${idCNFS} a été transféré de la structure: ${ancienneSA} vers la structure: ${nouvelleSA}`);
   exit();
