@@ -69,9 +69,14 @@ const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauc
       structureId: ancienneSA,
       dateRupture,
       motifRupture
-    } }
+    } },
+    $unset: {
+      supHierarchique: '',
+      telephonePro: ''
+    },
   });
 };
+
 const majConseillerObj = db => async idCNFS => {
   const conseillerAjour = await db.collection('conseillers').findOne({ _id: idCNFS });
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj': conseillerAjour } });
