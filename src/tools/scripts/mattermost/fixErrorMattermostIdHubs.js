@@ -34,7 +34,8 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       const resultJoinTeam = await joinTeam(mattermost, token, idTeam, idUser);
       logger.info(resultJoinTeam);
 
-      [resultChannel.data.id, mattermost.themeChannelId, mattermost.resourcesChannelId].forEach(async canalId => {
+      [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId, mattermost.aideMetierChannelId,
+        mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId].forEach(async canalId => {
         const resultJoinChannel = await joinChannel(mattermost, token, canalId, idUser);
         logger.info(resultJoinChannel);
       });
