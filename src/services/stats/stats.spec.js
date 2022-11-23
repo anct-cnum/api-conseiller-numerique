@@ -75,8 +75,8 @@ const region = [
 ];
 
 const codePostaux = [
-  '44000',
-  '44300'
+  { _id: { ville: 'NANTES', codePostal: '44000' } },
+  { _id: { ville: 'NANTES', codePostal: '44300' } }
 ];
 
 const getDepartements = async () => departement;
@@ -352,8 +352,8 @@ describe('Vérification des statistiques par département ou région', () => {
 describe('Vérification des statistiques conseiller par code postal', () => {
   it('devrait être considérée comme valide lorsque la liste des codes postaux est obtenue', async () => {
     const listCodePostaux = [
-      '44000',
-      '44300'
+      { id: '44000', villes: ['NANTES'] },
+      { id: '44300', villes: ['NANTES'] }
     ];
     const idConseiller = '60462000871498b5cec20c0b';
 

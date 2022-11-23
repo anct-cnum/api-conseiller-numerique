@@ -80,6 +80,8 @@ module.exports = {
   cras: db => {
     return Promise.all([
       db.collection('cras').createIndex({ 'conseiller.$id': 1 }),
+      db.collection('cras').createIndex({ 'permanence.$id': 1 }),
+      db.collection('cras').createIndex({ 'structure.$id': 1 }),
       db.collection('cras').createIndex({ 'createdAt': 1 }),
       db.collection('cras').createIndex({ 'cra.duree': 1 }),
       db.collection('cras').createIndex({ 'cra.codePostal': 1 }),

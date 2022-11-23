@@ -179,14 +179,10 @@ exports.Stats = class Stats extends Service {
         };
 
         if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
-          query = {
-            'conseiller.$id': new ObjectID(conseiller._id),
-            'cra.codePostal': req.query?.codePostal,
-            'cra.dateAccompagnement': {
-              $gte: dateDebut,
-              $lt: dateFin,
-            }
-          };
+          query['cra.codePostal'] = req.query?.codePostal;
+        }
+        if (req.query?.ville !== '' && req.query?.ville !== 'null') {
+          query['cra.nomCommune'] = req.query?.ville;
         }
 
         //Construction des statistiques
@@ -314,6 +310,7 @@ exports.Stats = class Stats extends Service {
           }
 
           let finUrl = '/' + type + '/' + idType + dateDebut + '/' + dateFin + codePostal;
+
           /** Ouverture d'un navigateur en headless afin de générer le PDF **/
           try {
             await statsPdf.generatePdf(app, res, logger, accessToken, userFinal, finUrl);
@@ -336,7 +333,6 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/admincoop/statistiques.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur],
@@ -371,7 +367,7 @@ exports.Stats = class Stats extends Service {
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, query.ville, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -736,6 +732,10 @@ exports.Stats = class Stats extends Service {
         if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
           query['cra.codePostal'] = req.query?.codePostal;
         }
+        if (req.query?.ville !== '' && req.query?.ville !== 'null' && req.query?.ville !== undefined) {
+          query['cra.nomCommune'] = req.query?.ville;
+        }
+
         stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
         res.send(stats);
       });
