@@ -46,16 +46,15 @@ execute(__filename, async ({ db, logger, exit, app }) => {
         { $set: { 'mattermost.majMattermost': true }
         });
     }
-  } else {
-    logger.info(`Fin. Il y a ${conseillerIds.length} cnfs qui ont été rattrapé`);
-    if (reset) {
-      await db.collection('conseillers').updateMany(
-        { 'mattermost.majMattermost': true },
-        { $unset: {
-          'mattermost.majMattermost': ''
-        } }
-      );
-    }
+    logger.info(`Fin du lot ! (${conseillerIds.length} conseillers rattrapé)`);
+  }
+  if (reset) {
+    await db.collection('conseillers').updateMany(
+      { 'mattermost.majMattermost': true },
+      { $unset: {
+        'mattermost.majMattermost': ''
+      } }
+    );
   }
   exit();
 });
