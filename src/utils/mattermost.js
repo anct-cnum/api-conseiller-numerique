@@ -205,9 +205,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     logger.info(resultJoinTeam);
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-    const cannaux = [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId,
+    const canaux = [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId,
       mattermost.aideMetierChannelId, mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId];
-    for (const canalId of cannaux) {
+    for (const canalId of canaux) {
       await sleep(500);
       const resultJoinChannel = await axios({
         method: 'post',
