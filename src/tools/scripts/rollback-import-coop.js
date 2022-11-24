@@ -67,6 +67,8 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
       reject();
       return;
     }
+    //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
+    await updateConseillersPG(conseiller.email, true, logger, Sentry);
     // Modification de la mise en relation
     await db.collection('misesEnRelation').updateOne(
       { _id: miseEnRelation._id },
@@ -164,8 +166,6 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
     if (conseiller.mattermost?.id !== undefined) {
       await deleteAccount(mattermost, conseiller, db, logger, Sentry);
     }
-    //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
-    await updateConseillersPG(conseiller.email, true, logger, Sentry);
     // Suppression des infos de recrutement dans le doc conseiller
     await db.collection('conseillers').updateOne(
       {
@@ -201,5 +201,3 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
     resolve();
   });
 });
-
-/// WIP
