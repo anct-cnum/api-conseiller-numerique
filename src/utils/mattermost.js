@@ -205,8 +205,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
     logger.info(resultJoinTeam);
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-    [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId,
-      mattermost.aideMetierChannelId, mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId].forEach(async canalId => {
+    const cannaux = [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId,
+      mattermost.aideMetierChannelId, mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId];
+    for (const canalId of cannaux) {
       await sleep(500);
       const resultJoinChannel = await axios({
         method: 'post',
@@ -220,8 +221,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
         }
       });
       logger.info(resultJoinChannel);
-    });
-
+    }
     const regionName = findDepartement(structure.codeDepartement)?.region_name;
     let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
     if (hub === null) {

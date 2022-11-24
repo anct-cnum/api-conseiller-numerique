@@ -34,11 +34,14 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
       const resultJoinTeam = await joinTeam(mattermost, token, idTeam, idUser);
       logger.info(resultJoinTeam);
 
-      [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId, mattermost.aideMetierChannelId,
-        mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId].forEach(async canalId => {
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      const cannaux = [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId, mattermost.aideMetierChannelId,
+        mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId];
+      for (const canalId of cannaux) {
+        await sleep(500);
         const resultJoinChannel = await joinChannel(mattermost, token, canalId, idUser);
         logger.info(resultJoinChannel);
-      });
+      }
 
       const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
       const regionName = findDepartement(structure.codeDepartement).region_name;
