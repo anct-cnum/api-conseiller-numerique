@@ -36,7 +36,7 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
 
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       const canaux = [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId, mattermost.aideMetierChannelId,
-        mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId];
+        mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId];
       for (const canalId of canaux) {
         await sleep(500);
         const resultJoinChannel = await joinChannel(mattermost, token, canalId, idUser);

@@ -20,7 +20,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   const mattermost = app.get('mattermost');
   const token = await loginAPI({ mattermost });
   const canaux = [mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId,
-    mattermost.aideMetierChannelId, mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId, mattermost.blablaChannelId];
+    mattermost.aideMetierChannelId, mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId];
 
   const conseillerIds = await db.collection('conseillers').find({
     'statut': 'RECRUTE',
