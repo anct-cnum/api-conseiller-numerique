@@ -76,8 +76,11 @@
     "login": "MATTERMOST_LOGIN",
     "password": "MATTERMOST_PASSWORD",
     "teamId": "MATTERMOST_TEAMID",
-    "themeChannelId": "MATTERMOST_THEME_CHANNEL_ID",
-    "resourcesChannelId": "MATTERMOST_RESOURCES_CHANNEL_ID",
+    "acceuilActuChannelId": "MATTERMOST_ACCEUIL_ACTU_CHANNEL_ID",
+    "aideEspaceCoopChannelId": "MATTERMOST_AIDE_ESPACE_COOP_CHANNEL_ID",
+    "aideMetierChannelId": "MATTERMOST_AIDE_METIER_CHANNEL_ID",
+    "ressourcerieChannelId": "MATTERMOST_RESSOURCERIE_CHANNEL_ID",
+    "revuePresseChannelId": "MATTERMOST_REVUE_PRESSE_CHANNEL_ID",
     "hubTeamId": "MATTERMOST_HUB_TEAM_ID"
   },
   "aws": {
