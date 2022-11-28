@@ -168,14 +168,8 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
     }
     // Suppression des infos de recrutement dans le doc conseiller
     await db.collection('conseillers').updateOne(
-      {
-        _id: conseiller._id,
-      },
-      { $set: {
-        disponible: true
-      }
-      },
-      {
+      { _id: conseiller._id },
+      { $set: { disponible: true },
         $unset: {
           statut: '',
           estRecrute: '',
