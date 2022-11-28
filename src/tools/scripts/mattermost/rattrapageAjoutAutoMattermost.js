@@ -36,17 +36,21 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   if (conseillerIds.length >= 1) {
-    for (const cn of conseillerIds) {
-      for (const canalId of canaux) {
-        await sleep(500);
-        await joinChannel(mattermost, token, canalId, cn.mattermost.id);
+    try {
+      for (const cn of conseillerIds) {
+        for (const canalId of canaux) {
+          await sleep(500);
+          await joinChannel(mattermost, token, canalId, cn.mattermost.id);
+        }
+        await db.collection('conseillers').updateOne(
+          { _id: cn._id },
+          { $set: { 'mattermost.majMattermost': true }
+          });
       }
-      await db.collection('conseillers').updateOne(
-        { _id: cn._id },
-        { $set: { 'mattermost.majMattermost': true }
-        });
+      logger.info(`Fin du lot ! (${conseillerIds.length} conseillers rattrapé)`);
+    } catch (e) {
+      logger.error(e);
     }
-    logger.info(`Fin du lot ! (${conseillerIds.length} conseillers rattrapé)`);
   }
   if (reset) {
     await db.collection('conseillers').updateMany(
