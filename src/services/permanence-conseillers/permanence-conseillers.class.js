@@ -15,7 +15,7 @@ const {
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { updatePermanenceToSchema, updatePermanencesToSchema, validationPermamences, locationDefault } = require('./permanence/utils/update-permanence.utils');
 const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
-  deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences
+  deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences, deleteCraPermanence,
 } = require('./permanence/repositories/permanence-conseiller.repository');
 
 const axios = require('axios');
@@ -277,8 +277,14 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await deletePermanence(db)(idPermanence).then(() => {
-          return res.send({ isDeleted: true });
+        await deletePermanence(db)(idPermanence).then(async () => {
+          await deleteCraPermanence(db)(idPermanence).then(() => {
+            return res.send({ isDeleted: true });
+          }).catch(error => {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            return res.status(409).send(new Conflict('La suppression de la permanence dans les cras existants a échoué, veuillez réessayer.').toJSON());
+          });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
@@ -297,8 +303,14 @@ exports.PermanenceConseillers = class Sondages extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        await deleteConseillerPermanence(db)(idPermanence, idConseiller).then(() => {
-          return res.send({ isConseillerDeleted: true });
+        await deleteConseillerPermanence(db)(idPermanence, idConseiller).then(async () => {
+          await deleteCraPermanence(db)(idPermanence).then(() => {
+            return res.send({ isConseillerDeleted: true });
+          }).catch(error => {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            return res.status(409).send(new Conflict('La suppression de la permanence dans les cras existants a échoué, veuillez réessayer.').toJSON());
+          });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);

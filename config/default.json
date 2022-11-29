@@ -90,8 +90,11 @@
     "login": "login",
     "password": "password",
     "teamId": "teamId",
-    "themeChannelId": "themeChannelId",
-    "resourcesChannelId": "resourcesChannelId",
+    "acceuilActuChannelId": "acceuilActuChannelId",
+    "aideEspaceCoopChannelId": "aideEspaceCoopChannelId",
+    "aideMetierChannelId": "aideMetierChannelId",
+    "ressourcerieChannelId": "ressourcerieChannelId",
+    "revuePresseChannelId": "revuePresseChannelId",
     "hubTeamId": "hubTeamId"
   },
   "aws": {

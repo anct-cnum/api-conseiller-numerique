@@ -25,7 +25,7 @@ const statsThemes = statistiques => [
 ];
 
 const statsLieux = (statistiques, isAdminCoop) => [
-  `Lieux des accompagnements${isAdminCoop === true ? ' (en %)' : ''}`,
+  `Canaux d'accompagnements${isAdminCoop === true ? ' (en %)' : ''}`,
   ...[
     'À domicile',
     'À distance',
@@ -89,8 +89,8 @@ const statsReorientations = statistiques => [
   .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur}`),
 ];
 
-const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, codePostal, isAdminCoop) => [
-  `Statistiques ${type} ${codePostal ?? ''} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
+const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, codePostal, ville, isAdminCoop) => [
+  `Statistiques ${type} ${codePostal ?? ''} ${ville ?? ''} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
   ...statsThemes(statistiques),
   ...statsLieux(statistiques, isAdminCoop),

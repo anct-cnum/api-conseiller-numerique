@@ -253,7 +253,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Fraude et harcèlement;20\n' +
       'Santé;15\n' +
       '\n' +
-      'Lieux des accompagnements\n' +
+      'Canaux d\'accompagnements\n' +
       'À domicile;0\n' +
       'À distance;0\n' +
       'Lieu de rattachement;23\n' +

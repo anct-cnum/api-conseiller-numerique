@@ -49,7 +49,25 @@ const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalR
 };
 
 const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras }) => {
-  return await getCodesPostauxStatistiquesCras(idConseiller);
+  const liste = await getCodesPostauxStatistiquesCras(idConseiller);
+  const listeDefinitive = [];
+
+  liste.forEach(paire => {
+    if (listeDefinitive.findIndex(item => item.id === paire._id.codePostal) > -1) {
+      listeDefinitive.find(item => item.id === paire._id.codePostal).villes.push(paire._id.ville);
+    } else {
+      listeDefinitive.push({ id: paire._id.codePostal, villes: [paire._id.ville] });
+    }
+  });
+
+  listeDefinitive.sort((a, b) => {
+    if (a.id !== b.id) {
+      return a.id - b.id;
+    }
+    return -1;
+  });
+
+  return listeDefinitive;
 };
 
 const getCodesPostauxCrasStructure = async (idConseiller, { getCodesPostauxStatistiquesCrasStructure }) => {
