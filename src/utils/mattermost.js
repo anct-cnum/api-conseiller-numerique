@@ -455,6 +455,34 @@ const updateLogin = (mattermost, gandi, logger) => async (conseiller, login) => 
   logger.info(resultUpdateJustLogin);
 };
 
+const deleteMemberChannel = async (mattermost, token, idChannel, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+  return await axios({
+    method: 'delete',
+    url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members/${idUser}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+const deleteJoinTeam = async (mattermost, token, idChannel, idUser) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+  return await axios({
+    method: 'delete',
+    url: `${mattermost.endPoint}/api/v4/teams/${idChannel}/members/${idUser}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 module.exports = {
   slugifyName,
   loginAPI,
@@ -472,5 +500,7 @@ module.exports = {
   deleteArchivedChannels,
   searchUser,
   patchLogin,
-  updateLogin
+  updateLogin,
+  deleteMemberChannel,
+  deleteJoinTeam
 };

@@ -3,6 +3,11 @@ const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
 const dayjs = require('dayjs');
+const { getChannel, joinChannel, deleteMemberChannel, joinTeam, deleteJoinTeam } = require('../../../utils/mattermost');
+const slugify = require('slugify');
+const departements = require('../../../../data/imports/departements-region.json');
+slugify.extend({ '-': ' ' });
+slugify.extend({ '\'': ' ' });
 
 require('dotenv').config();
 
@@ -98,6 +103,80 @@ const updatePermanences = db => async idCNFS => await db.collection('permanences
   { $pull: { conseillers: idCNFS, conseillersItinerants: idCNFS, lieuPrincipalPour: idCNFS } }
 );
 
+const miseAjourMattermostCanaux = db => async (idCNFS, structureDestination, ancienneSA, mattermost) => {
+  const CNFS = await db.collection('conseillers').findOne({ _id: idCNFS });
+  const ancienneStructure = await db.collection('structures').findOne({ '_id': ancienneSA });
+
+  if (CNFS?.mattermost?.id && (ancienneStructure.codeDepartement !== structureDestination.codeDepartement)) {
+
+    let departementAncienneSA = departements.find(d => `${d.num_dep}` === ancienneStructure.codeDepartement);
+    let departementNouvelleSA = departements.find(d => `${d.num_dep}` === structureDestination.codeDepartement);
+
+    if (structureDestination.codeDepartement === '00' && structureDestination.codePostal === '97150') {
+      departementNouvelleSA = departements.find(d => `${d.num_dep}` === '971');
+    }
+    const channelNameNouvelleSA = slugify(departementNouvelleSA.dep_name, { replacement: '', lower: true });
+    const resultChannelNouvelleSA = await getChannel(mattermost, null, channelNameNouvelleSA);
+    await joinChannel(mattermost, null, resultChannelNouvelleSA.data.id, CNFS.mattermost.id);
+
+    if (ancienneStructure.codeDepartement === '00' && ancienneStructure.codePostal === '97150') {
+      departementAncienneSA = departements.find(d => `${d.num_dep}` === '971');
+    }
+    const channelNameAncienneSA = slugify(departementAncienneSA.dep_name, { replacement: '', lower: true });
+    const resultChannelAncienneSA = await getChannel(mattermost, null, channelNameAncienneSA);
+    await deleteMemberChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id);
+  }
+
+  if (CNFS?.mattermost?.id && (ancienneStructure.codeRegion !== structureDestination.codeRegion)) {
+    const regionNameAncienneSA = departements.find(d => `${d.num_dep}` === ancienneStructure.codeDepartement)?.region_name;
+    let hubAncienneSA = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionNameAncienneSA } } });
+    if (hubAncienneSA === null) {
+      // Cas Saint Martin => on les regroupe au hub Antilles-Guyane
+      if (ancienneStructure.codeDepartement === '00' && ancienneStructure.codeCom === '978') {
+        hubAncienneSA = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: '973' } } });
+      } else {
+        hubAncienneSA = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${ancienneStructure.codeDepartement}` } } });
+      }
+    }
+    const regionNameNouvelleSA = departements.find(d => `${d.num_dep}` === structureDestination.codeDepartement)?.region_name;
+    let hubNouvelleSA = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionNameNouvelleSA } } });
+    if (hubNouvelleSA === null) {
+      // Cas Saint Martin => on les regroupe au hub Antilles-Guyane
+      if (structureDestination.codeDepartement === '00' && structureDestination.codeCom === '978') {
+        hubNouvelleSA = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: '973' } } });
+      } else {
+        hubNouvelleSA = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structureDestination.codeDepartement}` } } });
+      }
+    }
+    if (hubAncienneSA !== null) {
+      if (CNFS.mattermost.hubJoined) {
+        await deleteMemberChannel(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id); // erreur 404 dans le cas où l'user n'existe pas dans l'équipe
+      }
+      if (hubNouvelleSA === null) {
+        await deleteJoinTeam(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id);
+        await db.collection('conseillers').updateOne({ _id: CNFS._id }, {
+          $unset: { 'mattermost.hubJoined': '' }
+        });
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': CNFS._id }, {
+          $unset: { 'conseillerObj.mattermost.hubJoined': true }
+        });
+      }
+    }
+    if (hubNouvelleSA !== null) {
+      if (!CNFS.mattermost?.hubJoined) {
+        await joinTeam(mattermost, null, mattermost.hubTeamId, CNFS.mattermost.id);
+      }
+      await joinChannel(mattermost, null, hubNouvelleSA.channelId, CNFS.mattermost.id);
+      await db.collection('conseillers').updateOne({ _id: CNFS._id }, {
+        $set: { 'mattermost.hubJoined': true }
+      });
+      await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': CNFS._id }, {
+        $set: { 'conseillerObj.mattermost.hubJoined': true }
+      });
+    }
+  }
+};
+
 const emailsStructureAncienne = db => async (emails, cnfsRecrute, ancienneSA) => {
   const structure = await db.collection('structures').findOne({ _id: ancienneSA });
   const messageStructure = emails.getEmailMessageByTemplateName('conseillerRuptureStructure');
@@ -127,6 +206,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     exit('Paramètres invalides. Veuillez entrez les 6 paramètres requis');
     return;
   }
+  const mattermost = app.get('mattermost');
   const idCNFS = new ObjectID(id);
   const ancienneSA = new ObjectID(ancienne);
   const nouvelleSA = new ObjectID(nouvelle);
@@ -165,10 +245,12 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     await majConseillerObj(db)(idCNFS);
     await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateEmbauche);
     await updatePermanences(db)(idCNFS);
+    await miseAjourMattermostCanaux(db)(idCNFS, structureDestination, ancienneSA, mattermost);
     await emailsStructureAncienne(db)(emails, cnfsRecrute, ancienneSA);
     await emailsCnfsNotification(db)(emails, idCNFS);
+
   } catch (error) {
-    logger.error(error.message);
+    logger.error(error);
     Sentry.captureException(error);
   }
 
