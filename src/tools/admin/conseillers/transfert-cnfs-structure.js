@@ -3,7 +3,7 @@ const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
 const dayjs = require('dayjs');
-const { getChannel, joinChannel, deleteMemberChannel, joinTeam, deleteJoinTeam } = require('../../../utils/mattermost');
+const { getChannel, joinChannel, deleteMemberChannel, joinTeam, deleteJoinTeam, getIdUserChannel } = require('../../../utils/mattermost');
 const slugify = require('slugify');
 const departements = require('../../../../data/imports/departements-region.json');
 slugify.extend({ '-': ' ' });
@@ -124,7 +124,9 @@ const miseAjourMattermostCanaux = db => async (idCNFS, structureDestination, anc
     }
     const channelNameAncienneSA = slugify(departementAncienneSA.dep_name, { replacement: '', lower: true });
     const resultChannelAncienneSA = await getChannel(mattermost, null, channelNameAncienneSA);
-    await deleteMemberChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id);
+    await getIdUserChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id).then(() =>
+      deleteMemberChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id)
+    ).catch(error => console.log('error (partie departement):', error.response.data.message));
   }
 
   if (CNFS?.mattermost?.id && (ancienneStructure.codeRegion !== structureDestination.codeRegion)) {
@@ -149,23 +151,22 @@ const miseAjourMattermostCanaux = db => async (idCNFS, structureDestination, anc
       }
     }
     if (hubAncienneSA !== null) {
-      if (CNFS.mattermost.hubJoined) {
-        await deleteMemberChannel(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id); // erreur 404 dans le cas où l'user n'existe pas dans l'équipe
-      }
+      await getIdUserChannel(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id).then(() =>
+        deleteMemberChannel(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id)
+      ).catch(error => console.log('error (partie hub):', error.response.data.message));
+
       if (hubNouvelleSA === null) {
-        await deleteJoinTeam(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id);
+        await deleteJoinTeam(mattermost, null, mattermost.hubTeamId, CNFS.mattermost.id);
         await db.collection('conseillers').updateOne({ _id: CNFS._id }, {
           $unset: { 'mattermost.hubJoined': '' }
         });
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': CNFS._id }, {
-          $unset: { 'conseillerObj.mattermost.hubJoined': true }
+          $unset: { 'conseillerObj.mattermost.hubJoined': '' }
         });
       }
     }
     if (hubNouvelleSA !== null) {
-      if (!CNFS.mattermost?.hubJoined) {
-        await joinTeam(mattermost, null, mattermost.hubTeamId, CNFS.mattermost.id);
-      }
+      await joinTeam(mattermost, null, mattermost.hubTeamId, CNFS.mattermost.id);
       await joinChannel(mattermost, null, hubNouvelleSA.channelId, CNFS.mattermost.id);
       await db.collection('conseillers').updateOne({ _id: CNFS._id }, {
         $set: { 'mattermost.hubJoined': true }
@@ -248,7 +249,6 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     await miseAjourMattermostCanaux(db)(idCNFS, structureDestination, ancienneSA, mattermost);
     await emailsStructureAncienne(db)(emails, cnfsRecrute, ancienneSA);
     await emailsCnfsNotification(db)(emails, idCNFS);
-
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
