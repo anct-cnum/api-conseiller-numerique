@@ -455,6 +455,22 @@ const updateLogin = (mattermost, gandi, logger) => async (conseiller, login) => 
   logger.info(resultUpdateJustLogin);
 };
 
+const searchUsersEmail = async (mattermost, token, teamId, email) => {
+  if (token === undefined || token === null) {
+    token = await loginAPI({ mattermost });
+  }
+
+  return await axios({
+    method: 'POST',
+    url: `${mattermost.endPoint}/api/v4/users/search`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: { allow_inactive: true, team_id: teamId, term: email }
+  });
+};
+
 module.exports = {
   slugifyName,
   loginAPI,
@@ -472,5 +488,6 @@ module.exports = {
   deleteArchivedChannels,
   searchUser,
   patchLogin,
-  updateLogin
+  updateLogin,
+  searchUsersEmail
 };
