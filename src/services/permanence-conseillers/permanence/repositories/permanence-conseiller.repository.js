@@ -32,6 +32,7 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
         },
         {
           $project: {
+            'nom': 1,
             'siret': 1,
             'estLabelliseFranceServices': 1,
             'estLabelliseAidantsConnect': 1,
