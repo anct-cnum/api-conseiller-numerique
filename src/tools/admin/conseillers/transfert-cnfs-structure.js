@@ -65,7 +65,6 @@ const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauc
   await db.collection('conseillers').updateOne({ _id: idCNFS }, {
     $set: {
       structureId: nouvelleSA,
-      datePrisePoste: dateEmbauche,
       codeRegionStructure: structureDestination.codeRegion,
       codeDepartementStructure: structureDestination.codeDepartement,
       hasPermanence: false,
@@ -77,7 +76,8 @@ const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauc
     } },
     $unset: {
       supHierarchique: '',
-      telephonePro: ''
+      telephonePro: '',
+      emailPro: ''
     },
   });
 };
@@ -197,14 +197,14 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   program.option('-r, --rupture <rupture>', 'rupture: date de rupture AAAA/MM/DD');
   program.option('-m, --motif <motif>', 'motif: motif de la rupture');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: id mongo structure de destination');
-  program.option('-e, --embauche <embauche>', 'embauche: date de embauche AAAA/MM/DD');
-  program.option('-c, --cota', 'cota: pour desactivé la verif du nombre de post autorisé');
+  program.option('-e, --embauche <embauche>', 'embauche: date d\'embauche AAAA/MM/DD');
+  program.option('-q, --quota', 'quota: pour désactiver le bridage du nombre de poste validé en Coselec');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { id, ancienne, nouvelle, rupture, embauche, motif, cota } = program;
+  const { id, ancienne, nouvelle, rupture, embauche, motif, quota } = program;
   if (!id || !ancienne || !nouvelle || !rupture || !embauche || !motif) {
-    exit('Paramètres invalides. Veuillez entrez les 6 paramètres requis');
+    exit('Paramètres invalides. Veuillez entrer les 6 paramètres requis');
     return;
   }
   const mattermost = app.get('mattermost');
@@ -233,7 +233,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     'statut': { $in: ['recrutee', 'finalisee'] },
     'structure.$id': structureDestination._id
   });
-  if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec && !cota) {
+  if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec && !quota) {
     //eslint-disable-next-line max-len
     exit(`La structure destinataire est seulement autorisé à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recruté(s)`);
     return;

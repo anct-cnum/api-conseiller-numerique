@@ -461,7 +461,7 @@ const deleteMemberChannel = async (mattermost, token, idChannel, idUser) => {
   }
 
   return await axios({
-    method: 'delete',
+    method: 'DELETE',
     url: `${mattermost.endPoint}/api/v4/channels/${idChannel}/members/${idUser}`,
     headers: {
       'Content-Type': 'application/json',
@@ -470,14 +470,14 @@ const deleteMemberChannel = async (mattermost, token, idChannel, idUser) => {
   });
 };
 
-const deleteJoinTeam = async (mattermost, token, idTeams, idUser) => {
+const deleteJoinTeam = async (mattermost, token, idTeam, idUser) => {
   if (token === undefined || token === null) {
     token = await loginAPI({ mattermost });
   }
 
   return await axios({
-    method: 'delete',
-    url: `${mattermost.endPoint}/api/v4/teams/${idTeams}/members/${idUser}`,
+    method: 'DELETE',
+    url: `${mattermost.endPoint}/api/v4/teams/${idTeam}/members/${idUser}`,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`

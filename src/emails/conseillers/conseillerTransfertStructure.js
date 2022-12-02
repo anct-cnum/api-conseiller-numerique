@@ -16,7 +16,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         emailCN,
         {
-          subject: 'Demande de Transfert',
+          subject: 'Demande de transfert',
           body: await render(),
         },
       )
