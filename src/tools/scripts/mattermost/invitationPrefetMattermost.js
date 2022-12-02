@@ -39,7 +39,7 @@ execute(__filename, async ({ app, logger, exit }) => {
     readCSV(program.csv).then(async conseillers => {
       await new Promise(async () => {
         for (const conseiller of conseillers) {
-          const prefetEmail = conseiller['Email'];
+          const emailUtilisateur = utilisateur['Email'];
           const search = await searchUsersEmail(mattermost, null, mattermost.hubTeamId, prefetEmail);
           if (search.data[0]?.id) {
             for (const idChannel of resultArrayIdChannel) {
