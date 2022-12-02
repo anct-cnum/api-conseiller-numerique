@@ -38,7 +38,7 @@ execute(__filename, async ({ app, logger, exit }) => {
   await new Promise(() => {
     readCSV(program.csv).then(async conseillers => {
       await new Promise(async () => {
-        for (const conseiller of conseillers) {
+        for (const utilisateur of utilisateurs) {
           const emailUtilisateur = utilisateur['Email'];
           const search = await searchUsersEmail(mattermost, null, mattermost.hubTeamId, prefetEmail);
           if (search.data[0]?.id) {
