@@ -36,7 +36,7 @@ execute(__filename, async ({ app, logger, exit }) => {
   const mattermost = app.get('mattermost');
 
   await new Promise(() => {
-    readCSV(program.csv).then(async conseillers => {
+    readCSV(program.csv).then(async utilisateurs=> {
       await new Promise(async () => {
         for (const utilisateur of utilisateurs) {
           const emailUtilisateur = utilisateur['Email'];
