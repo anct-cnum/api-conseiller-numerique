@@ -51,7 +51,7 @@ execute(__filename, async ({ app, logger, exit }) => {
             errors++;
           }
         }
-        logger.info(`${count} prefet ont été ajouté et ${errors} qui ne sont pas encore inscrit`);
+        logger.info(`${count} utilisateurs ont été ajoutés et ${errors} qui non présents dans le MM`);
         exit();
       });
     }).catch(error => {
