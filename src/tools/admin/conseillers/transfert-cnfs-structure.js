@@ -106,30 +106,30 @@ const updatePermanences = db => async idCNFS => await db.collection('permanences
 const miseAjourMattermostCanaux = db => async (idCNFS, structureDestination, ancienneSA, mattermost) => {
   const CNFS = await db.collection('conseillers').findOne({ _id: idCNFS });
   const ancienneStructure = await db.collection('structures').findOne({ '_id': ancienneSA });
+  if (CNFS?.mattermost?.id) {
 
-  if (CNFS?.mattermost?.id && (ancienneStructure.codeDepartement !== structureDestination.codeDepartement)) {
+    if (ancienneStructure.codeDepartement !== structureDestination.codeDepartement) {
 
-    let departementAncienneSA = departements.find(d => `${d.num_dep}` === ancienneStructure.codeDepartement);
-    let departementNouvelleSA = departements.find(d => `${d.num_dep}` === structureDestination.codeDepartement);
+      let departementAncienneSA = departements.find(d => `${d.num_dep}` === ancienneStructure.codeDepartement);
+      let departementNouvelleSA = departements.find(d => `${d.num_dep}` === structureDestination.codeDepartement);
 
-    if (structureDestination.codeDepartement === '00' && structureDestination.codePostal === '97150') {
-      departementNouvelleSA = departements.find(d => `${d.num_dep}` === '971');
+      if (structureDestination.codeDepartement === '00' && structureDestination.codePostal === '97150') {
+        departementNouvelleSA = departements.find(d => `${d.num_dep}` === '971');
+      }
+      const channelNameNouvelleSA = slugify(departementNouvelleSA.dep_name, { replacement: '', lower: true });
+      const resultChannelNouvelleSA = await getChannel(mattermost, null, channelNameNouvelleSA);
+      await joinChannel(mattermost, null, resultChannelNouvelleSA.data.id, CNFS.mattermost.id);
+
+      if (ancienneStructure.codeDepartement === '00' && ancienneStructure.codePostal === '97150') {
+        departementAncienneSA = departements.find(d => `${d.num_dep}` === '971');
+      }
+      const channelNameAncienneSA = slugify(departementAncienneSA.dep_name, { replacement: '', lower: true });
+      const resultChannelAncienneSA = await getChannel(mattermost, null, channelNameAncienneSA);
+      await getIdUserChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id).then(() =>
+        deleteMemberChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id)
+      ).catch(error => console.log('error (partie departement):', error.response.data.message));
     }
-    const channelNameNouvelleSA = slugify(departementNouvelleSA.dep_name, { replacement: '', lower: true });
-    const resultChannelNouvelleSA = await getChannel(mattermost, null, channelNameNouvelleSA);
-    await joinChannel(mattermost, null, resultChannelNouvelleSA.data.id, CNFS.mattermost.id);
 
-    if (ancienneStructure.codeDepartement === '00' && ancienneStructure.codePostal === '97150') {
-      departementAncienneSA = departements.find(d => `${d.num_dep}` === '971');
-    }
-    const channelNameAncienneSA = slugify(departementAncienneSA.dep_name, { replacement: '', lower: true });
-    const resultChannelAncienneSA = await getChannel(mattermost, null, channelNameAncienneSA);
-    await getIdUserChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id).then(() =>
-      deleteMemberChannel(mattermost, null, resultChannelAncienneSA.data.id, CNFS.mattermost.id)
-    ).catch(error => console.log('error (partie departement):', error.response.data.message));
-  }
-
-  if (CNFS?.mattermost?.id && (ancienneStructure.codeRegion !== structureDestination.codeRegion)) {
     const regionNameAncienneSA = departements.find(d => `${d.num_dep}` === ancienneStructure.codeDepartement)?.region_name;
     let hubAncienneSA = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionNameAncienneSA } } });
     if (hubAncienneSA === null) {
@@ -150,7 +150,7 @@ const miseAjourMattermostCanaux = db => async (idCNFS, structureDestination, anc
         hubNouvelleSA = await db.collection('hubs').findOne({ departements: { $elemMatch: { $eq: `${structureDestination.codeDepartement}` } } });
       }
     }
-    if (hubAncienneSA !== null) {
+    if ((hubAncienneSA !== null) && (hubAncienneSA?.channelId !== hubNouvelleSA?.channelId)) {
       await getIdUserChannel(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id).then(() =>
         deleteMemberChannel(mattermost, null, hubAncienneSA.channelId, CNFS.mattermost.id)
       ).catch(error => console.log('error (partie hub):', error.response.data.message));
@@ -165,7 +165,7 @@ const miseAjourMattermostCanaux = db => async (idCNFS, structureDestination, anc
         });
       }
     }
-    if (hubNouvelleSA !== null) {
+    if ((hubNouvelleSA !== null) && (hubAncienneSA?.channelId !== hubNouvelleSA?.channelId)) {
       await joinTeam(mattermost, null, mattermost.hubTeamId, CNFS.mattermost.id);
       await joinChannel(mattermost, null, hubNouvelleSA.channelId, CNFS.mattermost.id);
       await db.collection('conseillers').updateOne({ _id: CNFS._id }, {
