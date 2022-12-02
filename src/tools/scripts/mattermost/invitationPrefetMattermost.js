@@ -40,7 +40,7 @@ execute(__filename, async ({ app, logger, exit }) => {
       await new Promise(async () => {
         for (const utilisateur of utilisateurs) {
           const emailUtilisateur = utilisateur['Email'];
-          const search = await searchUsersEmail(mattermost, null, mattermost.hubTeamId, prefetEmail);
+          const search = await searchUsersEmail(mattermost, null, mattermost.hubTeamId, emailUtilisateur);
           if (search.data[0]?.id) {
             for (const idChannel of resultArrayIdChannel) {
               await joinChannel(mattermost, null, idChannel, search.data[0]?.id);
