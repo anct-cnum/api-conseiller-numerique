@@ -2,9 +2,11 @@ const { program } = require('commander');
 const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
+const dayjs = require('dayjs');
 require('dotenv').config();
 
 execute(__filename, async ({ db, logger, exit, app }) => {
+  const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
 
   program.option('-i, --id <id>', 'id: id Mongo du conseiller à transférer');
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
@@ -26,7 +28,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   idCNFS = new ObjectID(program.id);
   ancienneSA = new ObjectID(program.ancienne);
   nouvelleSA = new ObjectID(program.nouvelle);
-  dateEmbauche = new Date(program.dateEmbauche);
+  dateEmbauche = formatDate(program.dateEmbauche);
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
   if (!cnfsRecrute) {

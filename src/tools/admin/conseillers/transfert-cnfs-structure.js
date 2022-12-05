@@ -13,7 +13,7 @@ require('dotenv').config();
 
 const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
 
-const majMiseEnRelationStructureRupture = db => async (idCNFS, nouvelleSA, ancienneSA, dateRupture, motifRupture) => {
+const majMiseEnRelationStructureRupture = db => async (idCNFS, nouvelleSA, ancienneSA) => {
   await db.collection('misesEnRelation').updateOne(
     { 'conseiller.$id': idCNFS,
       'structure.$id': ancienneSA,
@@ -22,8 +22,6 @@ const majMiseEnRelationStructureRupture = db => async (idCNFS, nouvelleSA, ancie
     {
       $set: {
         statut: 'finalisee_rupture',
-        dateRupture,
-        motifRupture,
         transfert: {
           'destinationStructureId': nouvelleSA,
           'date': new Date()
@@ -194,10 +192,10 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
 
   program.option('-i, --id <id>', 'id: id Mongo du conseiller à transférer');
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
-  program.option('-r, --rupture <rupture>', 'rupture: date de rupture AAAA/MM/DD');
+  program.option('-r, --rupture <rupture>', 'rupture: date de rupture DD/MM/AAAA');
   program.option('-m, --motif <motif>', 'motif: motif de la rupture');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: id mongo structure de destination');
-  program.option('-e, --embauche <embauche>', 'embauche: date d\'embauche AAAA/MM/DD');
+  program.option('-e, --embauche <embauche>', 'embauche: date d\'embauche DD/MM/AAAA');
   program.option('-q, --quota', 'quota: pour désactiver le bridage du nombre de poste validé en Coselec');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
@@ -239,7 +237,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     return;
   }
   try {
-    await majMiseEnRelationStructureRupture(db)(idCNFS, nouvelleSA, ancienneSA, dateRupture, motifRupture);
+    await majMiseEnRelationStructureRupture(db)(idCNFS, nouvelleSA, ancienneSA);
     await historiseCollectionRupture(db)(idCNFS, ancienneSA, dateRupture, motifRupture);
     await majMiseEnRelationStructureNouvelle(db, app)(idCNFS, nouvelleSA, dateEmbauche, structureDestination);
     await majDataCnfsStructureNouvelle(db)(idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination);
