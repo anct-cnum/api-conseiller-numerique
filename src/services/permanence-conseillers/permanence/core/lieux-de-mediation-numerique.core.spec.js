@@ -12,7 +12,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -33,6 +34,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -52,7 +54,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -74,6 +77,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -93,7 +97,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -115,6 +120,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -133,7 +139,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -154,6 +161,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -172,7 +180,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -193,6 +202,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -211,7 +221,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -234,7 +245,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -277,7 +289,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -298,6 +311,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -316,7 +330,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -337,6 +352,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -355,7 +371,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -376,6 +393,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -394,7 +412,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -415,6 +434,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -433,7 +453,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -456,7 +477,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
@@ -479,7 +501,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -500,6 +523,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -518,7 +542,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -539,6 +564,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -557,7 +583,8 @@ describe('lieux de médiation numérique', () => {
         rue: '  RUE DE  LECLERCQ '
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -578,6 +605,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -596,7 +624,8 @@ describe('lieux de médiation numérique', () => {
         rue: '  RUE DE LECLERCQ '
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -617,6 +646,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -635,7 +665,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'null'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -658,7 +689,8 @@ describe('lieux de médiation numérique', () => {
         rue: null
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -687,7 +719,8 @@ describe('lieux de médiation numérique', () => {
         ]
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -710,6 +743,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -729,7 +763,8 @@ describe('lieux de médiation numérique', () => {
       },
       numeroTelephone: '+33180059880',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -751,6 +786,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -770,7 +806,8 @@ describe('lieux de médiation numérique', () => {
       },
       numeroTelephone: ' +33 1 80 05 98 80 ',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -792,6 +829,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -811,7 +849,8 @@ describe('lieux de médiation numérique', () => {
       },
       numeroTelephone: '+33.1.80.05.98.80',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -833,6 +872,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -852,7 +892,8 @@ describe('lieux de médiation numérique', () => {
       },
       numeroTelephone: '+330562636539',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -874,6 +915,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -893,7 +935,8 @@ describe('lieux de médiation numérique', () => {
       },
       numeroTelephone: '+33123456',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -914,6 +957,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -933,7 +977,8 @@ describe('lieux de médiation numérique', () => {
       },
       numeroTelephone: '0111',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -954,6 +999,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -973,7 +1019,8 @@ describe('lieux de médiation numérique', () => {
       },
       email: 'contact@laquincaillerie.tl',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -995,6 +1042,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1014,7 +1062,8 @@ describe('lieux de médiation numérique', () => {
       },
       email: ' contact@laquincaillerie.tl   ',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1036,6 +1085,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1055,7 +1105,8 @@ describe('lieux de médiation numérique', () => {
       },
       siteWeb: 'https://www.laquincaillerie.tl/',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1077,6 +1128,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1096,7 +1148,8 @@ describe('lieux de médiation numérique', () => {
       },
       siteWeb: 'www.laquincaillerie.tl/',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1118,6 +1171,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1137,7 +1191,8 @@ describe('lieux de médiation numérique', () => {
       },
       siteWeb: '  https://  www.laquincaillerie.tl/  ',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1159,6 +1214,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1178,7 +1234,8 @@ describe('lieux de médiation numérique', () => {
       },
       siteWeb: 'https://www.https://www.laquincaillerie.tl/',
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1200,6 +1257,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1290,7 +1348,8 @@ describe('lieux de médiation numérique', () => {
         }
       ],
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1312,6 +1371,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1331,7 +1391,8 @@ describe('lieux de médiation numérique', () => {
       },
       updatedAt: new Date('2022-06-02T12:23:00.442Z'),
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1353,6 +1414,7 @@ describe('lieux de médiation numérique', () => {
         date_maj: '2022-06-02',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1372,6 +1434,7 @@ describe('lieux de médiation numérique', () => {
       },
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS',
         estLabelliseFranceServices: 'OUI'
       },
       aidants: [
@@ -1393,6 +1456,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS, France Services',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1412,6 +1476,7 @@ describe('lieux de médiation numérique', () => {
       },
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS',
         estLabelliseAidantsConnect: 'OUI'
       },
       aidants: [
@@ -1433,6 +1498,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS, Aidants Connect',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1452,6 +1518,7 @@ describe('lieux de médiation numérique', () => {
       },
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS',
         estLabelliseAidantsConnect: 'OUI',
         estLabelliseFranceServices: 'OUI'
       },
@@ -1474,6 +1541,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS, Aidants Connect, France Services',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1493,6 +1561,7 @@ describe('lieux de médiation numérique', () => {
       },
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS',
         urlPriseRdv: 'https://www.url-rdv.fr/org/1234'
       },
       aidants: [
@@ -1515,6 +1584,7 @@ describe('lieux de médiation numérique', () => {
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1534,6 +1604,7 @@ describe('lieux de médiation numérique', () => {
       },
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS',
         urlPriseRdv: 'www.url-rdv.fr/org/1234'
       },
       aidants: [
@@ -1556,6 +1627,7 @@ describe('lieux de médiation numérique', () => {
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1575,6 +1647,7 @@ describe('lieux de médiation numérique', () => {
       },
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS',
         urlPriseRdv: 'https://  www.url-rdv.fr/org/1234  '
       },
       aidants: [
@@ -1597,6 +1670,7 @@ describe('lieux de médiation numérique', () => {
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1616,6 +1690,7 @@ describe('lieux de médiation numérique', () => {
       },
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS',
         urlPriseRdv: 'https://www.https://www.url-rdv.fr/org/1234'
       },
       aidants: [
@@ -1638,6 +1713,7 @@ describe('lieux de médiation numérique', () => {
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1656,7 +1732,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: []
     };
@@ -1677,7 +1754,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 1, nom: 'Jean', prenom: 'Dupond', nonAffichageCarto: true }
@@ -1700,7 +1778,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
@@ -1721,6 +1800,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1739,7 +1819,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' },
@@ -1761,6 +1842,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
         ]
@@ -1779,7 +1861,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'JEAN claude', nom: 'de la rivière', emailPro: 'jean-claude@gouv.fr', telephonePro: '+33112341234' },
@@ -1803,6 +1886,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Claude De La Rivière', courriel: 'jean-claude@gouv.fr', telephone: '+33112341234' },
           { aidantId: 'bbb88891b3f44bdf86bb7bc2601d3ggg', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' },
@@ -1823,7 +1907,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'JEAN claude', nom: 'de la rivière', telephonePro: '+33112341234' },
@@ -1846,6 +1931,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Claude De La Rivière', telephone: '+33112341234' },
           { aidantId: 'bbb88891b3f44bdf86bb7bc2601d3ggg', nom: 'Jean Dupond' },
@@ -1866,7 +1952,8 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd'
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
       },
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'zebulon', nom: 'DUPOND' },
@@ -1890,6 +1977,7 @@ describe('lieux de médiation numérique', () => {
         conditions_access: 'Gratuit',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
         aidants: [
           { aidantId: 'ddd88891b3f44bdf86bb7bc2601d3iii', nom: 'Arthur De La Rivière' },
           { aidantId: 'ccc88891b3f44bdf86bb7bc2601d3hhh', nom: 'Jean-Pierre Dupont-Dupond' },

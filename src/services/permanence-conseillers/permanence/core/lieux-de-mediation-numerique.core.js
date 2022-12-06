@@ -164,6 +164,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
     ...priseRdvIfAny(permanence.structure?.urlPriseRdv),
     ...pivotIfAny(permanence.siret),
     structureId: permanence.structure?._id,
+    structureNom: permanence.structure?.nom,
     ...aidantsIfAny(permanence.aidants),
   })).filter(invalidLieux);
 
