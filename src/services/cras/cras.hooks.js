@@ -51,7 +51,7 @@ module.exports = {
 
         //Separation CP / ville et suppression de cp plus utile
         context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
-        context.data.cra.nomCommune = context.data.cra.cp.slice(6).toUppercase();
+        context.data.cra.nomCommune = context.data.cra.cp.slice(6).toUpperCase();
 
         //Ajout de la date de création
         context.data.createdAt = new Date();
