@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
 const { execute } = require('../utils');
 
 const updateCra = async db => await db.collection('cras').updateMany(
