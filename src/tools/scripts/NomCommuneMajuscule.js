@@ -4,20 +4,6 @@
 require('dotenv').config();
 const { execute } = require('../utils');
 
-/* mongodb -> 4.2
-const updateCra = async db => await db.collection('cras').updateMany(
-  {
-    'cra.nomCommune': /.*[a-z]+.*/
-/*},
-  [{ $set: { 'cra.nomCommune': { $toUpper: '$cra.nomCommune' } } }]
-);
-const updatePermanence = async db => await db.collection('permanences').updateMany(
-  { 'adresse.ville': /.*[a-z]+.*/
-/*},
-  [{ $set: { 'adresse.ville': { $toUpper: '$adresse.ville' } } }]
-);
-*/
-
 const getCrasMinuscule = async db => await db.collection('cras').find({ 'cra.nomCommune': /.*[a-z]+.*/ });
 
 const updateCra = async (db, cra) => await db.collection('cras').updateOne(
