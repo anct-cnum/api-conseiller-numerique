@@ -521,6 +521,11 @@
     lodash "^4.17.21"
     radix-router "^3.0.1"
 
+"@gouvfr-anct/lieux-de-mediation-numerique@1.12.1":
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/@gouvfr-anct/lieux-de-mediation-numerique/-/lieux-de-mediation-numerique-1.12.1.tgz#cc98c5a913de119a71f03d8668d3901518f0e635"
+  integrity sha512-MugAPcOl+HrIadaMLxs9cjTk/g6gFQwj62cqrALSRjEYalnffY7fX3Ba9a1wAquHdl/7baSmEJcHDjuNpo27Fw==
+
 "@hapi/boom@9.1.1":
   version "9.1.1"
   resolved "https://registry.npmjs.org/@hapi/boom/-/boom-9.1.1.tgz"
