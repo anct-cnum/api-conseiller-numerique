@@ -44,12 +44,14 @@ module.exports = {
 
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
         context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.idConseiller), database);
-        context.data.permanence = new DBRef('permanences', new ObjectId(context.data.cra.idPermanence), database);
         context.data.structure = new DBRef('structures', new ObjectId(context.data.idStructure), database);
+        if (context.data.cra.idPermanence) {
+          context.data.permanence = new DBRef('permanences', new ObjectId(context.data.cra.idPermanence), database);
+        }
 
         //Separation CP / ville et suppression de cp plus utile
         context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
-        context.data.cra.nomCommune = context.data.cra.cp.slice(6);
+        context.data.cra.nomCommune = context.data.cra.cp.slice(6).toUpperCase();
 
         //Ajout de la date de création
         context.data.createdAt = new Date();

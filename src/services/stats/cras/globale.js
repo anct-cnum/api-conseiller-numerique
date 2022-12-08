@@ -35,6 +35,13 @@ const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
 
   //Thèmes (total de chaque catégorie)
   statsGlobales.statsThemes = await statsCras.getStatsThemes(db, query);
+  statsGlobales.statsThemes = statsGlobales.statsThemes.filter(function(theme) {
+    if (theme.nom !== 'smartphone') {
+      return true;
+    } else {
+      return theme.valeur > 0;
+    }
+  });
   statsGlobales.statsThemes = isAdminCoop ? statsGlobales.statsThemes.sort(sortByValueThenName) : statsGlobales.statsThemes;
 
   //Canaux (total de chaque catégorie)
