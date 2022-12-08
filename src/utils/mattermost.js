@@ -533,7 +533,7 @@ module.exports = {
   searchUser,
   patchLogin,
   updateLogin,
-  searchUsersEmail
+  searchUsersEmail,
   deleteMemberChannel,
   deleteJoinTeam,
   getIdUserChannel
