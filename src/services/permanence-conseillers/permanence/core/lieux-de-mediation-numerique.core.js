@@ -61,9 +61,7 @@ const toTimeTable = horaires => (horaires ?? []).map(horaire => [horaire.matin, 
   osmHours
 })).filter(openingHour => openingHour.osmHours !== '');
 
-const horairesIfAny = horaires => horaires && horaires !== '' ? {
-  horaires: toOsmOpeningHours(toTimeTable(horaires))
-} : {};
+const horairesIfAny = horaires => horaires ? { horaires } : {};
 
 const CNFS_COMMON_SERVICES = [
   Service.PrendreEnMainUnSmartphoneOuUneTablette,
@@ -165,7 +163,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
             ...courrielIfAny(removeAllSpaces(permanence.email)),
             ...siteWebIfAny(formatUrl(permanence.siteWeb))
           }),
-          ...horairesIfAny(permanence.horaires),
+          ...horairesIfAny(toOsmOpeningHours(toTimeTable(permanence.horaires))),
           source: 'conseiller-numerique',
           date_maj: permanence.updatedAt,
           services: Services(CNFS_COMMON_SERVICES),
