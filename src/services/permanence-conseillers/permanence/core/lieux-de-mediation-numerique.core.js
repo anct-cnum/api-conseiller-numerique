@@ -113,7 +113,7 @@ const aidantsIfAny = aidants =>
     .sort((aidant1, aidant2) => (aidant1.nom > aidant2.nom) ? 1 : ((aidant2.nom > aidant1.nom) ? -1 : 0))
   } : throwNoAidantsError();
 
-const localistaionIfAny = coordinates =>
+const localisationIfAny = coordinates =>
   coordinates !== undefined ? {
     localisation: Localisation({
       latitude: coordinates[1],
@@ -150,7 +150,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
             code_postal: removeAllSpaces(permanence.adresse?.codePostal),
             commune: removeSuperfluousSpaces(permanence.adresse?.ville),
           }),
-          ...localistaionIfAny(permanence.location?.coordinates),
+          ...localisationIfAny(permanence.location?.coordinates),
           contact: Contact({
             ...telephoneIfAny(formatPhone(permanence.numeroTelephone)),
             ...courrielIfAny(removeAllSpaces(permanence.email)),
