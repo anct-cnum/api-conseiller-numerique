@@ -456,6 +456,139 @@ describe('lieux de médiation numérique', () => {
     ]);
   });
 
+  it('devrait avoir une commune sans points', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Avallon.',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Avallon',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait avoir une commune sans points', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Avallon.',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Avallon',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+
+  it('devrait avoir une commune sans détails placés devant une virgule', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'TAN ROUGE, SAINT PAUL',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'SAINT PAUL',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
   it('devrait avoir un code postal', async () => {
     const permanence = {
       _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
@@ -509,6 +642,50 @@ describe('lieux de médiation numérique', () => {
         pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait avoir un code postal avec le bon nombre de caractères', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Grenoble',
+        codePostal: '380000',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Grenoble',
+        code_postal: '38000',
         adresse: '12 BIS RUE DE LECLERCQ',
         services: TEST_SERVICES,
         source: 'conseiller-numerique',

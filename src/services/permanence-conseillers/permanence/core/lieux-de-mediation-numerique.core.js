@@ -61,7 +61,7 @@ const toTimeTable = horaires => (horaires ?? []).map(horaire => [horaire.matin, 
   osmHours
 })).filter(openingHour => openingHour.osmHours !== '');
 
-const horairesIfAny = horaires => horaires ? {
+const horairesIfAny = horaires => horaires && horaires !== '' ? {
   horaires: toOsmOpeningHours(toTimeTable(horaires))
 } : {};
 
@@ -137,6 +137,15 @@ const noInvalidSiret = siret =>
     '00000000000000' :
     siret;
 
+const formatCodePostal = codePostal => removeAllSpaces(codePostal)?.slice(0, 5);
+
+const formatCommune = ville => removeSuperfluousSpaces(
+  ville
+  ?.replace('.', '')
+  .replace(/\(.*\)/gu, '')
+  .replace(/.*,/gu, '')
+);
+
 const lieuxDeMediationNumerique = async ({ getPermanences }) =>
   (await getPermanences()).map(permanence => {
     try {
@@ -147,8 +156,8 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
           nom: Nom(removeSuperfluousSpaces(permanence.nomEnseigne)),
           adresse: Adresse({
             voie: removeSuperfluousSpaces(removeNullStrings([permanence.adresse.numeroRue, permanence.adresse.rue].join(' '))),
-            code_postal: removeAllSpaces(permanence.adresse?.codePostal),
-            commune: removeSuperfluousSpaces(permanence.adresse?.ville),
+            code_postal: formatCodePostal(permanence.adresse?.codePostal),
+            commune: formatCommune(permanence.adresse?.ville),
           }),
           ...localisationIfAny(permanence.location?.coordinates),
           contact: Contact({
