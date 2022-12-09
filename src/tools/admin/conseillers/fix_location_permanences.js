@@ -36,7 +36,7 @@ execute(__filename, async ({ logger, exit, db }) => {
     (key, value) => (value === null) ? '' : value
   );
   const { numeroRue, rue, codePostal, ville } = JSON.parse(convertAdresse);
-  let adressePostale = adresse ? adresse : `${numeroRue} ${rue} ${ville} ${codePostal}`;
+  let adressePostale = adresse ? adresse : `${numeroRue} ${rue} ${codePostal} ${ville}`;
   adressePostale = encodeURI(adressePostale);
   const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}`;
   const result = await axios.get(urlAPI, { params: {} });
