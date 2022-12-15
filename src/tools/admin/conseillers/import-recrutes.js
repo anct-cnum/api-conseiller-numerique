@@ -7,6 +7,7 @@ const pool = new Pool();
 const { createMailbox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
 const slugify = require('slugify');
 const { DBRef } = require('mongodb');
+const bcrypt = require('bcryptjs');
 
 const configPG = {
   user: process.env.PGUSER,
@@ -166,6 +167,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                 $set: {
                   prenom: conseillerOriginal.prenom, //nécessaire si compte candidat pas sur le même doublon avec renseignements différents
                   nom: conseillerOriginal.nom,
+                  password: await bcrypt.hashSync(uuidv4()),
                   roles: Array(role),
                   token: uuidv4(),
                   mailSentDate: null,
