@@ -83,11 +83,22 @@ const statsEvolutions = statistiques => [
   ]).flat()
 ];
 
-const statsReorientations = statistiques => [
-  'Usager.ères réorienté.es',
-  ...statistiques.statsReorientations
-  .map(statReorientation => `${statReorientation.nom};${statReorientation.valeur}`),
-];
+const statsReorientations = statistiques => {
+  let reorientation = 'Usager.ères réorienté.es (en %)';
+  statistiques.statsReorientations.forEach(statReorientation => {
+    reorientation += `\n${statReorientation.nom};${Number(statReorientation.valeur)}`;
+  });
+
+  return reorientation;
+};
+
+const statsReorientationsVide = statistiques => {
+  let valeur = 0;
+  statistiques.statsReorientations.forEach(lieu => {
+    valeur += lieu.valeur;
+  });
+  return `Lieu vide;${Number((100 - valeur).toFixed(2))}`;
+};
 
 const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, codePostal, ville, isAdminCoop) => [
   '\ufeff', //ufeff pour BOM UTF-8
@@ -99,7 +110,8 @@ const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin,
   ...statsAges(statistiques),
   ...statsUsagers(statistiques),
   ...statsEvolutions(statistiques),
-  ...statsReorientations(statistiques),
+  statistiques.statsReorientations.length > 0 ? statsReorientations(statistiques) : '',
+  statistiques.statsReorientations.length > 0 ? statsReorientationsVide(statistiques) : '',
 ].join('\n');
 
 module.exports = {
