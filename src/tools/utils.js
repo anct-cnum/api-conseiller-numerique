@@ -1,4 +1,6 @@
-const moment = require('moment');
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+dayjs.extend(utc);
 
 const feathers = require('@feathersjs/feathers');
 const configuration = require('@feathersjs/configuration');
@@ -86,8 +88,10 @@ module.exports = {
     try {
       let launchTime = new Date().getTime();
       await job(jobComponents);
-      let duration = moment.utc(new Date().getTime() - launchTime).format('HH:mm:ss.SSS');
-      console.log(`Completed in ${duration}`);
+      let duration = dayjs
+        .utc(new Date().getTime() - launchTime)
+        .format('HH:mm:ss.SSS');
+      logger.info(`Completed in ${duration}`);
       exit();
     } catch (e) {
       exit(e);
