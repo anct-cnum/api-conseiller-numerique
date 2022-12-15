@@ -80,7 +80,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           const formatDate = date => dayjs(date).format('DD/MM/YYYY');
           const date = date => dayjs(date, 'YYYY-MM-DD').toDate();
           const dateRupture = conseillerOriginal?.ruptures?.slice(-1)[0]?.dateRupture;
-          const query = conseillerOriginal?.ruptures ? { '$gt': dateRupture } : { '$gte': miseEnRelation.dateRecrutement };
+          const query = conseillerOriginal?.ruptures ? { '$gt': dateRupture } : { '$gte': miseEnRelation?.dateRecrutement };
           const matchCras = { 'conseiller.$id': conseillerOriginal._id, 'cra.dateAccompagnement': query };
           const countCras = await db.collection('cras').countDocuments(matchCras);
           const connection = app.get('mongodb');
