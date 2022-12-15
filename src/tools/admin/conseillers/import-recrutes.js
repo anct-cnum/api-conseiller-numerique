@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 const pool = new Pool();
 const { createMailbox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
 const slugify = require('slugify');
+const { DBRef } = require('mongodb');
 
 const configPG = {
   user: process.env.PGUSER,
@@ -78,6 +79,12 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const formatDate = date => dayjs(date).format('DD/MM/YYYY');
           const date = date => dayjs(date, 'YYYY-MM-DD').toDate();
+          const dateRupture = conseillerOriginal?.ruptures?.slice(-1)[0]?.dateRupture;
+          const query = conseillerOriginal?.ruptures ? { '$gt': dateRupture } : { '$gte': miseEnRelation.dateRecrutement };
+          const matchCras = { 'conseiller.$id': conseillerOriginal._id, 'cra.dateAccompagnement': query };
+          const countCras = await db.collection('cras').countDocuments(matchCras);
+          const connection = app.get('mongodb');
+          const database = connection.substr(connection.lastIndexOf('/') + 1);
 
           if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
             logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
@@ -125,6 +132,10 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           } else if (miseEnRelation === null) {
             logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
+            errors++;
+          } else if (dateRupture && (dateRupture > miseEnRelation.dateRecrutement)) {
+            // eslint-disable-next-line max-len
+            logger.error(`Un conseiller avec l'id: ${idPGConseiller} a une date de Rupture ${formatDate(dateRupture)} supérieure à la date de recrutement ${formatDate(miseEnRelation.dateRecrutement)}`);
             errors++;
           } else {
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
@@ -216,7 +227,15 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                 'conseillerObj.userCreated': false
               }
             });
-
+            if (countCras >= 1) {
+              // eslint-disable-next-line max-len
+              logger.info(`Maj de ${countCras} CRAS pour le conseiller avec l'id: ${idPGConseiller}, cras => après la date ${query['$gte'] ? 'recrutement' : 'de rupture'}`);
+              await db.collection('cras').updateMany(matchCras, {
+                $set: {
+                  structure: new DBRef('structures', miseEnRelation.structure.oid, database),
+                }
+              });
+            }
             // Creation boite mail du conseiller
             const gandi = app.get('gandi');
             const nom = slugify(`${conseillerUpdated.nom}`, { replacement: '-', lower: true, strict: true });
