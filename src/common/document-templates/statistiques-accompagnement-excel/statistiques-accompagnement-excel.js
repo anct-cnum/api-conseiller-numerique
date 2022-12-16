@@ -108,7 +108,7 @@ const statsEvolutions = (ws, statistiques) => {
   let y = 0;
   Object.keys(statistiques.statsEvolutions).forEach((year, i) => {
     if (i > 0) {
-      year = 2;
+      y = 2;
     }
     ws.cell(60, 1 + y).string(year);
     const statsEvolutions = statistiques.statsEvolutions[year].sort((statEvolutionA, statEvolutionB) => statEvolutionA.mois - statEvolutionB.mois);
