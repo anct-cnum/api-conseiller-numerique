@@ -151,8 +151,7 @@ const buildExportStatistiquesExcelFileContent = (app, res, statistiques, dateDeb
   ville = ville ?? '';
   idType = idType ?? '';
   ws.cell(1, 1).string(
-    'Statistiques ' + type + ' ' + codePostal + ' ' + ville + ' ' + idType + ' ' +
-    formatDate(dateDebut).toLocaleString() + '-' + formatDate(dateFin).toLocaleString()
+    ['Statistiques', type, codePostal, ville, idType, formatDate(dateDebut).toLocaleString()].join(' ') + '-' + formatDate(dateFin).toLocaleString()
   );
   ws = general(ws, statistiques);
   ws = statsThemes(ws, statistiques);

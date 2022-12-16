@@ -499,25 +499,25 @@ exports.Conseillers = class Conseillers extends Service {
           'conseiller.$id': conseiller._id,
           'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
         };
-        if (query.codePostal !== '') {
+        if (query?.codePostal !== '') {
           statsQuery = {
             ...statsQuery,
-            'cra.codePostal': req.query?.codePostal
+            'cra.codePostal': query?.codePostal
           };
         }
-        if (query.ville !== '') {
+        if (query?.ville !== '') {
           statsQuery = {
             ...statsQuery,
-            'cra.nomCommune': req.query?.ville
+            'cra.nomCommune': query?.ville
           };
         }
         const isAdminCoop = checkRoleAdminCoop(userById);
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         buildExportStatistiquesExcelFileContent(
-          app, res, stats, query.dateDebut, query.dateFin,
-          `${conseiller.prenom} ${conseiller.nom}`,
-          query.idType, query.codePostal, query.ville,
+          app, res, stats, query.dateDebut, query?.dateFin,
+          `${conseiller?.prenom} ${conseiller?.nom}`,
+          query?.idType, query?.codePostal, query?.ville,
           isAdminCoop
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
