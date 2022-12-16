@@ -9,7 +9,7 @@ const mois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 
 const general = (ws, statistiques) => {
   ws.cell(3, 1).string('Général');
   ws.cell(4, 1).string('Personnes totales accompagnées durant cette période');
-  ws.cell(5, 1).string('Accompagnements total enregistrés (dont récurrent)');
+  ws.cell(5, 1).string('Accompagnements totaux enregistrés (dont récurrent)');
   ws.cell(6, 1).string('Ateliers réalisés');
   ws.cell(7, 1).string('Total des participants aux ateliers');
   ws.cell(8, 1).string('Accompagnements individuels');
@@ -105,17 +105,17 @@ const statsUsagers = (ws, statistiques) => {
 
 const statsEvolutions = (ws, statistiques) => {
   ws.cell(59, 1).string('Évolution des comptes rendus d\'activité');
-  let ibis = 0;
+  let y = 0;
   Object.keys(statistiques.statsEvolutions).forEach((year, i) => {
     if (i > 0) {
-      ibis = 2;
+      year = 2;
     }
-    ws.cell(60, 1 + ibis).string(year);
+    ws.cell(60, 1 + y).string(year);
     const statsEvolutions = statistiques.statsEvolutions[year].sort((statEvolutionA, statEvolutionB) => statEvolutionA.mois - statEvolutionB.mois);
     statsEvolutions.forEach((data, y) => {
       const moisStats = mois[data.mois];
-      ws.cell(61 + y, 1 + ibis).string(moisStats);
-      ws.cell(61 + y, 2 + ibis).number(data.totalCras);
+      ws.cell(61 + y, 1 + y).string(moisStats);
+      ws.cell(61 + y, 2 + y).number(data.totalCras);
     });
   });
   return ws;

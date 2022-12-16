@@ -515,7 +515,7 @@ exports.Conseillers = class Conseillers extends Service {
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         buildExportStatistiquesExcelFileContent(
-          app, res, stats, query.dateDebut, query?.dateFin,
+          app, res, stats, query?.dateDebut, query?.dateFin,
           `${conseiller?.prenom} ${conseiller?.nom}`,
           query?.idType, query?.codePostal, query?.ville,
           isAdminCoop
