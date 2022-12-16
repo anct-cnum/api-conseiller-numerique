@@ -19,14 +19,10 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
     app.get('/historique-cras/liste', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      const maxDate = new Date(dayjs().subtract(1, 'month'));
       const { theme, page } = req.query;
 
       let query = {
         'conseiller.$id': new ObjectId(user.entity.oid),
-        'cra.dateAccompagnement': {
-          '$gte': maxDate
-        }
       };
       if (theme !== 'null') {
         query = { ...query, 'cra.themes': { '$in': [theme] } };
