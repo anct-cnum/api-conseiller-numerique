@@ -143,7 +143,7 @@ const statsReorientations = (ws, statistiques) => {
 };
 
 const buildExportStatistiquesExcelFileContent = (app, res, statistiques, dateDebut, dateFin, type, idType, codePostal, ville, isAdminCoop) => {
-  app.use(cors({ exposedHeaders: '*' }));
+  app.use(cors({ exposedHeaders: '*, Authorization' }));
   const wb = new xl.Workbook();
   let ws = wb.addWorksheet('Statistiques d\'accompagnement');
   //Titre
