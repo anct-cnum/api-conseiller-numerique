@@ -90,7 +90,7 @@ module.exports = {
     ],
     remove: [
       checkPermissions({
-        roles: ['admin'],
+        roles: ['admin', 'conseiller'],
         field: 'roles',
       })
     ]
