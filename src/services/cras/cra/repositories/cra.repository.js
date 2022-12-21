@@ -55,8 +55,8 @@ const updateStatistiquesCra = db => async (cra, oldDateAccompagnement, conseille
     await updateLigneCra(db)(oldYear, oldMonth, oldTotal, stats._id, options);
     await updateLigneCra(db)(newYear, newMonth, newTotal, stats._id, options);
     if (cra.cra.dateAccompagnement !== new Date('y-m-d')) {
-      await updateDailyCra(db)(oldDateAccompagnement, -1);
-      await updateDailyCra(db)(cra.cra.dateAccompagnement, 1);
+      await updateDailyCra(db)(new Date(oldDateAccompagnement + 'T00:00:00.000Z'), -1);
+      await updateDailyCra(db)(new Date(cra.cra.dateAccompagnement + 'T00:00:00.000Z'), 1);
     }
   }
 };
@@ -69,14 +69,17 @@ const deleteStatistiquesCra = db => async cra => {
   const options = { upsert: true };
   const year = cra.cra.dateAccompagnement.getUTCFullYear();
   const month = cra.cra.dateAccompagnement.getMonth();
-  const date = dayjs(cra.cra.dateAccompagnement).format('YYYY-MM-DDT00:00:00.000Z');
+  const date = dayjs(cra.cra.dateAccompagnement).format('YYYY-MM-DD');
+  const stats = await getStatsConseillerCras(db)(new ObjectId(cra.conseiller.oid));
+  let total = stats[String(year)]?.find(stat => stat.mois === month)?.totalCras;
 
-  const stats = await getStatsConseillerCras(db)(cra.conseiller.$id);
   await deleteLigneCra(db)(year, month, stats._id, options);
-  if (date !== dayjs(new Date()).format('YYYY-MM-DDT00:00:00.000Z')) {
-    console.log(date);
-    console.log(dayjs(new Date()).format('YYYY-MM-DDT00:00:00.000Z'));
-    await updateDailyCra(db)(date, -1);
+  if (total >= 2) {
+    await updateLigneCra(db)(year, month, total - 1, stats._id, options);
+  }
+
+  if (date !== dayjs(new Date()).format('YYYY-MM-DD')) {
+    await updateDailyCra(db)(new Date(date + 'T00:00:00.000Z'), -1);
   }
 };
 
