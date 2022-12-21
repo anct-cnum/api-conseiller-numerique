@@ -95,7 +95,6 @@ exports.Cras = class Cras extends Service {
               logger.error(error);
               return res.status(409).send(new Conflict('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
             });
-            /*
             await deleteCra(db)(craId).then(() => {
               res.send({ isDeleted: true });
             }).catch(error => {
@@ -103,7 +102,6 @@ exports.Cras = class Cras extends Service {
               logger.error(error);
               return res.status(404).send(new Conflict('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
             });
-            */
           } else {
             return res.status(404).send(new Conflict('Vous ne pouvez pas supprimer ce cra.').toJSON());
           }
