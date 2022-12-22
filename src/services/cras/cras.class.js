@@ -1,4 +1,4 @@
-const { Conflict, BadRequest } = require('@feathersjs/errors');
+const { Conflict, BadRequest, GeneralError, Forbidden } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const { Service } = require('feathers-mongodb');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
@@ -87,23 +87,26 @@ exports.Cras = class Cras extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user),
       ).then(async () => {
         await getCraById(db)(craId).then(async cra => {
-          if (cra.conseiller.$id === user.entity.$id) {
+          console.log(cra.conseiller.oid);
+          console.log(user.entity.oid);
+
+          if (cra.conseiller.oid === user.entity.oid) {
             await deleteStatistiquesCra(db)(cra).then(async () => {
               return;
             }).catch(error => {
               app.get('sentry').captureException(error);
               logger.error(error);
-              return res.status(409).send(new Conflict('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
+              return res.status(500).send(new GeneralError('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
             });
             await deleteCra(db)(craId).then(() => {
               res.send({ isDeleted: true });
             }).catch(error => {
               app.get('sentry').captureException(error);
               logger.error(error);
-              return res.status(404).send(new Conflict('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
+              return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
             });
           } else {
-            return res.status(404).send(new Conflict('Vous ne pouvez pas supprimer ce cra.').toJSON());
+            return res.status(403).send(new Forbidden('Vous ne pouvez pas supprimer ce cra.').toJSON());
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
