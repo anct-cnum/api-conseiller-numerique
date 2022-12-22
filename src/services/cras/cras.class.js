@@ -87,10 +87,7 @@ exports.Cras = class Cras extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user),
       ).then(async () => {
         await getCraById(db)(craId).then(async cra => {
-          console.log(cra.conseiller.oid);
-          console.log(user.entity.oid);
-
-          if (cra.conseiller.oid === user.entity.oid) {
+          if (String(cra.conseiller.oid) === String(user.entity.oid)) {
             await deleteStatistiquesCra(db)(cra).then(async () => {
               return;
             }).catch(error => {
@@ -106,7 +103,7 @@ exports.Cras = class Cras extends Service {
               return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
             });
           } else {
-            return res.status(403).send(new Forbidden('Vous ne pouvez pas supprimer ce cra.').toJSON());
+            return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra.').toJSON());
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
