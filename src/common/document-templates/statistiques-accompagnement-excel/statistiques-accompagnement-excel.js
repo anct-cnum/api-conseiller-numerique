@@ -112,10 +112,10 @@ const statsEvolutions = (ws, statistiques) => {
     }
     ws.cell(60, 1 + y).string(year);
     const statsEvolutions = statistiques.statsEvolutions[year].sort((statEvolutionA, statEvolutionB) => statEvolutionA.mois - statEvolutionB.mois);
-    statsEvolutions.forEach((data, y) => {
+    statsEvolutions.forEach((data, z) => {
       const moisStats = mois[data.mois];
-      ws.cell(61 + y, 1 + y).string(moisStats);
-      ws.cell(61 + y, 2 + y).number(data.totalCras);
+      ws.cell(61 + z, 1 + y).string(moisStats);
+      ws.cell(61 + z, 2 + y).number(data.totalCras);
     });
   });
   return ws;
@@ -146,6 +146,7 @@ const buildExportStatistiquesExcelFileContent = (app, res, statistiques, dateDeb
   app.use(cors({ exposedHeaders: '*, Authorization' }));
   const wb = new xl.Workbook();
   let ws = wb.addWorksheet('Statistiques d\'accompagnement');
+  ws.column(1).setWidth(55);
   //Titre
   codePostal = codePostal ?? '';
   ville = ville ?? '';
