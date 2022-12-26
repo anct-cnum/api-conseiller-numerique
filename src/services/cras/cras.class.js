@@ -1,4 +1,4 @@
-const { Conflict, BadRequest } = require('@feathersjs/errors');
+const { Conflict, BadRequest, GeneralError, Forbidden } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const { Service } = require('feathers-mongodb');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
@@ -10,7 +10,7 @@ const {
   rolesGuard,
   Role,
 } = require('../../common/utils/feathers.utils');
-const { getCraById, updateCra, updateStatistiquesCra, countCraByPermanenceId } = require('./cra/repositories/cra.repository');
+const { getCraById, updateCra, updateStatistiquesCra, countCraByPermanenceId, deleteCra, deleteStatistiquesCra } = require('./cra/repositories/cra.repository');
 const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
 const { validationCra } = require('./cra/utils/validationCra');
 const { v4: validate } = require('uuid');
@@ -75,6 +75,41 @@ exports.Cras = class Cras extends Service {
         } else {
           return res.status(400).send(new BadRequest(validationCra(cra)));
         }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.delete('/cras', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const craId = req.query.craId;
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user),
+      ).then(async () => {
+        await getCraById(db)(craId).then(async cra => {
+          if (String(cra.conseiller.oid) === String(user.entity.oid)) {
+            await deleteStatistiquesCra(db)(cra).then(async () => {
+              return;
+            }).catch(error => {
+              app.get('sentry').captureException(error);
+              logger.error(error);
+              return res.status(500).send(new GeneralError('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
+            });
+            await deleteCra(db)(craId).then(() => {
+              res.send({ isDeleted: true });
+            }).catch(error => {
+              app.get('sentry').captureException(error);
+              logger.error(error);
+              return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
+            });
+          } else {
+            return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra.').toJSON());
+          }
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(404).send(new Conflict('Le cra que vous voulez supprimer n\'existe pas.').toJSON());
+        });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
