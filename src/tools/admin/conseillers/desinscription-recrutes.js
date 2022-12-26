@@ -167,8 +167,6 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 } },
                 $unset: {
                   estRecrute: '',
-                  datePrisePoste: '',
-                  dateFinFormation: '',
                   structureId: '',
                   emailCNError: '',
                   emailCN: '',
