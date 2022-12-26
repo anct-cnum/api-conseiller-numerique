@@ -138,6 +138,10 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             // eslint-disable-next-line max-len
             logger.error(`Un conseiller avec l'id: ${idPGConseiller} a une date de Rupture ${formatDate(dateRupture)} supérieure à la date de recrutement ${formatDate(miseEnRelation.dateRecrutement)}`);
             errors++;
+          } else if (structure.statut !== 'VALIDATION_COSELEC') {
+            logger.error(`La structure ${structureId} est en statut ${structure.statut} (conseiller: ${idPGConseiller})`);
+            Sentry.captureException(`La structure ${structureId} est en statut ${structure.statut} (conseiller: ${idPGConseiller})`);
+            errors++;
           } else {
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
             await updateConseillersPG(conseillerOriginal.email, false);
