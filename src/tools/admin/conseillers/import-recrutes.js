@@ -8,6 +8,7 @@ const { createMailbox, fixHomonymesCreateMailbox } = require('../../../utils/mai
 const slugify = require('slugify');
 const { DBRef } = require('mongodb');
 const bcrypt = require('bcryptjs');
+const utils = require('../../../utils/index');
 
 const configPG = {
   user: process.env.PGUSER,
@@ -86,6 +87,11 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           const countCras = await db.collection('cras').countDocuments(matchCras);
           const connection = app.get('mongodb');
           const database = connection.substr(connection.lastIndexOf('/') + 1);
+          const dernierCoselec = utils.getCoselec(structure);
+          const countMiseEnrelation = await db.collection('misesEnRelation').countDocuments({
+            'structureObj.idPG': structureId,
+            'statut': { $in: ['recrutee', 'finalisee'] },
+          });
 
           if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
             logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
@@ -141,6 +147,10 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           } else if (structure.statut !== 'VALIDATION_COSELEC') {
             logger.error(`La structure ${structureId} est en statut ${structure.statut} (conseiller: ${idPGConseiller})`);
             Sentry.captureException(`La structure ${structureId} est en statut ${structure.statut} (conseiller: ${idPGConseiller})`);
+            errors++;
+          } else if (countMiseEnrelation > dernierCoselec.nombreConseillersCoselec) {
+            logger.error(`La structure ${structureId} à dépassé le quota (conseiller: ${idPGConseiller})`);
+            Sentry.captureException(`La structure ${structureId} à dépassé le quota (conseiller: ${idPGConseiller})`);
             errors++;
           } else {
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)

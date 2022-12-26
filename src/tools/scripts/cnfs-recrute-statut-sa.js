@@ -2,6 +2,7 @@
 'use strict';
 
 const { execute } = require('../utils');
+const utils = require('../../utils/index');
 
 execute(__filename, async ({ logger, db, exit }) => {
   const conseillersRecrute =
@@ -10,11 +11,25 @@ execute(__filename, async ({ logger, db, exit }) => {
 
   for (let idSA of conseillersRecrute) {
     const structure = await db.collection('structures').findOne({ _id: idSA });
-    if (structure?.statut !== 'VALIDATION_COSELEC') {
-      logger.error(`La structure ${structure.nom} (id: ${structure.idPG}) à un statut "${structure.statut}" et à au moins 1 conseiller RECRUTE`);
+    const countMiseEnrelation = await db.collection('misesEnRelation').countDocuments({
+      'structure.$id': idSA,
+      'statut': { $in: ['recrutee', 'finalisee'] },
+    });
+    const dernierCoselec = utils.getCoselec(structure);
+    const verifSAStatut = structure?.statut !== 'VALIDATION_COSELEC';
+    const verifQuotaSA = countMiseEnrelation > dernierCoselec.nombreConseillersCoselec;
+
+    if (verifSAStatut || verifQuotaSA) {
+      if (verifSAStatut) {
+        logger.error(`La structure ${structure.nom} (id: ${structure.idPG}) à un statut "${structure.statut}" mais a pourtant au moins 1 conseiller RECRUTE`);
+      }
+      if (verifQuotaSA) {
+      // eslint-disable-next-line max-len
+        logger.error(`La structure ${structure.idPG} à dépassé le quota (${countMiseEnrelation} misesEnRelation > ${dernierCoselec.nombreConseillersCoselec} poste(s) autorisé) `);
+      }
       countError++;
     }
   }
-  logger.info(`${countError} / ${conseillersRecrute.length} erreur(s) aux total`);
+  logger.info(`${countError} / ${conseillersRecrute.length} erreur(s) au total`);
   exit();
 });
