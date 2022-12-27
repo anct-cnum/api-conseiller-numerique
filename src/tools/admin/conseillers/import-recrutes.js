@@ -89,7 +89,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           const database = connection.substr(connection.lastIndexOf('/') + 1);
           const dernierCoselec = utils.getCoselec(structure);
           const countMiseEnrelation = await db.collection('misesEnRelation').countDocuments({
-            'structureObj.idPG': structureId,
+            'structure.$id': structure._id,
             'statut': { $in: ['recrutee', 'finalisee'] },
           });
 
@@ -149,8 +149,8 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             Sentry.captureException(`La structure ${structureId} est en statut ${structure.statut} (conseiller: ${idPGConseiller})`);
             errors++;
           } else if (countMiseEnrelation > dernierCoselec.nombreConseillersCoselec) {
-            logger.error(`La structure ${structureId} à dépassé le quota (conseiller: ${idPGConseiller})`);
-            Sentry.captureException(`La structure ${structureId} à dépassé le quota (conseiller: ${idPGConseiller})`);
+            logger.error(`La structure ${structureId} a dépassé le quota (conseiller: ${idPGConseiller})`);
+            Sentry.captureException(`La structure ${structureId} a dépassé le quota (conseiller: ${idPGConseiller})`);
             errors++;
           } else {
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)

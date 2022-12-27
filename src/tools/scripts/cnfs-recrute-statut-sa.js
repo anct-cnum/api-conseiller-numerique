@@ -5,8 +5,7 @@ const { execute } = require('../utils');
 const utils = require('../../utils/index');
 
 execute(__filename, async ({ logger, db, exit }) => {
-  const conseillersRecrute =
-  await db.collection('conseillers').distinct('structureId', { statut: 'RECRUTE' });
+  const conseillersRecrute = await db.collection('conseillers').distinct('structureId', { statut: 'RECRUTE' });
   let countError = 0;
 
   for (let idSA of conseillersRecrute) {
@@ -21,11 +20,12 @@ execute(__filename, async ({ logger, db, exit }) => {
 
     if (verifSAStatut || verifQuotaSA) {
       if (verifSAStatut) {
-        logger.error(`La structure ${structure.nom} (id: ${structure.idPG}) à un statut "${structure.statut}" mais a pourtant au moins 1 conseiller RECRUTE`);
+        // eslint-disable-next-line max-len
+        logger.error(`La structure ${structure.nom} (id: ${structure.idPG}) à un statut "${structure.statut}" mais a pourtant au moins 1 conseiller SELECTIONNE || RECRUTE`);
       }
       if (verifQuotaSA) {
       // eslint-disable-next-line max-len
-        logger.error(`La structure ${structure.idPG} à dépassé le quota (${countMiseEnrelation} misesEnRelation > ${dernierCoselec.nombreConseillersCoselec} poste(s) autorisé) `);
+        logger.error(`La structure ${structure.idPG} a dépassé le quota (${countMiseEnrelation} misesEnRelation > ${dernierCoselec.nombreConseillersCoselec} poste(s) autorisé) `);
       }
       countError++;
     }
