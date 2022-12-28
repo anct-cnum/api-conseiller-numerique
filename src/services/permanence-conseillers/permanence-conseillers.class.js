@@ -237,7 +237,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user?._id, [Role.Conseiller], () => user)
       ).then(async () => {
 
-        const adressePostale = encodeURI(`${adresse.numero} ${adresse.rue} ${adresse.ville} ${adresse.codePostal}`);
+        const adressePostale = encodeURI(`${adresse.numero} ${adresse.rue} ${adresse.codePostal} ${adresse.ville}`);
         const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}`;
 
         try {

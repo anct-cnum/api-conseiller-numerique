@@ -90,6 +90,7 @@ const statsReorientations = statistiques => [
 ];
 
 const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin, type, idType, codePostal, ville, isAdminCoop) => [
+  '\ufeff', //ufeff pour BOM UTF-8
   `Statistiques ${type} ${codePostal ?? ''} ${ville ?? ''} ${idType ?? ''} ${formatDate(dateDebut).toLocaleString()}-${formatDate(dateFin).toLocaleString()}\n`,
   ...general(statistiques),
   ...statsThemes(statistiques),
