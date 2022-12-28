@@ -55,6 +55,8 @@ const {
   exportStatistiquesQueryToSchema
 } = require('./export-statistiques/utils/export-statistiques.utils');
 const { buildExportStatistiquesCsvFileContent } = require('../../common/document-templates/statistiques-accompagnement-csv/statistiques-accompagnement-csv');
+const { buildExportStatistiquesExcelFileContent
+} = require('../../common/document-templates/statistiques-accompagnement-excel/statistiques-accompagnement-excel');
 const { geolocatedConseillers, geolocatedStructure, geolocatedPermanence } = require('./geolocalisation/core/geolocalisation.core');
 const { geolocationRepository } = require('./geolocalisation/repository/geolocalisation.repository');
 const { createSexeAgeBodyToSchema, validateCreateSexeAgeSchema, conseillerGuard } = require('./create-sexe-age/utils/create-sexe-age.util');
@@ -469,6 +471,54 @@ exports.Conseillers = class Conseillers extends Service {
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
           // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
+        );
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseillers/statistiques.xlsx', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = exportStatistiquesQueryToSchema(req.query);
+      const getUserById = userAuthenticationRepository(db);
+      const userId = userIdFromRequestJwt(req);
+      const conseillerSubordonne = idSubordonne(req);
+      let conseiller = {};
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Conseiller, Role.Coordinateur], getUserById),
+        schemaGuard(validateExportStatistiquesSchema(query))
+      ).then(async () => {
+        const userById = await getUserById(userId);
+        const { getConseillerAssociatedWithUser, getCoordinateur, getConseiller } = exportStatistiquesRepository(db);
+        if (conseillerSubordonne !== null) {
+          conseiller = await getCoordinateur(userById, conseillerSubordonne) ?
+            await getConseiller(conseillerSubordonne) : await getConseillerAssociatedWithUser(userById);
+        } else {
+          conseiller = await getConseillerAssociatedWithUser(userById);
+        }
+        let statsQuery = {
+          'conseiller.$id': conseiller._id,
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
+        };
+        if (query?.codePostal !== '') {
+          statsQuery = {
+            ...statsQuery,
+            'cra.codePostal': query?.codePostal
+          };
+        }
+        if (query?.ville !== '') {
+          statsQuery = {
+            ...statsQuery,
+            'cra.nomCommune': query?.ville
+          };
+        }
+        const isAdminCoop = checkRoleAdminCoop(userById);
+        const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
+
+        buildExportStatistiquesExcelFileContent(
+          app, res, stats, query?.dateDebut, query?.dateFin,
+          `${conseiller?.prenom} ${conseiller?.nom}`,
+          query?.idType, query?.codePostal, query?.ville,
+          isAdminCoop
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

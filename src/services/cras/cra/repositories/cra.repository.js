@@ -56,11 +56,31 @@ const countCraByPermanenceId = db => async permanenceId => {
   return await db.collection('cras').countDocuments({ 'permanence.$id': new ObjectId(permanenceId) });
 };
 
+const insertDeleteCra = db => async craId => {
+  await db.collection('cras_deleted').insertOne({
+    '_id': new ObjectId(craId),
+    'deletedAt': new Date()
+  });
+};
+
 const deleteCra = db => async craId => {
   await db.collection('cras').deleteOne({
     _id: new ObjectId(craId)
   });
-  //TODO Manipulation statistiques
+  await insertDeleteCra(db)(craId);
+};
+
+const deleteStatistiquesCra = db => async cra => {
+  const options = { upsert: true };
+  const year = cra.cra.dateAccompagnement.getUTCFullYear();
+  const month = cra.cra.dateAccompagnement.getMonth();
+  const stats = await getStatsConseillerCras(db)(new ObjectId(cra.conseiller.oid));
+  let total = stats[String(year)]?.find(stat => stat.mois === month)?.totalCras;
+  await deleteLigneCra(db)(year, month, stats._id, options);
+  if (total > 1) {
+    await updateLigneCra(db)(year, month, total - 1, stats._id, options);
+  }
+
 };
 
 module.exports = {
@@ -68,5 +88,7 @@ module.exports = {
   updateCra,
   updateStatistiquesCra,
   countCraByPermanenceId,
+  deleteStatistiquesCra,
   deleteCra,
+  insertDeleteCra,
 };

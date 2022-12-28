@@ -31,6 +31,9 @@ const { getStatistiquesToExport } = require('./export-statistiques/core/export-s
 const { exportStatistiquesRepository } = require('./export-statistiques/repositories/export-statistiques.repository');
 const { statsRepository } = require('./stats.repository');
 const departementsRegion = require('../../../data/imports/departements-region.json');
+const {
+  buildExportStatistiquesExcelFileContent
+} = require('../../common/document-templates/statistiques-accompagnement-excel/statistiques-accompagnement-excel');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -335,7 +338,7 @@ exports.Stats = class Stats extends Service {
       const query = exportStatistiquesQueryToSchema(req.query);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur],
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
           userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
@@ -368,6 +371,48 @@ exports.Stats = class Stats extends Service {
           `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, query.ville, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
+        );
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/stats/admincoop/statistiques.xlsx', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const query = exportStatistiquesQueryToSchema(req.query);
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
+          userAuthenticationRepository(db)),
+        schemaGuard(validateExportStatistiquesSchema(query))
+      ).then(async () => {
+        let ids = [];
+        let userFinal = {};
+        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
+        if (user.roles.includes(Role.Prefet)) {
+          userFinal = await db.collection('users').findOne({ 'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
+        } else {
+          userFinal = user;
+        }
+
+        if (query.type !== 'structure') {
+          ids = query.conseillerIds !== undefined ? query.conseillerIds.split(',').map(id => new ObjectID(id)) : query.conseillerIds;
+        } else {
+          const getUserById = userAuthenticationRepository(db);
+          const { getStructureAssociatedWithUser } = exportStatistiquesRepository(db);
+
+          const structure = await getStructureAssociatedWithUser(await getUserById(userFinal._id));
+          const structureId = structure._id;
+          ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
+        }
+        const { stats, type, idType } = await getStatistiquesToExport(
+          query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
+          exportStatistiquesRepository(db),
+          statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
+        );
+        buildExportStatistiquesExcelFileContent(
+          app, res, stats, query.dateDebut, query.dateFin,
+          type, idType, query.codePostal, query.ville,
+          statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
