@@ -174,7 +174,9 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   resetPasswordCNError: '',
                   codeRegionStructure: '',
                   codeDepartementStructure: '',
-                  hasPermanence: ''
+                  hasPermanence: '',
+                  telephonePro: '',
+                  emailPro: ''
                 }
               });
 
