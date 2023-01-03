@@ -146,7 +146,7 @@ const archiverLaSuppression = app => async (tableauCandidat, user, motif, action
         promises.push(new Promise(async resolve => {
           try {
             // eslint-disable-next-line no-unused-vars
-            const { email, telephone, nom, prenom, telephonePro, emailPro, ...conseiller } = profil;
+            const { email, telephone, nom, prenom, telephonePro, emailPro, supHierarchique, ...conseiller } = profil;
             const objAnonyme = {
               deletedAt: new Date(),
               motif: motif,

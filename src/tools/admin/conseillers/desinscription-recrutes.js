@@ -176,7 +176,8 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   codeDepartementStructure: '',
                   hasPermanence: '',
                   telephonePro: '',
-                  emailPro: ''
+                  emailPro: '',
+                  supHierarchique: ''
                 }
               });
 
