@@ -205,7 +205,10 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               structureId: structure._id,
               userCreated: true
             }, $unset: {
-              userCreationError: ''
+              userCreationError: '',
+              supHierarchique: '',
+              telephonePro: '',
+              emailPro: ''
             } });
             const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerOriginal._id });
 
