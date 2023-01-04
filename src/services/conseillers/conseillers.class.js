@@ -1076,5 +1076,47 @@ exports.Conseillers = class Conseillers extends Service {
         }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
+
+    app.patch('/conseillers/updateContratActif/:id', async (req, res) => {
+      checkAuth(req, res);
+      const userId = userIdFromRequestJwt(req);
+      const getUserById = userAuthenticationRepository(db);
+      const idConseiller = new ObjectId(req.params.id);
+
+      let body = req.body;
+      body.dateFin = body.dateFin !== 'null' ? new Date(body.dateFin) : null;
+      body.dateDebut = new Date(body.dateDebut);
+
+      const schema = Joi.object({
+        typeContrat: Joi.string().required().error(new Error('Le type de contrat est invalide')),
+        dateDebut: Joi.date().required().error(new Error('La date de début est invalide')),
+        dateFin: body.typeContrat === 'CDI' ? Joi.optional().allow(null) : Joi.date().optional().allow(null).error(new Error('La date de fin est invalide')),
+      }).validate(body);
+
+      if (schema.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
+      }
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Conseiller], getUserById)
+      ).then(async () => {
+        try {
+          const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+          if (conseiller?.contrats) {
+            conseiller.contrats.push(body);
+          } else {
+            conseiller.contrats = [body];
+          }
+          await app.service('conseillers').patch(idConseiller, conseiller);
+          return res.send({ success: true });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
   }
 };
