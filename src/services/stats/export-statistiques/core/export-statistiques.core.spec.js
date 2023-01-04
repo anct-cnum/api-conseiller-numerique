@@ -97,7 +97,7 @@ const statistiquesConseiller = {
       valeur: 23
     },
     {
-      nom: 'autre',
+      nom: 'autre lieu',
       valeur: 0
     }
   ],
@@ -291,7 +291,7 @@ const statistiquesNationales = {
       valeur: 230
     },
     {
-      nom: 'autre',
+      nom: 'autre lieu',
       valeur: 0
     }
   ],

@@ -51,7 +51,7 @@ const statsLieux = (ws, statistiques, isAdminCoop) => {
     'À domicile',
     'À distance',
     'Lieu de rattachement',
-    'Autre'
+    'Autre lieu'
   ].forEach((statLieux, i) => {
     ws.cell(34 + i, 1).string(statLieux);
     ws.cell(34 + i, 2).number(statistiques.statsLieux[i].valeur);

@@ -92,7 +92,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           valeur: 23
         },
         {
-          nom: 'autre',
+          nom: 'autre lieu',
           valeur: 0
         }
       ],
@@ -258,7 +258,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'À domicile;0\n' +
       'À distance;0\n' +
       'Lieu de rattachement;23\n' +
-      'Autre;0\n' +
+      'Autre lieu;0\n' +
       '\n' +
       'Durée des accompagnements\n' +
       'Moins de 30 minutes;4\n' +
