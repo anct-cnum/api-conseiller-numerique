@@ -77,7 +77,16 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     const database = connection.substr(connection.lastIndexOf('/') + 1);
     const conseiller = await db.collection('conseillers').findOne({ _id: idCNFS });
     const structure = await db.collection('structures').findOne({ _id: nouvelleSA });
-
+    //changement de structure dans le contrat en cours
+    if (conseiller?.contrats) {
+      for (let contrat of conseiller.contrats) {
+        if (new Date(contrat.dateDebut) <= new Date() && contrat.typeContrat === 'CDI') {
+          contrat.structureId = nouvelleSA;
+        } else if (new Date(contrat.dateDebut) <= new Date() && new Date(contrat.dateFin) >= new Date()) {
+          contrat.structureId = nouvelleSA;
+        }
+      }
+    }
     await db.collection('misesEnRelation').insertOne({
       conseiller: new DBRef('conseillers', idCNFS, database),
       structure: new DBRef('structures', nouvelleSA, database),
