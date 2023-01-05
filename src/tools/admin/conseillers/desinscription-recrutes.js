@@ -153,7 +153,18 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 dateRupture: formatDateDb(dateRupture),
                 motifRupture
               });
-
+              //Recherche du contrat actif afin de mettre une date de fin
+              const contrats = [];
+              if (conseillerCoop?.contrats) {
+                for (let contrat of conseillerCoop?.contrats) {
+                  if (new Date(contrat.dateDebut) <= new Date() && contrat.typeContrat === 'CDI') {
+                    contrat.dateFin = formatDateDb(dateRupture);
+                  } else if (new Date(contrat.dateDebut) <= new Date() && new Date(contrat.dateFin) >= new Date()) {
+                    contrat.dateFin = formatDateDb(dateRupture);
+                  }
+                  contrats.push(contrat);
+                }
+              }
               //Mise à jour du conseiller
               await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
                 $set: {
@@ -163,7 +174,8 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 $push: { ruptures: {
                   structureId: structure._id,
                   dateRupture: formatDateDb(dateRupture),
-                  motifRupture
+                  motifRupture,
+                  contrats
                 } },
                 $unset: {
                   estRecrute: '',

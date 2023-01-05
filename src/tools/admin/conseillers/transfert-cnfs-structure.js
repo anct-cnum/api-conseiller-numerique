@@ -59,13 +59,14 @@ const majMiseEnRelationStructureNouvelle = (db, app) => async (idCNFS, nouvelleS
       });
   }
 };
-const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination) => {
+const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination, contrats) => {
   await db.collection('conseillers').updateOne({ _id: idCNFS }, {
     $set: {
       structureId: nouvelleSA,
       codeRegionStructure: structureDestination.codeRegion,
       codeDepartementStructure: structureDestination.codeDepartement,
       hasPermanence: false,
+      contrats,
     },
     $push: { ruptures: {
       structureId: ancienneSA,
@@ -236,11 +237,27 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     exit(`La structure destinataire est seulement autorisé à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recruté(s)`);
     return;
   }
+
+  //Recherche du contrat actif afin de mettre une date de fin
+  const contrats = [];
+  if (cnfsRecrute?.contrats) {
+    for (let contrat of cnfsRecrute?.contrats) {
+      if (ancienneSA === contrat.structureId) {
+        if (new Date(contrat.dateDebut) <= new Date() && contrat.typeContrat === 'CDI') {
+          contrat.dateFin = dateRupture;
+        } else if (new Date(contrat.dateDebut) <= new Date() && new Date(contrat.dateFin) >= new Date()) {
+          contrat.dateFin = dateRupture;
+        }
+      }
+      contrats.push(contrat);
+    }
+  }
+
   try {
     await majMiseEnRelationStructureRupture(db)(idCNFS, nouvelleSA, ancienneSA);
     await historiseCollectionRupture(db)(idCNFS, ancienneSA, dateRupture, motifRupture);
     await majMiseEnRelationStructureNouvelle(db, app)(idCNFS, nouvelleSA, dateEmbauche, structureDestination);
-    await majDataCnfsStructureNouvelle(db)(idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination);
+    await majDataCnfsStructureNouvelle(db)(idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination, contrats);
     await majConseillerObj(db)(idCNFS);
     await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateEmbauche);
     await updatePermanences(db)(idCNFS);
