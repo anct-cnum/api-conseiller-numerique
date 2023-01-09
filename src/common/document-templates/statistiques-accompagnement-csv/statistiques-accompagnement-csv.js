@@ -30,8 +30,8 @@ const statsLieux = (statistiques, isAdminCoop) => [
   ...[
     'À domicile',
     'À distance',
-    'Lieu de rattachement',
-    'Autre'
+    'Lieu d\'activité',
+    'Autre lieu'
   ].map((statLieux, index) => `${statLieux};${statistiques.statsLieux[index].valeur}`),
   ''
 ];
