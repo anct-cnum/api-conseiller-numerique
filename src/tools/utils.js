@@ -89,8 +89,8 @@ module.exports = {
       let launchTime = new Date().getTime();
       await job(jobComponents);
       let duration = dayjs
-        .utc(new Date().getTime() - launchTime)
-        .format('HH:mm:ss.SSS');
+      .utc(new Date().getTime() - launchTime)
+      .format('HH:mm:ss.SSS');
       logger.info(`Completed in ${duration}`);
       exit();
     } catch (e) {
