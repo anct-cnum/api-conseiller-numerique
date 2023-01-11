@@ -2152,6 +2152,51 @@ describe('lieux de médiation numérique', () => {
     ]);
   });
 
+  it('devrait ne remonter que les aidants non anonymes', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' },
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3ggg', prenom: 'Jean', nom: 'Anonyme', emailPro: 'jean.anonyme@gouv.fr', nonAffichageCarto: true }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
   it('devrait avoir aucun doublon d\'aidant de même id', async () => {
     const permanence = {
       _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',

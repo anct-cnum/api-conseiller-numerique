@@ -100,7 +100,7 @@ const aidantsIfAny = aidants =>
   // Retire les aidants souhaitant être "anonyme"
   aidants?.filter(aidant => aidant.nonAffichageCarto !== true)?.length > 0 ? {
     aidants:
-    removeDuplicates(aidants)
+    removeDuplicates(aidants.filter(aidant => aidant.nonAffichageCarto !== true))
     .map(aidant => ({
       aidantId: aidant._id,
       ...formatNomAidant(aidant.prenom, aidant.nom),
