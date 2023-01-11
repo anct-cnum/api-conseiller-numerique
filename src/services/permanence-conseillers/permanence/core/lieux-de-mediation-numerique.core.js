@@ -1,9 +1,18 @@
+/* eslint-disable new-cap */
+
 const { toOsmOpeningHours, OSM_DAYS_OF_WEEK } = require('../utils/osm-opening-hours/osm-opening-hours');
+const { Pivot, Adresse, Localisation, Contact, ConditionsAcces, Services, LabelsNationaux, Url, Service,
+  LabelNational, ConditionAcces, toSchemaLieuMediationNumerique, Id, Nom, NomError, IdError, CommuneError, CodePostalError, VoieError
+} = require('@gouvfr-anct/lieux-de-mediation-numerique');
+const { AidantsError } = require('./aidants-error');
 
 // eslint-disable-next-line max-len
 const URL_REGEXP = /^(?:https?:\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4])|(?:[a-z\u00a1-\uffff\d]-*)*[a-z\u00a1-\uffff\d]+(?:\.(?:[a-z\u00a1-\uffff\d]-*)*[a-z\u00a1-\uffff\d]+)*\.[a-z\u00a1-\uffff]{2,})(?::\d{2,5})?(?:\/\S*)?$/;
 
 const PHONE_REGEX = /^(?:(?:\+)(33|590|596|594|262|269))(?:\d{3}){3}$/;
+
+// eslint-disable-next-line max-len
+const COURRIEL_REGEXP = /^(?:(?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@(?:(?:\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}])|(?:(?:[A-Za-zÀ-ÖØ-öø-ÿ\-\d]+\.)+[a-zA-Z]{2,}))$/;
 
 const removeAllSpaces = string => string?.replaceAll(' ', '') ?? null;
 
@@ -19,67 +28,28 @@ const removeAllSpacesAndDuplicateHttpPrefix = siteWeb => removeAllSpaces(siteWeb
 const addMissingHttpsPrefix = siteWeb =>
   siteWeb && (siteWeb.startsWith('https://') || siteWeb.startsWith('http://')) ? siteWeb : `https://${siteWeb}`;
 
-const removeSuperfluousSpaces = string => string?.trim().replaceAll(/\s+/g, ' ') ?? null;
+const formatUrl = url => addMissingHttpsPrefix(removeAllSpacesAndDuplicateHttpPrefix(url));
 
-const nullOrEmpty = string => string === null || string === '';
+const removeSuperfluousSpaces = string => string?.trim().replaceAll(/\s+/g, ' ') ?? '';
 
-const invalidLieux = lieu =>
-  !nullOrEmpty(lieu.id) &&
-  !nullOrEmpty(lieu.nom) &&
-  !nullOrEmpty(lieu.commune) &&
-  !nullOrEmpty(lieu.code_postal) &&
-  !nullOrEmpty(lieu.adresse) &&
-  lieu.hasOwnProperty('aidants') &&
-  !nullOrEmpty(lieu.structureId);
+const keepDefined = lieu => lieu !== undefined;
 
 const removeNullStrings = string => string
 .replaceAll('null null', '')
 .replaceAll('null ', '');
 
-const pivotIfAny = pivot => pivot ? {
-  pivot: removeAllSpaces(pivot)
-} : {};
-
-const priseRdvIfAny = priseRdv => {
-  const fixedPriseRdv = addMissingHttpsPrefix(removeAllSpacesAndDuplicateHttpPrefix(priseRdv));
-
-  return fixedPriseRdv && URL_REGEXP.test(fixedPriseRdv) ? {
-    prise_rdv: fixedPriseRdv
-  } : {};
-};
-
-const coordonneesGPSIfAny = coordinates => coordinates ? {
-  latitude: coordinates[1],
-  longitude: coordinates[0]
-} : {};
+const priseRdvIfAny = priseRdv => priseRdv && URL_REGEXP.test(priseRdv) ? { prise_rdv: Url(priseRdv) } : {};
 
 const checkLengthPhone = telephone =>
   PHONE_REGEX.test(telephone) || (telephone.startsWith('0') && telephone.length === 10);
 
-const telephoneIfAny = telephone => {
-  const formattedTel = formatPhone(telephone);
+const telephoneIfAny = telephone => telephone && checkLengthPhone(telephone) ? { telephone } : {};
 
-  return formattedTel && checkLengthPhone(formattedTel) ? {
-    telephone: formattedTel
-  } : {};
-};
+const courrielIfAny = courriel => courriel && COURRIEL_REGEXP.test(courriel) ? { courriel } : {};
 
-const courrielIfAny = courriel => courriel ? {
-  courriel: removeAllSpaces(courriel)
-} : {};
+const siteWebIfAny = siteWeb => siteWeb && URL_REGEXP.test(siteWeb) ? { site_web: [siteWeb] } : {};
 
-const siteWebIfAny = siteWeb => {
-  const fixedSiteWeb = addMissingHttpsPrefix(removeAllSpacesAndDuplicateHttpPrefix(siteWeb));
-
-  return fixedSiteWeb && URL_REGEXP.test(fixedSiteWeb) ? {
-    site_web: fixedSiteWeb
-  } : {};
-};
-
-const toTimeTable = horaires => (horaires ?? []).map(horaire => [
-  horaire.matin,
-  horaire.apresMidi
-]
+const toTimeTable = horaires => (horaires ?? []).map(horaire => [horaire.matin, horaire.apresMidi]
 .flat()
 .filter(horaire => horaire !== 'Fermé'))
 .map(horaire =>
@@ -91,30 +61,23 @@ const toTimeTable = horaires => (horaires ?? []).map(horaire => [
   osmHours
 })).filter(openingHour => openingHour.osmHours !== '');
 
-const osmOpeningHoursIfAny = horaires =>
-  horaires.length === 0 ? {} : {
-    horaires: toOsmOpeningHours(horaires)
-  };
+const horairesIfAny = horaires => horaires ? { horaires } : {};
 
 const CNFS_COMMON_SERVICES = [
-  'Prendre en main un smartphone ou une tablette',
-  'Prendre en main un ordinateur',
-  'Utiliser le numérique au quotidien',
-  'Approfondir ma culture numérique'
-].join(', ');
+  Service.PrendreEnMainUnSmartphoneOuUneTablette,
+  Service.PrendreEnMainUnOrdinateur,
+  Service.UtiliserLeNumerique,
+  Service.ApprofondirMaCultureNumerique
+];
 
-const dateMajIfAny = updatedAt => updatedAt ? {
-  date_maj: updatedAt.toISOString().substring(0, 10)
-} : {};
-
-
-const labelsNationauxIfAny = structure => ({
-  labels_nationaux: [
-    'CNFS',
-    ...(structure?.estLabelliseAidantsConnect === 'OUI') ? ['Aidants Connect'] : [],
-    ...(structure?.estLabelliseFranceServices === 'OUI') ? ['France Services'] : []
-  ].join(', ')
-});
+const labelsNationaux = structure =>
+  ({
+    labels_nationaux: LabelsNationaux([
+      LabelNational.CNFS,
+      ...(structure?.estLabelliseAidantsConnect === 'OUI' ? [LabelNational.AidantsConnect] : []),
+      ...(structure?.estLabelliseFranceServices === 'OUI' ? [LabelNational.FranceServices] : [])
+    ])
+  });
 
 const formatNomAidant = (prenom, nom) => ({
   nom: (prenom + ' ' + nom).toLowerCase().replace(/(^\w{1})|([\s,-]+\w{1})/g, letter => letter.toUpperCase())
@@ -129,44 +92,97 @@ const removeDuplicates = array => {
   });
 };
 
+const throwNoAidantsError = () => {
+  throw new AidantsError();
+};
+
 const aidantsIfAny = aidants =>
   // Retire les aidants souhaitant être "anonyme"
   aidants?.filter(aidant => aidant.nonAffichageCarto !== true)?.length > 0 ? {
     aidants:
-    removeDuplicates(aidants)
+    removeDuplicates(aidants.filter(aidant => aidant.nonAffichageCarto !== true))
     .map(aidant => ({
       aidantId: aidant._id,
       ...formatNomAidant(aidant.prenom, aidant.nom),
-      ...courrielIfAny(aidant.emailPro),
-      ...telephoneIfAny(aidant.telephonePro)
+      ...courrielIfAny(removeAllSpaces(aidant.emailPro)),
+      ...telephoneIfAny(formatPhone(aidant.telephonePro))
     }))
     // eslint-disable-next-line no-nested-ternary
     .sort((aidant1, aidant2) => (aidant1.nom > aidant2.nom) ? 1 : ((aidant2.nom > aidant1.nom) ? -1 : 0))
+  } : throwNoAidantsError();
+
+const localisationIfAny = coordinates =>
+  coordinates !== undefined ? {
+    localisation: Localisation({
+      latitude: coordinates[1],
+      longitude: coordinates[0]
+    })
   } : {};
 
+const REQUIRED_FIELDS_ERRORS = [
+  NomError,
+  IdError,
+  CommuneError,
+  CodePostalError,
+  VoieError,
+  AidantsError
+];
+
+const noInvalidSiret = siret =>
+  siret === '' ||
+  siret === null ||
+  siret.length !== 14 ?
+    '00000000000000' :
+    siret;
+
+const formatCodePostal = codePostal => removeAllSpaces(codePostal)?.slice(0, 5);
+
+const formatCommune = ville => removeSuperfluousSpaces(
+  ville
+  ?.replace('.', '')
+  .replace(/\(.*\)/gu, '')
+  .replace(/.*,/gu, '')
+);
+
 const lieuxDeMediationNumerique = async ({ getPermanences }) =>
-  (await getPermanences()).map(permanence => ({
-    id: permanence._id,
-    nom: removeSuperfluousSpaces(permanence.nomEnseigne),
-    commune: removeSuperfluousSpaces(permanence.adresse?.ville),
-    code_postal: removeAllSpaces(permanence.adresse?.codePostal),
-    adresse: removeSuperfluousSpaces(removeNullStrings([permanence.adresse.numeroRue, permanence.adresse.rue].join(' '))),
-    ...coordonneesGPSIfAny(permanence.location?.coordinates),
-    ...telephoneIfAny(permanence.numeroTelephone),
-    ...courrielIfAny(permanence.email),
-    ...siteWebIfAny(permanence.siteWeb),
-    ...osmOpeningHoursIfAny(toTimeTable(permanence.horaires)),
-    source: 'conseiller-numerique',
-    ...dateMajIfAny(permanence.updatedAt),
-    services: CNFS_COMMON_SERVICES,
-    conditions_access: 'Gratuit',
-    ...labelsNationauxIfAny(permanence.structure),
-    ...priseRdvIfAny(permanence.structure?.urlPriseRdv),
-    ...pivotIfAny(permanence.siret),
-    structureId: permanence.structure?._id,
-    structureNom: permanence.structure?.nom,
-    ...aidantsIfAny(permanence.aidants),
-  })).filter(invalidLieux);
+  (await getPermanences()).map(permanence => {
+    try {
+      return {
+        ...toSchemaLieuMediationNumerique({
+          id: Id(permanence._id),
+          pivot: Pivot(noInvalidSiret(removeAllSpaces(permanence.siret))),
+          nom: Nom(removeSuperfluousSpaces(permanence.nomEnseigne)),
+          adresse: Adresse({
+            voie: removeSuperfluousSpaces(removeNullStrings([permanence.adresse.numeroRue, permanence.adresse.rue].join(' '))),
+            code_postal: formatCodePostal(permanence.adresse?.codePostal),
+            commune: formatCommune(permanence.adresse?.ville),
+          }),
+          ...localisationIfAny(permanence.location?.coordinates),
+          contact: Contact({
+            ...telephoneIfAny(formatPhone(permanence.numeroTelephone)),
+            ...courrielIfAny(removeAllSpaces(permanence.email)),
+            ...siteWebIfAny(formatUrl(permanence.siteWeb))
+          }),
+          ...horairesIfAny(toOsmOpeningHours(toTimeTable(permanence.horaires))),
+          source: 'conseiller-numerique',
+          date_maj: permanence.updatedAt,
+          services: Services(CNFS_COMMON_SERVICES),
+          conditions_acces: ConditionsAcces([ConditionAcces.Gratuit]),
+          ...labelsNationaux(permanence.structure),
+          ...priseRdvIfAny(formatUrl(permanence.structure?.urlPriseRdv))
+        }),
+        structureId: permanence.structure?._id,
+        structureNom: permanence.structure?.nom,
+        ...aidantsIfAny(permanence.aidants),
+      };
+    } catch (error) {
+      if (REQUIRED_FIELDS_ERRORS.some(requiredFieldError => error instanceof requiredFieldError)) {
+        return undefined;
+      }
+
+      throw error;
+    }
+  }).filter(keepDefined);
 
 module.exports = {
   lieuxDeMediationNumerique,
