@@ -15,8 +15,8 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
   return new Promise(async (resolve, reject) => {
     const conseillerDoc = await db.collection('conseillers').findOne({ _id: _id });
     try {
-      //Bridage si doublon recruté => pas de création de compte candidat
-      const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: 'RECRUTE', email: conseillerDoc.email });
+      //Bridage si doublon recruté (ou en rupture : le process fait un switch compte coop en candidat)=> pas de création de compte candidat
+      const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: { $in: ['RECRUTE', 'RUPTURE'] }, email: conseillerDoc.email });
       const userExists = await db.collection('users').countDocuments({ name: conseillerDoc.email });
 
       if ((hasUserCoop === 0) && (userExists === 0)) {
