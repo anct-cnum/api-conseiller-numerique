@@ -169,13 +169,13 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
               await db.collection('conseillers').updateOne({ _id: conseillerCoop._id }, {
                 $set: {
                   disponible: true,
-                  statut: 'RUPTURE'
+                  statut: 'RUPTURE',
+                  contrats
                 },
                 $push: { ruptures: {
                   structureId: structure._id,
                   dateRupture: formatDateDb(dateRupture),
-                  motifRupture,
-                  contrats
+                  motifRupture
                 } },
                 $unset: {
                   estRecrute: '',
