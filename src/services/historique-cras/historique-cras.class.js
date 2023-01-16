@@ -17,7 +17,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
     app.get('/historique-cras/liste', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      const { theme, canal, type, sort, page } = req.query;
+      const { theme, canal, type, dateDebut, dateFin, codePostal, ville, sort, page } = req.query;
       let query = {
         'conseiller.$id': new ObjectId(user.entity.oid),
       };
@@ -30,10 +30,20 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       if (type !== 'null') {
         query = { ...query, 'cra.activite': type };
       }
+      if (dateDebut !== 'null' || dateFin !== 'null') {
+        query = { ...query, 'cra.dateAccompagnement': { '$gte': new Date(dateDebut), '$lte': new Date(dateFin) } };
+      }
+      if (codePostal !== 'null' && codePostal !== '') {
+        query = { ...query, 'cra.codePostal': codePostal };
+      }
+      if (ville !== 'null' && ville !== '') {
+        query = { ...query, 'cra.nomCommune': ville };
+      }
       let sorting = { 'cra.dateAccompagnement': -1, 'createdAt': -1 };
       if (sort !== 'null') {
         sorting = { 'updatedAt': sort === 'asc' ? 1 : -1 };
       }
+
       try {
         let items = {};
         const cras = await db.collection('cras').find(query).sort(sorting)
