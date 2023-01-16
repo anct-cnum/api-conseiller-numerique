@@ -36,8 +36,10 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
       const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
       const messageConseiller = emails.getEmailMessageByTemplateName('mailRelanceM+1,5Conseiller');
       const messageStructure = emails.getEmailMessageByTemplateName('mailRelanceM+1,5Structure');
+      const messageSupHierarchique = emails.getEmailMessageByTemplateName('mailRelanceM+1,5SupHierarchique');
       await messageConseiller.send(conseiller);
       await messageStructure.send(conseiller, structure.contact.email);
+      await messageSupHierarchique.send(conseiller);
       if (delai) {
         await delay(delai);
       }
