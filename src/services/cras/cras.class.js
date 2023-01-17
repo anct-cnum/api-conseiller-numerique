@@ -96,8 +96,9 @@ exports.Cras = class Cras extends Service {
               return res.status(500).send(new GeneralError('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
             });
             await deleteCra(db)(craId).then(() => {
-              res.send({ isDeleted: true });
+              return res.send({ isDeleted: true });
             }).catch(error => {
+              error.message = `${error.message} (conseillerId: ${user.entity.oid})`;
               app.get('sentry').captureException(error);
               logger.error(error);
               return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
