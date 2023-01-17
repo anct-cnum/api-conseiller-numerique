@@ -38,6 +38,9 @@ exports.Cras = class Cras extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await getCraById(db)(craId).then(cra => {
+          if (cra === null) {
+            return res.status(404).send(new Conflict('Le cra n\'a pas pu être chargé ou a été supprimé.').toJSON());
+          }
           return res.send({ cra });
         }).catch(error => {
           app.get('sentry').captureException(error);
