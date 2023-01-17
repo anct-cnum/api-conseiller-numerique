@@ -1,7 +1,6 @@
 const Joi = require('joi');
 
 const validationCra = ObjectCra => {
-  console.log('ObjectCra:', ObjectCra);
   const schema = Joi.object({
     codePostal: Joi.string().required().min(5).max(5).error(new Error('Le code postal est invalide')),
     nomCommune: Joi.string().required().error(new Error('Le nom de la commune est invalide')),
