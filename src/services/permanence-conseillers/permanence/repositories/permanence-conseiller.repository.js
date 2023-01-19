@@ -68,7 +68,7 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
   } },
   { $sort: { 'codePostalTri': 1, 'villeTri': 1, 'nomTri': 1, '_id': 1 } }
 ], {
-  $collation: { locale: 'fr' },
+  collation: { locale: 'fr' },
   allowDiskUse: true
 }).toArray();
 
