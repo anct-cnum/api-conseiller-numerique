@@ -3,7 +3,7 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   const render = async conseiller => {
-    return mailer.render(__dirname, templateName, { conseiller });
+    return mailer.render(__dirname, 'mailRelanceM+1Structure', { conseiller });
   };
 
   return {

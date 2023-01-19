@@ -33,10 +33,10 @@ const invitationHubEspaceCoop = require('./hubs/creationCompteHub');
 const bienvenueCompteHub = require('./hubs/bienvenueCompteHub');
 const mailRelanceM1Conseiller = require('./conseillers/mailRelanceM+1Conseiller');
 const mailRelanceM1Structure = require('./structures/mailRelanceM+1Structure');
-const mailRelanceM1SupHierarchique = require('./supHierarchique/mailRelanceM+1SupHierarchique');
+const mailRelanceM1SupHierarchique = require('./structures/mailRelanceM+1SupHierarchique');
 const mailRelanceM15Conseiller = require('./conseillers/mailRelanceM+1,5Conseiller');
 const mailRelanceM15Structure = require('./structures/mailRelanceM+1,5Structure');
-const mailRelanceM15SupHierarchique = require('./supHierarchique/mailRelanceM+1,5SupHierarchique');
+const mailRelanceM15SupHierarchique = require('./structures/mailRelanceM+1,5SupHierarchique');
 const conseillerTransfertStructure = require('./conseillers/conseillerTransfertStructure');
 
 module.exports = (db, mailer, app, logger) => {
