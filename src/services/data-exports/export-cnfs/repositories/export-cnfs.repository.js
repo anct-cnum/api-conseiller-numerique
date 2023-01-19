@@ -134,7 +134,6 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
 const getCnfsWithoutCRA = db => async dateMoins15jours => await db.collection('conseillers').aggregate([
   {
     $match: {
-      'groupeCRA': { $eq: 4 },
       'statut': { $eq: 'RECRUTE' },
       'estCoordinateur': { $exists: false },
       'groupeCRAHistorique': {
@@ -168,6 +167,7 @@ const getCnfsWithoutCRA = db => async dateMoins15jours => await db.collection('c
       'structure.idPG': 1,
       'structure.siret': 1,
       'structure.nom': 1,
+      'structure.codePostal': 1,
     }
   }
 ]).toArray();
