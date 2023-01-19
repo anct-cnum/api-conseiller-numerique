@@ -67,7 +67,10 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
     nomTri: { $trim: { input: '$nomEnseigne' } }
   } },
   { $sort: { 'codePostalTri': 1, 'villeTri': 1, 'nomTri': 1, '_id': 1 } }
-], { $collation: { locale: 'fr' } }).toArray();
+], {
+  $collation: { locale: 'fr' },
+  allowDiskUse: true
+}).toArray();
 
 const getPermanenceById = db => async permanenceId => {
   return await db.collection('permanences').findOne({ '_id': new ObjectId(permanenceId) });
