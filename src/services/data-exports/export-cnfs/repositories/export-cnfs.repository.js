@@ -135,7 +135,7 @@ const getCnfsWithoutCRA = db => async dateMoins15jours => await db.collection('c
   {
     $match: {
       'statut': { $eq: 'RECRUTE' },
-      'estCoordinateur': { $exists: false },
+      'estCoordinateur': { $ne: true },
       'groupeCRAHistorique': {
         $elemMatch: {
           'nbJourDansGroupe': { $exists: false },
