@@ -83,6 +83,28 @@ const deleteStatistiquesCra = db => async cra => {
 
 };
 
+const searchSousThemes = db => async (theme, sousTheme) => {
+  const regex = new RegExp(sousTheme);
+  const sousThemes = [];
+  const result = await db.collection('cras').aggregate([
+    { $match: { 'cra.themes': { '$in': [theme] }, 'cra.sousThemes': { '$elemMatch': { [theme]: { '$in': [regex] } } } } },
+    { $group: { '_id': '$cra.sousThemes' } },
+    { $project: {
+      '_id': 0,
+      'sousTheme': { $map: {
+        input: '$_id',
+        as: 'sousTheme',
+        in: '$$sousTheme.' + theme
+      } }
+    } }
+  ]).toArray();
+  result.forEach(element => {
+    sousThemes.push(element.sousTheme[0][0]);
+
+  });
+  return sousThemes;
+};
+
 module.exports = {
   getCraById,
   updateCra,
@@ -91,4 +113,5 @@ module.exports = {
   deleteStatistiquesCra,
   deleteCra,
   insertDeleteCra,
+  searchSousThemes,
 };

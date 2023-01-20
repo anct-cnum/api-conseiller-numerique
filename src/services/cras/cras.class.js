@@ -10,7 +10,14 @@ const {
   rolesGuard,
   Role,
 } = require('../../common/utils/feathers.utils');
-const { getCraById, updateCra, updateStatistiquesCra, countCraByPermanenceId, deleteCra, deleteStatistiquesCra } = require('./cra/repositories/cra.repository');
+const {
+  getCraById,
+  updateCra,
+  updateStatistiquesCra,
+  countCraByPermanenceId,
+  deleteCra,
+  deleteStatistiquesCra,
+  searchSousThemes } = require('./cra/repositories/cra.repository');
 const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
 const { validationCra } = require('./cra/utils/validationCra');
 const { v4: validate } = require('uuid');
@@ -124,6 +131,25 @@ exports.Cras = class Cras extends Service {
       ).then(async () => {
         await countCraByPermanenceId(db)(permanenceId).then(count => {
           return res.send({ id: permanenceId, count: count });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(404).send(new Conflict('Le comptage de cras pour cette permanence a échoué.').toJSON());
+        });
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/cras/searchSousThemes', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const { theme, sousTheme } = req.query;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await searchSousThemes(db)(theme, sousTheme).then(sousThemes => {
+          return res.send({ sousThemes });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
