@@ -57,5 +57,17 @@
   {
     "nom": "sante",
     "correspondance": "Santé"
+  },
+  {
+    "nom": "budget",
+    "correspondance": "Budget"
+  },
+  {
+    "nom": "scolaire",
+    "correspondance": "Scolaire"
+  },
+  {
+    "nom": "diagnostic",
+    "correspondance": "Diagnostic num&eacute;rique"
   }
 ]
