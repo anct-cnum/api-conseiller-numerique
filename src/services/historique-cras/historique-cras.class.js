@@ -45,7 +45,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
-        return res.status(500).send(new GeneralError('Une erreur s\'est produite sur le chargement des cras, veuillez réessayer plus tard.').toJSON());
+        return res.status(500).send(new GeneralError('Une erreur s\'est produite lors du chargement des cras, veuillez réessayer plus tard.').toJSON());
       }
     });
 
@@ -67,7 +67,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
-        return res.status(500).send(new GeneralError('Une erreur s\'est produite sur le chargement des thématiques, veuillez réessayer plus tard.').toJSON());
+        return res.status(500).send(new GeneralError('Une erreur s\'est produite lors du chargement des thématiques, veuillez réessayer plus tard.').toJSON());
       }
     });
   }

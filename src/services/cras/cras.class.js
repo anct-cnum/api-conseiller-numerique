@@ -1,4 +1,4 @@
-const { Conflict, BadRequest, GeneralError, Forbidden } = require('@feathersjs/errors');
+const { Conflict, BadRequest, GeneralError, Forbidden, NotFound } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const { Service } = require('feathers-mongodb');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
@@ -39,7 +39,7 @@ exports.Cras = class Cras extends Service {
       ).then(async () => {
         await getCraById(db)(craId).then(cra => {
           if (cra === null) {
-            return res.status(404).send(new Conflict('Le cra n\'a pas pu être chargé ou a été supprimé.').toJSON());
+            return res.status(404).send(new NotFound('Le cra n\'a pas pu être chargé ou a été supprimé.').toJSON());
           }
           return res.send({ cra });
         }).catch(error => {
