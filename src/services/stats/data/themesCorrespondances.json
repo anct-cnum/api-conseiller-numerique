@@ -28,7 +28,7 @@
   },
   {
     "nom": "traitement texte",
-    "correspondance": "Traitement de texte"
+    "correspondance": "Bureautique"
   },
   {
     "nom": "echanger",
@@ -68,6 +68,6 @@
   },
   {
     "nom": "diagnostic",
-    "correspondance": "Diagnostic num&eacute;rique"
+    "correspondance": "Diagnostic numérique"
   }
 ]

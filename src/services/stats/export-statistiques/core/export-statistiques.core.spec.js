@@ -79,6 +79,18 @@ const statistiquesConseiller = {
       valeur: 15
     },
     {
+      nom: 'scolaire',
+      valeur: 4
+    },
+    {
+      nom: 'diagnostic',
+      valeur: 8
+    },
+    {
+      nom: 'budget',
+      valeur: 9
+    },
+    {
       nom: 'autre',
       valeur: 13
     }
@@ -271,6 +283,18 @@ const statistiquesNationales = {
     {
       nom: 'sante',
       valeur: 150
+    },
+    {
+      nom: 'scolaire',
+      valeur: 400
+    },
+    {
+      nom: 'diagnostic',
+      valeur: 800
+    },
+    {
+      nom: 'budget',
+      valeur: 900
     },
     {
       nom: 'autre',

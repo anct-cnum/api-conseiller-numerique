@@ -153,7 +153,7 @@ exports.Cras = class Cras extends Service {
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          return res.status(404).send(new Conflict('Le comptage de cras pour cette permanence a échoué.').toJSON());
+          return res.status(404).send(new Conflict('Une erreur s\'est produite lors de la recherche de sous-thèmes.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
