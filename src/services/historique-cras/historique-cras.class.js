@@ -1,7 +1,7 @@
 const { Service } = require('feathers-mongodb');
 const { ObjectId } = require('mongodb');
 
-const { GeneralError} = require('@feathersjs/errors');
+const { GeneralError } = require('@feathersjs/errors');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { userIdFromRequestJwt } = require('../../common/utils/feathers.utils');
 const statsCras = require('../stats/cras');
