@@ -1,6 +1,7 @@
 const { Service } = require('feathers-mongodb');
 const { ObjectId } = require('mongodb');
 
+const { GeneralError } = require('@feathersjs/errors');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { userIdFromRequestJwt } = require('../../common/utils/feathers.utils');
 const statsCras = require('../stats/cras');
@@ -58,6 +59,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
+        return res.status(500).send(new GeneralError('Une erreur s\'est produite lors du chargement des cras, veuillez réessayer plus tard.').toJSON());
       }
     });
 
@@ -79,6 +81,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
+        return res.status(500).send(new GeneralError('Une erreur s\'est produite lors du chargement des thématiques, veuillez réessayer plus tard.').toJSON());
       }
     });
   }
