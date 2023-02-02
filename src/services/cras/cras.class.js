@@ -153,7 +153,7 @@ exports.Cras = class Cras extends Service {
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          return res.status(404).send(new Conflict('Une erreur s\'est produite lors de la recherche de sous-thèmes.').toJSON());
+          return res.status(500).send(new GeneralError('Une erreur s\'est produite lors de la recherche de sous-thèmes.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
