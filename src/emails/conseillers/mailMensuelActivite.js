@@ -20,7 +20,6 @@ module.exports = mailer => {
         utils.setSentryError(err);
         throw err;
       };
-
       return mailer.createMailer().sendEmail(
         conseiller.emailCN.address,
         {
