@@ -1,0 +1,81 @@
+<mjml>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-image width="1500px" src="<%= utils.getPublicUrl('/assets/img/email/mailActiviteMensuelle/header-mail.png') %>"></mj-image>
+         </mj-column>
+    </mj-section>
+    <mj-section>
+      <mj-column>
+        <mj-text font-weight="bold" font-size="28px" color="#000" line-height="1.5" align="center">
+          <strong>Bonjour  <%= conseiller.prenom %>,</strong>
+        </mj-text>
+        <mj-text font-size="16px" color="#000" line-height="1.5" align="center">
+          Voici le récapitulatif de votre activité d'accompagnement de <strong><%= cras.mois %> :</strong>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-top="24">
+      <mj-column>
+        <mj-text>
+          <%= cras.nbUsagers %></br>
+          nouveaux usagers accompagnés</br>
+          <%= cras.pourcentageUsagers %>
+        </mj-text>
+      </mj-column>
+      <mj-column>
+        <mj-text>
+          <%= cras.nbAccompagnements %></br>
+          accompagnements(avec récurrences)</br>
+          <%= cras.pourcentageAccompagnements %>
+        </mj-text>
+      </mj-column>
+      <mj-column>
+        <mj-text>
+          <%= cras.nbHeures %>h</br>
+          d’accompagnement au total</br>
+          <%= cras.pourcentageHeures %>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-top="24">
+      <mj-column>
+        <mj-text align="center">
+        <a href="https://framaforms.org/condition-exceptionnelle-non-remplissage-des-cra-1650445633" target="_blank"
+           style="color: #0063cb; border: 1px solid #0063cb; border-radius: 20px; font-size:12px; width:169px; display:block; margin: 0 auto; padding: 10px 0;text-decoration:none;">
+         Voir détail de l’activité
+        </a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+     <mj-section padding-top="24">
+      <mj-column>
+        <mj-text align="center" color="#3b3f44" font-size="12px" line-height="1.5">
+        Votre historique d’accompagnements vous permet d’avoir une vision sur votre activité,
+        de l’organiser et de la valoriser auprès de votre structure.</br>
+        Vous pouvez <a href="https://framaforms.org/condition-exceptionnelle-non-remplissage-des-cra-1650445633" target="_blank" style="color: #0063CB;">
+          <strong>éditer vos accompagnements</strong>
+        </a> sur la Coop.
+      </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding-top="24">
+      <mj-column>
+        <mj-text color="#666666" font-size="12px" line-height="1.5" text-align="justify">
+          Politique des données : les informations d’accompagnements des conseillers numériques France services  sont enregistrées dans la base de données de l’espace Coop, mutualisées à différentes échelles : structures, territoires, et national. Elles permettent de mieux comprendre l’activité de médiation, les territoires, et servent également à évaluer le dispostif CnFS. Accédez au Guide de l’outil de suivi d’activité pour en apprendre davantage sur l’utilisation des données d’accompagnement Conseiller numérique France Services.
+        </mj-text>
+       </mj-column>
+    </mj-section>
+    <mj-section padding-top="24">
+      <mj-column>
+        <mj-text>
+          <a href="" target="_blank" style="color:#666666; font-size:10px;">
+            CGU
+          </a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

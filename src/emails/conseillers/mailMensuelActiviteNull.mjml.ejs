@@ -1,0 +1,100 @@
+<mjml>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-image width="548px" height="120px" src="<%= utils.getPublicUrl('/assets/img/email/mailActiviteMensuelle/header-mail.png') %>"></mj-image>
+         </mj-column>
+    </mj-section>
+    <mj-section>
+      <mj-column>
+        <mj-text font-weight="bold" font-size="28px" color="#000" line-height="1.5" align="center">
+          <strong>Bonjour  <%= conseiller.prenom %>,</strong>
+        </mj-text>
+        <mj-text font-size="16px" color="#000" line-height="1.5" align="center">
+          Voici le récapitulatif de votre activité d'accompagnement de <strong><%= cras.mois %> :</strong>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding-top="0">
+      <mj-column height="162px" width="140px">
+        <mj-section background-url="https://www.educatout.com/images/Jeux-de-transition-Le-losange-2.jpg" background-position="top" height="162px" width="140px" background-repeat="no-repeat">
+          <mj-column width="140px" height="162px">
+            	<mj-text text-align="center">
+            		0
+              </mj-text>
+            <mj-text text-align="center">
+            	usagers accompagnés
+            </mj-text>
+          </mj-column>
+        </mj-section>
+      </mj-column>
+      <mj-column height="162px" width="140px">
+        <mj-section background-url="https://www.educatout.com/images/Jeux-de-transition-Le-losange-2.jpg" background-position="top" height="162px" width="140px" background-repeat="no-repeat">
+      	<mj-column height="162px" width="140px">
+        <mj-text >
+          0</br>
+          accompagnements(avec récurrences)
+        </mj-text>
+        </mj-section>
+      </mj-column>
+      </mj-column>
+      <mj-column height="162px" width="140px">
+        <mj-section background-url="https://www.educatout.com/images/Jeux-de-transition-Le-losange-2.jpg" background-position="top" height="162px" width="140px" background-repeat="no-repeat">
+      <mj-column height="162px" width="140px">
+          <mj-text>
+            0h</br>
+            d’accompagnement au total</br>
+          </mj-text>
+      </mj-column>
+      	</mj-section>
+      </mj-column>
+    </mj-section>
+    <mj-section padding-top="0">
+      <mj-column>
+        <mj-text line-height="1.5">
+          Dans le cas où vous seriez effectivement en congés ou en arrêt, veuillez ignorer ce mail.</br>
+          Si tel n’est pas le cas, pour quelle(s) raison(s) n’avez-vous pas enregistré vos données d’accompagnement ?
+        </mj-text>
+      	<mj-text line-height="1.5">
+          <strong>Je ne suis pas au courant, j’ai oublié, ou je ne souhaite pas enregistrer mes</br> accompagnements :</strong></br>
+          Ceux-ci doivent être obligatoirement remplis, votre employeur et vous en êtes garants, consultez le <a href="#" target="_blank" style="color: #0063CB; font-weight: 600; text-decoration: none;">Guide de suivi et de pilotage</a> pour plus de détails.
+      	</mj-text>
+          <mj-text line-height="1.5"><strong>Un problème m’empêche d’effectuer mon suivi d’activité,</br>
+            ou cela est difficile pour moi :</strong></br>
+            - Vous pouvez <a href="#" target="_blank" style="color: #0063CB; font-weight: 600; text-decoration: none;">alerter le support par message</a> du problème que vous rencontrez.</br>
+            - Vous pouvez <a href="#" target="_blank" style="color: #0063CB; font-weight: 600; text-decoration: none;">appeler la permanence téléphonique</a> CnFS de la Banque des Territoires </br>
+						au 01.58.50.89.42 (lun. 9h30 - 12h00, jeu. 9h30 - 12h00). </br>
+            - Vous pouvez faire part de vos demandes concernant le CRA sur le canal</br>
+            <a href="#" target="_blank" style="color: #0063CB; font-weight: 600; text-decoration: none;">
+              #Atelier - Outil de suivi d’activité</a> sur l’espace de discussion Mattermost CnFS.
+          </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding-top="0">
+      <mj-column>
+        <mj-text align="center">
+        <a href="https://framaforms.org/condition-exceptionnelle-non-remplissage-des-cra-1650445633" target="_blank"
+           style="color: #0063cb; border: 1px solid #0063cb; border-radius: 20px; font-size:12px; width:169px; display:block; margin: 0 auto; padding: 10px 0;text-decoration:none;">
+         Enregistrer une activité
+        </a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding-top="0">
+      <mj-column>
+        <mj-text color="#666666" font-size="12px" line-height="1.5" text-align="justify" line-height="1.5">
+          Politique des données : les informations d’accompagnements des conseillers numériques France services  sont enregistrées dans la base de données de l’espace Coop, mutualisées à différentes échelles : structures, territoires, et national. Elles permettent de mieux comprendre l’activité de médiation, les territoires, et servent également à évaluer le dispostif CnFS. Accédez au <a href="#" target="_blank" style="color: #0063CB; font-weight: 600;">Guide de l’outil de suivi d’activité</a> pour en apprendre davantage sur l’utilisation des données d’accompagnement Conseiller numérique France Services.
+        </mj-text>
+       </mj-column>
+    </mj-section>
+    <mj-section>
+      <mj-column>
+        <mj-text>
+          <a href="" target="_blank" style="color:#666666; font-size:10px;">
+            CGU
+          </a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
