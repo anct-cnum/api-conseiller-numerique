@@ -16,34 +16,35 @@
       </mj-column>
     </mj-section>
     <mj-section padding-top="0">
-      <mj-column height="162px" width="140px">
-        <mj-section background-url="https://www.educatout.com/images/Jeux-de-transition-Le-losange-2.jpg" background-position="top" height="162px" width="140px" background-repeat="no-repeat">
-          <mj-column width="140px" height="162px">
-            	<mj-text text-align="center">
-            		0
-              </mj-text>
-            <mj-text text-align="center">
-            	usagers accompagnés
+      <mj-column>
+        <mj-section background-url="<%= utils.getPublicUrl('/assets/img/email/mailActiviteMensuelle/losange-1.png') %>" background-position="top" background-repeat="no-repeat">
+          <mj-column>
+            <mj-text align="center" height="160px" width="140px" line-height="20px">
+              <span style="font-size:32px; display:inline-block; margin:10px">0</span></br>
+            	usagers</br>
+          		accompagnés
             </mj-text>
           </mj-column>
         </mj-section>
       </mj-column>
-      <mj-column height="162px" width="140px">
-        <mj-section background-url="https://www.educatout.com/images/Jeux-de-transition-Le-losange-2.jpg" background-position="top" height="162px" width="140px" background-repeat="no-repeat">
-      	<mj-column height="162px" width="140px">
-        <mj-text >
-          0</br>
-          accompagnements(avec récurrences)
+      <mj-column>
+        <mj-section background-url="<%= utils.getPublicUrl('/assets/img/email/mailActiviteMensuelle/losange-2.png') %>" background-position="top" background-repeat="no-repeat">
+      	<mj-column>
+        <mj-text align="center" height="160px" width="140px" line-height="20px">
+              <span style="font-size:32px; display:inline-block; margin:10px">0</span></br>
+          accompagnements </br>
+          (avec récurrences)
         </mj-text>
         </mj-section>
       </mj-column>
       </mj-column>
-      <mj-column height="162px" width="140px">
-        <mj-section background-url="https://www.educatout.com/images/Jeux-de-transition-Le-losange-2.jpg" background-position="top" height="162px" width="140px" background-repeat="no-repeat">
-      <mj-column height="162px" width="140px">
-          <mj-text>
-            0h</br>
-            d’accompagnement au total</br>
+      <mj-column>
+        <mj-section background-url="<%= utils.getPublicUrl('/assets/img/email/mailActiviteMensuelle/losange-3.png') %>" background-position="top" background-repeat="no-repeat">
+      <mj-column>
+          <mj-text align="center" height="160px" width="140px" line-height="20px">
+              <span style="font-size:32px; display:inline-block; margin:10px">0h</span></br>
+            d’accompagnement </br>
+          	au total
           </mj-text>
       </mj-column>
       	</mj-section>
@@ -59,6 +60,11 @@
           <strong>Je ne suis pas au courant, j’ai oublié, ou je ne souhaite pas enregistrer mes</br> accompagnements :</strong></br>
           Ceux-ci doivent être obligatoirement remplis, votre employeur et vous en êtes garants, consultez le <a href="#" target="_blank" style="color: #0063CB; font-weight: 600; text-decoration: none;">Guide de suivi et de pilotage</a> pour plus de détails.
       	</mj-text>
+        <mj-text>
+          <a href="https://framaforms.org/condition-exceptionnelle-non-remplissage-des-cra-1650445633" target="_blank" style="color: #0063CB; font-weight: 600; text-decoration: none;">
+            EN ATTENTE DE TEXTE
+          </a>
+        </mj-text>
           <mj-text line-height="1.5"><strong>Un problème m’empêche d’effectuer mon suivi d’activité,</br>
             ou cela est difficile pour moi :</strong></br>
             - Vous pouvez <a href="#" target="_blank" style="color: #0063CB; font-weight: 600; text-decoration: none;">alerter le support par message</a> du problème que vous rencontrez.</br>
@@ -73,7 +79,7 @@
     <mj-section padding-top="0">
       <mj-column>
         <mj-text align="center">
-        <a href="https://framaforms.org/condition-exceptionnelle-non-remplissage-des-cra-1650445633" target="_blank"
+        <a href="<%= utils.getEspaceCoopUrl('compte-rendu-activite') %>" target="_blank"
            style="color: #0063cb; border: 1px solid #0063cb; border-radius: 20px; font-size:12px; width:169px; display:block; margin: 0 auto; padding: 10px 0;text-decoration:none;">
          Enregistrer une activité
         </a>
@@ -82,8 +88,12 @@
     </mj-section>
     <mj-section padding-top="0">
       <mj-column>
-        <mj-text color="#666666" font-size="12px" line-height="1.5" text-align="justify" line-height="1.5">
-          Politique des données : les informations d’accompagnements des conseillers numériques France services  sont enregistrées dans la base de données de l’espace Coop, mutualisées à différentes échelles : structures, territoires, et national. Elles permettent de mieux comprendre l’activité de médiation, les territoires, et servent également à évaluer le dispostif CnFS. Accédez au <a href="#" target="_blank" style="color: #0063CB; font-weight: 600;">Guide de l’outil de suivi d’activité</a> pour en apprendre davantage sur l’utilisation des données d’accompagnement Conseiller numérique France Services.
+        <mj-text color="#666666" font-size="12px" text-align="justify" line-height="1.5">
+          Politique des données : les informations d’accompagnements des conseillers numériques France services  sont enregistrées dans
+          la base de données de l’espace Coop, mutualisées à différentes échelles : structures, territoires, et national. Elles permettent
+          de mieux comprendre l’activité de médiation, les territoires, et servent également à évaluer le dispostif CnFS. Accédez au
+          <a href="#" target="_blank" style="color: #0063CB; font-weight: 600;">Guide de l’outil de suivi d’activité</a> pour en apprendre
+          davantage sur l’utilisation des données d’accompagnement Conseiller numérique France Services.
         </mj-text>
        </mj-column>
     </mj-section>
