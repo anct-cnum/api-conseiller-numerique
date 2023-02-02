@@ -12,6 +12,7 @@
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-candidats.sh",
   "0 0 * * * $ROOT/src/tools/jobs/delete-cv-six-mois.sh",
   "0 3 * * * $ROOT/src/tools/jobs/update-token-mot-de-passe.sh",
-  "*/30 * * * * $ROOT/src/tools/jobs/populate-rdv-aide-numerique.sh"
+  "*/30 * * * * $ROOT/src/tools/jobs/populate-rdv-aide-numerique.sh",
+  "0 7 1 * * $ROOT/src/tools/jobs/send-email-mensuelle-activite-cras.sh"
 ]
 
