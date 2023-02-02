@@ -77,6 +77,18 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           nom: 'sante',
           valeur: 15
         },
+        {
+          nom: 'scolaire',
+          valeur: 4
+        },
+        {
+          nom: 'diagnostic',
+          valeur: 8
+        },
+        {
+          nom: 'budget',
+          valeur: 9
+        },
       ],
       statsLieux: [
         {
@@ -244,7 +256,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Applications smartphone;2\n' +
       'Gestion de contenus numériques;8\n' +
       'Culture numérique;4\n' +
-      'Traitement de texte;8\n' +
+      'Bureautique;8\n' +
       'Échanger avec ses proches;0\n' +
       'Emploi et formation;21\n' +
       'Accompagner un aidant;0\n' +
@@ -253,6 +265,9 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Sécuriser un équipement;4\n' +
       'Fraude et harcèlement;20\n' +
       'Santé;15\n' +
+      'Scolaire;4\n' +
+      'Diagnostic numérique;8\n' +
+      'Budget;9\n' +
       '\n' +
       'Canaux d\'accompagnements\n' +
       'À domicile;0\n' +
