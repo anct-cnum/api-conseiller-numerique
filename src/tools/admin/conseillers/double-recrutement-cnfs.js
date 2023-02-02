@@ -32,7 +32,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     });
 
     if (finaliseeRupture === null) {
-      exit('Aucune mise en relation avec le statut finalisee_rupture existe !');
+      exit('Aucune mise en relation avec le statut finalisee_rupture n\'existe !');
       return;
     }
     const finalisee = await db.collection('misesEnRelation').findOne({
@@ -50,12 +50,13 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     let misesEnRelation = {
       conseiller: finaliseeRupture.conseiller,
       structure: finaliseeRupture.structure,
-      statut,
-      createdAt: new Date(),
       conseillerCreatedAt: finaliseeRupture.conseillerObj.createdAt,
+      createdAt: new Date(),
+      distance: finaliseeRupture?.distance ?? 0,
+      statut,
+      type: 'MANUEL',
       conseillerObj: finaliseeRupture.conseillerObj,
       structureObj: finaliseeRupture.structureObj,
-      type: 'MANUEL',
     };
 
     if (statut === 'recrutee') {
