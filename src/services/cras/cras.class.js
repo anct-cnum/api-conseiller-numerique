@@ -1,4 +1,4 @@
-const { Conflict, BadRequest, GeneralError, Forbidden } = require('@feathersjs/errors');
+const { Conflict, BadRequest, GeneralError, Forbidden, NotFound } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const { Service } = require('feathers-mongodb');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
@@ -45,6 +45,9 @@ exports.Cras = class Cras extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await getCraById(db)(craId).then(cra => {
+          if (cra === null) {
+            return res.status(404).send(new NotFound('Le cra n\'a pas pu être chargé ou a été supprimé.').toJSON());
+          }
           return res.send({ cra });
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -103,8 +106,9 @@ exports.Cras = class Cras extends Service {
               return res.status(500).send(new GeneralError('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
             });
             await deleteCra(db)(craId).then(() => {
-              res.send({ isDeleted: true });
+              return res.send({ isDeleted: true });
             }).catch(error => {
+              error.message = `${error.message} (conseillerId: ${user.entity.oid})`;
               app.get('sentry').captureException(error);
               logger.error(error);
               return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());

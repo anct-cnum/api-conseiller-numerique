@@ -15,20 +15,37 @@ cli.description('Send emails for conseiller without deposit CRA after 1,5 month'
 .parse(process.argv);
 
 const datePlus1MoisEtDemi = new Date(dayjs(Date.now()).subtract(45, 'day'));
+const datePlus15jours = new Date(dayjs(Date.now()).subtract(15, 'day'));
 execute(__filename, async ({ db, logger, Sentry, emails }) => {
   const { limit = 1, delai = 1000 } = cli;
 
   const conseillers = await db.collection('conseillers').find({
-    'groupeCRA': { $eq: 4 },
     'statut': { $eq: 'RECRUTE' },
-    'estCoordinateur': { $exists: false },
-    'groupeCRAHistorique': {
-      $elemMatch: {
-        'nbJourDansGroupe': { $exists: false },
-        'dateDeChangement': { $lte: datePlus1MoisEtDemi },
-        'mailSendConseillerM+1,5': { $exists: false }
-      }
-    }
+    'estCoordinateur': { $ne: true },
+    '$or': [
+      {
+        $and: [
+          { 'groupeCRA': { $eq: 3 } },
+          { 'groupeCRAHistorique': {
+            $elemMatch: {
+              'nbJourDansGroupe': { $exists: false },
+              'mailSendConseillerM+1,5': { $exists: false },
+              'dateDeChangement': { $lte: datePlus15jours },
+            } } }
+        ]
+      },
+      {
+        $and: [
+          { 'groupeCRA': { $eq: 4 } },
+          { 'groupeCRAHistorique': {
+            $elemMatch: {
+              'nbJourDansGroupe': { $exists: false },
+              'dateDeChangement': { $lte: datePlus1MoisEtDemi },
+              'mailSendConseillerM+1,5': { $exists: false }
+            } } }
+        ]
+      },
+    ]
   }).limit(limit).toArray();
 
   for (const conseiller of conseillers) {
@@ -36,8 +53,12 @@ execute(__filename, async ({ db, logger, Sentry, emails }) => {
       const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
       const messageConseiller = emails.getEmailMessageByTemplateName('mailRelanceM+1,5Conseiller');
       const messageStructure = emails.getEmailMessageByTemplateName('mailRelanceM+1,5Structure');
+      const messageSupHierarchique = emails.getEmailMessageByTemplateName('mailRelanceM+1,5SupHierarchique');
       await messageConseiller.send(conseiller);
       await messageStructure.send(conseiller, structure.contact.email);
+      if (conseiller?.supHierarchique?.email) {
+        await messageSupHierarchique.send(conseiller);
+      }
       if (delai) {
         await delay(delai);
       }

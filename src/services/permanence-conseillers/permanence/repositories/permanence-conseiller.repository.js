@@ -60,8 +60,17 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
     'aidants.emailPro': 1,
     'aidants.telephonePro': 1,
     'aidants.nonAffichageCarto': 1
-  } }
-]).toArray();
+  } },
+  { $addFields: {
+    codePostalTri: { $trim: { input: '$adresse.codePostal' } },
+    villeTri: { $trim: { input: '$adresse.ville' } },
+    nomTri: { $trim: { input: '$nomEnseigne' } }
+  } },
+  { $sort: { 'codePostalTri': 1, 'villeTri': 1, 'nomTri': 1, '_id': 1 } }
+], {
+  collation: { locale: 'fr' },
+  allowDiskUse: true
+}).toArray();
 
 const getPermanenceById = db => async permanenceId => {
   return await db.collection('permanences').findOne({ '_id': new ObjectId(permanenceId) });
