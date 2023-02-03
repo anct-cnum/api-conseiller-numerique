@@ -76,7 +76,7 @@ module.exports = (db, mailer, app, logger) => {
     confirmationChangeEmailCnfs(db, mailer, app, logger),
     invitationHubEspaceCoop(db, mailer),
     bienvenueCompteHub(db, mailer),
-    mailMensuelActivite(mailer),
+    mailMensuelActivite(db, mailer),
     mailRelanceM1Conseiller(db, mailer),
     mailRelanceM1Structure(db, mailer),
     mailRelanceM1SupHierarchique(db, mailer),

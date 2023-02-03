@@ -1,4 +1,4 @@
-module.exports = mailer => {
+module.exports = (db, mailer) => {
   const templateName = 'mailMensuelActivite';
   const templateNameNull = 'mailMensuelActiviteNull';
   const { utils } = mailer;
@@ -12,8 +12,14 @@ module.exports = mailer => {
     render,
     send: async (conseiller, cras) => {
 
-      const onSuccess = () => {
-        return;
+      const onSuccess = async () => {
+        return db.collection('conseillers').updateOne({
+          _id: conseiller._id
+        }, {
+          $set: {
+            mailActiviteCRAMois: cras.mois
+          }
+        });
       };
 
       const onError = async err => {
@@ -23,7 +29,7 @@ module.exports = mailer => {
       return mailer.createMailer().sendEmail(
         conseiller.emailCN.address,
         {
-          subject: '',
+          subject: 'Mon activité du mois de ' + cras.mois,
           body: await render(conseiller, cras),
         },
       )

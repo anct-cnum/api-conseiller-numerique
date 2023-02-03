@@ -29,25 +29,15 @@ const finMoisDernier = new Date(dayjs(moisDernier).endOf('month'));
 const getConseillers = db => async limit => await db.collection('conseillers').find({
   'emailCN.address': { $exists: true },
   'estCoordinateur': { $ne: true },
+  'statut': 'RECRUTE',
+  'mailActiviteCRAMois': { $ne: listeMois[new Date(mois).getMonth()] }
 }).limit(limit).toArray();
 
-const getCountCrasMois = db => async query => await db.collection('cras').countDocuments(query);
+const getCountCras = db => async query => await db.collection('cras').countDocuments(query);
 
-const getCountCrasMoisDernier = db => async query => await db.collection('cras').countDocuments(query);
-
-const getNbUsagersMois = db => async query => await db.collection('cras').aggregate(
+const getNbUsagers = db => async query => await db.collection('cras').aggregate(
   {
     $match:
-    { ...query }
-  },
-  { $group:
-    { _id: null, count: { $sum: '$cra.nbParticipants' } }
-  },
-  { $project: { 'valeur': '$count' } }
-).toArray();
-
-const getNbUsagersMoisDernier = db => async query => await db.collection('cras').aggregate(
-  { $match:
     { ...query }
   },
   { $group:
@@ -75,15 +65,7 @@ const getPlus1Heure = async arrayHeures => {
   return Math.round(totalMinutes / 60);
 };
 
-const get1hEtPlusMois = db => async query => await db.collection('cras').aggregate(
-  { $unwind: '$cra.duree' },
-  { $match: { ...query,
-    'cra.duree': { $gte: 60 } } },
-  { $group: { _id: '$cra.duree', count: { $sum: 1 } } },
-  { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
-).toArray();
-
-const get1hEtPlusMoisDernier = db => async query => await db.collection('cras').aggregate(
+const get1hEtPlus = db => async query => await db.collection('cras').aggregate(
   { $unwind: '$cra.duree' },
   { $match: { ...query,
     'cra.duree': { $gte: 60 } } },
@@ -124,25 +106,25 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
     try {
       const cras = {};
       cras.mois = listeMois[new Date(mois).getMonth()];
-      const countCrasMois = await getCountCrasMois(db)(query);
-      const countCrasMoisPasse = await getCountCrasMoisDernier(db)(queryMoisDernier);
+      const countCrasMois = await getCountCras(db)(query);
+      const countCrasMoisPasse = await getCountCras(db)(queryMoisDernier);
       cras.nbAccompagnements = countCrasMois;
       cras.pourcentageAccompagnements = await pourcentage(countCrasMoisPasse, countCrasMois);
 
       if (countCrasMois > 0) {
 
-        const nbUsagers = await getNbUsagersMois(db)(query);
-        const nbUsagersPasse = await getNbUsagersMoisDernier(db)(queryMoisDernier);
+        const nbUsagers = await getNbUsagers(db)(query);
+        const nbUsagersPasse = await getNbUsagers(db)(queryMoisDernier);
         cras.nbUsagers = nbUsagers[0]?.count;
         cras.pourcentageUsagers = await pourcentage(nbUsagersPasse[0]?.count ?? 0, nbUsagers[0]?.count ?? 0);
 
         let totalHeuresMois = 0;
         const nbHeures = await getStatsDurees(db, query);
-        const nb1HeuresEtPlus = await get1hEtPlusMois(db)(query);
+        const nb1HeuresEtPlus = await get1hEtPlus(db)(query);
 
         let totalHeuresMoisPasse = 0;
         const nbHeuresPasse = await getStatsDurees(db, queryMoisDernier);
-        const nb1HeuresEtPlusPasse = await get1hEtPlusMoisDernier(db)(queryMoisDernier);
+        const nb1HeuresEtPlusPasse = await get1hEtPlus(db)(queryMoisDernier);
 
         totalHeuresMois = await getPlus1Heure(nb1HeuresEtPlus) + await getMoins1Heure(nbHeures);
         totalHeuresMoisPasse = await getPlus1Heure(nb1HeuresEtPlusPasse) + await getMoins1Heure(nbHeuresPasse);
