@@ -97,10 +97,7 @@ const pourcentage = async (nbMoisDernier, nbMois) => {
   return pourcentage >= 0 ? '+' + pourcentage : pourcentage;
 };
 
-execute(__filename, async ({ app, db, logger, Sentry }) => {
-
-  let mailer = createMailer(app);
-  const emails = createEmails(db, mailer, app, logger);
+execute(__filename, async ({ app, db, logger, emails, Sentry }) => {
 
   const { limit = 1, delai = 1000 } = cli;
 
