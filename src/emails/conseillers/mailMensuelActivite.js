@@ -12,7 +12,7 @@ module.exports = (db, mailer) => {
     render,
     send: async (conseiller, cras) => {
 
-      const onSuccess = async () => {
+      const onSuccess = () => {
         return db.collection('conseillers').updateOne({
           _id: conseiller._id
         }, {
@@ -26,6 +26,7 @@ module.exports = (db, mailer) => {
         utils.setSentryError(err);
         throw err;
       };
+
       return mailer.createMailer().sendEmail(
         conseiller.emailCN.address,
         {

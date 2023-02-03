@@ -148,5 +148,5 @@ execute(__filename, async ({ db, logger, emails, Sentry }) => {
 
   logger.info(`Fin de l'envoi de mail (${nbEnvoisMails} envois) aux conseillers:`);
   logger.info(`+ ${mailAvecCras} mails pour des conseillers actifs`);
-  logger.info(`+ ${mailSansCra} maisl pour des conseillers inactifs`);
+  logger.info(`+ ${mailSansCra} mails pour des conseillers inactifs`);
 });
