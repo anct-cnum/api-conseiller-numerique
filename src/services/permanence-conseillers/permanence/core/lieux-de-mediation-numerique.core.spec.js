@@ -1,4 +1,8 @@
-const { lieuxDeMediationNumerique, CNFS_COMMON_SERVICES } = require('./lieux-de-mediation-numerique.core');
+const { lieuxDeMediationNumerique } = require('./lieux-de-mediation-numerique.core');
+const { ConditionAcces, Service, LabelNational } = require('@gouvfr-anct/lieux-de-mediation-numerique');
+
+// eslint-disable-next-line max-len
+const TEST_SERVICES = `${Service.PrendreEnMainUnSmartphoneOuUneTablette};${Service.PrendreEnMainUnOrdinateur};${Service.UtiliserLeNumerique};${Service.ApprofondirMaCultureNumerique}`;
 
 describe('lieux de médiation numérique', () => {
   it('devrait avoir les informations obligatoires du schéma de médiation numérique avec extension CnFS', async () => {
@@ -11,6 +15,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -26,12 +31,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        // eslint-disable-next-line max-len
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -53,6 +61,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -72,9 +81,10 @@ describe('lieux de médiation numérique', () => {
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -96,6 +106,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -115,9 +126,100 @@ describe('lieux de médiation numérique', () => {
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait avoir un siret avec la valeur 00000000000000 quand celui ci est initialement null', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      siret: null,
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        pivot: '00000000000000',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait avoir un siret avec la valeur 00000000000000 quand celui ci est initialement vide', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      siret: '',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        pivot: '00000000000000',
+        nom: 'Anonymal',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -138,6 +240,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -153,12 +256,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -179,6 +284,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -194,12 +300,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Association Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -220,6 +328,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -244,6 +353,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -260,7 +370,6 @@ describe('lieux de médiation numérique', () => {
 
   it('devrait exclure les lieux dont l\'id structure n\'est pas renseignée', async () => {
     const permanence = {
-      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: '',
       adresse: {
         ville: 'Reims',
@@ -268,6 +377,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
       ]
@@ -283,11 +393,11 @@ describe('lieux de médiation numérique', () => {
       _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
       adresse: {
-        ville: 'Reims',
         codePostal: '51100',
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -299,24 +409,7 @@ describe('lieux de médiation numérique', () => {
 
     const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
 
-    expect(lieux).toStrictEqual([
-      {
-        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
-        nom: 'Anonymal',
-        commune: 'Reims',
-        code_postal: '51100',
-        adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
-        source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
-        labels_nationaux: 'CNFS',
-        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
-        structureNom: 'Gare CnFS',
-        aidants: [
-          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
-        ]
-      }
-    ]);
+    expect(lieux).toStrictEqual([]);
   });
 
   it('devrait avoir une commune sans espaces superflus', async () => {
@@ -329,6 +422,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -344,12 +438,147 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Villeneuve sur Eure',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait avoir une commune sans points', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Avallon.',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Avallon',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait avoir une commune sans points', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Avallon.',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Avallon',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+
+  it('devrait avoir une commune sans détails placés devant une virgule', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'TAN ROUGE, SAINT PAUL',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'SAINT PAUL',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -366,92 +595,10 @@ describe('lieux de médiation numérique', () => {
       nomEnseigne: 'Anonymal',
       adresse: {
         ville: 'Reims',
-        codePostal: '51100',
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
-      structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
-        nom: 'Gare CnFS'
-      },
-      aidants: [
-        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
-      ]
-    };
-
-    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
-
-    expect(lieux).toStrictEqual([
-      {
-        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
-        nom: 'Anonymal',
-        commune: 'Reims',
-        code_postal: '51100',
-        adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
-        source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
-        labels_nationaux: 'CNFS',
-        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
-        structureNom: 'Gare CnFS',
-        aidants: [
-          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
-        ]
-      }
-    ]);
-  });
-
-  it('devrait avoir un code postal sans espaces', async () => {
-    const permanence = {
-      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
-      nomEnseigne: 'Anonymal',
-      adresse: {
-        ville: 'Reims',
-        codePostal: '51 100',
-        numeroRue: '12 BIS',
-        rue: 'RUE DE LECLERCQ'
-      },
-      structure: {
-        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
-        nom: 'Gare CnFS'
-      },
-      aidants: [
-        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
-      ]
-    };
-
-    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
-
-    expect(lieux).toStrictEqual([
-      {
-        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
-        nom: 'Anonymal',
-        commune: 'Reims',
-        code_postal: '51100',
-        adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
-        source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
-        labels_nationaux: 'CNFS',
-        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
-        structureNom: 'Gare CnFS',
-        aidants: [
-          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
-        ]
-      }
-    ]);
-  });
-
-  it('devrait filtrer les codes postaux nuls', async () => {
-    const permanence = {
-      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
-      nomEnseigne: 'Anonymal',
-      adresse: {
-        ville: 'Reims',
-        codePostal: null,
-        numeroRue: '12 BIS',
-        rue: 'RUE DE LECLERCQ'
-      },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -466,7 +613,120 @@ describe('lieux de médiation numérique', () => {
     expect(lieux).toStrictEqual([]);
   });
 
-  it('devrait filtrer les codes postaux vides', async () => {
+  it('devrait avoir un code postal sans espaces', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51 100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait avoir un code postal avec le bon nombre de caractères', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Grenoble',
+        codePostal: '380000',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Grenoble',
+        code_postal: '38000',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait exclure les lieux dont les codes postaux nuls', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: null,
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([]);
+  });
+
+  it('devrait exclure les lieux dont les codes postaux vides', async () => {
     const permanence = {
       _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
       nomEnseigne: 'Anonymal',
@@ -476,6 +736,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -500,6 +761,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -515,12 +777,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -541,6 +805,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -556,12 +821,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -582,6 +849,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: ' 12  BIS ',
         rue: '  RUE DE  LECLERCQ '
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -597,12 +865,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -623,6 +893,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: ' 12 null',
         rue: '  RUE DE LECLERCQ '
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -638,12 +909,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -664,6 +937,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: 'null',
         rue: 'null'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -688,6 +962,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: null,
         rue: null
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -718,6 +993,7 @@ describe('lieux de médiation numérique', () => {
           43.52609
         ]
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -733,14 +1009,16 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         latitude: 43.52609,
         longitude: 5.41423,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -762,6 +1040,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '+33180059880',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -777,13 +1056,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         telephone: '+33180059880',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -805,6 +1086,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: ' +33 1 80 05 98 80 ',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -820,13 +1102,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         telephone: '+33180059880',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -848,6 +1132,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '+33.1.80.05.98.80',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -863,13 +1148,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         telephone: '+33180059880',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -891,6 +1178,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '+330562636539',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -906,13 +1194,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         telephone: '+33562636539',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -934,6 +1224,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '+33123456',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -949,12 +1240,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -976,6 +1269,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       numeroTelephone: '0111',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -991,12 +1285,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1018,6 +1314,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       email: 'contact@laquincaillerie.tl',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1033,13 +1330,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         courriel: 'contact@laquincaillerie.tl',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1061,6 +1360,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       email: ' contact@laquincaillerie.tl   ',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1076,13 +1376,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         courriel: 'contact@laquincaillerie.tl',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1104,6 +1406,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: 'https://www.laquincaillerie.tl/',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1119,13 +1422,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         site_web: 'https://www.laquincaillerie.tl/',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1147,6 +1452,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: 'www.laquincaillerie.tl/',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1162,13 +1468,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         site_web: 'https://www.laquincaillerie.tl/',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1190,6 +1498,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: '  https://  www.laquincaillerie.tl/  ',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1205,13 +1514,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         site_web: 'https://www.laquincaillerie.tl/',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1233,6 +1544,7 @@ describe('lieux de médiation numérique', () => {
         rue: 'RUE DE LECLERCQ'
       },
       siteWeb: 'https://www.https://www.laquincaillerie.tl/',
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1248,13 +1560,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         site_web: 'https://www.laquincaillerie.tl/',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1347,6 +1661,7 @@ describe('lieux de médiation numérique', () => {
           ]
         }
       ],
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1362,13 +1677,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         horaires: 'Mo 09:30-10:45; Tu 11:15-12:45; We 13:30-14:25; Th 8:00-9:25,15:00-16:05; Fr 16:20-17:15; Sa 18:30-19:00; Su 19:50-23:55',
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1405,12 +1722,13 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        conditions_acces: ConditionAcces.Gratuit,
         date_maj: '2022-06-02',
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
@@ -1432,6 +1750,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS',
@@ -1448,13 +1767,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
-        labels_nationaux: 'CNFS, France Services',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: `${LabelNational.CNFS};${LabelNational.FranceServices}`,
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
         aidants: [
@@ -1474,6 +1795,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS',
@@ -1490,13 +1812,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
-        labels_nationaux: 'CNFS, Aidants Connect',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: `${LabelNational.CNFS};${LabelNational.AidantsConnect}`,
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
         aidants: [
@@ -1516,6 +1840,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS',
@@ -1533,13 +1858,15 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
-        labels_nationaux: 'CNFS, Aidants Connect, France Services',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: `${LabelNational.CNFS};${LabelNational.AidantsConnect};${LabelNational.FranceServices}`,
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
         aidants: [
@@ -1559,6 +1886,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS',
@@ -1575,12 +1903,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
@@ -1602,6 +1932,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS',
@@ -1618,12 +1949,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
@@ -1645,6 +1978,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS',
@@ -1661,12 +1995,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
@@ -1688,6 +2024,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS',
@@ -1704,12 +2041,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         prise_rdv: 'https://www.url-rdv.fr/org/1234',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
@@ -1731,6 +2070,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1753,6 +2093,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1777,6 +2118,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1792,12 +2134,59 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
+        labels_nationaux: 'CNFS',
+        structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        structureNom: 'Gare CnFS',
+        aidants: [
+          { aidantId: 'aaa88891b3f44bdf86bb7bc2601d3fff', nom: 'Jean Dupond', courriel: 'jean.dupond@gouv.fr', telephone: '+33112341234' }
+        ]
+      }
+    ]);
+  });
+
+  it('devrait ne remonter que les aidants non anonymes', async () => {
+    const permanence = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      nomEnseigne: 'Anonymal',
+      adresse: {
+        ville: 'Reims',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      updatedAt: new Date('2022-12-01'),
+      structure: {
+        _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
+        nom: 'Gare CnFS'
+      },
+      aidants: [
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'Jean', nom: 'Dupond', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' },
+        { _id: 'aaa88891b3f44bdf86bb7bc2601d3ggg', prenom: 'Jean', nom: 'Anonyme', emailPro: 'jean.anonyme@gouv.fr', nonAffichageCarto: true }
+      ]
+    };
+
+    const lieux = await lieuxDeMediationNumerique({ getPermanences: () => [permanence] });
+
+    expect(lieux).toStrictEqual([
+      {
+        id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        nom: 'Anonymal',
+        pivot: '00000000000000',
+        commune: 'Reims',
+        code_postal: '51100',
+        adresse: '12 BIS RUE DE LECLERCQ',
+        services: TEST_SERVICES,
+        source: 'conseiller-numerique',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1818,6 +2207,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1834,12 +2224,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1860,6 +2252,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1878,12 +2271,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1906,6 +2301,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1923,12 +2319,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',
@@ -1951,6 +2349,7 @@ describe('lieux de médiation numérique', () => {
         numeroRue: '12 BIS',
         rue: 'RUE DE LECLERCQ'
       },
+      updatedAt: new Date('2022-12-01'),
       structure: {
         _id: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         nom: 'Gare CnFS'
@@ -1969,12 +2368,14 @@ describe('lieux de médiation numérique', () => {
       {
         id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
         nom: 'Anonymal',
+        pivot: '00000000000000',
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        services: CNFS_COMMON_SERVICES,
+        services: TEST_SERVICES,
         source: 'conseiller-numerique',
-        conditions_access: 'Gratuit',
+        date_maj: '2022-12-01',
+        conditions_acces: ConditionAcces.Gratuit,
         labels_nationaux: 'CNFS',
         structureId: 'abc88891b3f44bdf86bb7bc2601d3ddd',
         structureNom: 'Gare CnFS',

@@ -185,7 +185,8 @@ const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
     'Date d\'envoi du mail M+1,5',
     'Id de la structure',
     'Siret de la structure',
-    'Nom de la structure'
+    'Nom de la structure',
+    'Code postal de la structure',
   ];
   return [
     fileHeaders.join(csvCellSeparator),
@@ -200,7 +201,8 @@ const buildExportCnfsWithoutCRACsvFileContent = async conseillers => {
       statCnfsWithoutCRA.date1MoisEtDemi,
       statCnfsWithoutCRA.structure.idPG,
       statCnfsWithoutCRA.structure.siret,
-      statCnfsWithoutCRA.structure.nom
+      statCnfsWithoutCRA.structure.nom,
+      statCnfsWithoutCRA.structure.codePostal,
     ].join(csvCellSeparator))
   ].join(csvLineSeparator);
 };
