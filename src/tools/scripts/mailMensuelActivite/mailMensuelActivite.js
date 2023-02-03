@@ -8,8 +8,6 @@ const dayjs = require('dayjs');
 const cli = require('commander');
 let { delay } = require('../../utils');
 const { getStatsDurees } = require('../../../../src/services/stats/cras/durees');
-const createEmails = require('../../../emails/emails');
-const createMailer = require('../../../mailer');
 
 cli.description('Envoi du mail mensuel d\'activité sur les CRAs')
 .option('--limit [limit]', 'limit the number of emails sent (default: 1)', parseInt)
@@ -79,10 +77,7 @@ const pourcentage = async (nbMoisDernier, nbMois) => {
   return pourcentage >= 0 ? '+' + pourcentage : pourcentage;
 };
 
-execute(__filename, async ({ app, db, logger, Sentry }) => {
-
-  let mailer = createMailer(app);
-  const emails = createEmails(db, mailer, app, logger);
+execute(__filename, async ({ db, logger, emails, Sentry }) => {
 
   const { limit = 1, delai = 1000 } = cli;
 
