@@ -83,24 +83,29 @@ const deleteStatistiquesCra = db => async cra => {
 
 };
 
-const searchSousThemes = db => async (theme, sousTheme) => {
+const searchSousThemes = db => async sousTheme => {
   const regex = new RegExp(sousTheme);
   const sousThemes = [];
+
   const result = await db.collection('cras').aggregate([
-    { $match: { 'cra.themes': { '$in': [theme] }, 'cra.sousThemes': { '$elemMatch': { [theme]: { '$in': [regex] } } } } },
+    { $match: { 'cra.sousThemes': { '$elemMatch': { ['annotation']: { '$in': [regex] } } } } },
     { $group: { '_id': '$cra.sousThemes' } },
     { $project: {
       '_id': 0,
-      'sousTheme': { $map: {
+      'sousThemes': { $map: {
         input: '$_id',
-        as: 'sousTheme',
-        in: '$$sousTheme.' + theme
+        as: 'sousThemes',
+        in: '$$sousThemes.annotation'
       } }
     } }
   ]).toArray();
-  result.forEach(element => {
-    sousThemes.push(element.sousTheme[0][0]);
 
+  result.forEach(element => {
+    element.sousThemes.forEach(sousTheme => {
+      if (sousTheme !== null && !sousThemes.includes(sousTheme[0])) {
+        sousThemes.push(sousTheme[0]);
+      }
+    });
   });
   return sousThemes;
 };
