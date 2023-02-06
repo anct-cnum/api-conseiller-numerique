@@ -15,7 +15,8 @@ cli.description('Envoi du mail mensuel d\'activité sur les CRAs')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
-const listeMois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const listeMois = ['de janvier', 'de février', 'de mars', 'd\'avril', 'de mai', 'de juin',
+  'de juillet', 'd\'août', 'de septembre', 'd\'octobre', 'de novembre', 'de décembre'];
 const mois = new Date(dayjs(Date.now()).subtract(1, 'month'));
 const debutMois = new Date(dayjs(mois).startOf('month'));
 const finMois = new Date(dayjs(mois).endOf('month'));
@@ -23,6 +24,14 @@ const finMois = new Date(dayjs(mois).endOf('month'));
 const moisDernier = new Date(dayjs(Date.now()).subtract(2, 'month'));
 const debutMoisDernier = new Date(dayjs(moisDernier).startOf('month'));
 const finMoisDernier = new Date(dayjs(moisDernier).endOf('month'));
+
+const getQuery = (conseillerId, debut, fin) => {
+  return {
+    'conseiller.$id': conseillerId,
+    'cra.dateAccompagnement': {
+      '$gte': debut, '$lte': fin }
+  };
+};
 
 const getConseillers = db => async limit => await db.collection('conseillers').find({
   'emailCN.address': { $exists: true },
@@ -87,16 +96,9 @@ execute(__filename, async ({ db, logger, emails, Sentry }) => {
   let mailAvecCras = 0;
   let mailSansCra = 0;
   for (const conseiller of conseillers) {
-    const query = {
-      'conseiller.$id': conseiller._id,
-      'cra.dateAccompagnement': {
-        '$gte': debutMois, '$lte': finMois }
-    };
-    const queryMoisDernier = {
-      'conseiller.$id': conseiller._id,
-      'cra.dateAccompagnement': {
-        '$gte': debutMoisDernier, '$lte': finMoisDernier }
-    };
+
+    const query = getQuery(conseiller._id, debutMois, finMois);
+    const queryMoisDernier = getQuery(conseiller._id, debutMoisDernier, finMoisDernier);
 
     try {
       const cras = {};

@@ -30,7 +30,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         conseiller.emailCN.address,
         {
-          subject: 'Mon activité du mois de ' + cras.mois,
+          subject: 'Mon activité du mois ' + cras.mois,
           body: await render(conseiller, cras),
         },
       )
