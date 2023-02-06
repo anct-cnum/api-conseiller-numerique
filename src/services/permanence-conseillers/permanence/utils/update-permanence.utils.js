@@ -3,7 +3,7 @@ const Joi = require('joi');
 
 const assignPermanence = (body, conseillerId, database) => {
   let permanence = Object.assign({}, body);
-
+  permanence = JSON.parse(JSON.stringify(permanence).replace(/"\s+|\s+"/g, '"'));
   permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
   permanence.conseillers = [];
   body.conseillers.forEach(conseiller => {
@@ -41,7 +41,8 @@ const assignPermanences = (permanences, conseillerId) => {
     const conseillers = [];
     const conseillersItinerants = [];
     const lieuPrincipalPour = [];
-
+    
+    permanence = JSON.parse(JSON.stringify(permanence).replace(/"\s+|\s+"/g, '"'));
     permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
     permanence._id = permanence._id ? new ObjectId(permanence._id) : null;
 
