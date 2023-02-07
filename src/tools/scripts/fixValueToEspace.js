@@ -61,6 +61,6 @@ execute(__filename, async ({ logger, db, exit }) => {
   }
   const arrayImpactCN = [].concat(...Object.values(impactCN));
   const resultImpactCn = [...new Set(arrayImpactCN)];
-  logger.info(`${resultImpactCn.length} conseillers concernées`);
+  logger.info(`${resultImpactCn.length} conseillers concernés`);
   exit();
 });
