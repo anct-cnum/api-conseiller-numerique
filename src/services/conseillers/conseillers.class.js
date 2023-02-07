@@ -301,6 +301,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await checkCvExistsS3(app)(conseiller);
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         await suppressionCv(conseiller.cv, app);
         await suppressionCVConseiller(db, conseiller);
         return res.send({ deleteSuccess: true });
