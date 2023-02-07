@@ -31,6 +31,7 @@ const conseillerChangeEmailCnfs = require('./support/conseillerChangeEmailCnfs')
 const confirmationChangeEmailCnfs = require('./support/confirmationChangeEmailCnfs');
 const invitationHubEspaceCoop = require('./hubs/creationCompteHub');
 const bienvenueCompteHub = require('./hubs/bienvenueCompteHub');
+const mailMensuelActivite = require('./conseillers/mailMensuelActivite');
 const mailRelanceM1Conseiller = require('./conseillers/mailRelanceM+1Conseiller');
 const mailRelanceM1Structure = require('./structures/mailRelanceM+1Structure');
 const mailRelanceM1SupHierarchique = require('./structures/mailRelanceM+1SupHierarchique');
@@ -75,6 +76,7 @@ module.exports = (db, mailer, app, logger) => {
     confirmationChangeEmailCnfs(db, mailer, app, logger),
     invitationHubEspaceCoop(db, mailer),
     bienvenueCompteHub(db, mailer),
+    mailMensuelActivite(db, mailer),
     mailRelanceM1Conseiller(db, mailer),
     mailRelanceM1Structure(db, mailer),
     mailRelanceM1SupHierarchique(db, mailer),
