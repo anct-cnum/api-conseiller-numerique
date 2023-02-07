@@ -223,6 +223,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       //Suppression de l'ancien CV si présent dans S3 et dans MongoDb
       if (conseiller.cv?.file) {
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
         s3.deleteObject(paramsDelete, function(error, data) {
@@ -301,14 +302,11 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await checkCvExistsS3(app)(conseiller);
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         await suppressionCv(conseiller.cv, app);
         await suppressionCVConseiller(db, conseiller);
         return res.send({ deleteSuccess: true });
       } catch (error) {
-        if (conseiller?.cv?.file) {
-          await suppressionCVConseiller(db, conseiller);
-          return res.send({ deleteSuccess: true });
-        }
         app.get('sentry').captureException(error);
         logger.error(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression du CV').toJSON());
