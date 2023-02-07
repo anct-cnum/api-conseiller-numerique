@@ -307,10 +307,6 @@ exports.Conseillers = class Conseillers extends Service {
         await suppressionCVConseiller(db, conseiller);
         return res.send({ deleteSuccess: true });
       } catch (error) {
-        if (conseiller?.cv?.file) {
-          await suppressionCVConseiller(db, conseiller);
-          return res.send({ deleteSuccess: true });
-        }
         app.get('sentry').captureException(error);
         logger.error(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression du CV').toJSON());
