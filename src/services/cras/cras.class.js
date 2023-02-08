@@ -97,7 +97,7 @@ exports.Cras = class Cras extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user),
       ).then(async () => {
         await getCraById(db)(craId).then(async cra => {
-          if (String(cra.conseiller.oid) === String(user.entity.oid)) {
+          if (String(cra?.conseiller?.oid) === String(user.entity.oid)) {
             await deleteStatistiquesCra(db)(cra).then(async () => {
               return;
             }).catch(error => {
@@ -114,7 +114,7 @@ exports.Cras = class Cras extends Service {
               return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
             });
           } else {
-            return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra.').toJSON());
+            return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra ou il a déjà été supprimé.').toJSON());
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -147,7 +147,7 @@ exports.Cras = class Cras extends Service {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const { sousTheme } = req.query;
-      
+
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
