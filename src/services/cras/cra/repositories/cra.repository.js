@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const { escapeRegex } = require('../../../../utils/escapeRegex');
 
 const getCraById = db => async craId => {
   return await db.collection('cras').findOne({ '_id': new ObjectId(craId) });
@@ -83,12 +84,9 @@ const deleteStatistiquesCra = db => async cra => {
 
 };
 
-const fonctionRegex = RegExp.escape = function(text) {
-  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-};
 
 const searchSousThemes = db => async sousTheme => {
-  const regex = new RegExp(fonctionRegex(sousTheme));
+  const regex = new RegExp(escapeRegex(sousTheme));
   const sousThemes = [];
 
   const result = await db.collection('cras').aggregate([
