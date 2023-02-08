@@ -75,12 +75,13 @@ const deleteStatistiquesCra = db => async cra => {
   const year = cra.cra.dateAccompagnement.getUTCFullYear();
   const month = cra.cra.dateAccompagnement.getMonth();
   const stats = await getStatsConseillerCras(db)(new ObjectId(cra.conseiller.oid));
-  let total = stats[String(year)]?.find(stat => stat.mois === month)?.totalCras;
-  await deleteLigneCra(db)(year, month, stats._id, options);
-  if (total > 1) {
-    await updateLigneCra(db)(year, month, total - 1, stats._id, options);
+  if (stats) {
+    let total = stats[String(year)]?.find(stat => stat.mois === month)?.totalCras;
+    await deleteLigneCra(db)(year, month, stats._id, options);
+    if (total > 1) {
+      await updateLigneCra(db)(year, month, total - 1, stats._id, options);
+    }
   }
-
 };
 
 const searchSousThemes = db => async sousTheme => {
