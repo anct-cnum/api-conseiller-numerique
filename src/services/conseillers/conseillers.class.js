@@ -446,9 +446,11 @@ exports.Conseillers = class Conseillers extends Service {
         } else {
           conseiller = await getConseillerAssociatedWithUser(userById);
         }
+        let dateFin = new Date(query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
         };
         if (query.codePostal !== '') {
           statsQuery = {
@@ -466,9 +468,9 @@ exports.Conseillers = class Conseillers extends Service {
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
+          `${getExportStatistiquesFileName(query.dateDebut, dateFin)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -493,9 +495,11 @@ exports.Conseillers = class Conseillers extends Service {
         } else {
           conseiller = await getConseillerAssociatedWithUser(userById);
         }
+        let dateFin = new Date(query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
         };
         if (query?.codePostal !== '') {
           statsQuery = {
@@ -513,7 +517,7 @@ exports.Conseillers = class Conseillers extends Service {
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         buildExportStatistiquesExcelFileContent(
-          app, res, stats, query?.dateDebut, query?.dateFin,
+          app, res, stats, query?.dateDebut, dateFin,
           `${conseiller?.prenom} ${conseiller?.nom}`,
           query?.idType, query?.codePostal, query?.ville,
           isAdminCoop
