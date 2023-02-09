@@ -35,7 +35,7 @@ const validationCra = ObjectCra => {
     }),
     dateAccompagnement: Joi.date().min(new Date('2020-01-01T00:00:00.000Z')).required().error(new Error('La date est invalide')),
     organisme: Joi.string().required().allow(null).error(new Error('L\'organisme de l\'accompagnement est invalide')),
-  }).validate(ObjectCra.cra);
+  }).validate(ObjectCra);
 
   return schema.error;
 };
