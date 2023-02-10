@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const { escapeRegex } = require('../../../../utils/escapeRegex');
 
 const getCraById = db => async craId => {
   return await db.collection('cras').findOne({ '_id': new ObjectId(craId) });
@@ -75,12 +76,41 @@ const deleteStatistiquesCra = db => async cra => {
   const year = cra.cra.dateAccompagnement.getUTCFullYear();
   const month = cra.cra.dateAccompagnement.getMonth();
   const stats = await getStatsConseillerCras(db)(new ObjectId(cra.conseiller.oid));
-  let total = stats[String(year)]?.find(stat => stat.mois === month)?.totalCras;
-  await deleteLigneCra(db)(year, month, stats._id, options);
-  if (total > 1) {
-    await updateLigneCra(db)(year, month, total - 1, stats._id, options);
+  if (stats) {
+    let total = stats[String(year)]?.find(stat => stat.mois === month)?.totalCras;
+    await deleteLigneCra(db)(year, month, stats._id, options);
+    if (total > 1) {
+      await updateLigneCra(db)(year, month, total - 1, stats._id, options);
+    }
   }
+};
 
+
+const searchSousThemes = db => async sousTheme => {
+  const regex = new RegExp(escapeRegex(sousTheme));
+  const sousThemes = [];
+
+  const result = await db.collection('cras').aggregate([
+    { $match: { 'cra.sousThemes': { '$elemMatch': { 'annotation': { '$in': [regex] } } } } },
+    { $group: { '_id': '$cra.sousThemes' } },
+    { $project: {
+      '_id': 0,
+      'sousThemes': { $map: {
+        input: '$_id',
+        as: 'sousThemes',
+        in: '$$sousThemes.annotation'
+      } }
+    } }
+  ]).toArray();
+
+  result.forEach(element => {
+    element.sousThemes.forEach(sousTheme => {
+      if (sousTheme !== null && !sousThemes.includes(sousTheme[0])) {
+        sousThemes.push(sousTheme[0]);
+      }
+    });
+  });
+  return sousThemes;
 };
 
 module.exports = {
@@ -91,4 +121,5 @@ module.exports = {
   deleteStatistiquesCra,
   deleteCra,
   insertDeleteCra,
+  searchSousThemes,
 };

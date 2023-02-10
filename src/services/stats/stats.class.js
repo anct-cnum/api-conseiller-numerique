@@ -345,6 +345,8 @@ exports.Stats = class Stats extends Service {
         let ids = [];
         let userFinal = {};
         const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        let dateFin = new Date(query.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
 
         if (user.roles.includes(Role.Prefet)) {
           userFinal = await db.collection('users').findOne({ 'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
@@ -363,14 +365,14 @@ exports.Stats = class Stats extends Service {
           ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
         }
         const { stats, type, idType } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
+          query.dateDebut, dateFin, query.idType, query.type, query.codePostal, ids,
           exportStatistiquesRepository(db),
           statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
         );
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin, type, idType, query.codePostal)}.csv`,
+          `${getExportStatistiquesFileName(query.dateDebut, dateFin, type, idType, query.codePostal)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, type, idType, query.codePostal, query.ville, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, dateFin, type, idType, query.codePostal, query.ville, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -387,6 +389,8 @@ exports.Stats = class Stats extends Service {
         let ids = [];
         let userFinal = {};
         const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        let dateFin = new Date(query.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
 
         if (user.roles.includes(Role.Prefet)) {
           userFinal = await db.collection('users').findOne({ 'entity.$ref': 'structures', 'entity.$id': new ObjectID(req.query?.idType) });
@@ -405,12 +409,12 @@ exports.Stats = class Stats extends Service {
           ids = await statsFct.getConseillersIdsByStructure(structureId, res, statsRepository(db));
         }
         const { stats, type, idType } = await getStatistiquesToExport(
-          query.dateDebut, query.dateFin, query.idType, query.type, query.codePostal, ids,
+          query.dateDebut, dateFin, query.idType, query.type, query.codePostal, ids,
           exportStatistiquesRepository(db),
           statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
         );
         buildExportStatistiquesExcelFileContent(
-          app, res, stats, query.dateDebut, query.dateFin,
+          app, res, stats, query.dateDebut, dateFin,
           type, idType, query.codePostal, query.ville,
           statsFct.checkRole(userFinal?.roles, Role.AdminCoop)
         );

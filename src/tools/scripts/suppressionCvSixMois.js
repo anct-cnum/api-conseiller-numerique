@@ -23,6 +23,7 @@ execute(__filename, async ({ logger, db, app }) => {
   if (conseillers.length > 0) {
     conseillers.forEach(conseiller => {
       promises.push(new Promise(async resolve => {
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         await suppressionCv(conseiller.cv, app)
         .then(async () => {
           return suppressionCVConseiller(db, conseiller);

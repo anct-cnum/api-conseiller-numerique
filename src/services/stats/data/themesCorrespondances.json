@@ -28,7 +28,7 @@
   },
   {
     "nom": "traitement texte",
-    "correspondance": "Traitement de texte"
+    "correspondance": "Bureautique"
   },
   {
     "nom": "echanger",
@@ -57,5 +57,17 @@
   {
     "nom": "sante",
     "correspondance": "Santé"
+  },
+  {
+    "nom": "budget",
+    "correspondance": "Budget"
+  },
+  {
+    "nom": "scolaire",
+    "correspondance": "Scolaire"
+  },
+  {
+    "nom": "diagnostic",
+    "correspondance": "Diagnostic numérique"
   }
 ]

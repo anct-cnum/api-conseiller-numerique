@@ -16,6 +16,9 @@ const getStatsThemes = async (db, query) => {
     { nom: 'securite', valeur: 0 },
     { nom: 'fraude et harcelement', valeur: 0 },
     { nom: 'sante', valeur: 0 },
+    { nom: 'budget', valeur: 0 },
+    { nom: 'scolaire', valeur: 0 },
+    { nom: 'diagnostic', valeur: 0 },
   ];
 
   let themes = await db.collection('cras').aggregate(

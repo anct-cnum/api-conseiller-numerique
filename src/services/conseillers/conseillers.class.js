@@ -223,6 +223,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       //Suppression de l'ancien CV si présent dans S3 et dans MongoDb
       if (conseiller.cv?.file) {
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
         s3.deleteObject(paramsDelete, function(error, data) {
@@ -301,14 +302,11 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await checkCvExistsS3(app)(conseiller);
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         await suppressionCv(conseiller.cv, app);
         await suppressionCVConseiller(db, conseiller);
         return res.send({ deleteSuccess: true });
       } catch (error) {
-        if (conseiller?.cv?.file) {
-          await suppressionCVConseiller(db, conseiller);
-          return res.send({ deleteSuccess: true });
-        }
         app.get('sentry').captureException(error);
         logger.error(error);
         return res.status(500).send(new GeneralError('Une erreur est survenue lors de la suppression du CV').toJSON());
@@ -448,9 +446,11 @@ exports.Conseillers = class Conseillers extends Service {
         } else {
           conseiller = await getConseillerAssociatedWithUser(userById);
         }
+        let dateFin = new Date(query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
         };
         if (query.codePostal !== '') {
           statsQuery = {
@@ -468,9 +468,9 @@ exports.Conseillers = class Conseillers extends Service {
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         csvFileResponse(res,
-          `${getExportStatistiquesFileName(query.dateDebut, query.dateFin)}.csv`,
+          `${getExportStatistiquesFileName(query.dateDebut, dateFin)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -495,9 +495,11 @@ exports.Conseillers = class Conseillers extends Service {
         } else {
           conseiller = await getConseillerAssociatedWithUser(userById);
         }
+        let dateFin = new Date(query?.dateFin);
+        dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: query.dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
         };
         if (query?.codePostal !== '') {
           statsQuery = {
@@ -515,7 +517,7 @@ exports.Conseillers = class Conseillers extends Service {
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         buildExportStatistiquesExcelFileContent(
-          app, res, stats, query?.dateDebut, query?.dateFin,
+          app, res, stats, query?.dateDebut, dateFin,
           `${conseiller?.prenom} ${conseiller?.nom}`,
           query?.idType, query?.codePostal, query?.ville,
           isAdminCoop

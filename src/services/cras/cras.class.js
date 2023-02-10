@@ -10,7 +10,14 @@ const {
   rolesGuard,
   Role,
 } = require('../../common/utils/feathers.utils');
-const { getCraById, updateCra, updateStatistiquesCra, countCraByPermanenceId, deleteCra, deleteStatistiquesCra } = require('./cra/repositories/cra.repository');
+const {
+  getCraById,
+  updateCra,
+  updateStatistiquesCra,
+  countCraByPermanenceId,
+  deleteCra,
+  deleteStatistiquesCra,
+  searchSousThemes } = require('./cra/repositories/cra.repository');
 const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
 const { validationCra } = require('./cra/utils/validationCra');
 const { v4: validate } = require('uuid');
@@ -61,7 +68,7 @@ exports.Cras = class Cras extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        if (!validationCra(cra)) {
+        if (!validationCra(cra.cra)) {
           await updateCra(db)(cra).then(async () => {
             await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId).then(() => {
               return res.send({ cra });
@@ -90,7 +97,7 @@ exports.Cras = class Cras extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user),
       ).then(async () => {
         await getCraById(db)(craId).then(async cra => {
-          if (String(cra.conseiller.oid) === String(user.entity.oid)) {
+          if (String(cra?.conseiller?.oid) === String(user.entity.oid)) {
             await deleteStatistiquesCra(db)(cra).then(async () => {
               return;
             }).catch(error => {
@@ -107,7 +114,7 @@ exports.Cras = class Cras extends Service {
               return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
             });
           } else {
-            return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra.').toJSON());
+            return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra ou il a déjà été supprimé.').toJSON());
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -132,6 +139,25 @@ exports.Cras = class Cras extends Service {
           app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(404).send(new Conflict('Le comptage de cras pour cette permanence a échoué.').toJSON());
+        });
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/cras/searchSousThemes', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const { sousTheme } = req.query;
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        await searchSousThemes(db)(sousTheme).then(sousThemes => {
+          return res.send({ sousThemes });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          return res.status(500).send(new GeneralError('Une erreur s\'est produite lors de la recherche de sous-thèmes.').toJSON());
         });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
