@@ -237,7 +237,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Statistiques John Doe  false  01/01/2021-15/11/2021\n' +
       '\n' +
       'Général\n' +
-      'Personnes totales accompagnées durant cette période;20\n' +
+      'Nouveaux usagers accompagnés durant cette période;20\n' +
       'Accompagnements totaux enregistrés (dont récurrent);23\n' +
       'Ateliers réalisés;0\n' +
       'Total des participants aux ateliers;0\n' +
