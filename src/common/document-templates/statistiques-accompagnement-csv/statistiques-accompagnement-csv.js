@@ -4,7 +4,7 @@ const labelsCorrespondance = require('../../../services/stats/data/themesCorresp
 
 const general = statistiques => [
   'Général',
-  `Personnes totales accompagnées durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
+  `Nouveaux usagers accompagnés durant cette période;${statistiques.nbTotalParticipant + statistiques.nbAccompagnementPerso +
     statistiques.nbDemandePonctuel - statistiques.nbParticipantsRecurrents}`,
   `Accompagnements totaux enregistrés (dont récurrent);${statistiques.nbTotalParticipant +
     statistiques.nbAccompagnementPerso + statistiques.nbDemandePonctuel}`,

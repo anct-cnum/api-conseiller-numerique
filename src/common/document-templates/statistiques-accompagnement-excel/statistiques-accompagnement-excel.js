@@ -8,7 +8,7 @@ const mois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 
 
 const general = (ws, statistiques) => {
   ws.cell(3, 1).string('Général');
-  ws.cell(4, 1).string('Personnes totales accompagnées durant cette période');
+  ws.cell(4, 1).string('Nouveaux usagers accompagnés durant cette période');
   ws.cell(5, 1).string('Accompagnements totaux enregistrés (dont récurrent)');
   ws.cell(6, 1).string('Ateliers réalisés');
   ws.cell(7, 1).string('Total des participants aux ateliers');
