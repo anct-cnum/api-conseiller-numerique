@@ -68,7 +68,7 @@ exports.Cras = class Cras extends Service {
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        if (!validationCra(cra)) {
+        if (!validationCra(cra.cra)) {
           await updateCra(db)(cra).then(async () => {
             await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId).then(() => {
               return res.send({ cra });
