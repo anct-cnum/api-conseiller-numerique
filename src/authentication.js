@@ -20,4 +20,35 @@ module.exports = app => {
 
   app.use('/authentication', authentication);
   app.configure(expressOauth());
+
+  app.service('authentication').hooks({
+    after: {
+      create: [
+        async context => {
+          try {
+            if (context.data.strategy === 'local') {
+              const db = await app.get('mongoClient');
+              await db.collection('logs').insertOne({ name: context.data.name, time: new Date(), ip: context.params.ip });
+            }
+          } catch (error) {
+            throw new Error(error);
+          }
+        }
+      ]
+    },
+    error: {
+      create: [
+        async context => {
+          try {
+            if (context.data.strategy === 'local') {
+              const db = await app.get('mongoClient');
+              await db.collection('logs').insertOne({ name: context.data.name, time: new Date(), ip: context.params.ip, connexionError: true });
+            }
+          } catch (error) {
+            throw new Error(error);
+          }
+        }
+      ]
+    }
+  });
 };
