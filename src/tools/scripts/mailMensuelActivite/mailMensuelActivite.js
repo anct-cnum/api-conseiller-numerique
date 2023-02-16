@@ -129,15 +129,22 @@ execute(__filename, async ({ db, logger, emails, Sentry }) => {
         cras.nbHeures = totalHeuresMois;
         cras.pourcentageHeures = await pourcentage(totalHeuresMoisPasse, totalHeuresMois);
         mailAvecCras++;
+
+        //En attente de contenue de la BDT pour le mail 0 cra
+        const messageMensuelActivite = emails.getEmailMessageByTemplateName('mailMensuelActivite');
+        messageMensuelActivite.send(conseiller, cras);
+        nbEnvoisMails++;
       } else {
         cras.nbUsagers = 0;
         cras.nbHeures = 0;
-        mailSansCra++;
+        //mailSansCra++;
       }
 
-      const messageMensuelActivite = emails.getEmailMessageByTemplateName('mailMensuelActivite');
+      //En attente de contenue de la BDT pour le mail 0 cra
+      /*const messageMensuelActivite = emails.getEmailMessageByTemplateName('mailMensuelActivite');
       messageMensuelActivite.send(conseiller, cras);
       nbEnvoisMails++;
+      */
       if (delai) {
         await delay(delai);
       }
