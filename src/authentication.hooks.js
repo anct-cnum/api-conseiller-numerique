@@ -21,7 +21,7 @@ module.exports = {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
             await db.collection('accessLogs')
-            .insertOne({ name: context.data.name, lastLoginDate: new Date(), ip: context.params.ip });
+            .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip });
           }
         } catch (error) {
           throw new Error(error);
