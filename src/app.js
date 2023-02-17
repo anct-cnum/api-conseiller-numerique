@@ -63,7 +63,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
 app.configure(mongodb);
 
 app.configure(middleware);

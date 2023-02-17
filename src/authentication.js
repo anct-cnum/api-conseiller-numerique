@@ -1,6 +1,7 @@
 const { AuthenticationService, JWTStrategy } = require('@feathersjs/authentication');
 const { LocalStrategy } = require('@feathersjs/authentication-local');
 const { expressOauth } = require('@feathersjs/authentication-oauth');
+const hooks = require('./authentication.hooks');
 
 class InsensitiveLocalStrategy extends LocalStrategy {
   async getEntityQuery(query) {
@@ -21,34 +22,6 @@ module.exports = app => {
   app.use('/authentication', authentication);
   app.configure(expressOauth());
 
-  app.service('authentication').hooks({
-    after: {
-      create: [
-        async context => {
-          try {
-            if (context.data.strategy === 'local') {
-              const db = await app.get('mongoClient');
-              await db.collection('logs').insertOne({ name: context.data.name, time: new Date(), ip: context.params.ip });
-            }
-          } catch (error) {
-            throw new Error(error);
-          }
-        }
-      ]
-    },
-    error: {
-      create: [
-        async context => {
-          try {
-            if (context.data.strategy === 'local') {
-              const db = await app.get('mongoClient');
-              await db.collection('logs').insertOne({ name: context.data.name, time: new Date(), ip: context.params.ip, connexionError: true });
-            }
-          } catch (error) {
-            throw new Error(error);
-          }
-        }
-      ]
-    }
-  });
+  const service = app.service('authentication');
+  service.hooks(hooks);
 };
