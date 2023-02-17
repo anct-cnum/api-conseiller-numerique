@@ -20,7 +20,8 @@ module.exports = {
         try {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
-            await db.collection('accessLogs').insertOne({ name: context.data.name, lastLoginDate: new Date(), ip: context.params.ip });
+            await db.collection('accessLogs')
+            .insertOne({ name: context.data.name, lastLoginDate: new Date(), ip: context.params.ip });
           }
         } catch (error) {
           throw new Error(error);
@@ -41,7 +42,8 @@ module.exports = {
         try {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
-            await db.collection('accessLogs').insertOne({ name: context.data.name, lastLoginDate: new Date(), ip: context.params.ip, connexionError: true });
+            await db.collection('accessLogs')
+            .insertOne({ name: context.data.name, lastLoginDate: new Date(), ip: context.params.ip, connexionError: true });
           }
         } catch (error) {
           throw new Error(error);
