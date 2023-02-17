@@ -59,9 +59,10 @@ app.use(express.urlencoded({ extended: true }));
 app.configure(express.rest());
 
 app.use((req, res, next) => {
-  req.feathers.ip = req.connection.remoteAddress;
+  req.feathers.ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   next();
 });
+
 
 app.configure(mongodb);
 
