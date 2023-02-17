@@ -2,7 +2,7 @@
 const { AccessLogs } = require('./access-logs.class');
 const hooks = require('./access-logs.hooks');
 
-module.exports = function (app) {
+module.exports = function(app) {
   const options = {
     paginate: app.get('paginate')
   };
