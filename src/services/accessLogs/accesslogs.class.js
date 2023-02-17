@@ -5,7 +5,7 @@ exports.AccessLogs = class AccessLogs extends Service {
     super(options);
     
     app.get('mongoClient').then(db => {
-      this.Model = db.collection('Accesslogs');
+      this.Model = db.collection('accessLogs');
     });
   }
 };

@@ -8,10 +8,10 @@ module.exports = function(app) {
   };
 
   // Initialize our service with any options it requires
-  app.use('/Accesslogs', new AccessLogs(options, app));
+  app.use('/accessLogs', new AccessLogs(options, app));
 
   // Get our initialized service so that we can register hooks
-  const service = app.service('Accesslogs');
+  const service = app.service('accessLogs');
 
   service.hooks(hooks);
 };
