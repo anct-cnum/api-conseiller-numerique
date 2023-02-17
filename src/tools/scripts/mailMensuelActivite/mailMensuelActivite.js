@@ -130,7 +130,7 @@ execute(__filename, async ({ db, logger, emails, Sentry }) => {
         cras.pourcentageHeures = await pourcentage(totalHeuresMoisPasse, totalHeuresMois);
         mailAvecCras++;
 
-        //En attente de contenue de la BDT pour le mail 0 cra
+        //En attente de contenu de la BDT pour le mail 0 cra
         const messageMensuelActivite = emails.getEmailMessageByTemplateName('mailMensuelActivite');
         messageMensuelActivite.send(conseiller, cras);
         nbEnvoisMails++;
