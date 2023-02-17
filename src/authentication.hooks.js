@@ -22,6 +22,8 @@ module.exports = {
             const db = await context.app.get('mongoClient');
             await db.collection('accessLogs')
             .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip });
+            await db.collection('users')
+            .updateOne({ name: context.data.name }, { $set: { lastLogin: new Date() } });
           }
         } catch (error) {
           throw new Error(error);
@@ -43,7 +45,7 @@ module.exports = {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
             await db.collection('accessLogs')
-            .insertOne({ name: context.data.name, lastLoginDate: new Date(), ip: context.params.ip, connexionError: true });
+            .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip, connexionError: true });
           }
         } catch (error) {
           throw new Error(error);
