@@ -58,6 +58,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.configure(express.rest());
 
+app.use((req, res, next) => {
+  req.feathers.ip = req.connection.remoteAddress;
+  next();
+});
+
 app.configure(mongodb);
 
 app.configure(middleware);
