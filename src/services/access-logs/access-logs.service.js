@@ -1,8 +1,8 @@
-// Initializes the `logs` service on path `/logs`
-const { AccessLogs } = require('./accessLogs.class');
-const hooks = require('./accessLogs.hooks');
+// Initializes the `accessLogs` service on path `/accessLogs`
+const { AccessLogs } = require('./access-logs.class');
+const hooks = require('./access-logs.hooks');
 
-module.exports = function(app) {
+module.exports = function (app) {
   const options = {
     paginate: app.get('paginate')
   };
