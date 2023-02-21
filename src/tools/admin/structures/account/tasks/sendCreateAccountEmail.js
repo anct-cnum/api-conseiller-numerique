@@ -9,6 +9,7 @@ module.exports = async (db, logger, emails, action, options = {}) => {
   };
 
   let cursor = await db.collection('users').find({
+    migrationDashboard: { $exists: false },
     ...action.getQuery(),
     ...(options.siret ? { siret: options.siret } : {})
   });
