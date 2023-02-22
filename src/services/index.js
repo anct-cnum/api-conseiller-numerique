@@ -11,6 +11,8 @@ const permanenceConseillers = require('./permanence-conseillers/permanence-conse
 const geocode = require('./geocode/geocode.service.js');
 const historiqueCras = require('./historique-cras/historique-cras.service.js');
 
+const accessLogs = require('./access-logs/access-logs.service.js');
+
 module.exports = function(app) {
   app.configure(users);
   app.configure(siret);
@@ -24,4 +26,5 @@ module.exports = function(app) {
   app.configure(permanenceConseillers);
   app.configure(geocode);
   app.configure(historiqueCras);
+  app.configure(accessLogs);
 };

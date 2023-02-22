@@ -14,11 +14,12 @@ const conseillersToExcelFileHeaders = [
   'idPG',
   'prenom',
   'nom',
+  'email',
   'certifie'
 ];
 
 const writeConseillersToExcelInCSVFile = conseillersToExcel => {
-  const csvFile = path.join(__dirname, '../../../../data/exports', 'conseillers-to-xls.csv');
+  const csvFile = path.join(__dirname, '../../../data/exports', 'conseillers-to-xls.csv');
   const file = fs.createWriteStream(csvFile, { flags: 'w' });
 
   file.write(`${conseillersToExcelFileHeaders.join(';')}\n`);
@@ -28,6 +29,7 @@ const writeConseillersToExcelInCSVFile = conseillersToExcel => {
       conseillerToExcel.idPG,
       conseillerToExcel.prenom,
       conseillerToExcel.nom,
+      conseillerToExcel.email,
       conseillerToExcel.certifie
     ];
 
@@ -54,7 +56,8 @@ const readExcel = async file => {
   const IDPG = 1;
   const PRENOM = 2;
   const NOM = 3;
-  const CERTIFIE = 4;
+  const EMAIL = 4;
+  const CERTIFIE = 5;
 
   const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
   const listConseiller = [];
@@ -70,11 +73,13 @@ const readExcel = async file => {
       const idPG = row.getCell(IDPG).value;
       const prenom = row.getCell(PRENOM).value;
       const nom = row.getCell(NOM).value;
+      const email = row.getCell(EMAIL).value;
       const certifie = row.getCell(CERTIFIE).value;
       listConseiller.push({
         'idPG': idPG,
         'prenom': prenom,
         'nom': nom,
+        'email': email,
         'certifie': certifie
       });
     }
