@@ -9,6 +9,7 @@ module.exports = async (db, logger, emails, options = {}) => {
   };
 
   let cursor = await db.collection('users').find({
+    'migrationDashboard': { $exists: false },
     'roles': { '$in': ['structure_coop'] },
     'mailCoopSent': { '$ne': true }
   });
