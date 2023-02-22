@@ -13,12 +13,17 @@ cli.description('Fix conseillers en recette pour les relances M+1 et M+1,5')
 .parse(process.argv);
 
 const dateDuJourMoins15jours = new Date(dayjs(Date.now()).subtract(15, 'day'));
-execute(__filename, async ({ db, logger }) => {
+execute(__filename, async ({ db, logger, exit, app }) => {
+  const mongodb = app.get('mongodb');
+  if (!mongodb.includes('local') && !mongodb.includes('bezikra')) {
+    exit('Vous devez être connecté à la base de données en recette ou en local pour lancer ce script');
+    return;
+  }
   const { limit = 1 } = cli;
   await db.collection('conseillers').updateMany({
     'statut': { $eq: 'RECRUTE' },
     'estCoordinateur': { $ne: true },
-    'groupeCRA': { $eq: 3 },
+    'groupeCRA': { $in: [3, 4] },
     'groupeCRAHistorique': {
       $elemMatch: {
         'nbJourDansGroupe': { $exists: false },
