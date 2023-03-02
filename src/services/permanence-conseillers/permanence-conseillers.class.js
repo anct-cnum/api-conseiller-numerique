@@ -198,6 +198,23 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.get('/permanences/verifySiret/:siret', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      /*return res.send({ 'adresseParSiret': {
+        'l1': 'DECATHLON FRANCE',
+        'l2': 'DECATHLON DIRECTION GENERALE FRANCE',
+        'l3': '',
+        'l4': '4 BD DE MONS',
+        'l5': '',
+        'l6': '59650 VILLENEUVE D ASCQ',
+        'l7': 'FRANCE',
+        'numero_voie': '4',
+        'type_voie': 'BD',
+        'nom_voie': 'DE MONS',
+        'complement_adresse': '',
+        'code_postal': '5965',
+        'localite': 'VILLENEUVE D ASCQ',
+        'code_insee_localite': '5900',
+        'cedex': ''
+      } });*/
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -212,12 +229,47 @@ exports.PermanenceConseillers = class Sondages extends Service {
             object: 'checkSiret',
           };
           const result = await axios.get(urlSiret, { params: params });
-          const adresse = JSON.stringify(result?.data?.etablissement?.adresse,
+          let adresse = JSON.stringify(result?.data?.etablissement?.adresse,
             (key, value) => (value === null) ? '' : value
           );
-          return res.send({ 'adresseParSiret': JSON.parse(adresse) });
+          if (adresse) {
+            adresse = JSON.parse(adresse);
+            const adresseComplete = [
+              adresse?.numero_voie ?? '',
+              adresse?.type_voie ?? '',
+              adresse?.nom_voie ?? '',
+              adresse?.code_postal ?? '',
+              adresse?.localite ?? ''
+            ].join(' ');
+
+            let adresseParSiret = {
+              l1: adresse?.l1 ?? '',
+              l2: adresse?.l2 ?? '',
+              numero_voie: adresse?.numero_voie ?? '',
+              type_voie: adresse?.type_voie ?? '',
+              nom_voie: adresse?.nom_voie ?? '',
+              code_postal: adresse?.code_postal ?? '',
+              localite: adresse?.localite ?? '',
+              adresseComplete: adresseComplete,
+            };
+
+            try {
+              const params = {};
+              const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adresseComplete}`;
+              const resultAPI = await axios.get(urlAPI, { params: params });
+              if (resultAPI.data?.features?.length > 0) {
+                adresseParSiret.listeAdresses = resultAPI.data?.features;
+              }
+              return res.send({ adresseParSiret });
+            } catch (error) {
+              logger.error(error);
+              app.get('sentry').captureException(error);
+              return res.send({ adresseParSiret });
+            }
+          }
         } catch (error) {
           if (!error.response.data?.gateway_error) {
+
             logger.error(error);
             app.get('sentry').captureException(error);
           }
@@ -246,6 +298,26 @@ exports.PermanenceConseillers = class Sondages extends Service {
           return res.send({ 'geocodeAdresse': result.data?.features });
         } catch (e) {
           return res.send({ 'geocodeAdresse': null });
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/permanences/getAdresse/:adresse', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const { adresse } = JSON.parse(req.params.adresse);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adresse}`;
+        try {
+          const params = {};
+          const result = await axios.get(urlAPI, { params: params });
+          return res.send({ 'adresseApi': result.data?.features });
+        } catch (e) {
+          return res.send({ 'adresseApi': null });
         }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
