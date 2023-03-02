@@ -53,23 +53,34 @@ const getNbUsagers = db => async query => await db.collection('cras').aggregate(
   { $project: { 'valeur': '$count' } }
 ).toArray();
 
-const getMoins1Heure = async arrayHeures => {
+const getUsagersRecurrents = db => async query => await db.collection('cras').aggregate(
+  {
+    $match:
+    { ...query }
+  },
+  { $group:
+    { _id: null, count: { $sum: '$cra.nbParticipantsRecurrents' } }
+  },
+  { $project: { 'valeur': '$count' } }
+).toArray();
+
+const getMoins1Heure = async arrayMinutes => {
   let totalMinutes = 0;
-  arrayHeures.forEach(heures => {
-    if (heures.nom === '0-30') {
-      totalMinutes += 30 * heures.valeur;
-    } else if (heures.nom === '30-60') {
-      totalMinutes += 60 * heures.valeur;
+  arrayMinutes.forEach(minutes => {
+    if (minutes.nom === '0-30') {
+      totalMinutes += 30 * minutes.valeur;
+    } else if (minutes.nom === '30-60') {
+      totalMinutes += 60 * minutes.valeur;
     }
   });
-  return Math.round(totalMinutes / 60);
+  return totalMinutes;
 };
-const getPlus1Heure = async arrayHeures => {
+const getPlus1Heure = async arrayMinutes => {
   let totalMinutes = 0;
-  arrayHeures.forEach(heures => {
-    totalMinutes += heures._id * heures.count;
+  arrayMinutes.forEach(minutes => {
+    totalMinutes += minutes._id * minutes.count;
   });
-  return Math.round(totalMinutes / 60);
+  return totalMinutes;
 };
 
 const get1hEtPlus = db => async query => await db.collection('cras').aggregate(
@@ -79,6 +90,12 @@ const get1hEtPlus = db => async query => await db.collection('cras').aggregate(
   { $group: { _id: '$cra.duree', count: { $sum: 1 } } },
   { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
 ).toArray();
+
+const convertionMinutesHeures = async nbMinutes => {
+  const minutes = nbMinutes % 60;
+  const heures = (nbMinutes - minutes) / 60;
+  return heures + 'h' + minutes;
+};
 
 const pourcentage = async (nbMoisDernier, nbMois) => {
   const diff = nbMois - nbMoisDernier;
@@ -92,6 +109,7 @@ execute(__filename, async ({ db, logger, emails, Sentry }) => {
 
   logger.info(`Début de l'envoi des emails mensuels sur l'activité des conseillers:`);
   const conseillers = await getConseillers(db)(limit);
+
   let nbEnvoisMails = 0;
   let mailAvecCras = 0;
   let mailSansCra = 0;
@@ -102,6 +120,7 @@ execute(__filename, async ({ db, logger, emails, Sentry }) => {
 
     try {
       const cras = {};
+      /*Nombre d'accompagnements*/
       cras.mois = listeMois[new Date(mois).getMonth()];
       const countCrasMois = await getCountCras(db)(query);
       const countCrasMoisPasse = await getCountCras(db)(queryMoisDernier);
@@ -109,27 +128,30 @@ execute(__filename, async ({ db, logger, emails, Sentry }) => {
       cras.pourcentageAccompagnements = await pourcentage(countCrasMoisPasse, countCrasMois);
 
       if (countCrasMois > 0) {
-
+        /*Nombre de nouveaux usagers*/
         const nbUsagers = await getNbUsagers(db)(query);
         const nbUsagersPasse = await getNbUsagers(db)(queryMoisDernier);
-        cras.nbUsagers = nbUsagers[0]?.count;
-        cras.pourcentageUsagers = await pourcentage(nbUsagersPasse[0]?.count ?? 0, nbUsagers[0]?.count ?? 0);
+        const nbUsagersRecurrents = await getUsagersRecurrents(db)(query);
+        const nbUsagersRecurrentsPasse = await getUsagersRecurrents(db)(queryMoisDernier);
+        cras.nbUsagers = nbUsagers[0]?.count - nbUsagersRecurrents[0]?.count;
+        const nbUsagersPasseSansRecurrence = nbUsagersPasse[0]?.count - nbUsagersRecurrentsPasse[0]?.count;
+        cras.pourcentageUsagers = await pourcentage(nbUsagersPasseSansRecurrence ?? 0, cras.nbUsagers ?? 0);
 
+        /*Nombre d'heures*/
         let totalHeuresMois = 0;
         const nbHeures = await getStatsDurees(db, query);
         const nb1HeuresEtPlus = await get1hEtPlus(db)(query);
-
         let totalHeuresMoisPasse = 0;
         const nbHeuresPasse = await getStatsDurees(db, queryMoisDernier);
         const nb1HeuresEtPlusPasse = await get1hEtPlus(db)(queryMoisDernier);
-
-        totalHeuresMois = await getPlus1Heure(nb1HeuresEtPlus) + await getMoins1Heure(nbHeures);
-        totalHeuresMoisPasse = await getPlus1Heure(nb1HeuresEtPlusPasse) + await getMoins1Heure(nbHeuresPasse);
-
+        const totalMinutesMois = await getPlus1Heure(nb1HeuresEtPlus) + await getMoins1Heure(nbHeures);
+        const totalMinutesMoisPasse = await getPlus1Heure(nb1HeuresEtPlusPasse) + await getMoins1Heure(nbHeuresPasse);
+        totalHeuresMois = await convertionMinutesHeures(totalMinutesMois);
+        totalHeuresMoisPasse = await convertionMinutesHeures(totalMinutesMoisPasse);
         cras.nbHeures = totalHeuresMois;
         cras.pourcentageHeures = await pourcentage(totalHeuresMoisPasse, totalHeuresMois);
-        mailAvecCras++;
 
+        mailAvecCras++;
         //En attente de contenu de la BDT pour le mail 0 cra
         const messageMensuelActivite = emails.getEmailMessageByTemplateName('mailMensuelActivite');
         messageMensuelActivite.send(conseiller, cras);
