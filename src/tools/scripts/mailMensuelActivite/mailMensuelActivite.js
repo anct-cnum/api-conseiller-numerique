@@ -95,7 +95,7 @@ const convertionMinutesHeures = async nbMinutes => {
 
 execute(__filename, async ({ db, logger, emails, Sentry }) => {
 
-  const { limit = 1, delai = 1000 } = cli;
+  const { limit = 1, delai = 2000 } = cli;
 
   logger.info(`Début de l'envoi des emails mensuels sur l'activité des conseillers:`);
   const conseillers = await getConseillers(db)(limit);
