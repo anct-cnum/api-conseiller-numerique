@@ -13,7 +13,13 @@ const {
 } = require('../../common/utils/feathers.utils');
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
-const { updatePermanenceToSchema, updatePermanencesToSchema, validationPermamences, locationDefault } = require('./permanence/utils/update-permanence.utils');
+const {
+  updatePermanenceToSchema,
+  updatePermanencesToSchema,
+  validationPermamences,
+  locationDefault,
+  sendEmailAdresseIntrouvable
+} = require('./permanence/utils/update-permanence.utils');
 const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
   deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences, deleteCraPermanence,
 } = require('./permanence/repositories/permanence-conseiller.repository');
@@ -117,7 +123,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       };
       const conseillerId = req.params.id;
       const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
@@ -129,9 +134,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
           return res.status(400).send(new BadRequest(error).toJSON());
         }
         await locationDefault(permanence);
-        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async () => {
           if (idOldPermanence) {
-            return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
+            return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
               return res.send({ isCreated: true });
             }).catch(error => {
               app.get('sentry').captureException(error);
@@ -139,7 +144,12 @@ exports.PermanenceConseillers = class Sondages extends Service {
               return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
             });
           } else {
-            return res.send({ isCreated: true });
+            let sendMailAdresseIntrouvable = false;
+            //envoi mail pour prévenir de l'abscence d'une adresse
+            if (permanence?.adresseIntrouvable) {
+              sendMailAdresseIntrouvable = await sendEmailAdresseIntrouvable(app, db, user, permanence);
+            }
+            return res.send({ isCreated: true, sendMailAdresseIntrouvable });
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -198,24 +208,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.get('/permanences/verifySiret/:siret', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      /*return res.send({ 'adresseParSiret': {
-        'l1': 'DECATHLON FRANCE',
-        'l2': 'DECATHLON DIRECTION GENERALE FRANCE',
-        'l3': '',
-        'l4': '4 BD DE MONS',
-        'l5': '',
-        'l6': '59650 VILLENEUVE D ASCQ',
-        'l7': 'FRANCE',
-        'numero_voie': '4',
-        'type_voie': 'BD',
-        'nom_voie': 'DE MONS',
-        'complement_adresse': '',
-        'code_postal': '5965',
-        'localite': 'VILLENEUVE D ASCQ',
-        'code_insee_localite': '5900',
-        'cedex': ''
-      } });*/
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user?._id, [Role.Conseiller], () => user)
