@@ -35,7 +35,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     return;
   }
 
-  if (partie === 'villes') {
+  if (partie === 'villes' || partie === 'codePostaux') {
     let limitCount = 0;
     adresses = await db.collection('permanences').aggregate([
       { '$group': { '_id': null,
@@ -51,7 +51,7 @@ execute(__filename, async ({ logger, db, exit }) => {
         '_id': null,
         'villes': { $addToSet: '$villes' },
         'codePostaux': { $addToSet: '$codePostaux' }
-      }}
+      } }
     ]).toArray();
 
 
@@ -91,6 +91,27 @@ execute(__filename, async ({ logger, db, exit }) => {
       console.log('multipleResultAndUpdate:', multipleResultAndUpdate.length, '/', limitCount, ':', multipleResultAndUpdate);
       console.log('noResult:', noResult.length, '/', limitCount, ':', noResult);
       console.log('Error:', error.length, '/', limitCount, ':', error);
+    }
+    if (partie === 'codePostaux') {
+      logger.info(`Correction des ${adresses[0]?.codePostaux.length} code postaux qui n'existe pas dans le fichier json....`);
+      const codeAcorriger = [];
+      const codeNoExists = [];
+      for (const c of adresses[0].codePostaux.slice(0, limit)) {
+        const ville = formatText(c.ville);
+        const code = c.codePostal;
+        const codeFormat = code?.replace(/ /gi, '');
+        console.log('codeFormat:', ville, code, '=>', codeFormat);
+        const filter = codePostauxFichier.filter(e => [String(e.Code_postal), parseInt(e.Code_postal)].includes(codeFormat) && (e.Nom_commune === ville));
+        if (filter.length > 0) {
+          // prevoir un update..
+          codeAcorriger.push({ base: c, filter });
+        } else {
+          // Action ?
+          codeNoExists.push({ base: c, filter });
+        }
+      }
+      console.log('codeAcorriger:', codeAcorriger);
+      console.log('codeNoExists:', codeNoExists);
     }
     logger.info(`Fin de la correction des ${limitCount}/${limit} (${adresses[0][partie]?.length}) (partie ${partie})`);
   }
