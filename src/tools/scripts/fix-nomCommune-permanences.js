@@ -30,7 +30,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   const partie = program.partie;
   let adresses = [];
 
-  if (!['villes', 'codePostaux', 'verif', 'one'].includes(partie)) {
+  if (!['villes', 'codePostaux', 'verif'].includes(partie)) {
     exit(`Partie incorrect, veuillez choisir parmi la liste ['villes', 'codePostaux', 'verif']`);
     return;
   }
@@ -114,6 +114,42 @@ execute(__filename, async ({ logger, db, exit }) => {
       console.log('codeNoExists:', codeNoExists);
     }
     logger.info(`Fin de la correction des ${limitCount}/${limit} (${adresses[0][partie]?.length}) (partie ${partie})`);
+  }
+
+  if (partie === 'verif') {
+    let verifOKLocation = 0;
+    let notOKLocation = [];
+    let notOKLocationError = [];
+
+    adresses = await db.collection('permanences').aggregate([
+      { $project: { '_id': 0, 'adresse': 1, 'location': 1 } },
+      { $limit: limit }
+    ]).toArray();
+
+    for (const a of adresses) {
+      const adresse = a.adresse;
+      const adressePostale = encodeURI(`${adresse.numeroRue} ${adresse.rue} ${adresse.codePostal} ${adresse.ville}`);
+      const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adressePostale}`;
+      try {
+        const params = {};
+        const result = await axios.get(urlAPI, { params: params });
+        const verifLocation = result.data?.features.find(i => String(i?.geometry?.coordinates) === String(a?.location?.coordinates));
+        if (!verifLocation) {
+          notOKLocation.push(a.adresse);
+          // Action ? cacher les permanences ?  691/3318
+        } else {
+          verifOKLocation++;
+        }
+      } catch (error) {
+        notOKLocationError.push({ message: error.message, adresse, detail: `${adresse.numeroRue} ${adresse.rue} ${adresse.codePostal} ${adresse.ville}` });
+      }
+    }
+    console.log('verifOKLocation:', verifOKLocation, '/', adresses.length);
+    console.log('notOKLocation:', notOKLocation.length, notOKLocation[0], notOKLocation[1], notOKLocation[2]);
+    console.log('notOKLocationError:', notOKLocationError.length, notOKLocationError);
+    logger.info(`Fin de la vérification des permanences : ${verifOKLocation}/${adresses.length} qui sont OK (partie ${partie})`);
+    logger.info(`Fin de la vérification des permanences : ${notOKLocation.length}/${adresses.length} où leur location est invalide (partie ${partie})`);
+    logger.info(`Fin de la vérification des permanences : ${notOKLocationError.length}/${adresses.length} qui sont en Erreur (partie ${partie})`);
   }
   exit();
 });
