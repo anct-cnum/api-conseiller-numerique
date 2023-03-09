@@ -145,7 +145,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
             });
           } else {
             let sendMailAdresseIntrouvable = false;
-            //envoi mail pour prévenir de l'abscence d'une adresse
+            //envoi mail pour prévenir de l'absence d'une adresse
             if (permanence?.adresseIntrouvable) {
               sendMailAdresseIntrouvable = await sendEmailAdresseIntrouvable(app, db, user, permanence);
             }
