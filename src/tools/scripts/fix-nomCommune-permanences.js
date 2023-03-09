@@ -6,17 +6,22 @@ const codePostauxFichier = require('../../../data/imports/codesPostaux.json');
 const { program } = require('commander');
 
 
-const updateVillePermanence = db => async (findVille, v) =>
+const updateVillePermanence = db => async (findVille, v) => {
   await db.collection('permanences').updateOne({ 'adresse.ville': v.ville, 'adresse.codePostal': v.codePostal },
     { '$set': {
       'adresse.ville': findVille[0].Nom_commune,
       // 'updatedAt': new Date() // A voir si on change la date pour metabase etc..
     } });
+  await db.collection('cras').updateOne({ 'cra.codePostal': v.ville, 'cra.nomCommune': v.codePostal },
+    { '$set': {
+      'cra.nomCommune': findVille[0].Nom_commune,
+    } });
+};
 
 const formatText = mot => {
   let m = mot.normalize('NFD').replace(/[\u0300-\u036f]/g, '')?.replace(/[',-]/g, ' ');
-  m = m.replace('/SAINT\b/gi', 'ST');
-  m = m.replace('/SAINTE\b/gi', 'STE');
+  m = m.replace(/\bSAINT\b/gi, 'ST');
+  m = m.replace(/\bSAINTE\b/gi, 'STE');
   return m;
 };
 
@@ -56,7 +61,7 @@ execute(__filename, async ({ logger, db, exit }) => {
 
 
     if (partie === 'villes') {
-      logger.info(`Correction orthographe des ${limit} sur ${adresses[0]?.villes.length} villes qui n'existe pas dans le fichier...`);
+      logger.info(`Correction orthographe des ${adresses[0]?.villes.length} villes qui n'existe pas dans le fichier (limit: ${limit})...`);
       let oneResultAndUpdate = [];
       let multipleResultAndUpdate = [];
       let noResult = [];
@@ -79,10 +84,10 @@ execute(__filename, async ({ logger, db, exit }) => {
               multipleResultAndUpdate.push({ base: v, mot, fichierJson: findVille });
             }
           } else {// AUCUN RESULTAT
-            noResult.push({ base: v, mot, fichierJson: findVille });
+            noResult.push({ base: v, mot });
           }
         } catch (error) {
-          error.push({ base: v, mot, fichierJson: findVille });
+          error.push({ base: v, mot });
         }
         limitCount++;
       }
@@ -109,11 +114,12 @@ execute(__filename, async ({ logger, db, exit }) => {
           // Action ?
           codeNoExists.push({ base: c, filter });
         }
+        limitCount++;
       }
       console.log('codeAcorriger:', codeAcorriger);
       console.log('codeNoExists:', codeNoExists);
     }
-    logger.info(`Fin de la correction des ${limitCount}/${limit} (${adresses[0][partie]?.length}) (partie ${partie})`);
+    logger.info(`Fin de la correction des ${limitCount}/${adresses[0][partie]?.length} (limit: ${limit}) (partie ${partie})`);
   }
 
   if (partie === 'verif') {
