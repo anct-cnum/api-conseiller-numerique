@@ -1,10 +1,12 @@
+#!/usr/bin/env node
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
 const { execute } = require('../utils');
 const axios = require('axios');
 const codePostauxFichier = require('../../../data/imports/codesPostaux.json');
 const { program } = require('commander');
-
 
 const updateVillePermanence = db => async (findVille, v) => {
   await db.collection('permanences').updateOne({ 'adresse.ville': v.ville, 'adresse.codePostal': v.codePostal },
@@ -28,15 +30,21 @@ const formatText = mot => {
 execute(__filename, async ({ logger, db, exit }) => {
   program.option('-l, --limit <limit>', 'limit: limit');
   program.option('-p, --partie <partie>', 'partie: villes ou codePostaux ou verif');
+  program.option('-lt, --lot <lot>', 'lot: numero lot');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   const limit = ~~program.limit === 0 ? 1 : ~~program.limit;
   const partie = program.partie;
+  const lot = program.lot;
   let adresses = [];
 
   if (!['villes', 'codePostaux', 'verif'].includes(partie)) {
     exit(`Partie incorrect, veuillez choisir parmi la liste ['villes', 'codePostaux', 'verif']`);
+    return;
+  }
+  if (!lot) {
+    exit(`Presciser numero lot pour la partie ${partie} ?`);
     return;
   }
 
@@ -73,29 +81,39 @@ execute(__filename, async ({ logger, db, exit }) => {
         try {
           if (findVille.length === 1) {// RESULTAT ONE =>
             oneResultAndUpdate.push({ base: v, mot });
-            await updateVillePermanence(db)(findVille, v);
+            // await updateVillePermanence(db)(findVille, v);
           } else if (findVille.length >= 2) {
             let VilleNotDoublon = [...new Set(findVille.map(e => JSON.stringify(e)))];// delete doublon !
             VilleNotDoublon = VilleNotDoublon.map(e => JSON.parse(e));
             if (VilleNotDoublon.length === 1) {
-              await updateVillePermanence(db)(findVille, v);
+              // await updateVillePermanence(db)(findVille, v);
               oneResultAndUpdate.push({ base: v, mot });
             } else {
               multipleResultAndUpdate.push({ base: v, mot, fichierJson: findVille });
             }
           } else {// AUCUN RESULTAT
+            // A corriger plus tard...
             noResult.push({ base: v, mot });
           }
         } catch (error) {
-          error.push({ base: v, mot });
+          error.push({ base: v, mot, message: error.message });
         }
         limitCount++;
       }
-      // pour historiser lors du traitement..
-      console.log('oneResultAndUpdate:', oneResultAndUpdate.length, '/', limitCount, ':', oneResultAndUpdate);
-      console.log('multipleResultAndUpdate:', multipleResultAndUpdate.length, '/', limitCount, ':', multipleResultAndUpdate);
-      console.log('noResult:', noResult.length, '/', limitCount, ':', noResult);
-      console.log('Error:', error.length, '/', limitCount, ':', error);
+      let jsonFile = path.join(__dirname, '../../../data/exports', `partie-villes-lot-${lot}.json`);
+      let file = fs.createWriteStream(jsonFile, { flags: 'w' });
+      const detailLot = `/${limitCount} pour la partie 1 - lot ${lot}`;
+      file.write(JSON.stringify([
+        { total: oneResultAndUpdate.length, detailLot: [oneResultAndUpdate.length + detailLot, 'oneResultAndUpdate'].join(' '), oneResultAndUpdate },
+        { total: multipleResultAndUpdate.length,
+          detailLot: [multipleResultAndUpdate.length + detailLot, 'multipleResultAndUpdate'].join(' '), multipleResultAndUpdate },
+        { total: noResult.length, detailLot: [noResult.length + detailLot, ' noResult'].join(' '), noResult },
+        { total: error.length, detailLot: [error.length + detailLot, error].join(' '), error },
+      ]));
+      logger.info(`oneResultAndUpdate: ${oneResultAndUpdate.length}`);
+      logger.info(`multipleResultAndUpdate: ${multipleResultAndUpdate.length}`);
+      logger.info(`noResult: ${noResult.length}`);
+      logger.info(`error: ${error.length}`);
     }
     if (partie === 'codePostaux') {
       logger.info(`Correction des ${adresses[0]?.codePostaux.length} code postaux qui n'existe pas dans le fichier json....`);
@@ -105,27 +123,34 @@ execute(__filename, async ({ logger, db, exit }) => {
         const ville = formatText(c.ville);
         const code = c.codePostal;
         const codeFormat = code?.replace(/ /gi, '');
-        console.log('codeFormat:', ville, code, '=>', codeFormat);
         const filter = codePostauxFichier.filter(e => [String(e.Code_postal), parseInt(e.Code_postal)].includes(codeFormat) && (e.Nom_commune === ville));
         if (filter.length > 0) {
-          // prevoir un update..
+          // prevoir un updateMany pour le code postal
           codeAcorriger.push({ base: c, filter });
         } else {
-          // Action ?
-          codeNoExists.push({ base: c, filter });
+          // A corriger plus tard...
+          codeNoExists.push({ base: c });
         }
         limitCount++;
       }
-      console.log('codeAcorriger:', codeAcorriger);
-      console.log('codeNoExists:', codeNoExists);
+
+      let jsonFile = path.join(__dirname, '../../../data/exports', `partie-codePostaux-lot-${lot}.json`);
+      let file = fs.createWriteStream(jsonFile, { flags: 'w' });
+      file.write(JSON.stringify([
+        { total: codeAcorriger.length, codeAcorriger },
+        { total: codeNoExists.length, codeNoExists },
+      ]));
+      logger.info(`codeAcorriger: ${codeAcorriger.length}`);
+      logger.info(`codeNoExists: ${codeNoExists.length}`);
     }
     logger.info(`Fin de la correction des ${limitCount}/${adresses[0][partie]?.length} (limit: ${limit}) (partie ${partie})`);
   }
 
   if (partie === 'verif') {
-    let verifOKLocation = 0;
+    let verifOKLocation = [];
     let notOKLocation = [];
     let notOKLocationError = [];
+    let diffCity = [];
 
     adresses = await db.collection('permanences').aggregate([
       { $project: { '_id': 0, 'adresse': 1, 'location': 1 } },
@@ -141,21 +166,31 @@ execute(__filename, async ({ logger, db, exit }) => {
         const result = await axios.get(urlAPI, { params: params });
         const verifLocation = result.data?.features.find(i => String(i?.geometry?.coordinates) === String(a?.location?.coordinates));
         if (!verifLocation) {
-          notOKLocation.push(a.adresse);
-          // Action ? cacher les permanences ?  691/3318
+          notOKLocation.push({ adresse: a.adresse, verifLocation });
+          // A corriger plus tard...
+        } else if (formatText(verifLocation.properties.city.toUpperCase()) !== formatText(a.adresse.ville)) {
+          diffCity.push({ adresse: a.adresse, verifLocation: verifLocation.properties.city.toUpperCase() });
         } else {
-          verifOKLocation++;
+          verifOKLocation.push({ adresse: a.adresse, verifLocation: verifLocation.properties.city.toUpperCase() });
         }
       } catch (error) {
         notOKLocationError.push({ message: error.message, adresse, detail: `${adresse.numeroRue} ${adresse.rue} ${adresse.codePostal} ${adresse.ville}` });
       }
     }
-    console.log('verifOKLocation:', verifOKLocation, '/', adresses.length);
-    console.log('notOKLocation:', notOKLocation.length, notOKLocation[0], notOKLocation[1], notOKLocation[2]);
-    console.log('notOKLocationError:', notOKLocationError.length, notOKLocationError);
-    logger.info(`Fin de la vérification des permanences : ${verifOKLocation}/${adresses.length} qui sont OK (partie ${partie})`);
-    logger.info(`Fin de la vérification des permanences : ${notOKLocation.length}/${adresses.length} où leur location est invalide (partie ${partie})`);
-    logger.info(`Fin de la vérification des permanences : ${notOKLocationError.length}/${adresses.length} qui sont en Erreur (partie ${partie})`);
+    let jsonFile = path.join(__dirname, '../../../data/exports', `partie-verif-lot-${lot}.json`);
+    let file = fs.createWriteStream(jsonFile, { flags: 'w' });
+    file.write(JSON.stringify([
+      { total: verifOKLocation.length, verifOKLocation },
+      { total: notOKLocation.length, notOKLocation },
+      { total: diffCity.length, diffCity },
+      { total: notOKLocationError.length, notOKLocationError },
+    ]));
+    logger.info(`verifOKLocation: ${verifOKLocation.length}`);
+    logger.info(`notOKLocation: ${notOKLocation.length}`);
+    logger.info(`diffCity: ${diffCity.length}`);
+    logger.info(`notOKLocationError: ${notOKLocationError.length}`);
   }
+  logger.info(`Fin du lot ${lot} pour la partie ${partie}`);
+
   exit();
 });
