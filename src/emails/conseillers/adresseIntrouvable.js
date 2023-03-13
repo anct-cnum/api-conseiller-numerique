@@ -26,7 +26,7 @@ module.exports = (db, mailer) => {
         return false;
       };
       return mailer.createMailer().sendEmail(
-        'conseiller-numerique@anct.gouv.fr',
+        utils.getSupportMail(),
         {
           subject: 'Un Conseiller Numérique France service n\'a pas trouvé son adresse',
           body: await render(user, permanence),

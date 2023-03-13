@@ -221,11 +221,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
             object: 'checkSiret',
           };
           const result = await axios.get(urlSiret, { params: params });
-          let adresse = JSON.stringify(result?.data?.etablissement?.adresse,
-            (key, value) => (value === null) ? '' : value
-          );
+          let adresse = result?.data?.etablissement?.adresse;
+          console.log(adresse);
           if (adresse) {
-            adresse = JSON.parse(adresse);
             const adresseComplete = [
               adresse?.numero_voie ?? '',
               adresse?.type_voie ?? '',
@@ -233,7 +231,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
               adresse?.code_postal ?? '',
               adresse?.localite ?? ''
             ].join(' ');
-
+            console.log(adresseComplete);
             let adresseParSiret = {
               l1: adresse?.l1 ?? '',
               l2: adresse?.l2 ?? '',
@@ -261,7 +259,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
           }
         } catch (error) {
           if (!error.response.data?.gateway_error) {
-
             logger.error(error);
             app.get('sentry').captureException(error);
           }
