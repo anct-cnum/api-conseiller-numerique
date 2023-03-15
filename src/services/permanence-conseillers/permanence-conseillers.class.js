@@ -222,7 +222,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
           };
           const result = await axios.get(urlSiret, { params: params });
           let adresse = result?.data?.etablissement?.adresse;
-          console.log(adresse);
           if (adresse) {
             const adresseComplete = [
               adresse?.numero_voie ?? '',
@@ -231,7 +230,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
               adresse?.code_postal ?? '',
               adresse?.localite ?? ''
             ].join(' ');
-            console.log(adresseComplete);
             let adresseParSiret = {
               l1: adresse?.l1 ?? '',
               l2: adresse?.l2 ?? '',
