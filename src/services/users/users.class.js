@@ -737,5 +737,10 @@ exports.Users = class Users extends Service {
         }
       });
     });
+
+    // Monitoring clever
+    app.get('/', (req, res) => {
+      res.sendStatus(200);
+    });
   }
 };

@@ -23,15 +23,9 @@ describe('Feathers application tests', () => {
     server.close(done);
   });
 
-  it('starts and shows nothing on the index page', async () => {
-    try {
-      await axios.get(getUrl());
-      assert.fail('should never get here');
-    } catch (error) {
-      const { response } = error;
-
-      assert.equal(response.status, 404);
-    }
+  it('starts and shows OK on the index page', async () => {
+    const { data } = await axios.get(getUrl());
+    assert.ok(data.indexOf('OK') !== -1);
   });
 
   describe('404', function() {
