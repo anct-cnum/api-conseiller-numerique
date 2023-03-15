@@ -2,6 +2,9 @@ const { ObjectId } = require('mongodb');
 
 const getPermanences = db => async () => await db.collection('permanences').aggregate([
   {
+    $match: { 'adresseIntrouvable': { $exists: false } }
+  },
+  {
     $addFields: {
       'entity': {
         $arrayElemAt: [{ $objectToArray: '$structure' }, 1]
