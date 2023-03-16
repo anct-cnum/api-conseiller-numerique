@@ -79,6 +79,10 @@ const statistiquesConseiller = {
       valeur: 15
     },
     {
+      nom: 'espace-sante',
+      valeur: 1
+    },
+    {
       nom: 'scolaire',
       valeur: 4
     },
@@ -283,6 +287,10 @@ const statistiquesNationales = {
     {
       nom: 'sante',
       valeur: 150
+    },
+    {
+      nom: 'espace-sante',
+      valeur: 15
     },
     {
       nom: 'scolaire',

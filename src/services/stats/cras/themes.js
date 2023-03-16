@@ -16,6 +16,7 @@ const getStatsThemes = async (db, query) => {
     { nom: 'securite', valeur: 0 },
     { nom: 'fraude et harcelement', valeur: 0 },
     { nom: 'sante', valeur: 0 },
+    { nom: 'espace-sante', valeur: 0 },
     { nom: 'budget', valeur: 0 },
     { nom: 'scolaire', valeur: 0 },
     { nom: 'diagnostic', valeur: 0 },
@@ -30,8 +31,21 @@ const getStatsThemes = async (db, query) => {
     ]
   ).toArray();
 
-  if (themes.length > 0) {
+  //Affichage temporaire pour la sous thématique Mon espace Santé
+  let sousThemes = await db.collection('cras').aggregate(
+    [
+      { $unwind: '$cra.sousThemes' },
+      { $match: { ...query, 'cra.sousThemes.sante': { '$in': ['espace-sante'] } } },
+      { $group: { _id: 'espace-sante', count: { $sum: 1 } } },
+      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
+    ]
+  ).toArray();
+
+  if (themes?.length > 0) {
     statsThemes = statsThemes.map(theme1 => themes.find(theme2 => theme1.nom === theme2.nom) || theme1);
+    if (sousThemes?.length > 0) {
+      statsThemes[15].valeur = sousThemes[0].valeur;
+    }
   }
 
   return statsThemes;
