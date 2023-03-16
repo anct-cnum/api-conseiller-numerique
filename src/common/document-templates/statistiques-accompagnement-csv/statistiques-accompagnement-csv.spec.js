@@ -78,6 +78,10 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           valeur: 15
         },
         {
+          nom: 'espace-sante',
+          valeur: 1
+        },
+        {
           nom: 'scolaire',
           valeur: 4
         },
@@ -265,6 +269,7 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Sécuriser un équipement;4\n' +
       'Fraude et harcèlement;20\n' +
       'Santé;15\n' +
+      'Mon espace santé;1\n' +
       'Scolaire;4\n' +
       'Diagnostic numérique;8\n' +
       'Budget;9\n' +
