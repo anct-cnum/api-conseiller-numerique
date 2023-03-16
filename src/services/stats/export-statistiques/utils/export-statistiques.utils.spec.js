@@ -133,6 +133,10 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
         {
           'nom': 'sante',
           'valeur': 3
+        },
+        {
+          'nom': 'espace-sante',
+          'valeur': 1
         }
       ];
 
@@ -148,6 +152,10 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis le
         {
           'nom': 'sante',
           'valeur': 3
+        },
+        {
+          'nom': 'espace-sante',
+          'valeur': 1
         },
         {
           'nom': 'securite',
