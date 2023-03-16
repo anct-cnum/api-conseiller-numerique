@@ -25,7 +25,7 @@ const getCoordinateur = db => async (user, conseillerSubordonne) => {
         resultat = coordinateur?.listeSubordonnes?.liste?.includes(conseiller?.codeRegionStructure) ? coordinateur : null;
         break;
       case 'conseillers':
-        resultat = coordinateur?.listeSubordonnes?.liste?.includes(new ObjectId(conseillerSubordonne)) ? coordinateur : null;
+        resultat = coordinateur.listeSubordonnes.liste?.includes(new ObjectId(conseillerSubordonne)) ? coordinateur : null;
         break;
       default:
         break;
