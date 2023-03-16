@@ -19,10 +19,10 @@ const getCoordinateur = db => async (user, conseillerSubordonne) => {
   if (coordinateur) {
     switch (coordinateur.listeSubordonnes.type) {
       case 'codeDepartement':
-        resultat = coordinateur?.listeSubordonnes?.liste?.includes(conseiller?.codeDepartementStructure) ? coordinateur : null;
+        resultat = coordinateur.listeSubordonnes?.liste?.includes(conseiller?.codeDepartementStructure) ? coordinateur : null;
         break;
       case 'codeRegion':
-        resultat = coordinateur?.listeSubordonnes?.liste?.includes(conseiller?.codeRegionStructure) ? coordinateur : null;
+        resultat = coordinateur.listeSubordonnes?.liste?.includes(conseiller?.codeRegionStructure) ? coordinateur : null;
         break;
       case 'conseillers':
         resultat = coordinateur.listeSubordonnes.liste?.includes(new ObjectId(conseillerSubordonne)) ? coordinateur : null;
