@@ -17,7 +17,7 @@ const { execute } = require('../../utils');
 
 execute(__filename, async ({ app, logger, exit }) => {
   program.option('-c, --csv <path>', 'CSV file path');
-  program.option('-a, --array <array>', 'array: lister les ids MM exemple: xxxx,yyyyy,zzzzz');
+  program.option('-a, --array <array>', 'array: lister les ids des canaux MM exemple: xxxx,yyyyy,zzzzz');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
