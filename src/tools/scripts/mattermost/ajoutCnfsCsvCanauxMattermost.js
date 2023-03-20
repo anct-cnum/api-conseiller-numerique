@@ -48,7 +48,7 @@ execute(__filename, async ({ app, logger, exit }) => {
             count++;
             await sleep(500);
           } else {
-            logger.error(`${emailUtilisateur} non ajouter dans le canal`);
+            logger.error(`${emailUtilisateur} non ajouté dans le canal`);
             errors++;
           }
         }
