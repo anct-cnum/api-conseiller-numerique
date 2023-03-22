@@ -1,12 +1,17 @@
 const { DBRef, ObjectId } = require('mongodb');
-const createEmails = require('../../../../emails/emails');
-const createMailer = require('../../../../mailer');
 const Joi = require('joi');
 
 const assignPermanence = (body, conseillerId, database) => {
   let permanence = Object.assign({}, body);
   permanence = JSON.parse(JSON.stringify(permanence).replace(/"\s+|\s+"/g, '"'));
-  permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
+
+  if (permanence?.adresseIntrouvable) {
+    delete permanence.adresse;
+    permanence.location = null;
+  } else {
+    permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
+  }
+
   permanence.conseillers = [];
   body.conseillers.forEach(conseiller => {
     permanence.conseillers.push(new ObjectId(conseiller));
@@ -31,6 +36,7 @@ const assignPermanence = (body, conseillerId, database) => {
   delete permanence.estCoordinateur;
   delete permanence.hasPermanence;
   delete permanence.idOldPermanence;
+  delete permanence.adresseIntrouvable;
 
   permanence?.horaires?.forEach(horaires => {
     delete horaires.fermeture;
@@ -45,9 +51,15 @@ const assignPermanences = (permanences, conseillerId) => {
     const lieuPrincipalPour = [];
 
     permanence = JSON.parse(JSON.stringify(permanence).replace(/"\s+|\s+"/g, '"'));
-    permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
-    permanence._id = permanence._id ? new ObjectId(permanence._id) : null;
 
+    if (permanence?.adresseIntrouvable) {
+      delete permanence.adresse;
+      permanence.location = null;
+    } else {
+      permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
+    }
+
+    permanence._id = permanence._id ? new ObjectId(permanence._id) : null;
     permanence?.conseillers.forEach(conseiller => {
       conseillers.push(new ObjectId(conseiller));
     });
@@ -86,6 +98,7 @@ const validationPermanences = permanences => {
     numeroRue: Joi.string().trim().allow('', null).error(new Error('Un numéro de voie doit obligatoirement être saisi')),
     rue: Joi.string().trim().allow('', null).error(new Error('Une rue doit obligatoirement être saisie')),
     codePostal: Joi.string().trim().allow('', null).error(new Error('Un code postal doit obligatoirement être saisi')),
+    codeCommune: Joi.string().trim().allow('', null).error(new Error('Un code commune doit obligatoirement être saisi')),
     ville: Joi.string().trim().allow('', null).error(new Error('Une ville doit obligatoirement être saisie')),
   };
   let location = Joi.object().allow(null).error(new Error('La localisation du lieu d\'activité doit obligatoirement être saisie'));
@@ -94,6 +107,7 @@ const validationPermanences = permanences => {
       numeroRue: Joi.string().trim().required().allow('', null).error(new Error('Un numéro de voie doit obligatoirement être saisi')),
       rue: Joi.string().trim().required().min(5).max(120).error(new Error('Une rue doit obligatoirement être saisie')),
       codePostal: Joi.string().trim().required().min(5).max(5).error(new Error('Un code postal doit obligatoirement être saisi')),
+      codeCommune: Joi.string().trim().required().max(6).error(new Error('Un code commune doit obligatoirement être saisi')),
       ville: Joi.string().trim().required().min(3).max(60).error(new Error('Une ville doit obligatoirement être saisie')),
     };
     location = Joi.object().required().error(new Error('La localisation du lieu d\'activité doit obligatoirement être saisie'));
@@ -139,18 +153,10 @@ const locationDefault = permanence => {
   }
 };
 
-const sendEmailAdresseIntrouvable = async (app, db, user, permanence) => {
-  let mailer = createMailer(app);
-  const emails = createEmails(db, mailer);
-  let message = emails.getEmailMessageByTemplateName('adresseIntrouvable');
-  return await message.send(user, permanence);
-};
-
 module.exports = {
   assignPermanence,
   updatePermanenceToSchema,
   updatePermanencesToSchema,
   validationPermamences,
-  locationDefault,
-  sendEmailAdresseIntrouvable
+  locationDefault
 };

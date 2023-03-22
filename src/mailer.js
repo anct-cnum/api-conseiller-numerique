@@ -47,8 +47,8 @@ module.exports = app => {
   let getPixUrl = path => `${app.get('pix').hostname}${path}`;
   const getPixContactMail = () => app.get('pix').contactMailing;
   const getPixSupportMail = () => app.get('pix').supportMailing;
-  const getSUpportMail = () => configuration.replyTo;
-  
+  const getSupportMail = () => configuration.replyTo;
+
   const setSentryError = err => {
     if (config().sentry.enabled === 'true') {
       Sentry.init({
@@ -75,7 +75,7 @@ module.exports = app => {
     getHelpUrl,
     getPixContactMail,
     getPixSupportMail,
-    getSUpportMail,
+    getSupportMail,
     setSentryError,
   };
 

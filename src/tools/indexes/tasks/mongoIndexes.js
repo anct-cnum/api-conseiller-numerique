@@ -129,7 +129,11 @@ module.exports = {
       db.collection('permanences').createIndex({ 'conseillersItinerants': 1 }),
       db.collection('permanences').createIndex({ 'lieuPrincipalPour': 1 }),
       db.collection('permanences').createIndex({ 'structure.$id': 1 }),
-      db.collection('permanences').createIndex({ 'adresseIntrouvable': 1 })
+    ]);
+  },
+  adressesIntrouvables: db => {
+    return Promise.all([
+      db.collection('adressesIntrouvables').createIndex({ 'conseiller.$id': 1 }),
     ]);
   },
 };
