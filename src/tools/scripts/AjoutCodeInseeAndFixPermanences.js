@@ -61,7 +61,8 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
           file.write(`${i._id};${objectCsv(i.adresse)};${objectCsv(i.matchOK)}\n`);
           break;
         case 'permNotOK':
-          file.write(`${i._id};${objectCsv(i.adresse)} /${i.adresse.coordinates};${i.resultApi?.total};${i.resultApi.fields.map(i => objectCsv(i))}\n`);
+          // eslint-disable-next-line max-len
+          file.write(`${i._id};${objectCsv(i.adresse)}[${i.adresse.coordinates}];${i.resultApi?.total};${i.resultApi.fields.map(i => `${objectCsv(i)}[${i.coordinates}]`)}\n`);
           break;
         case 'diffCityAndCodePostal':
           file.write(`${i.nombreDiff};${i._id};${objectCsv(i.adresse)};${objectCsv(i.matchLocation)}\n`);
@@ -120,8 +121,13 @@ execute(__filename, async ({ logger, db, exit }) => {
       for (const { adresse, location, _id } of permanences) {
         const adresseComplete = `${adresse.numeroRue ?? ''} ${adresse.rue} ${adresse.codePostal} ${adresse.ville}`;
         const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${encodeURI(adresseComplete)}`;
+        let resultQueryLatLong = {};
         await axios.get(urlAPI, { params: {} }).then(async result => {
-          const matchLocation = result?.data?.features.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
+          let matchLocation = result?.data?.features.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
+          if (!matchLocation) {
+            resultQueryLatLong = await axios.get(`${urlAPI}&lat=${location?.coordinates[0]}&lon=${location?.coordinates[1]}`, { params: {} });
+            matchLocation = resultQueryLatLong?.data?.features.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
+          }
           const district = matchLocation?.properties?.district ? matchLocation?.properties?.district?.replace('e Arrondissement', '') : undefined;
           const adresseControleDiff = {
             diffNumber: matchLocation?.properties?.housenumber !== adresse.numeroRue && ![null, ''].includes(adresse.numeroRue),
@@ -131,14 +137,12 @@ execute(__filename, async ({ logger, db, exit }) => {
             diffville: formatText(district ?? matchLocation?.properties?.city.toUpperCase())?.toUpperCase() !== formatText(adresse.ville)
           };
           if (!matchLocation) {
-            const resultQueryLatLong = await axios.get(`${urlAPI}&lat=${location?.coordinates[0]}&lon=${location?.coordinates[1]}`, { params: {} });
             exportsCSv.permNotOK.push({ _id,
               adresse: { ...adresse, coordinates: location?.coordinates },
               resultApi: {
-                total: resultQueryLatLong.data?.features.length,
-                fields: resultQueryLatLong.data?.features.map(i => resultApi(i.properties))
+                total: resultQueryLatLong?.data?.features.length,
+                fields: resultQueryLatLong?.data?.features.map(i => ({ ...resultApi(i.properties), coordinates: i.geometry.coordinates }))
               } });
-            return;
           } else if (Object.values(adresseControleDiff).includes(true)) {
             exportsCSv.diffCityAndCodePostal.push({
               nombreDiff: Object.values(adresseControleDiff).filter(i => i === true).length,
