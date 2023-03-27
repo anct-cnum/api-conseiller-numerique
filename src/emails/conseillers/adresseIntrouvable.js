@@ -18,7 +18,7 @@ module.exports = (db, mailer) => {
         return true;
       };
       const onError = async err => {
-        await db.collection('adressesIntrouvables').updateOne({ 'permanenceId': permanenceId }, {
+        await db.collection('adressesIntrouvables').updateOne({ permanenceId }, {
           $set: {
             mailErrorAdresseIntrouvable: 'smtpError',
             mailErrorDetailAdresseIntrouvable: err.message
