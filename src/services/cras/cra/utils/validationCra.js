@@ -4,6 +4,7 @@ const validationCra = ObjectCra => {
   const schema = Joi.object({
     codePostal: Joi.string().required().min(5).max(5).error(new Error('Le code postal est invalide')),
     nomCommune: Joi.string().required().error(new Error('Le nom de la commune est invalide')),
+    codeCommune: Joi.string().trim().required().max(6).error(new Error('Le code commune est invalide')),
     canal: Joi.string().required().valid('rattachement', 'autre lieu', 'distance', 'domicile').error(new Error('Le canal est invalide')),
     activite: Joi.string().required().valid('individuel', 'collectif', 'ponctuel').error(new Error('L\'activité est invalide')),
     nbParticipants: Joi.number().integer().required().min(1).max(100).error(new Error('Le nombre de participants est invalide')),
