@@ -148,7 +148,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
             }).catch(error => {
               app.get('sentry').captureException(error);
               logger.error(error);
-              return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+              return res.status(500).send(new GeneralError('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
             });
           } else {
             let sendMailAdresseIntrouvable = false;
@@ -197,7 +197,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
           telephonePro, emailPro, estCoordinateur).then(() => {
           if (!adresseIntrouvable) {
             deleteAdresseIntrouvable(db)(permanenceId);
-          } else if (adresseIntrouvable) {
+          } else {
             createAdresseIntrouvable(db)(user, adresseIntrouvable, new ObjectId(permanenceId)).then(async () => {
               await sendEmailAdresseIntrouvable(app, db, user, adresseIntrouvable, new ObjectId(permanenceId));
             });

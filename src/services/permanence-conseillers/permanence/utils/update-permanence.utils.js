@@ -98,7 +98,7 @@ const validationPermanences = permanences => {
     numeroRue: Joi.string().trim().allow('', null).error(new Error('Un numéro de voie doit obligatoirement être saisi')),
     rue: Joi.string().trim().allow('', null).error(new Error('Une rue doit obligatoirement être saisie')),
     codePostal: Joi.string().trim().allow('', null).error(new Error('Un code postal doit obligatoirement être saisi')),
-    codeCommune: Joi.string().trim().allow('', null).error(new Error('Un code commune doit obligatoirement être saisi')),
+    codeCommune: Joi.string().trim().allow('', null).min(4).max(5).error(new Error('Un code commune doit obligatoirement être saisi')),
     ville: Joi.string().trim().allow('', null).error(new Error('Une ville doit obligatoirement être saisie')),
   };
   let location = Joi.object().allow(null).error(new Error('La localisation du lieu d\'activité doit obligatoirement être saisie'));
@@ -107,7 +107,7 @@ const validationPermanences = permanences => {
       numeroRue: Joi.string().trim().required().allow('', null).error(new Error('Un numéro de voie doit obligatoirement être saisi')),
       rue: Joi.string().trim().required().min(5).max(120).error(new Error('Une rue doit obligatoirement être saisie')),
       codePostal: Joi.string().trim().required().min(5).max(5).error(new Error('Un code postal doit obligatoirement être saisi')),
-      codeCommune: Joi.string().trim().required().max(6).error(new Error('Un code commune doit obligatoirement être saisi')),
+      codeCommune: Joi.string().trim().required().min(4).max(5).error(new Error('Un code commune doit obligatoirement être saisi')),
       ville: Joi.string().trim().required().min(3).max(60).error(new Error('Une ville doit obligatoirement être saisie')),
     };
     location = Joi.object().required().error(new Error('La localisation du lieu d\'activité doit obligatoirement être saisie'));
