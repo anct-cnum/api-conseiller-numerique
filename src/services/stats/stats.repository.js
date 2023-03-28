@@ -82,7 +82,7 @@ const getTotalRegions = db => async (date, nomRegion) => {
 
 const getCodesPostauxStatistiquesCras = db => async conseillerId => await db.collection('cras').aggregate([
   { $match: { 'conseiller.$id': conseillerId } },
-  { $group: { _id: { ville: '$cra.nomCommune', codePostal: '$cra.codePostal' } } },
+  { $group: { _id: { ville: '$cra.nomCommune', codePostal: '$cra.codePostal', codeCommune: '$cra.codeCommune' } } },
 ]).toArray();
 
 const getCodesPostauxStatistiquesCrasStructure = db => async conseillersId => await db.collection('cras').distinct('cra.codePostal',

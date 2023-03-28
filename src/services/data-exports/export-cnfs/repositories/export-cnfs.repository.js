@@ -45,7 +45,7 @@ const countGetPersonnesAccompagnees = db => async (conseiller, dateDebut, dateFi
   { $match: { 'conseiller.$id': conseiller._id,
     '$and': [
       { 'cra.dateAccompagnement': { $gt: dateDebut } },
-      { 'cra.dateAccompagnement': { $lt: dateFin } }
+      { 'cra.dateAccompagnement': { $lte: dateFin } }
     ]
   } },
   { $group: { _id: null, count: { $sum: '$cra.nbParticipants' } } },
@@ -59,7 +59,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
         statut: 'RECRUTE',
         $and: [
           { datePrisePoste: { $gt: dateDebut } },
-          { datePrisePoste: { $lt: dateFin } },
+          { datePrisePoste: { $lte: dateFin } },
         ],
         ...filterUserActif(isUserActif),
         ...filterGroupeCRA(groupeCRA),
