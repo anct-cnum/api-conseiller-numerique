@@ -22,14 +22,12 @@ const updatePermanenceAndCRAS = db => async (matchLocation, _id) => {
     { '$set': {
       'adresse.numeroRue': matchLocation.numeroRue,
       'adresse.rue': matchLocation.rue,
-      'codePostal': matchLocation.codePostal,
       'adresse.ville': matchLocation.ville,
       'adresse.codeCommune': matchLocation.codeCommune,
     }
     });
   await db.collection('cras').updateMany({ 'permanence.$id': _id },
     { '$set': {
-      'cra.codePostal': matchLocation.codePostal,
       'cra.nomCommune': matchLocation.ville,
       'cra.codeCommune': matchLocation.codeCommune,
     }
