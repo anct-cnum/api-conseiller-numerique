@@ -87,10 +87,10 @@ execute(__filename, async ({ logger, db, exit }) => {
   const { partie, lot, acte } = program;
 
   if (!['cras', 'permanences'].includes(partie)) {
-    exit(`Partie incorrect, veuillez choisir parmi la liste ['cras', 'permanences']`);
+    exit(`Partie incorrecte, veuillez choisir parmi la liste ['cras', 'permanences']`);
     return;
   } else if (!lot && partie === 'cras') {
-    exit(`Presciser numero lot pour la partie ${partie} ?`);
+    exit(`Préciser numéro de lot pour la partie ${partie} ?`);
     return;
   } else {
 
@@ -109,9 +109,9 @@ execute(__filename, async ({ logger, db, exit }) => {
       logger.info(`${statApres.CrasRestantAvecPerm} CRAS avec une permanence & ${statApres.CrasRestantSansPerm} CRAS sans permanence (APRES la correction) `);
     }
     if (partie === 'permanences') {
-      logger.info(`Partie Permanences , par defaut la verification ${acte ? 'AVEC' : 'SANS'} correction`);
-      const permanences =
-      await db.collection('permanences').find({ 'adresse.codeCommune': { '$exists': false } }).limit(limit).project({ adresse: 1, location: 1 }).toArray();
+      logger.info(`Partie Permanences , par défaut la vérification ${acte ? 'AVEC' : 'SANS'} correction`);
+      // eslint-disable-next-line max-len
+      const permanences = await db.collection('permanences').find({ 'adresse.codeCommune': { '$exists': false } }).limit(limit).project({ adresse: 1, location: 1 }).toArray();
       const exportsCSv = {
         permMatchOK: [],
         permNotOK: [],
@@ -126,7 +126,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           let matchLocation = result?.data?.features.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
           if (!matchLocation) {
             resultQueryLatLong = await axios.get(`${urlAPI}&lat=${location?.coordinates[0]}&lon=${location?.coordinates[1]}`, { params: {} });
-            matchLocation = resultQueryLatLong?.data?.features.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
+            matchLocation = resultQueryLatLong?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
           }
           const district = matchLocation?.properties?.district ? matchLocation?.properties?.district?.replace('e Arrondissement', '') : undefined;
           const adresseControleDiff = {
@@ -140,8 +140,8 @@ execute(__filename, async ({ logger, db, exit }) => {
             exportsCSv.permNotOK.push({ _id,
               adresse: { ...adresse, coordinates: location?.coordinates },
               resultApi: {
-                total: resultQueryLatLong?.data?.features.length,
-                fields: resultQueryLatLong?.data?.features.map(i => ({ ...resultApi(i.properties), coordinates: i.geometry.coordinates }))
+                total: resultQueryLatLong?.data?.features?.length,
+                fields: resultQueryLatLong?.data?.features?.map(i => ({ ...resultApi(i.properties), coordinates: i.geometry.coordinates }))
               } });
           } else if (Object.values(adresseControleDiff).includes(true)) {
             exportsCSv.diffCityAndCodePostal.push({
