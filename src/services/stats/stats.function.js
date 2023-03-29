@@ -59,7 +59,6 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
       listeDefinitive.push({
         id: paire._id.codePostal,
         villes: [{ ville: paire._id.ville, codeCommune: paire._id.codeCommune }],
-        codeCommune: paire._id.codeCommune
       });
     }
   });
@@ -68,7 +67,8 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
     ...e,
     villes: [...new Map(e.villes.map(item => [item.codeCommune, item])).values()]
     .filter(i => i.codeCommune)
-    .map(i => i.ville)
+    .map(i => i.ville),
+    codeCommune: [...new Map(e.villes.map(item => [item.codeCommune, item])).values()]
   }));
 
   listeDefinitive.sort((a, b) => {
