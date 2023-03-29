@@ -512,7 +512,12 @@ exports.Conseillers = class Conseillers extends Service {
             'cra.codePostal': query?.codePostal
           };
         }
-        if (query?.ville !== '') {
+        if (query?.codeCommune !== '') {
+          statsQuery = {
+            ...statsQuery,
+            'cra.codeCommune': query?.codeCommune
+          };
+        } else if (query?.ville !== '') {
           statsQuery = {
             ...statsQuery,
             'cra.nomCommune': query?.ville
