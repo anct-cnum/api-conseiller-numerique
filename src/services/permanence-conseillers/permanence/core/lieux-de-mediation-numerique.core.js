@@ -153,7 +153,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
           pivot: Pivot(noInvalidSiret(removeAllSpaces(permanence.siret))),
           nom: Nom(removeSuperfluousSpaces(permanence.nomEnseigne)),
           adresse: Adresse({
-            voie: removeSuperfluousSpaces(removeNullStrings([permanence.adresse.numeroRue, permanence.adresse.rue].join(' '))),
+            voie: removeSuperfluousSpaces(removeNullStrings([permanence.adresse?.numeroRue, permanence.adresse?.rue].join(' '))),
             code_postal: formatCodePostal(permanence.adresse?.codePostal),
             commune: formatCommune(permanence.adresse?.ville),
           }),
