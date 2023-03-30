@@ -148,13 +148,18 @@ execute(__filename, async ({ logger, db, exit }) => {
           matchLocation = comparLatLon;
         }
         const adresseControleDiff = {
-          diffNumber: (matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase()) && ![null, ''].includes(adresse?.numeroRue),
+          // eslint-disable-next-line max-len
+          diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase() && ![null, '', 'null'].includes(adresse?.numeroRue),
           // eslint-disable-next-line max-len
           diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== adressePerm(formatText(adresse.rue)?.toUpperCase()),
           diffCodePostal: matchLocation?.properties?.postcode.toUpperCase() !== adresse?.codePostal.toUpperCase(),
           diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase() &&
           formatText(matchLocation?.properties?.city)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase()
         };
+        if (adresseControleDiff?.diffville === true) {// dans le cas où "SAINT" est écrit entièrement pour la ville
+          adresseControleDiff.diffville = formatText(district)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase() &&
+          formatText(matchLocation?.properties?.city)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase();
+        }
         if (!matchLocation) {
           exportsCSv.permNotOK.push({ _id,
             adresse: { ...adresse, coordinates: location?.coordinates },
