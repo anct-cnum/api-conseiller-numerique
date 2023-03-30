@@ -34,6 +34,20 @@ const updatePermanenceAndCRAS = db => async (matchLocation, _id) => {
     });
 };
 const formatText = mot => mot?.normalize('NFD').replace(/[\u0300-\u036f]/g, '')?.replace(/[',-]/g, ' ');
+const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
+.replace(/\bSTE\b/gi, 'SAINTE')
+.replace(/\bBD\b/gi, 'BOULEVARD')
+.replace(/\bPL\b/gi, 'PLACE')
+.replace(/\bALL\b/gi, 'ALLEE')
+.replace(/\bAV\b/gi, 'AVENUE')
+.replace(/\bAV.\b/gi, 'AVENUE')
+.replace(/\bPL.\b/gi, 'PLACE')
+.replace(/\bPL\b/gi, 'PLACE')
+.replace(/\bRTE\b/gi, 'ROUTE')
+.replace(/\bDR\b/gi, 'DOCTEUR')
+.replace(/\bNULL\b/gi, '')
+.trim();
+
 const resultApi = obj => ({
   'numeroRue': obj?.housenumber ?? '',
   'rue': obj?.street ?? obj?.locality,
@@ -48,7 +62,7 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
     { label: 'diffCityAndCodePostal', colonne: 'total de diff;id permanence;Adresse permanence;Resultat Api Adresse\n' },
     { label: 'permError', colonne: 'id permanence;message;detail\n' },
   ];
-  const objectCsv = obj => `${obj.numeroRue} ${obj.rue} ${obj.codePostal} ${obj.ville}`;
+  const objectCsv = obj => `${obj?.numeroRue} ${obj?.rue} ${obj?.codePostal} ${obj?.ville}`;
   Object.keys(exportsCSv).forEach(function(key) {
     let csvFile = path.join(__dirname, '../../../data/exports-historique', `${lot}Lot-${key}.csv`);
     let file = fs.createWriteStream(csvFile, { flags: 'w' });
@@ -118,22 +132,28 @@ execute(__filename, async ({ logger, db, exit }) => {
       diffCityAndCodePostal: [],
     };
     for (const { adresse, location, _id } of permanences) {
-      const adresseComplete = `${adresse.numeroRue ?? ''} ${adresse.rue} ${adresse.codePostal} ${adresse.ville}`;
+      const adresseComplete = `${adresse?.numeroRue ?? ''} ${adresse?.rue} ${adresse?.codePostal} ${adresse?.ville}`;
       const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${encodeURI(adresseComplete)}`;
-      let resultQueryLatLong = {};
       await axios.get(urlAPI, { params: {} }).then(async result => {
+        let resultQueryLatLong = {};
         let matchLocation = result?.data?.features.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
         if (!matchLocation) {
           resultQueryLatLong = await axios.get(`${urlAPI}&lat=${location?.coordinates[0]}&lon=${location?.coordinates[1]}`, { params: {} });
           matchLocation = resultQueryLatLong?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
         }
         const district = matchLocation?.properties?.district ? matchLocation?.properties?.district?.replace('e Arrondissement', '') : undefined;
+        const comparLatLon = resultQueryLatLong?.data?.features.find(i => i?.geometry?.coordinates[0].toFixed(1) === location?.coordinates[0].toFixed(1) &&
+          i?.geometry?.coordinates[1].toFixed(1) === location?.coordinates[1].toFixed(1));
+        if (!matchLocation && resultQueryLatLong?.data?.features?.length === 1 && comparLatLon) {
+          matchLocation = comparLatLon;
+        }
         const adresseControleDiff = {
-          diffNumber: matchLocation?.properties?.housenumber !== adresse.numeroRue && ![null, ''].includes(adresse.numeroRue),
+          diffNumber: (matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase()) && ![null, ''].includes(adresse?.numeroRue),
           // eslint-disable-next-line max-len
-          diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== formatText(adresse.rue)?.toUpperCase(),
-          diffCodePostal: matchLocation?.properties?.postcode !== adresse.codePostal,
-          diffville: formatText(district ?? matchLocation?.properties?.city.toUpperCase())?.toUpperCase() !== formatText(adresse.ville)
+          diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== adressePerm(formatText(adresse.rue)?.toUpperCase()),
+          diffCodePostal: matchLocation?.properties?.postcode.toUpperCase() !== adresse?.codePostal.toUpperCase(),
+          diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase() &&
+          formatText(matchLocation?.properties?.city)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase()
         };
         if (!matchLocation) {
           exportsCSv.permNotOK.push({ _id,
@@ -150,9 +170,9 @@ execute(__filename, async ({ logger, db, exit }) => {
             matchLocation: resultApi(matchLocation.properties)
           });
         } else {
-          exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation.properties) });
+          exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation?.properties) });
           if (acte === 'correction') {
-            await updatePermanenceAndCRAS(db)(resultApi(matchLocation.properties), _id);
+            await updatePermanenceAndCRAS(db)(resultApi(matchLocation?.properties), _id);
           }
         }
       }).catch(error =>
