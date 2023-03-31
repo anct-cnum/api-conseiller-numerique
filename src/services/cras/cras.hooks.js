@@ -49,9 +49,10 @@ module.exports = {
           context.data.permanence = new DBRef('permanences', new ObjectId(context.data.cra.idPermanence), database);
         }
 
-        //Separation CP / ville et suppression de cp plus utile
+        //Separation CP / ville et suppression de cp plus utile / ajout code commune
         context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
-        context.data.cra.nomCommune = context.data.cra.cp.slice(6).toUpperCase();
+        context.data.cra.nomCommune = context.data.cra.cp.slice(12).toUpperCase();
+        context.data.cra.codeCommune = context.data.cra.cp.slice(6, 11);
 
         //Ajout de la date de création
         context.data.createdAt = new Date();

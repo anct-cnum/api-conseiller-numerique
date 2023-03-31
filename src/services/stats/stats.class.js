@@ -184,7 +184,9 @@ exports.Stats = class Stats extends Service {
         if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
           query['cra.codePostal'] = req.query?.codePostal;
         }
-        if (req.query?.ville !== '' && req.query?.ville !== 'null') {
+        if (req.query?.codeCommune !== '' && req.query?.codeCommune !== 'null') {
+          query['cra.codeCommune'] = req.query?.codeCommune;
+        } else if (req.query?.ville !== '' && req.query?.ville !== 'null') {
           query['cra.nomCommune'] = req.query?.ville;
         }
 
