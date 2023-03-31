@@ -102,7 +102,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     exit(`Partie incorrecte, veuillez choisir parmi la liste ['cras', 'permanences']`);
     return;
   }
-  if (!lot && partie === 'cras') {
+  if (!lot && partie === 'permanences') {
     exit(`Préciser numéro de lot pour la partie ${partie} ?`);
     return;
   }
