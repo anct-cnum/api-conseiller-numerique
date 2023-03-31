@@ -34,7 +34,7 @@ const validationCra = ObjectCra => {
       redirection: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements redirigés vers un autre établissement est invalide')),
     }),
     dateAccompagnement: Joi.date().min(new Date('2020-01-01T00:00:00.000Z')).required().error(new Error('La date est invalide')),
-    organisme: Joi.string().required().allow(null).error(new Error('L\'organisme de l\'accompagnement est invalide')),
+    organismes: Joi.array().required().allow(null).error(new Error('Les organismes de l\'accompagnement sont invalides')),
   }).validate(ObjectCra);
 
   return schema.error;
