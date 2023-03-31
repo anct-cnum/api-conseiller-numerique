@@ -12,6 +12,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: structure de destination');
   program.option('-d, --date <date>', 'date: date de recrutement');
+  program.option('-q, --quota', 'quota: pour désactiver le bridage du nombre de poste validé en Coselec');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -19,6 +20,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   let ancienneSA = program.ancienne;
   let nouvelleSA = program.nouvelle;
   let dateEmbauche = program.date;
+  const quota = program.quota;
 
   if (!idCNFS || !ancienneSA || !nouvelleSA || !dateEmbauche) {
     exit('Paramètres invalides. Veuillez préciser un id du conseiller ainsi qu\'un id de la structure actuelle; un id de la structure destinataire et la date');
@@ -28,7 +30,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   idCNFS = new ObjectID(program.id);
   ancienneSA = new ObjectID(program.ancienne);
   nouvelleSA = new ObjectID(program.nouvelle);
-  dateEmbauche = formatDate(program.dateEmbauche);
+  dateEmbauche = formatDate(dateEmbauche);
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
   if (!cnfsRecrute) {
@@ -37,7 +39,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   }
   const structureDestination = await db.collection('structures').findOne({ '_id': nouvelleSA });
 
-  if (structureDestination?.statut !== 'VALIDATION_COSELEC') {
+  if (structureDestination?.statut !== 'VALIDATION_COSELEC' && !quota) {
     exit(`La structure destinataire n'est pas 'VALIDATION_COSELEC' mais ${structureDestination.statut}`);
     return;
   }
@@ -85,6 +87,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       createdAt: new Date(),
       conseillerObj: conseiller,
       structureObj: structure,
+      dateRecrutement: dateEmbauche,
       transfert
     });
   } else {
