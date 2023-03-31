@@ -7,6 +7,7 @@ const exportStatistiquesQueryToSchema = query => {
     dateFin: new Date(query.dateFin),
     codePostal: query.codePostal === 'null' ? '' : query.codePostal,
     ville: query.ville === 'null' ? '' : query.ville,
+    codeCommune: query.codeCommune === 'null' ? '' : query.codeCommune,
   };
 };
 
