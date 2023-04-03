@@ -17,13 +17,15 @@ const statCras = async db => {
   );
   return { crasRestantSansPerm, crasRestantAvecPerm };
 };
-const updatePermanenceAndCRAS = db => async (matchLocation, _id) => {
+const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) => {
+  console.log('matchLocation:', coordinates);
   await db.collection('permanences').updateOne({ _id },
     { '$set': {
       'adresse.numeroRue': matchLocation.numeroRue,
       'adresse.rue': matchLocation.rue,
       'adresse.ville': matchLocation.ville,
       'adresse.codeCommune': matchLocation.codeCommune,
+      'location': coordinates
     }
     });
   await db.collection('cras').updateMany({ 'permanence.$id': _id },
@@ -181,7 +183,7 @@ execute(__filename, async ({ logger, db, exit }) => {
         } else {
           exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation?.properties) });
           if (acte === 'correction') {
-            await updatePermanenceAndCRAS(db)(resultApi(matchLocation?.properties), _id);
+            await updatePermanenceAndCRAS(db)(resultApi(matchLocation?.properties), matchLocation?.geometry?.coordinates, _id);
           }
         }
       }).catch(error =>
