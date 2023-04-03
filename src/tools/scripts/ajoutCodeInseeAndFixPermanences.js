@@ -58,8 +58,9 @@ const resultApi = obj => ({
 const exportCsvPermanences = (exportsCSv, lot, logger) => {
   const exportCsvColonnes = [
     { label: 'permMatchOK', colonne: 'id permanence;Adresse permanence;matchOK\n' },
-    { label: 'permNotOK', colonne: 'id permanence;Adresse permanence;nombre résultat Api adresse (query lat/lon); Resultat Api Adresse (query lat/lon)\n' },
-    { label: 'diffCityAndCodePostal', colonne: 'total de diff;id permanence;Adresse permanence;Resultat Api Adresse\n' },
+    // eslint-disable-next-line max-len
+    { label: 'permNotOK', colonne: 'nombre CN;id permanence;Adresse permanence;nombre résultat Api adresse (query lat/lon); Resultat Api Adresse (query lat/lon)\n' },
+    { label: 'diffCityAndCodePostal', colonne: 'nombre CN;total de diff;id permanence;Adresse permanence;Resultat Api Adresse\n' },
     { label: 'permError', colonne: 'id permanence;message;detail\n' },
   ];
   const objectCsv = obj => `${obj?.numeroRue} ${obj?.rue} ${obj?.codePostal} ${obj?.ville}`;
@@ -74,11 +75,11 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
       }
       if (key === 'permNotOK') {
         // eslint-disable-next-line max-len
-        file.write(`${i._id};${objectCsv(i.adresse)}[${i.adresse.coordinates}];${i.resultApi?.total};${i.resultApi.fields.map(i => `${objectCsv(i)}[${i.coordinates}]`)}\n`);
+        file.write(`${i.cnfsCount};${i._id};${objectCsv(i.adresse)}[${i.adresse.coordinates}];${i.resultApi?.total};${i.resultApi.fields.map(i => `${objectCsv(i)}[${i.coordinates}]`)}\n`);
         return;
       }
       if (key === 'diffCityAndCodePostal') {
-        file.write(`${i.nombreDiff};${i._id};${objectCsv(i.adresse)};${objectCsv(i.matchLocation)}\n`);
+        file.write(`${i.cnfsCount};${i.nombreDiff};${i._id};${objectCsv(i.adresse)};${objectCsv(i.matchLocation)}\n`);
         return;
       }
       file.write(`${i._id};${i.message};${i.detail}\n`);
@@ -124,14 +125,14 @@ execute(__filename, async ({ logger, db, exit }) => {
   if (partie === 'permanences') {
     logger.info(`Partie Permanences , par défaut la vérification ${acte ? 'AVEC' : 'SANS'} correction`);
     // eslint-disable-next-line max-len
-    const permanences = await db.collection('permanences').find({ 'adresse.codeCommune': { '$exists': false } }).limit(limit).project({ adresse: 1, location: 1 }).toArray();
+    const permanences = await db.collection('permanences').find({ 'adresse.codeCommune': { '$exists': false } }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1 }).toArray();
     const exportsCSv = {
       permMatchOK: [],
       permNotOK: [],
       permError: [],
       diffCityAndCodePostal: [],
     };
-    for (const { adresse, location, _id } of permanences) {
+    for (const { adresse, location, conseillers, _id } of permanences) {
       const adresseComplete = `${adresse?.numeroRue ?? ''} ${adresse?.rue} ${adresse?.codePostal} ${adresse?.ville}`;
       const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${encodeURI(adresseComplete)}`;
       await axios.get(urlAPI, { params: {} }).then(async result => {
@@ -166,13 +167,16 @@ execute(__filename, async ({ logger, db, exit }) => {
             resultApi: {
               total: resultQueryLatLong?.data?.features?.length,
               fields: resultQueryLatLong?.data?.features?.map(i => ({ ...resultApi(i.properties), coordinates: i.geometry.coordinates }))
-            } });
+            },
+            cnfsCount: conseillers?.length
+          });
         } else if (Object.values(adresseControleDiff).includes(true)) {
           exportsCSv.diffCityAndCodePostal.push({
             nombreDiff: Object.values(adresseControleDiff).filter(i => i === true).length,
             _id,
             adresse,
-            matchLocation: resultApi(matchLocation.properties)
+            matchLocation: resultApi(matchLocation.properties),
+            cnfsCount: conseillers?.length
           });
         } else {
           exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation?.properties) });
