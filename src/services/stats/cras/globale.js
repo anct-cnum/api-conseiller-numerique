@@ -57,6 +57,9 @@ const getStatsGlobales = async (db, query, statsCras, isAdminCoop) => {
   //Duree (total de chaque catégorie)
   statsGlobales.statsDurees = await statsCras.getStatsDurees(db, query);
 
+  //Temps d'accompagnement
+  statsGlobales.tempsAccompagnement = await statsCras.getStatsTempsAccompagnement(db, query);
+console.log(statsGlobales.tempsAccompagnement);
   //Catégorie d'âges (total de chaque catégorie en %)
   statsGlobales.statsAges = await statsCras.getStatsAges(db, query, totalParticipants);
 

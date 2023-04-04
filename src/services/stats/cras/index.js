@@ -5,6 +5,7 @@ module.exports = {
   ...require('./themes'),
   ...require('./canaux'),
   ...require('./durees'),
+  ...require('./tempsAccompagnement'),
   ...require('./ages'),
   ...require('./statuts'),
   ...require('./reorientations'),
