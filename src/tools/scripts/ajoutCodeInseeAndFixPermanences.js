@@ -18,14 +18,13 @@ const statCras = async db => {
   return { crasRestantSansPerm, crasRestantAvecPerm };
 };
 const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) => {
-  console.log('matchLocation:', coordinates);
   await db.collection('permanences').updateOne({ _id },
     { '$set': {
       'adresse.numeroRue': matchLocation.numeroRue,
       'adresse.rue': matchLocation.rue,
       'adresse.ville': matchLocation.ville,
       'adresse.codeCommune': matchLocation.codeCommune,
-      'location': coordinates
+      'location.coordinates': coordinates
     }
     });
   await db.collection('cras').updateMany({ 'permanence.$id': _id },
