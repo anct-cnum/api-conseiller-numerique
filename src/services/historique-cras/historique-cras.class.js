@@ -42,7 +42,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       }
       let sorting = { 'cra.year': -1, 'cra.day': -1, 'createdAt': -1 };
       if (sort !== 'null') {
-        sorting = { 'updatedAt': sort === 'asc' ? 1 : -1 };
+        sorting = { 'cra.dateSaisiAndModif': sort === 'asc' ? 1 : -1 };
       }
 
       try {
@@ -52,11 +52,12 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
           { $addFields: {
             'cra.day': { $dayOfYear: '$cra.dateAccompagnement' },
             'cra.year': { $year: '$cra.dateAccompagnement' },
+            'cra.dateSaisiAndModif': { $ifNull: ['$updatedAt', '$createdAt'] },
           } },
           { $sort: sorting },
           { $skip: page > 0 ? ((page - 1) * 30) : 0 },
           { $limit: 30 },
-          { $project: { 'cra.day': 0, 'cra.year': 0 } }
+          { $project: { 'cra.day': 0, 'cra.year': 0, 'cra.dateSaisiAndModif': 0 } }
         ]).toArray();
 
         items.total = await db.collection('cras').countDocuments(query);
