@@ -6,8 +6,8 @@ const assignCra = (body, database) => {
   objectCra._id = new ObjectId(objectCra.cra.id);
   //Separation CP / ville / code commune
   objectCra.cra.codePostal = objectCra.cra.cp.slice(0, 5);
-  objectCra.cra.nomCommune = objectCra.cra.cp.slice(12).toUpperCase();
   objectCra.cra.codeCommune = objectCra.cra.cp.slice(6, 11);
+  objectCra.cra.nomCommune = objectCra.cra.cp.slice(12).toUpperCase();
   //Mise en forme de la date d'accompagnement
   objectCra.cra.dateAccompagnement = new Date(objectCra.cra.dateAccompagnement);
   //Ajout de la date de mise à jour
