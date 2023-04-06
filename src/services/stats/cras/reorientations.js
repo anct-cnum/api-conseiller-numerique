@@ -2,25 +2,37 @@ const getStatsReorientations = async (db, query) => {
 
   let statsReorientations = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.accompagnement' },
-      { $match: { ...query, 'cra.organisme': { '$ne': null }, 'cra.accompagnement.redirection': { '$gte': 1 } } },
-      { $group: { _id: '$cra.organisme', redirection: { $sum: '$cra.accompagnement.redirection' } } },
-      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$redirection' } }
+      { $unwind: '$cra.organismes' },
+      { $match: { ...query, 'cra.organismes': { '$ne': null } } },
+      { $group: { _id: '$cra.organismes' } },
+      { $project: { '_id': 0, 'organismes': '$_id' } }
     ]
   ).toArray();
-  const totalReorientations = statsReorientations.reduce(
-    (previousValue, currentValue) => previousValue + currentValue.valeur,
-    0
-  );
+
+  let reorientations = [];
+  let totalReorientations = 0;
+  statsReorientations.forEach(statsReorientation => {
+    if (reorientations.filter(reorientation => reorientation.nom === String(Object.keys(statsReorientation.organismes)[0]))?.length > 0) {
+      reorientations.filter(reorientation => reorientation.nom === Object.keys(statsReorientation.organismes)[0])[0].valeur +=
+        statsReorientation.organismes[Object.keys(statsReorientation.organismes)[0]];
+    } else {
+      reorientations.push({
+        nom: String(Object.keys(statsReorientation.organismes)[0]),
+        valeur: statsReorientation.organismes[Object.keys(statsReorientation.organismes)[0]]
+      });
+    }
+    totalReorientations += statsReorientation.organismes[Object.keys(statsReorientation.organismes)[0]];
+  });
 
   //Conversion en % total
-  if (statsReorientations.length > 0) {
-    return statsReorientations.map(lieu => {
+  if (reorientations.length > 0) {
+    return reorientations.map(lieu => {
       lieu.valeur = totalReorientations > 0 ? Number((lieu.valeur / totalReorientations * 100).toFixed(2)) : 0;
       return lieu;
     });
   }
-  return statsReorientations;
+
+  return reorientations;
 };
 
 module.exports = { getStatsReorientations };
