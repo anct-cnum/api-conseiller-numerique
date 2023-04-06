@@ -54,7 +54,7 @@ execute(__filename, async ({ logger, db }) => {
     let promisesAvecOrganisme = [];
     crasAvecOrganisme?.forEach(cra => {
       promisesAvecOrganisme.push(new Promise(async resolve => {
-        cra.cra.organismes = [{ [cra.cra.organisme]: 1 }];
+        cra.cra.organismes = [{ [cra.cra.organisme]: cra.cra.accompagnement.redirection }];
         delete cra.cra.organisme;
         updateCra(db)(cra._id, cra.cra);
         modifiedCountAvecOrganisme++;
