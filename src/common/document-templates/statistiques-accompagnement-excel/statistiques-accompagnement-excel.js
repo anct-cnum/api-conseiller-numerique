@@ -1,6 +1,7 @@
 const xl = require('excel4node');
 const cors = require('cors');
 const dayjs = require('dayjs');
+const logger = require('../../logger');
 const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${separator}MM${separator}YYYY`);
 const labelsCorrespondance = require('../../../services/stats/data/themesCorrespondances.json');
 
@@ -46,35 +47,49 @@ const statsThemes = (ws, statistiques) => {
 };
 
 const statsLieux = (ws, statistiques, isAdminCoop) => {
-  ws.cell(33, 1).string(`Canaux d'accompagnements${isAdminCoop === true ? ' (en %)' : ''}`);
+  ws.cell(36, 1).string(`Canaux d'accompagnements${isAdminCoop === true ? ' (en %)' : ''}`);
   [
     'À domicile',
     'À distance',
     'Lieu d\'activité',
     'Autre lieu'
   ].forEach((statLieux, i) => {
-    ws.cell(34 + i, 1).string(statLieux);
-    ws.cell(34 + i, 2).number(statistiques.statsLieux[i].valeur);
+    ws.cell(37 + i, 1).string(statLieux);
+    ws.cell(37 + i, 2).number(statistiques.statsLieux[i].valeur);
+  });
+  return ws;
+};
+
+const statsTempsAccompagnements = (ws, statistiques) => {
+  ws.cell(42, 1).string('Temps en accompagnements');
+  [
+    'Total d\'heures',
+    'Individuelles',
+    'Collectives',
+    'Ponctuelles'
+  ].forEach((statsTempsAccompagnement, i) => {
+    ws.cell(43 + i, 1).string(statsTempsAccompagnement);
+    ws.cell(43 + i, 2).string(statistiques.statsTempsAccompagnements[i].valeur + 'h');
   });
   return ws;
 };
 
 const statsDurees = (ws, statistiques) => {
-  ws.cell(39, 1).string('Durée des accompagnements');
+  ws.cell(48, 1).string('Durée des accompagnements');
   [
     'Moins de 30 minutes',
     '30-60 minutes',
     '60-120 minutes',
     'Plus de 120 minutes'
   ].forEach((statsDuree, i) => {
-    ws.cell(40 + i, 1).string(statsDuree);
-    ws.cell(40 + i, 2).number(statistiques.statsDurees[i].valeur);
+    ws.cell(49 + i, 1).string(statsDuree);
+    ws.cell(49 + i, 2).number(statistiques.statsDurees[i].valeur);
   });
   return ws;
 };
 
 const statsAges = (ws, statistiques) => {
-  ws.cell(45, 1).string('Tranches d’âge des usagers (en %)');
+  ws.cell(54, 1).string('Tranches d’âge des usagers (en %)');
   [
     'Moins de 12 ans',
     '12-18 ans',
@@ -82,14 +97,14 @@ const statsAges = (ws, statistiques) => {
     '35-60 ans',
     'Plus de 60 ans'
   ].forEach((statsAge, i) => {
-    ws.cell(46 + i, 1).string(statsAge);
-    ws.cell(46 + i, 2).number(statistiques.statsAges[i].valeur);
+    ws.cell(55 + i, 1).string(statsAge);
+    ws.cell(55 + i, 2).number(statistiques.statsAges[i].valeur);
   });
   return ws;
 };
 
 const statsUsagers = (ws, statistiques) => {
-  ws.cell(52, 1).string('Statut des usagers (en %)');
+  ws.cell(61, 1).string('Statut des usagers (en %)');
   [
     'Scolarisé(e)',
     'Sans emploi',
@@ -97,25 +112,25 @@ const statsUsagers = (ws, statistiques) => {
     'Retraité',
     'Non renseigné'
   ].forEach((statsUsager, i) => {
-    ws.cell(53 + i, 1).string(statsUsager);
-    ws.cell(53 + i, 2).number(statistiques.statsUsagers[i].valeur);
+    ws.cell(62 + i, 1).string(statsUsager);
+    ws.cell(62 + i, 2).number(statistiques.statsUsagers[i].valeur);
   });
   return ws;
 };
 
 const statsEvolutions = (ws, statistiques) => {
-  ws.cell(59, 1).string('Évolution des comptes rendus d\'activité');
+  ws.cell(68, 1).string('Évolution des comptes rendus d\'activité');
   let y = 0;
   Object.keys(statistiques.statsEvolutions).forEach((year, i) => {
     if (i > 0) {
       y = 2;
     }
-    ws.cell(60, 1 + y).string(year);
+    ws.cell(69, 1 + y).string(year);
     const statsEvolutions = statistiques.statsEvolutions[year].sort((statEvolutionA, statEvolutionB) => statEvolutionA.mois - statEvolutionB.mois);
     statsEvolutions.forEach((data, z) => {
       const moisStats = mois[data.mois];
-      ws.cell(61 + z, 1 + y).string(moisStats);
-      ws.cell(61 + z, 2 + y).number(data.totalCras);
+      ws.cell(70 + z, 1 + y).string(moisStats);
+      ws.cell(70 + z, 2 + y).number(data.totalCras);
     });
   });
   return ws;
@@ -128,43 +143,49 @@ const statsReorientations = (ws, statistiques) => {
       size = statistiques.statsEvolutions[year].length;
     }
   });
-  ws.cell(62 + size, 1).string('Usager.ères réorienté.es (en %)');
+  ws.cell(71 + size, 1).string('Usager.ères réorienté.es (en %)');
   let valeurFinale = 0;
   statistiques.statsReorientations.forEach((reorientation, i) => {
     valeurFinale += reorientation.valeur;
-    ws.cell(63 + i + size, 1).string(reorientation.nom);
-    ws.cell(63 + i + size, 2).number(Number((reorientation.valeur).toFixed(2)));
+    ws.cell(72 + i + size, 1).string(reorientation.nom);
+    ws.cell(72 + i + size, 2).number(Number((reorientation.valeur).toFixed(2)));
   });
   if (valeurFinale !== 100) {
-    ws.cell(63 + statistiques.statsReorientations.length + size, 1).string('Saisie vide');
-    ws.cell(63 + statistiques.statsReorientations.length + size, 2).number(Number((100 - valeurFinale).toFixed(2)));
+    ws.cell(72 + statistiques.statsReorientations.length + size, 1).string('Saisie vide');
+    ws.cell(72 + statistiques.statsReorientations.length + size, 2).number(Number((100 - valeurFinale).toFixed(2)));
   }
   return ws;
 };
 
 const buildExportStatistiquesExcelFileContent = (app, res, statistiques, dateDebut, dateFin, type, idType, codePostal, ville, isAdminCoop) => {
-  app.use(cors({ exposedHeaders: '*, Authorization' }));
-  const wb = new xl.Workbook();
-  let ws = wb.addWorksheet('Statistiques d\'accompagnement');
-  ws.column(1).setWidth(55);
-  //Titre
-  codePostal = codePostal ?? '';
-  ville = ville ?? '';
-  idType = idType ?? '';
-  ws.cell(1, 1).string(
-    ['Statistiques', type, codePostal, ville, idType, formatDate(dateDebut).toLocaleString()].join(' ') + '-' + formatDate(dateFin).toLocaleString()
-  );
-  ws = general(ws, statistiques);
-  ws = statsThemes(ws, statistiques);
-  ws = statsLieux(ws, statistiques, isAdminCoop);
-  ws = statsDurees(ws, statistiques);
-  ws = statsAges(ws, statistiques);
-  ws = statsUsagers(ws, statistiques);
-  ws = statsEvolutions(ws, statistiques);
-  if (statistiques.statsReorientations.length > 0) {
-    ws = statsReorientations(ws, statistiques);
+  try {
+    app.use(cors({ exposedHeaders: '*, Authorization' }));
+    const wb = new xl.Workbook();
+    let ws = wb.addWorksheet('Statistiques d\'accompagnement');
+    ws.column(1).setWidth(55);
+    //Titre
+    codePostal = codePostal ?? '';
+    ville = ville ?? '';
+    idType = idType ?? '';
+    ws.cell(1, 1).string(
+      ['Statistiques', type, codePostal, ville, idType, formatDate(dateDebut).toLocaleString()].join(' ') + '-' + formatDate(dateFin).toLocaleString()
+    );
+    ws = general(ws, statistiques);
+    ws = statsThemes(ws, statistiques);
+    ws = statsLieux(ws, statistiques, isAdminCoop);
+    ws = statsTempsAccompagnements(ws, statistiques);
+    ws = statsDurees(ws, statistiques);
+    ws = statsAges(ws, statistiques);
+    ws = statsUsagers(ws, statistiques);
+    ws = statsEvolutions(ws, statistiques);
+    if (statistiques.statsReorientations.length > 0) {
+      ws = statsReorientations(ws, statistiques);
+    }
+    wb.write('Excel.xlsx', res);
+  } catch (error) {
+    logger.info(error);
+    app.get('sentry').captureException(error);
   }
-  wb.write('Excel.xlsx', res);
 };
 
 module.exports = {
