@@ -1,7 +1,7 @@
 const xl = require('excel4node');
 const cors = require('cors');
 const dayjs = require('dayjs');
-const logger = require('../../logger');
+const logger = require('../../../logger');
 const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${separator}MM${separator}YYYY`);
 const labelsCorrespondance = require('../../../services/stats/data/themesCorrespondances.json');
 
