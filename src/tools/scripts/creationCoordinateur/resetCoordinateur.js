@@ -3,7 +3,7 @@
 
 require('dotenv').config();
 
-const { execute } = require('../utils');
+const { execute } = require('../../utils');
 
 execute(__filename, async ({ db, logger, exit }) => {
   logger.info('Reset/Purge de tout les coordos....');
@@ -30,6 +30,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     { 'roles': { '$in': ['coordinateur_coop'] } },
     { $pull: { 'roles': 'coordinateur_coop' } }
   );
-  logger.info('FiN de la purge.');
+  logger.info('Fin de la purge.');
   exit();
 });
