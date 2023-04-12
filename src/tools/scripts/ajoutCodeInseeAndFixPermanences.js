@@ -138,7 +138,7 @@ execute(__filename, async ({ logger, db, exit }) => {
       const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${encodeURI(adresseComplete)}`;
       await axios.get(urlAPI, { params: {} }).then(async result => {
         let resultQueryLatLong = {};
-        let matchLocation = result?.data?.features.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
+        let matchLocation = result?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
         if (!matchLocation) {
           resultQueryLatLong = await axios.get(`${urlAPI}&lat=${location?.coordinates[0]}&lon=${location?.coordinates[1]}`, { params: {} });
           matchLocation = resultQueryLatLong?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
