@@ -81,7 +81,7 @@ module.exports = (db, mailer, app, logger) => {
     mailRelanceM15Conseiller(db, mailer),
     mailRelanceM15Structure(db, mailer),
     mailRelanceM15SupHierarchique(db, mailer),
-    conseillerTransfertStructure(db, mailer)
+    conseillerTransfertStructure(db, mailer),
   ];
 
   return {

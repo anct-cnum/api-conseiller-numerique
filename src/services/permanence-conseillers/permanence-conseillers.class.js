@@ -13,7 +13,12 @@ const {
 } = require('../../common/utils/feathers.utils');
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
-const { updatePermanenceToSchema, updatePermanencesToSchema, validationPermamences, locationDefault } = require('./permanence/utils/update-permanence.utils');
+const {
+  updatePermanenceToSchema,
+  updatePermanencesToSchema,
+  validationPermamences,
+  locationDefault
+} = require('./permanence/utils/update-permanence.utils');
 const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
   deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences, deleteCraPermanence,
 } = require('./permanence/repositories/permanence-conseiller.repository');
@@ -117,7 +122,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       };
       const conseillerId = req.params.id;
       const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
@@ -129,14 +133,14 @@ exports.PermanenceConseillers = class Sondages extends Service {
           return res.status(400).send(new BadRequest(error).toJSON());
         }
         await locationDefault(permanence);
-        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(() => {
+        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async () => {
           if (idOldPermanence) {
-            return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
+            return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
               return res.send({ isCreated: true });
             }).catch(error => {
               app.get('sentry').captureException(error);
               logger.error(error);
-              return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+              return res.status(500).send(new GeneralError('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
             });
           } else {
             return res.send({ isCreated: true });
@@ -175,7 +179,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
         await locationDefault(permanence);
         await setPermanence(db)(permanenceId, permanence, conseillerId, hasPermanence,
           telephonePro, emailPro, estCoordinateur).then(() => {
-
           if (idOldPermanence) {
             deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isUpdated: true });
@@ -198,7 +201,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.get('/permanences/verifySiret/:siret', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user?._id, [Role.Conseiller], () => user)
@@ -212,10 +214,40 @@ exports.PermanenceConseillers = class Sondages extends Service {
             object: 'checkSiret',
           };
           const result = await axios.get(urlSiret, { params: params });
-          const adresse = JSON.stringify(result?.data?.etablissement?.adresse,
-            (key, value) => (value === null) ? '' : value
-          );
-          return res.send({ 'adresseParSiret': JSON.parse(adresse) });
+          let adresse = result?.data?.etablissement?.adresse;
+          if (adresse) {
+            const adresseComplete = [
+              adresse?.numero_voie ?? '',
+              adresse?.type_voie ?? '',
+              adresse?.nom_voie ?? '',
+              adresse?.code_postal ?? '',
+              adresse?.localite ?? ''
+            ].join(' ');
+            let adresseParSiret = {
+              l1: adresse?.l1 ?? '',
+              l2: adresse?.l2 ?? '',
+              numero_voie: adresse?.numero_voie ?? '',
+              type_voie: adresse?.type_voie ?? '',
+              nom_voie: adresse?.nom_voie ?? '',
+              code_postal: adresse?.code_postal ?? '',
+              localite: adresse?.localite ?? '',
+              adresseComplete: adresseComplete,
+            };
+
+            try {
+              const params = {};
+              const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adresseComplete}`;
+              const resultAPI = await axios.get(urlAPI, { params: params });
+              if (resultAPI.data?.features?.length > 0) {
+                adresseParSiret.listeAdresses = resultAPI.data?.features;
+              }
+              return res.send({ adresseParSiret });
+            } catch (error) {
+              logger.error(error);
+              app.get('sentry').captureException(error);
+              return res.send({ adresseParSiret });
+            }
+          }
         } catch (error) {
           if (!error.response.data?.gateway_error) {
             logger.error(error);
@@ -246,6 +278,27 @@ exports.PermanenceConseillers = class Sondages extends Service {
           return res.send({ 'geocodeAdresse': result.data?.features });
         } catch (e) {
           return res.send({ 'geocodeAdresse': null });
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/permanences/getAdresse/:adresse', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const { adresse } = JSON.parse(req.params.adresse);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adresse}`;
+        try {
+          const params = {};
+          const result = await axios.get(urlAPI, { params: params });
+          const adresses = result.data?.features?.filter(adresse => adresse.properties.score > 0.7);
+          return res.send({ 'adresseApi': adresses });
+        } catch (e) {
+          return res.send({ 'adresseApi': null });
         }
       }).catch(routeActivationError => abort(res, routeActivationError));
     });

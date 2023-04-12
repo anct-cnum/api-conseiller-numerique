@@ -86,7 +86,7 @@ const getPermanencesByStructure = db => async structureId => {
 };
 
 const createPermanence = db => async (permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur) => {
-  await db.collection('permanences').insertOne(
+  const { ops } = await db.collection('permanences').insertOne(
     permanence
   );
 
@@ -100,15 +100,13 @@ const createPermanence = db => async (permanence, conseillerId, hasPermanence, t
       estCoordinateur,
     }
   });
+
+  return ops[0]._id;
 };
 
 const setPermanence = db => async (permanenceId, permanence, conseillerId, hasPermanence,
   telephonePro, emailPro, estCoordinateur) => {
-  await db.collection('permanences').updateOne({
-    _id: new ObjectId(permanenceId)
-  }, {
-    $set: permanence
-  });
+  await db.collection('permanences').replaceOne({ _id: new ObjectId(permanenceId) }, permanence, { upsert: true });
 
   await db.collection('conseillers').updateOne({
     _id: new ObjectId(conseillerId)
