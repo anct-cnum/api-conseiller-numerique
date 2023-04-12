@@ -63,6 +63,8 @@ module.exports = {
         delete context.data.cra.idPermanence;
         delete context.data.idStructure;
         delete context.data.cra.cp;
+        delete context.data.cra.loading;
+        delete context.data.cra.countCra;
 
         //Validation des données cra
         const error = validationCra(context.data.cra);
