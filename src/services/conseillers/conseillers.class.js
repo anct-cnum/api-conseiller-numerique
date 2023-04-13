@@ -463,11 +463,6 @@ exports.Conseillers = class Conseillers extends Service {
             ...statsQuery,
             'cra.codeCommune': req.query?.codeCommune
           };
-        } else if (query.ville !== '') {
-          statsQuery = {
-            ...statsQuery,
-            'cra.nomCommune': req.query?.ville
-          };
         }
         const isAdminCoop = checkRoleAdminCoop(userById);
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
@@ -516,11 +511,6 @@ exports.Conseillers = class Conseillers extends Service {
           statsQuery = {
             ...statsQuery,
             'cra.codeCommune': query?.codeCommune
-          };
-        } else if (query?.ville !== '') {
-          statsQuery = {
-            ...statsQuery,
-            'cra.nomCommune': query?.ville
           };
         }
         const isAdminCoop = checkRoleAdminCoop(userById);
