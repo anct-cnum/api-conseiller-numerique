@@ -53,7 +53,7 @@ const resultApi = obj => ({
   'numeroRue': obj?.housenumber ?? '',
   'rue': obj?.street ?? obj?.locality,
   'codePostal': obj?.postcode,
-  'ville': obj?.city.toUpperCase(),
+  'ville': obj?.city?.toUpperCase(),
   'codeCommune': obj?.citycode,
 });
 const exportCsvPermanences = (exportsCSv, lot, logger) => {
