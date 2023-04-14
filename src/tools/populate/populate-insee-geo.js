@@ -14,7 +14,8 @@ execute(__filename, async ({ db, logger, exit }) => {
 
     const updateDoc = {
       $set: {
-        coordonneesInsee: adresse.features[0].geometry
+        coordonneesInsee: adresse.features[0].geometry,
+        adresseInsee2Ban: adresse.features[0].properties,
       }
     };
 
