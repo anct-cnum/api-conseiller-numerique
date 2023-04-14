@@ -36,6 +36,17 @@ const statsLieux = (statistiques, isAdminCoop) => [
   ''
 ];
 
+const statsTempsAccompagnements = statistiques => [
+  'Temps en accompagnements',
+  ...[
+    'Total d\'heures',
+    'Individuelles',
+    'Collectives',
+    'Ponctuelles'
+  ].map((statsTempsAccompagnement, index) => `${statsTempsAccompagnement};${statistiques.statsTempsAccompagnements[index].valeur}h`),
+  ''
+];
+
 const statsDurees = statistiques => [
   'Durée des accompagnements',
   ...[
@@ -107,6 +118,7 @@ const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin,
   ...general(statistiques),
   ...statsThemes(statistiques),
   ...statsLieux(statistiques, isAdminCoop),
+  ...statsTempsAccompagnements(statistiques),
   ...statsDurees(statistiques),
   ...statsAges(statistiques),
   ...statsUsagers(statistiques),

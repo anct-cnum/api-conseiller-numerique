@@ -132,10 +132,4 @@ module.exports = {
       db.collection('permanences').createIndex({ 'structure.$id': 1 }),
     ]);
   },
-  adressesIntrouvables: db => {
-    return Promise.all([
-      db.collection('adressesIntrouvables').createIndex({ 'conseiller.$id': 1 }),
-      db.collection('adressesIntrouvables').createIndex({ 'permanenceId': 1 }),
-    ]);
-  },
 };
