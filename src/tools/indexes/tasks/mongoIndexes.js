@@ -90,6 +90,7 @@ module.exports = {
       db.collection('cras').createIndex({ 'cra.dateAccompagnement': 1 }),
       db.collection('cras').createIndex({ 'cra.activite': 1 }),
       db.collection('cras').createIndex({ 'cra.nomCommune': 1 }),
+      db.collection('cras').createIndex({ 'cra.codeCommune': 1 }),
       db.collection('cras').createIndex({ 'cra.organismes': 1 })
     ]);
   },
