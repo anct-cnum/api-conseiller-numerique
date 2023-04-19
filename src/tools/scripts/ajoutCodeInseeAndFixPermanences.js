@@ -46,6 +46,7 @@ const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
 .replace(/\bPL\b/gi, 'PLACE')
 .replace(/\bRTE\b/gi, 'ROUTE')
 .replace(/\bDR\b/gi, 'DOCTEUR')
+.replace(/\bCHE\b/gi, 'CHEMIN')
 .replace(/\bNULL\b/gi, '')
 .trim();
 
@@ -157,6 +158,17 @@ execute(__filename, async ({ logger, db, exit }) => {
           const api = e => adressePerm(formatText(apiAdresse(resultApi(e.properties))?.toUpperCase()));
           matchLocation = resultQueryLatLong?.data?.features?.find(e => api(e) === permanence);
         }
+        if (!matchLocation) {
+          exportsCSv.permNotOK.push({ _id,
+            adresse: { ...adresse, coordinates: location?.coordinates },
+            resultApi: {
+              total: resultQueryLatLong?.data?.features?.length,
+              fields: resultQueryLatLong?.data?.features?.map(i => ({ ...resultApi(i.properties), coordinates: i.geometry.coordinates }))
+            },
+            cnfsCount: conseillers?.length
+          });
+          return;
+        }
         const adresseControleDiff = {
           // eslint-disable-next-line max-len
           diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase() && ![null, '', 'null'].includes(adresse?.numeroRue),
@@ -170,16 +182,11 @@ execute(__filename, async ({ logger, db, exit }) => {
           adresseControleDiff.diffville = formatText(district)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase() &&
           formatText(matchLocation?.properties?.city)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase();
         }
-        if (!matchLocation) {
-          exportsCSv.permNotOK.push({ _id,
-            adresse: { ...adresse, coordinates: location?.coordinates },
-            resultApi: {
-              total: resultQueryLatLong?.data?.features?.length,
-              fields: resultQueryLatLong?.data?.features?.map(i => ({ ...resultApi(i.properties), coordinates: i.geometry.coordinates }))
-            },
-            cnfsCount: conseillers?.length
-          });
-        } else if (Object.values(adresseControleDiff).includes(true)) {
+        if (adresseControleDiff?.diffNumber === true) {// ignorer le cas il y a la perm avec un numéro de rue et dans le résultat api, il y en a pas.
+          adresseControleDiff.diffNumber =
+          !(!matchLocation?.properties?.housenumber && ![null, '', 'null'].includes(adresse?.numeroRue));
+        }
+        if (Object.values(adresseControleDiff).includes(true)) {
           exportsCSv.diffCityAndCodePostal.push({
             nombreDiff: Object.values(adresseControleDiff).filter(i => i === true).length,
             _id,
