@@ -49,6 +49,9 @@ const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
 .replace(/\bRTE\b/gi, 'ROUTE')
 .replace(/\bDR\b/gi, 'DOCTEUR')
 .replace(/\bCHE\b/gi, 'CHEMIN')
+.replace(/\bCRS\b/gi, 'COURS')
+.replace(/\bIMP\b/gi, 'IMPASSE')
+.replace(/\bSQ\b/gi, 'SQUARE')
 .replace(/\bNULL\b/gi, '')
 .trim();
 
