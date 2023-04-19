@@ -144,17 +144,25 @@ execute(__filename, async ({ logger, db, exit }) => {
           matchLocation = resultQueryLatLong?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
         }
         const district = matchLocation?.properties?.district ? matchLocation?.properties?.district?.replace('e Arrondissement', '') : undefined;
-        const comparLatLon = resultQueryLatLong?.data?.features.find(i => i?.geometry?.coordinates[0].toFixed(1) === location?.coordinates[0].toFixed(1) &&
+        const comparLatLon = resultQueryLatLong?.data?.features.filter(i => i?.geometry?.coordinates[0].toFixed(1) === location?.coordinates[0].toFixed(1) &&
           i?.geometry?.coordinates[1].toFixed(1) === location?.coordinates[1].toFixed(1));
-        if (!matchLocation && resultQueryLatLong?.data?.features?.length === 1 && comparLatLon) {
-          matchLocation = comparLatLon;
+        if (!matchLocation && comparLatLon?.length === 1) {
+          matchLocation = comparLatLon[0];
+        }
+        if (!matchLocation) {
+          // non compare du numero de rue, objectif trouver parmi X resultats , une adresse qui correspond à la perm
+          const permanenceSansNumRue = `${adresse?.rue} ${adresse?.codePostal} ${adresse?.ville?.replace('e Arrondissement', '')?.split(' ')[0]}`;
+          const apiAdresse = e => `${e?.rue} ${e?.codePostal} ${e?.ville}`;
+          const permanence = adressePerm(formatText(permanenceSansNumRue)?.toUpperCase());
+          const api = e => adressePerm(formatText(apiAdresse(resultApi(e.properties))?.toUpperCase()));
+          matchLocation = resultQueryLatLong?.data?.features?.find(e => api(e) === permanence);
         }
         const adresseControleDiff = {
           // eslint-disable-next-line max-len
           diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase() && ![null, '', 'null'].includes(adresse?.numeroRue),
           // eslint-disable-next-line max-len
           diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== adressePerm(formatText(adresse.rue)?.toUpperCase()),
-          diffCodePostal: matchLocation?.properties?.postcode.toUpperCase() !== adresse?.codePostal.toUpperCase(),
+          diffCodePostal: matchLocation?.properties?.postcode?.toUpperCase() !== adresse?.codePostal?.toUpperCase(),
           diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase() &&
           formatText(matchLocation?.properties?.city)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase()
         };
