@@ -18,9 +18,11 @@ const statCras = async db => {
   return { crasRestantSansPerm, crasRestantAvecPerm };
 };
 const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) => {
+  // pas de update de numeroRue si dans l'api adresse => le numeroRue n'est pas présent
+  const setPermanence = matchLocation.numeroRue !== '' ? { 'adresse.numeroRue': matchLocation.numeroRue } : {};
   await db.collection('permanences').updateOne({ _id },
     { '$set': {
-      'adresse.numeroRue': matchLocation.numeroRue,
+      ...setPermanence,
       'adresse.rue': matchLocation.rue,
       'adresse.ville': matchLocation.ville,
       'adresse.codeCommune': matchLocation.codeCommune,
@@ -46,6 +48,10 @@ const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
 .replace(/\bPL\b/gi, 'PLACE')
 .replace(/\bRTE\b/gi, 'ROUTE')
 .replace(/\bDR\b/gi, 'DOCTEUR')
+.replace(/\bCHE\b/gi, 'CHEMIN')
+.replace(/\bCRS\b/gi, 'COURS')
+.replace(/\bIMP\b/gi, 'IMPASSE')
+.replace(/\bSQ\b/gi, 'SQUARE')
 .replace(/\bNULL\b/gi, '')
 .trim();
 
@@ -144,23 +150,18 @@ execute(__filename, async ({ logger, db, exit }) => {
           matchLocation = resultQueryLatLong?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
         }
         const district = matchLocation?.properties?.district ? matchLocation?.properties?.district?.replace('e Arrondissement', '') : undefined;
-        const comparLatLon = resultQueryLatLong?.data?.features.find(i => i?.geometry?.coordinates[0].toFixed(1) === location?.coordinates[0].toFixed(1) &&
+        const comparLatLon = resultQueryLatLong?.data?.features.filter(i => i?.geometry?.coordinates[0].toFixed(1) === location?.coordinates[0].toFixed(1) &&
           i?.geometry?.coordinates[1].toFixed(1) === location?.coordinates[1].toFixed(1));
-        if (!matchLocation && resultQueryLatLong?.data?.features?.length === 1 && comparLatLon) {
-          matchLocation = comparLatLon;
+        if (!matchLocation && comparLatLon?.length === 1) {
+          matchLocation = comparLatLon[0];
         }
-        const adresseControleDiff = {
-          // eslint-disable-next-line max-len
-          diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase() && ![null, '', 'null'].includes(adresse?.numeroRue),
-          // eslint-disable-next-line max-len
-          diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== adressePerm(formatText(adresse.rue)?.toUpperCase()),
-          diffCodePostal: matchLocation?.properties?.postcode.toUpperCase() !== adresse?.codePostal.toUpperCase(),
-          diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase() &&
-          formatText(matchLocation?.properties?.city)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase()
-        };
-        if (adresseControleDiff?.diffville === true) {// dans le cas où "SAINT" est écrit entièrement pour la ville
-          adresseControleDiff.diffville = formatText(district)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase() &&
-          formatText(matchLocation?.properties?.city)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase();
+        if (!matchLocation) {
+          // non compare du numero de rue, objectif trouver parmi X resultats , une adresse qui correspond à la perm
+          const permanenceSansNumRue = `${adresse?.rue} ${adresse?.codePostal} ${adresse?.ville?.replace('e Arrondissement', '')?.split(' ')[0]}`;
+          const apiAdresse = e => `${e?.rue} ${e?.codePostal} ${e?.ville}`;
+          const permanence = adressePerm(formatText(permanenceSansNumRue)?.toUpperCase());
+          const api = e => adressePerm(formatText(apiAdresse(resultApi(e.properties))?.toUpperCase()));
+          matchLocation = resultQueryLatLong?.data?.features?.find(e => api(e) === permanence);
         }
         if (!matchLocation) {
           exportsCSv.permNotOK.push({ _id,
@@ -171,7 +172,26 @@ execute(__filename, async ({ logger, db, exit }) => {
             },
             cnfsCount: conseillers?.length
           });
-        } else if (Object.values(adresseControleDiff).includes(true)) {
+          return;
+        }
+        const adresseControleDiff = {
+          // eslint-disable-next-line max-len
+          diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase() && ![null, '', 'null'].includes(adresse?.numeroRue),
+          // eslint-disable-next-line max-len
+          diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== adressePerm(formatText(adresse.rue)?.toUpperCase()),
+          diffCodePostal: matchLocation?.properties?.postcode?.toUpperCase() !== adresse?.codePostal?.toUpperCase(),
+          diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase() &&
+          formatText(matchLocation?.properties?.city)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase()
+        };
+        if (adresseControleDiff?.diffville === true) {// dans le cas où "SAINT" est écrit entièrement pour la ville
+          adresseControleDiff.diffville = formatText(district)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase() &&
+          formatText(matchLocation?.properties?.city)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase();
+        }
+        if (adresseControleDiff?.diffNumber === true) {// ignorer le cas il y a la perm avec un numéro de rue et dans le résultat api, il y en a pas.
+          adresseControleDiff.diffNumber =
+          !(!matchLocation?.properties?.housenumber && ![null, '', 'null'].includes(adresse?.numeroRue));
+        }
+        if (Object.values(adresseControleDiff).includes(true)) {
           exportsCSv.diffCityAndCodePostal.push({
             nombreDiff: Object.values(adresseControleDiff).filter(i => i === true).length,
             _id,
