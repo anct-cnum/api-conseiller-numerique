@@ -18,9 +18,11 @@ const statCras = async db => {
   return { crasRestantSansPerm, crasRestantAvecPerm };
 };
 const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) => {
+  // pas de update de numeroRue si dans l'api adresse => le numeroRue n'est pas présent
+  const setPermanence = matchLocation.numeroRue !== '' ? { 'adresse.numeroRue': matchLocation.numeroRue } : {};
   await db.collection('permanences').updateOne({ _id },
     { '$set': {
-      'adresse.numeroRue': matchLocation.numeroRue,
+      ...setPermanence,
       'adresse.rue': matchLocation.rue,
       'adresse.ville': matchLocation.ville,
       'adresse.codeCommune': matchLocation.codeCommune,
