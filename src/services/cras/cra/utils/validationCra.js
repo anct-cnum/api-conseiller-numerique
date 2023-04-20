@@ -4,6 +4,7 @@ const validationCra = ObjectCra => {
   const schema = Joi.object({
     codePostal: Joi.string().required().min(5).max(5).error(new Error('Le code postal est invalide')),
     nomCommune: Joi.string().required().error(new Error('Le nom de la commune est invalide')),
+    codeCommune: Joi.string().trim().min(4).max(5).error(new Error('Le code commune est invalide')), // required temporaire non ajouté (rectif => PR )
     canal: Joi.string().required().valid('rattachement', 'autre lieu', 'distance', 'domicile').error(new Error('Le canal est invalide')),
     activite: Joi.string().required().valid('individuel', 'collectif', 'ponctuel').error(new Error('L\'activité est invalide')),
     nbParticipants: Joi.number().integer().required().min(1).max(100).error(new Error('Le nombre de participants est invalide')),
@@ -34,7 +35,7 @@ const validationCra = ObjectCra => {
       redirection: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements redirigés vers un autre établissement est invalide')),
     }),
     dateAccompagnement: Joi.date().min(new Date('2020-01-01T00:00:00.000Z')).required().error(new Error('La date est invalide')),
-    organisme: Joi.string().required().allow(null).error(new Error('L\'organisme de l\'accompagnement est invalide')),
+    organismes: Joi.array().required().allow(null).error(new Error('Les organismes de l\'accompagnement sont invalides')),
   }).validate(ObjectCra);
 
   return schema.error;

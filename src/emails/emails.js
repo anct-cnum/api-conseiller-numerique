@@ -38,7 +38,6 @@ const mailRelanceM15Conseiller = require('./conseillers/mailRelanceM+1,5Conseill
 const mailRelanceM15Structure = require('./structures/mailRelanceM+1,5Structure');
 const mailRelanceM15SupHierarchique = require('./structures/mailRelanceM+1,5SupHierarchique');
 const conseillerTransfertStructure = require('./conseillers/conseillerTransfertStructure');
-const adresseIntrouvable = require('./conseillers/adresseIntrouvable');
 
 module.exports = (db, mailer, app, logger) => {
 
@@ -83,7 +82,6 @@ module.exports = (db, mailer, app, logger) => {
     mailRelanceM15Structure(db, mailer),
     mailRelanceM15SupHierarchique(db, mailer),
     conseillerTransfertStructure(db, mailer),
-    adresseIntrouvable(db, mailer)
   ];
 
   return {

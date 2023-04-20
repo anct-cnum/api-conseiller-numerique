@@ -5,13 +5,6 @@ const assignPermanence = (body, conseillerId, database) => {
   let permanence = Object.assign({}, body);
   permanence = JSON.parse(JSON.stringify(permanence).replace(/"\s+|\s+"/g, '"'));
 
-  if (permanence?.adresseIntrouvable) {
-    delete permanence.adresse;
-    permanence.location = null;
-  } else {
-    permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
-  }
-
   permanence.conseillers = [];
   body.conseillers.forEach(conseiller => {
     permanence.conseillers.push(new ObjectId(conseiller));
@@ -36,7 +29,6 @@ const assignPermanence = (body, conseillerId, database) => {
   delete permanence.estCoordinateur;
   delete permanence.hasPermanence;
   delete permanence.idOldPermanence;
-  delete permanence.adresseIntrouvable;
 
   permanence?.horaires?.forEach(horaires => {
     delete horaires.fermeture;
@@ -51,13 +43,6 @@ const assignPermanences = (permanences, conseillerId) => {
     const lieuPrincipalPour = [];
 
     permanence = JSON.parse(JSON.stringify(permanence).replace(/"\s+|\s+"/g, '"'));
-
-    if (permanence?.adresseIntrouvable) {
-      delete permanence.adresse;
-      permanence.location = null;
-    } else {
-      permanence.adresse.ville = permanence?.adresse?.ville?.toUpperCase();
-    }
 
     permanence._id = permanence._id ? new ObjectId(permanence._id) : null;
     permanence?.conseillers.forEach(conseiller => {
@@ -94,31 +79,20 @@ const validationPermanences = permanences => {
   const regExpNumero = new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/);
   const regExpSiteWeb = new RegExp(/(https?):\/\/[a-z0-9\\/:%_+.,#?!@&=-]+/);
   const regExpSiret = new RegExp(/^$|^[0-9]{14}$/);
-  let adresse = {
-    numeroRue: Joi.string().trim().allow('', null).error(new Error('Un numéro de voie doit obligatoirement être saisi')),
-    rue: Joi.string().trim().allow('', null).error(new Error('Une rue doit obligatoirement être saisie')),
-    codePostal: Joi.string().trim().allow('', null).error(new Error('Un code postal doit obligatoirement être saisi')),
-    codeCommune: Joi.string().trim().allow('', null).min(4).max(5).error(new Error('Un code commune doit obligatoirement être saisi')),
-    ville: Joi.string().trim().allow('', null).error(new Error('Une ville doit obligatoirement être saisie')),
-  };
-  let location = Joi.object().allow(null).error(new Error('La localisation du lieu d\'activité doit obligatoirement être saisie'));
-  if (permanences?.adresseIntrouvable?.length === 0) {
-    adresse = {
-      numeroRue: Joi.string().trim().required().allow('', null).error(new Error('Un numéro de voie doit obligatoirement être saisi')),
-      rue: Joi.string().trim().required().min(5).max(120).error(new Error('Une rue doit obligatoirement être saisie')),
-      codePostal: Joi.string().trim().required().min(5).max(5).error(new Error('Un code postal doit obligatoirement être saisi')),
-      codeCommune: Joi.string().trim().required().min(4).max(5).error(new Error('Un code commune doit obligatoirement être saisi')),
-      ville: Joi.string().trim().required().min(3).max(60).error(new Error('Une ville doit obligatoirement être saisie')),
-    };
-    location = Joi.object().required().error(new Error('La localisation du lieu d\'activité doit obligatoirement être saisie'));
-  }
+
   const { error } = Joi.object({
     estCoordinateur: Joi.boolean().required().allow(true, false).error(new Error('Votre rôle doit obligatoirement être saisi')),
     estStructure: Joi.boolean().allow(true, false).required().error(new Error('Un lieu d\'activité doit obligatoirement être saisi')),
     numeroTelephone: Joi.string().trim().allow('', null).pattern(regExpNumero).error(new Error('Un numéro de téléphone valide doit être saisi')),
     nomEnseigne: Joi.string().trim().required().error(new Error('Un lieu d\'activité doit obligatoirement être saisi')),
-    adresse: adresse,
-    location: location,
+    adresse: {
+      numeroRue: Joi.string().trim().required().allow('', null).error(new Error('Un numéro de voie doit obligatoirement être saisi')),
+      rue: Joi.string().trim().required().min(5).max(120).error(new Error('Une rue doit obligatoirement être saisie')),
+      codePostal: Joi.string().trim().required().min(5).max(5).error(new Error('Un code postal doit obligatoirement être saisi')),
+      codeCommune: Joi.string().trim().required().min(4).max(5).error(new Error('Un code commune doit obligatoirement être saisi')),
+      ville: Joi.string().trim().required().min(3).max(60).error(new Error('Une ville doit obligatoirement être saisie')),
+    },
+    location: Joi.object().required().error(new Error('La localisation du lieu d\'activité doit obligatoirement être saisie')),
     itinerant: Joi.boolean().error(new Error('Une itinérance doit obligatoirement être saisie')),
     // eslint-disable-next-line max-len
     typeAcces: Joi.array().items(Joi.string().trim().valid('libre', 'rdv', 'prive')).min(1).required().error(new Error('Au moins un type d\'accès doit obligatoirement être indiqué')),
@@ -136,7 +110,6 @@ const validationPermanences = permanences => {
     updatedAt: Joi.date().error(new Error('Erreur sur le format du updateAt')),
     updatedBy: Joi.object().error(new Error('Erreur sur le format du updatedBy')),
     hasPermanence: Joi.boolean().error(new Error('Erreur sur le format du hasPermanence')),
-    adresseIntrouvable: Joi.string().trim().allow('', null).error(new Error('Une adresse introuvable doit être saisie')),
   }).validate(permanences);
 
   return error;

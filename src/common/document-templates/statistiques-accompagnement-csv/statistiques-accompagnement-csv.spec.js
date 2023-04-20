@@ -112,6 +112,24 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
           valeur: 0
         }
       ],
+      statsTempsAccompagnements: [
+        {
+          nom: 'total',
+          valeur: 16
+        },
+        {
+          nom: 'individuel',
+          valeur: 10
+        },
+        {
+          nom: 'collectif',
+          valeur: 3
+        },
+        {
+          nom: 'ponctuel',
+          valeur: 3
+        }
+      ],
       statsDurees: [
         {
           nom: '0-30',
@@ -279,6 +297,12 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'À distance;0\n' +
       'Lieu d\'activité;23\n' +
       'Autre lieu;0\n' +
+      '\n' +
+      'Temps en accompagnements\n' +
+      'Total d\'heures;16h\n' +
+      'Individuelles;10h\n' +
+      'Collectives;3h\n' +
+      'Ponctuelles;3h\n' +
       '\n' +
       'Durée des accompagnements\n' +
       'Moins de 30 minutes;4\n' +
