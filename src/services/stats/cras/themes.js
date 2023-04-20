@@ -60,7 +60,7 @@ const getStatsThemes = async (db, query) => {
   const total = totalTheme[0].total + statsThemes[15].valeur;
   if (total > 0) {
     statsThemes.forEach(theme => {
-      theme.pourcent = Math.round(theme.valeur > 0 ? theme.valeur * 100 / total : 0);
+      theme.pourcent = (theme.valeur > 0 ? theme.valeur * 100 / total : 0).toFixed(1);
     });
   }
 

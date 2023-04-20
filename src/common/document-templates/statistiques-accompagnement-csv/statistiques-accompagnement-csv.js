@@ -21,7 +21,8 @@ const general = statistiques => [
 
 const statsThemes = statistiques => [
   'Thèmes des accompagnements',
-  ...statistiques.statsThemes.map(theme => `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur}`),
+  ...statistiques.statsThemes.map(theme =>
+    `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur};${theme.pourcent}%`),
   ''
 ];
 
