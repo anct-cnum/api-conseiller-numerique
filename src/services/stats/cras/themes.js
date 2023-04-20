@@ -48,6 +48,22 @@ const getStatsThemes = async (db, query) => {
     }
   }
 
+  // Pourcentage
+  let totalTheme = await db.collection('cras').aggregate(
+    [
+      { $unwind: '$cra.themes' },
+      { $match: { ...query } },
+      { $group: { _id: 'total', count: { $sum: 1 } } },
+      { $project: { '_id': 0, 'total': '$count' } }
+    ]
+  ).toArray();
+  const total = totalTheme[0].total + statsThemes[15].valeur;
+  if (total > 0) {
+    statsThemes.forEach(theme => {
+      theme.pourcent = Math.round(theme.valeur > 0 ? theme.valeur * 100 / total : 0);
+    });
+  }
+
   return statsThemes;
 
 };
