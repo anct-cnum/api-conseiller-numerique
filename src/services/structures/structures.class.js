@@ -356,7 +356,7 @@ exports.Structures = class Structures extends Service {
         }).toJSON());
       }
 
-      const updateStructure = async (id, email, inactivite) => {
+      const updateStructure = async (id, email, inactivite, statut) => {
         try {
           await pool.query(`
           UPDATE djapp_hostorganization
@@ -378,7 +378,7 @@ exports.Structures = class Structures extends Service {
                 }
               } });
 
-          if (inactivite === true) {
+          if (inactivite === true && statut === 'VALIDATION_COSELEC') {
             await db.collection('structures').updateOne(
               { _id: new ObjectID(structureId) },
               {
@@ -405,19 +405,19 @@ exports.Structures = class Structures extends Service {
                 passwordCreated: false,
                 createdAt: new Date(),
                 resend: false,
-                mailSentDate: new Date()
+                mailSentDate: null
               }
             );
             await db.collection('misesEnRelation').updateMany(
               { 'structure.$id': new ObjectID(structureId) },
               {
                 $set: {
-                  'userCreated': true,
+                  'structureObj.userCreated': true,
                   'structureObj.contact.email': email,
                 },
                 $unset: {
-                  'contact.inactivite': '',
-                  'userCreationError': '',
+                  'structureObj.contact.inactivite': '',
+                  'structureObj.userCreationError': '',
                 }
               });
           } else {
@@ -437,7 +437,7 @@ exports.Structures = class Structures extends Service {
           res.status(500).send(new GeneralError(`Echec du changement d'email de la structure ${structure.nom}`));
         }
       };
-      await updateStructure(structure.idPG, email, structure.contact?.inactivite);
+      await updateStructure(structure.idPG, email, structure.contact?.inactivite, structure.statut);
     });
 
     app.post('/structures/updateStructureSiret', async (req, res) => {
