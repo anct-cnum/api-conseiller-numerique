@@ -205,6 +205,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               structureId: structure._id,
               userCreated: true
             }, $unset: {
+              inactivite: '',
               userCreationError: '',
               supHierarchique: '',
               telephonePro: '',
@@ -230,10 +231,15 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             });
 
             //Mise à jour des doublons
-            await db.collection('conseillers').updateMany({ _id: { $ne: conseillerOriginal._id }, email: conseillerOriginal.email }, { $set: {
-              disponible: false,
-              userCreated: false //si compte candidat n'était pas sur le même doublon
-            } });
+            await db.collection('conseillers').updateMany({ _id: { $ne: conseillerOriginal._id }, email: conseillerOriginal.email }, {
+              $set: {
+                disponible: false,
+                userCreated: false //si compte candidat n'était pas sur le même doublon
+              },
+              $unset: {
+                inactivite: '',
+              }
+            });
 
             await db.collection('misesEnRelation').updateMany({
               'conseillerObj.idPG': { $ne: idPGConseiller },
@@ -244,6 +250,9 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                 'statut': 'finalisee_non_disponible',
                 'conseillerObj.disponible': false,
                 'conseillerObj.userCreated': false
+              },
+              $unset: {
+                inactivite: '',
               }
             });
             if (countCras >= 1) {

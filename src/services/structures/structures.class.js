@@ -258,12 +258,16 @@ exports.Structures = class Structures extends Service {
       }
 
       try {
-        const structureUser = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structureId) });
-        // xxx maintenant qu'on a du multi user, ça récupère un des multicomptes au hasard, pas bon...
+        const structureUser = await db.collection('users').findOne({ 'name': structure.contact?.email });
+        // Cas où le cron n'est pas encore passé ou user inactif
         if (structureUser === null) {
-          res.status(404).send(new NotFound('User associated to structure not found', {
+          res.status(404).send(new NotFound('Utilisateur inexistant (inactivité)', {
             id: req.params.id
           }).toJSON());
+          return;
+        }
+        if (structureUser.passwordCreated === true) {
+          res.status(409).send(new Conflict(`Le compte ${structure.contact?.email} est déjà activé`));
           return;
         }
         //Met à jour le token possiblement expiré
@@ -352,7 +356,7 @@ exports.Structures = class Structures extends Service {
         }).toJSON());
       }
 
-      const updateStructure = async (id, email) => {
+      const updateStructure = async (id, email, inactivite) => {
         try {
           await pool.query(`
           UPDATE djapp_hostorganization
@@ -373,14 +377,59 @@ exports.Structures = class Structures extends Service {
                   idAdmin: adminUser?._id
                 }
               } });
-          await db.collection('users').updateOne(
-            { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': { $in: ['structure'] } },
-            { $set: { name: email }
-            });
-          await db.collection('misesEnRelation').updateMany(
-            { 'structure.$id': new ObjectID(structureId) },
-            { $set: { 'structureObj.contact.email': email }
-            });
+
+          if (inactivite === true) {
+            await db.collection('structures').updateOne(
+              { _id: new ObjectID(structureId) },
+              {
+                $set: {
+                  'userCreated': true
+                },
+                $unset: {
+                  'contact.inactivite': '',
+                  'userCreationError': '',
+                },
+              });
+            await db.collection('users').insertOne(
+              {
+                name: email,
+                password: uuidv4(),
+                roles: ['structure', 'structure_coop'],
+                entity: {
+                  '$ref': 'stuctures',
+                  '$id': new ObjectID(structureId),
+                  '$db': db.serverConfig.s.options.dbName
+                },
+                token: uuidv4(),
+                tokenCreatedAt: new Date(),
+                passwordCreated: false,
+                createdAt: new Date(),
+                resend: false,
+                mailSentDate: new Date()
+              }
+            );
+            await db.collection('misesEnRelation').updateMany(
+              { 'structure.$id': new ObjectID(structureId) },
+              {
+                $set: {
+                  'userCreated': true,
+                  'structureObj.contact.email': email,
+                },
+                $unset: {
+                  'contact.inactivite': '',
+                  'userCreationError': '',
+                }
+              });
+          } else {
+            await db.collection('users').updateOne(
+              { 'name': structure.contact.email, 'entity.$id': new ObjectID(structureId), 'roles': { $in: ['structure'] } },
+              { $set: { name: email }
+              });
+            await db.collection('misesEnRelation').updateMany(
+              { 'structure.$id': new ObjectID(structureId) },
+              { $set: { 'structureObj.contact.email': email }
+              });
+          }
           res.send({ emailUpdated: true });
         } catch (error) {
           logger.error(error);
@@ -388,7 +437,7 @@ exports.Structures = class Structures extends Service {
           res.status(500).send(new GeneralError(`Echec du changement d'email de la structure ${structure.nom}`));
         }
       };
-      await updateStructure(structure.idPG, email);
+      await updateStructure(structure.idPG, email, structure.contact?.inactivite);
     });
 
     app.post('/structures/updateStructureSiret', async (req, res) => {
