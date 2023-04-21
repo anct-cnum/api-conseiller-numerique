@@ -36,7 +36,7 @@ const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) =>
     }
     });
 };
-const formatText = mot => mot?.normalize('NFD').replace(/[\u0300-\u036f]/g, '')?.replace(/[',-]/g, ' ');
+const formatText = mot => mot?.normalize('NFD').replace(/[\u0300-\u036f]/g, '')?.replace(/['’,-]/g, ' ');
 const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
 .replace(/\bSTE\b/gi, 'SAINTE')
 .replace(/\bBD\b/gi, 'BOULEVARD')
