@@ -53,6 +53,7 @@ const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
 .replace(/\bIMP\b/gi, 'IMPASSE')
 .replace(/\bSQ\b/gi, 'SQUARE')
 .replace(/\bNULL\b/gi, '')
+.replace('.', '')
 .trim();
 
 const resultApi = obj => ({
