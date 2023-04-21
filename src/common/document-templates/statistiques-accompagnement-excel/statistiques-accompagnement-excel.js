@@ -42,6 +42,7 @@ const statsThemes = (ws, statistiques) => {
   statistiques.statsThemes.forEach((theme, i) => {
     ws.cell(17 + i, 1).string(labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom);
     ws.cell(17 + i, 2).number(theme.valeur);
+    ws.cell(17 + i, 3).string(theme.pourcent + '%');
   });
   return ws;
 };

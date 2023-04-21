@@ -48,6 +48,17 @@ const getStatsThemes = async (db, query) => {
     }
   }
 
+  // Pourcentage
+  const total = statsThemes.reduce(
+    (previousValue, currentValue) => previousValue + currentValue.valeur,
+    0,
+  );
+  if (total > 0) {
+    statsThemes.forEach(theme => {
+      theme.pourcent = (theme.valeur > 0 ? theme.valeur * 100 / total : 0).toFixed(1);
+    });
+  }
+
   return statsThemes;
 
 };
