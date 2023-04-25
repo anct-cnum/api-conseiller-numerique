@@ -177,7 +177,7 @@ execute(__filename, async ({ logger, db, exit }) => {
         }
         const adresseControleDiff = {
           // eslint-disable-next-line max-len
-          diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== adresse?.numeroRue?.toUpperCase() && ![null, '', 'null'].includes(adresse?.numeroRue),
+          diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== (adresse?.numeroRue?.toUpperCase())?.replace(' BIS', 'BIS') && ![null, '', 'null'].includes(adresse?.numeroRue),
           // eslint-disable-next-line max-len
           diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== adressePerm(formatText(adresse.rue)?.toUpperCase()),
           diffCodePostal: matchLocation?.properties?.postcode?.toUpperCase() !== adresse?.codePostal?.toUpperCase(),
