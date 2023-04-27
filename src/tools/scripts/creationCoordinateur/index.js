@@ -123,8 +123,8 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
           const adresseCoordo = ressource['Adresse CnFS'];
           const listCustom = ressource['Adresse mail CNFS'];
-          const mailleRegional = ressource['Région (chiffre)'];
-          const mailleDepartement = ressource['Departement (chiffre)'];
+          const mailleRegional = ressource['Code région'];
+          const mailleDepartement = ressource['Code département'];
 
           const estCoordinateur = await isAlreadyCoordinateur(db)(adresseCoordo);
           const idCoordinateur = await getIdConseillerByMail(db)(adresseCoordo);
