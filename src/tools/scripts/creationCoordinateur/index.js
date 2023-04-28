@@ -41,6 +41,10 @@ const updateConseillerIsCoordinateur = db => async idConseiller => {
     { '_id': idConseiller },
     { $set: { estCoordinateur: true } }
   );
+  await db.collection('misesEnRelation').updateMany(
+    { 'conseiller.$id': idConseiller },
+    { $set: { 'conseillerObj.estCoordinateur': true } }
+  );
 };
 
 const getListeExistante = db => async idConseiller => {
@@ -56,6 +60,15 @@ const addListSubordonnes = db => async (idConseiller, list, type) => {
     { $set: {
       'estCoordinateur': true,
       'listeSubordonnes': {
+        'type': type, 'liste': list
+      }
+    } }
+  );
+  await db.collection('misesEnRelation').updateMany(
+    { 'conseiller.$id': idConseiller },
+    { $set: {
+      'conseillerObj.estCoordinateur': true,
+      'conseillerObj.listeSubordonnes': {
         'type': type, 'liste': list
       }
     } }
@@ -107,8 +120,14 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
       ressources.forEach(ressource => {
         let p = new Promise(async (resolve, reject) => {
-          const estCoordinateur = await isAlreadyCoordinateur(db)(ressource.conseiller);
-          const idCoordinateur = await getIdConseillerByMail(db)(ressource.conseiller);
+
+          const adresseCoordo = ressource['Adresse CnFS'];
+          const listCustom = ressource['Adresse mail CNFS'];
+          const mailleRegional = ressource['Code région'];
+          const mailleDepartement = ressource['Code département'];
+
+          const estCoordinateur = await isAlreadyCoordinateur(db)(adresseCoordo);
+          const idCoordinateur = await getIdConseillerByMail(db)(adresseCoordo);
 
           if (idCoordinateur) {
             if (!estCoordinateur) {
@@ -118,19 +137,20 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             let listeExistante = await getListeExistante(db)(idCoordinateur);
 
             let listFinale = [];
-            if (ressource.region.length > 0) {
-              listFinale = setListeFinale(ressource.region.split(','), listeExistante);
+
+            if (mailleRegional.length > 0) {
+              listFinale = setListeFinale(mailleRegional.split('/'), listeExistante);
               await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeRegion');
-            } else if (ressource.departement.length > 0) {
-              listFinale = setListeFinale(ressource.departement.split(','), listeExistante);
+            } else if (mailleDepartement.length > 0) {
+              listFinale = setListeFinale(mailleDepartement.split('/'), listeExistante);
               await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeDepartement');
-            } else if (ressource.emails.length > 0) {
-              const emailsSubordonnes = ressource.emails.split(',');
+            } else if (listCustom.length > 0) {
+              const emailsSubordonnes = listCustom.split('/');
               const promisesEmails = [];
               const idSubordonnes = [];
               emailsSubordonnes.forEach(email => {
                 let p = new Promise(async (resolve, reject) => {
-                  const idSubordonne = await getIdSubordonneByMail(db)(email);
+                  const idSubordonne = await getIdSubordonneByMail(db)(email.trim());
                   if (idSubordonne) {
                     idSubordonnes.push(idSubordonne);
                     resolve();
@@ -152,7 +172,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             resolve();
           } else {
             error++;
-            logger.error('Erreur : Le coordinateur avec l\'adresse email : ' + ressource.conseiller + ' n\'existe pas !');
+            logger.error('Erreur : Le coordinateur avec l\'adresse email : ' + adresseCoordo + ' n\'existe pas !');
             reject();
           }
           if (total === ok + error) {
