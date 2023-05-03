@@ -1,7 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const { Conflict, GeneralError, BadRequest } = require('@feathersjs/errors');
 const logger = require('../../logger');
-const { ObjectId } = require('mongodb');
 
 const {
   canActivate,
@@ -26,12 +25,6 @@ const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure
 
 const axios = require('axios');
 const { lieuxDeMediationNumerique } = require('./permanence/core/lieux-de-mediation-numerique.core');
-const {
-  createAdresseIntrouvable,
-  sendEmailAdresseIntrouvable,
-  deleteAdresseIntrouvable,
-  getAdresseIntrouvable
-} = require('./permanence/repositories/adresses-introuvables.repository');
 
 exports.PermanenceConseillers = class Sondages extends Service {
   constructor(options, app) {
@@ -123,7 +116,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
-      const adresseIntrouvable = req.body.permanence?.adresseIntrouvable ?? null;
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       let permanence = {
         ...query
@@ -141,7 +133,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
           return res.status(400).send(new BadRequest(error).toJSON());
         }
         await locationDefault(permanence);
-        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async permanenceId => {
+        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async () => {
           if (idOldPermanence) {
             return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
               return res.send({ isCreated: true });
@@ -151,14 +143,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
               return res.status(500).send(new GeneralError('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
             });
           } else {
-            let sendMailAdresseIntrouvable = false;
-            //envoi mail pour prévenir de l'absence d'une adresse
-            if (adresseIntrouvable) {
-              createAdresseIntrouvable(db)(user, adresseIntrouvable, permanenceId).then(async () => {
-                sendMailAdresseIntrouvable = await sendEmailAdresseIntrouvable(app, db, user, adresseIntrouvable, permanenceId);
-              });
-            }
-            return res.send({ isCreated: true, sendMailAdresseIntrouvable });
+            return res.send({ isCreated: true });
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -173,7 +158,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
-      const adresseIntrouvable = req.body.permanence?.adresseIntrouvable ?? null;
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       let permanence = {
         ...query
@@ -195,13 +179,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
         await locationDefault(permanence);
         await setPermanence(db)(permanenceId, permanence, conseillerId, hasPermanence,
           telephonePro, emailPro, estCoordinateur).then(() => {
-          if (!adresseIntrouvable) {
-            deleteAdresseIntrouvable(db)(permanenceId);
-          } else {
-            createAdresseIntrouvable(db)(user, adresseIntrouvable, new ObjectId(permanenceId)).then(async () => {
-              await sendEmailAdresseIntrouvable(app, db, user, adresseIntrouvable, new ObjectId(permanenceId));
-            });
-          }
           if (idOldPermanence) {
             deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isUpdated: true });
@@ -318,30 +295,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
         try {
           const params = {};
           const result = await axios.get(urlAPI, { params: params });
-          return res.send({ 'adresseApi': result.data?.features });
+          const adresses = result.data?.features?.filter(adresse => adresse.properties.score > 0.7);
+          return res.send({ 'adresseApi': adresses });
         } catch (e) {
           return res.send({ 'adresseApi': null });
         }
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
-
-    app.get('/permanences/getAdresseIntrouvable/:id', async (req, res) => {
-
-      const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-      const permanenceId = req.params.id;
-
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        await getAdresseIntrouvable(db)(permanenceId).then(adresseIntrouvable => {
-          return res.send({ adresseIntrouvable });
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(500).send(new GeneralError('La recherche de permanence a échoué, veuillez réessayer.').toJSON());
-        });
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
@@ -373,7 +331,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await deletePermanence(db)(idPermanence).then(async () => {
-          await deleteAdresseIntrouvable(db)(idPermanence);
           await deleteCraPermanence(db)(idPermanence).then(() => {
             return res.send({ isDeleted: true });
           }).catch(error => {
