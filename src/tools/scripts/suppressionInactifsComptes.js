@@ -4,10 +4,17 @@ const dayjs = require('dayjs');
 
 const { execute } = require('../utils');
 
-execute(__filename, async ({ logger, db, Sentry }) => {
+execute(__filename, async ({ app, logger, db, Sentry }) => {
 
-  const EXPIRATION_DATE_DEFAUT = new Date(dayjs(new Date()).subtract(30, 'month')); // RGPD 30 mois
-  const EXPIRATION_DATE_ADMIN = new Date(dayjs(new Date()).subtract(12, 'month')); // Sécurité admin
+  const delayDefault = app.get('user_accounts')?.expiration_default_months;
+  const delayAdmin = app.get('user_accounts')?.expiration_admin_months;
+  if (!delayDefault || !delayAdmin || delayDefault === 0 || delayDefault === 0) {
+    logger.info('Inactivité désactivé');
+    return;
+  }
+
+  const EXPIRATION_DATE_DEFAUT = new Date(dayjs(new Date()).subtract(delayDefault, 'month')); // RGPD 30 mois
+  const EXPIRATION_DATE_ADMIN = new Date(dayjs(new Date()).subtract(delayAdmin, 'month')); // Sécurité admin
   const WL_ROLE_ADMIN = ['structure', 'admin', 'prefet', 'hub_coop', 'grandReseau']; //structure en premier car traitement supplémentaire et multi rôle possible
 
   const queryInactiveAdmin = { $or: [
