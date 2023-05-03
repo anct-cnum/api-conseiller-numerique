@@ -8,7 +8,7 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
 
   const delayDefault = app.get('user_accounts')?.expiration_default_months;
   const delayAdmin = app.get('user_accounts')?.expiration_admin_months;
-  if (!delayDefault || !delayAdmin || delayDefault === 0 || delayDefault === 0) {
+  if (!delayDefault || !delayAdmin || delayDefault === 0 || delayAdmin === 0) {
     logger.info('Inactivité désactivé');
     return;
   }
