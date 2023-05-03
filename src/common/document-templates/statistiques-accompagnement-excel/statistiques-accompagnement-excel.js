@@ -65,9 +65,9 @@ const statsTempsAccompagnements = (ws, statistiques) => {
   ws.cell(42, 1).string('Temps en accompagnements');
   [
     'Total d\'heures',
-    'Individuelles',
-    'Collectives',
-    'Ponctuelles'
+    'Individuels',
+    'Collectifs',
+    'Ponctuels'
   ].forEach((statsTempsAccompagnement, i) => {
     ws.cell(43 + i, 1).string(statsTempsAccompagnement);
     ws.cell(43 + i, 2).string(statistiques.statsTempsAccompagnements[i].valeur + 'h');

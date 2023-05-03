@@ -41,9 +41,9 @@ const statsTempsAccompagnements = statistiques => [
   'Temps en accompagnements',
   ...[
     'Total d\'heures',
-    'Individuelles',
-    'Collectives',
-    'Ponctuelles'
+    'Individuels',
+    'Collectifs',
+    'Ponctuels'
   ].map((statsTempsAccompagnement, index) => `${statsTempsAccompagnement};${statistiques.statsTempsAccompagnements[index].valeur}h`),
   ''
 ];

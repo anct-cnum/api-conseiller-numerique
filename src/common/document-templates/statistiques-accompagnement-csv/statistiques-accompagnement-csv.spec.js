@@ -319,9 +319,9 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       '\n' +
       'Temps en accompagnements\n' +
       'Total d\'heures;16h\n' +
-      'Individuelles;10h\n' +
-      'Collectives;3h\n' +
-      'Ponctuelles;3h\n' +
+      'Individuels;10h\n' +
+      'Collectifs;3h\n' +
+      'Ponctuels;3h\n' +
       '\n' +
       'Durée des accompagnements\n' +
       'Moins de 30 minutes;4\n' +
