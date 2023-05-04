@@ -753,15 +753,13 @@ exports.Conseillers = class Conseillers extends Service {
       app.get('mongoClient').then(async db => {
         let initModifMailPersoConseiller = false;
         let initModifMailProConseiller = false;
-        const { prenom, nom, telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
-        const body = { prenom, nom, telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
+        const { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
+        const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
         const idConseiller = req.params.id;
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
         const minDate = dayjs().subtract(99, 'year');
         const maxDate = dayjs().subtract(18, 'year');
         const schema = Joi.object({
-          prenom: Joi.string().trim().required().min(3).max(30).error(new Error('Le prénom est invalide')),
-          nom: Joi.string().trim().required().min(3).max(50).error(new Error('Le nom est invalide')),
           // eslint-disable-next-line max-len
           email: Joi.string().trim().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
           // eslint-disable-next-line max-len
@@ -790,7 +788,7 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
-        const changeInfos = { prenom, nom, telephone, telephonePro, sexe, dateDeNaissance };
+        const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
         try {
           await app.service('conseillers').patch(idConseiller, changeInfos);
         } catch (err) {
