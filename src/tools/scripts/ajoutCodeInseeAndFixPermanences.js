@@ -65,7 +65,7 @@ const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
 .replace('Œ', 'OE')
 .trim();
 
-const artcicleRue = rue => rue?.replace(/\bDU\b/gi, '')
+const articleRue = rue => rue?.replace(/\bDU\b/gi, '')
 .replace(/\bDE LA\b/gi, '')
 .replace(/\bDE\b/gi, '')
 .replace(/\bDES\b/gi, '')
@@ -216,14 +216,14 @@ execute(__filename, async ({ logger, db, exit }) => {
           // eslint-disable-next-line max-len
           diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== (adresse?.numeroRue?.toUpperCase())?.replace(' BIS', 'BIS') && ![null, '', 'null'].includes(adresse?.numeroRue),
           // eslint-disable-next-line max-len
-          diffRue: artcicleRue(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase()) !== artcicleRue(adressePerm(formatText(adresse.rue)?.toUpperCase())),
+          diffRue: articleRue(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase()) !== articleRue(adressePerm(formatText(adresse.rue)?.toUpperCase())),
           diffCodePostal: matchLocation?.properties?.postcode?.toUpperCase() !== adresse?.codePostal?.toUpperCase(),
           diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville)?.toUpperCase()) &&
           adressePerm(formatText(matchLocation?.properties?.city)?.toUpperCase()) !== adressePerm(formatText(adresse.ville)?.toUpperCase())
         };
         if (adresseControleDiff?.diffRue === true) {// gérer le cas où l'api adresse à des nom "raccourdie" "bd ou Pl etc..."
           // eslint-disable-next-line max-len
-          adresseControleDiff.diffRue = artcicleRue(adressePerm(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase())) !== artcicleRue(adressePerm(formatText(adresse.rue)?.toUpperCase()));
+          adresseControleDiff.diffRue = articleRue(adressePerm(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase())) !== articleRue(adressePerm(formatText(adresse.rue)?.toUpperCase()));
         }
         if (adresseControleDiff?.diffville === true) {// dans le cas où "SAINT" est écrit entièrement pour la ville
           adresseControleDiff.diffville = formatText(district)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase() &&
