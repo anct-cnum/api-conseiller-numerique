@@ -17,20 +17,13 @@ const statCras = async db => {
   );
   return { crasRestantSansPerm, crasRestantAvecPerm };
 };
-const updatePermanenceAndCRAS = db => async (logger, matchLocation, coordinates, _id) => {
-  const incoherenceNomCommune = await db.collection('cras').distinct('cra.nomCommune', { 'permanence.$id': _id });
-  const incoherenceCodePostal = await db.collection('cras').distinct('cra.codePostal', { 'permanence.$id': _id });
-  if ((incoherenceNomCommune.length >= 2) || (incoherenceCodePostal.length >= 2)) {
-    logger.error(`Permanence id : ${_id} a des différences dans les cras ${incoherenceCodePostal} / ${incoherenceNomCommune}`);
-    return;
-  }
+const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) => {
   // pas de update de numeroRue si dans l'api adresse => le numeroRue n'est pas présent
   const setPermanence = matchLocation.numeroRue !== '' ? { 'adresse.numeroRue': matchLocation.numeroRue } : {};
   await db.collection('permanences').updateOne({ _id },
     { '$set': {
       ...setPermanence,
       'adresse.rue': matchLocation.rue,
-      'adresse.codePostal': matchLocation.codePostal,
       'adresse.ville': matchLocation.ville,
       'adresse.codeCommune': matchLocation.codeCommune,
       'location.coordinates': coordinates
@@ -38,7 +31,6 @@ const updatePermanenceAndCRAS = db => async (logger, matchLocation, coordinates,
     });
   await db.collection('cras').updateMany({ 'permanence.$id': _id },
     { '$set': {
-      'cra.codePostal': matchLocation.codePostal,
       'cra.nomCommune': matchLocation.ville,
       'cra.codeCommune': matchLocation.codeCommune,
     }
@@ -216,7 +208,7 @@ execute(__filename, async ({ logger, db, exit }) => {
         } else {
           exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation?.properties) });
           if (acte === 'correction') {
-            await updatePermanenceAndCRAS(db)(logger, resultApi(matchLocation?.properties), matchLocation?.geometry?.coordinates, _id);
+            await updatePermanenceAndCRAS(db)(resultApi(matchLocation?.properties), matchLocation?.geometry?.coordinates, _id);
           }
         }
       }).catch(error =>
