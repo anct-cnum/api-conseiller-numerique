@@ -1107,6 +1107,12 @@ exports.Conseillers = class Conseillers extends Service {
       const userId = userIdFromRequestJwt(req);
       const getUserById = userAuthenticationRepository(db);
       const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(req.params.id) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Le conseiller n\'existe pas !', {
+          id: new ObjectId(req.params.id)
+        }).toJSON());
+        return;
+      }
       const distanceMax = req.body.distanceMax;
       const codeCommune = req.body.codeCommune;
       const codePostal = req.body.codePostal;
@@ -1137,18 +1143,19 @@ exports.Conseillers = class Conseillers extends Service {
         rolesGuard(userId, [Role.Conseiller], getUserById)
       ).then(async () => {
         try {
-          await pool.query(`UPDATE djapp_coach
+          /*await pool.query(`UPDATE djapp_coach
           (
             max_distance,
             zip_code,
             commune_code,
             departement_code,
             region_code,
-            geo_name)
+            geo_name,
+            location)
             =
-            ($2,$3,$4, $5, $6 ,$7)
-              SET  = $2 WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune]);
+            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8))
+            WHERE id = $1`,
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);*/
           await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax },
           });
