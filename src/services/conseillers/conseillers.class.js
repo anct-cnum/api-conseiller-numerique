@@ -1137,21 +1137,18 @@ exports.Conseillers = class Conseillers extends Service {
         rolesGuard(userId, [Role.Conseiller], getUserById)
       ).then(async () => {
         try {
-          try {
-            await pool.query(`UPDATE djapp_coach
-            (
-              max_distance,
-              zip_code,
-              commune_code)
-              =
-              ($2,$3,$4)
-                SET  = $2 WHERE id = $1`,
-            [conseiller.idPG, distanceMax, codePostal, codeCommune]);
-
-          } catch (err) {
-            logger.error(err);
-            app.get('sentry').captureException(err);
-          }
+          await pool.query(`UPDATE djapp_coach
+          (
+            max_distance,
+            zip_code,
+            commune_code,
+            departement_code,
+            region_code,
+            geo_name)
+            =
+            ($2,$3,$4, $5, $6 ,$7)
+              SET  = $2 WHERE id = $1`,
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune]);
           await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax },
           });
