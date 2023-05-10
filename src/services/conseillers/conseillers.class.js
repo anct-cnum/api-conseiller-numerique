@@ -1137,7 +1137,7 @@ exports.Conseillers = class Conseillers extends Service {
         rolesGuard(userId, [Role.Conseiller], getUserById)
       ).then(async () => {
         try {
-          /*try {
+          try {
             await pool.query(`UPDATE djapp_coach
             (
               max_distance,
@@ -1151,7 +1151,7 @@ exports.Conseillers = class Conseillers extends Service {
           } catch (err) {
             logger.error(err);
             app.get('sentry').captureException(err);
-          }*/
+          }
           await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax },
           });
