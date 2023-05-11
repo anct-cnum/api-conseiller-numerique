@@ -7,9 +7,9 @@ const { execute } = require('../utils');
 
 execute(__filename, async ({ db, logger, exit }) => {
 
-  program.option('-c, --correction', 'correction: correction des cas restantes');
+  program.option('-c, --correction', 'correction: correction des cas restants');
   program.option('-l, --log', 'log: rendre visible les logs');
-  program.option('-a, --analyse', 'analyse: analyse des permaneces ok');
+  program.option('-a, --analyse', 'analyse: analyse des permanences ok');
   program.option('-cp, --comparatif', 'comparatif: comparatif des permanences qui ont une incoherence');
   program.option('-i, --ignored', 'ignored: ignorer la partie de verification incoherence');
   program.helpOption('-e', 'HELP command');
@@ -29,8 +29,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   const idPermsInexistante = idPermsInCrasSansCodeCommune.map(i => String(i)).filter(i => !idsPermsTotal.map(i => String(i)).includes(i))?.length;
 
   logger.info(`${idsPermsSansCodeCommune.length} permanences restantes qui sont sans codeCommune`);
-  logger.info(`${idPermsInCrasSansCodeCommune.length} permanences qui sont associés à aux moins 1 cras (qui n'ont pas de code Commune)`);
-  logger.error(`${idPermsInexistante} permanence(s) potentiellement supprimer !`);
+  logger.info(`${idPermsInCrasSansCodeCommune.length} permanences qui sont associées à au moins 1 cras (qui n'ont pas de code Commune)`);
+  logger.warn(`${idPermsInexistante} permanence(s) potentiellement supprimer !`);
 
   for (const idPerm of idPermsInCrasSansCodeCommune) {
     const permanenceCorriger = await db.collection('permanences').findOne({ '_id': idPerm });
@@ -73,7 +73,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     }
   }
   // eslint-disable-next-line max-len
-  logger.info(`${countError} en erreurs dont ${countPermsExists} pas encore corrigés & ${countPermsNotExists} qui n'existe pas (${countError - countPermsNotExists} restante(s))`);
+  logger.info(`${countError} en erreurs dont ${countPermsExists} pas encore corrigées & ${countPermsNotExists} qui n'existent pas (${countError - countPermsNotExists} restante(s))`);
   logger.info(`${countIncoherence} incoherence(s)`);
   logger.info(`${countMaj} qui sont Ok`);
   exit();
