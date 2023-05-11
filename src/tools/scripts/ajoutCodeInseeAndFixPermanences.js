@@ -167,7 +167,7 @@ execute(__filename, async ({ logger, db, exit }) => {
       diffCityAndCodePostal: [],
       adressesContact: []
     };
-    logger.log(`Permanences au total: ${permanences.length}`);
+    logger.info(`Permanences au total: ${permanences.length}`);
     const countApiNotHouseNumber = [];
     for (const { adresse, location, conseillers, _id } of permanences) {
       const adresseComplete = `${adresse?.numeroRue ?? ''} ${adresse?.rue} ${adresse?.codePostal} ${adresse?.ville}`;
