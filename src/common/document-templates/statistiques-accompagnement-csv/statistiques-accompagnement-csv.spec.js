@@ -19,79 +19,98 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       statsThemes: [
         {
           nom: 'equipement informatique',
-          valeur: 13
+          valeur: 13,
+          pourcent: 10
         },
         {
           nom: 'internet',
-          valeur: 9
+          valeur: 9,
+          pourcent: 7
         },
         {
           nom: 'courriel',
-          valeur: 8
+          valeur: 8,
+          pourcent: 6
         },
         {
           nom: 'smartphone',
-          valeur: 2
+          valeur: 2,
+          pourcent: 1
         },
         {
           nom: 'contenus numeriques',
-          valeur: 8
+          valeur: 8,
+          pourcent: 6
         },
         {
           nom: 'vocabulaire',
-          valeur: 4
+          valeur: 4,
+          pourcent: 3
         },
         {
           nom: 'traitement texte',
-          valeur: 8
+          valeur: 8,
+          pourcent: 6
         },
         {
           nom: 'echanger',
-          valeur: 0
+          valeur: 0,
+          pourcent: 0
         },
         {
           nom: 'trouver emploi',
-          valeur: 21
+          valeur: 21,
+          pourcent: 16
         },
         {
           nom: 'accompagner enfant',
-          valeur: 0
+          valeur: 0,
+          pourcent: 0
         },
         {
           nom: 'tpe/pme',
-          valeur: 0
+          valeur: 0,
+          pourcent: 0
         },
         {
           nom: 'demarche en ligne',
-          valeur: 21
+          valeur: 21,
+          pourcent: 16
         },
         {
           nom: 'securite',
-          valeur: 4
+          valeur: 4,
+          pourcent: 3
         },
         {
           nom: 'fraude et harcelement',
-          valeur: 20
+          valeur: 20,
+          pourcent: 15
         },
         {
           nom: 'sante',
-          valeur: 15
+          valeur: 15,
+          pourcent: 11
         },
         {
           nom: 'espace-sante',
-          valeur: 1
+          valeur: 1,
+          pourcent: 1
         },
         {
           nom: 'scolaire',
-          valeur: 4
+          valeur: 4,
+          pourcent: 3
         },
         {
           nom: 'diagnostic',
-          valeur: 8
+          valeur: 8,
+          pourcent: 6
         },
         {
           nom: 'budget',
-          valeur: 9
+          valeur: 9,
+          pourcent: 7
         },
       ],
       statsLieux: [
@@ -110,6 +129,24 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
         {
           nom: 'autre lieu',
           valeur: 0
+        }
+      ],
+      statsTempsAccompagnements: [
+        {
+          nom: 'total',
+          valeur: 16
+        },
+        {
+          nom: 'individuel',
+          valeur: 10
+        },
+        {
+          nom: 'collectif',
+          valeur: 3
+        },
+        {
+          nom: 'ponctuel',
+          valeur: 3
         }
       ],
       statsDurees: [
@@ -254,31 +291,37 @@ describe('construction du contenu du fichier CSV d\'export des statistiques', ()
       'Redirections vers une autre structure agréée;10\n' +
       '\n' +
       'Thèmes des accompagnements\n' +
-      'Prendre en main du matériel;13\n' +
-      'Naviguer sur Internet;9\n' +
-      'Courriels;8\n' +
-      'Applications smartphone;2\n' +
-      'Gestion de contenus numériques;8\n' +
-      'Culture numérique;4\n' +
-      'Bureautique;8\n' +
-      'Échanger avec ses proches;0\n' +
-      'Emploi et formation;21\n' +
-      'Accompagner un aidant;0\n' +
-      'Numérique et TPE/PME;0\n' +
-      'Démarche en ligne;21\n' +
-      'Sécuriser un équipement;4\n' +
-      'Fraude et harcèlement;20\n' +
-      'Santé;15\n' +
-      'Mon espace santé;1\n' +
-      'Scolaire;4\n' +
-      'Diagnostic numérique;8\n' +
-      'Budget;9\n' +
+      'Prendre en main du matériel;13;10%\n' +
+      'Naviguer sur Internet;9;7%\n' +
+      'Courriels;8;6%\n' +
+      'Applications smartphone;2;1%\n' +
+      'Gestion de contenus numériques;8;6%\n' +
+      'Culture numérique;4;3%\n' +
+      'Bureautique;8;6%\n' +
+      'Échanger avec ses proches;0;0%\n' +
+      'Emploi et formation;21;16%\n' +
+      'Accompagner un aidant;0;0%\n' +
+      'Numérique et TPE/PME;0;0%\n' +
+      'Démarche en ligne;21;16%\n' +
+      'Sécuriser un équipement;4;3%\n' +
+      'Fraude et harcèlement;20;15%\n' +
+      'Santé;15;11%\n' +
+      'Mon espace santé;1;1%\n' +
+      'Scolaire;4;3%\n' +
+      'Diagnostic numérique;8;6%\n' +
+      'Budget;9;7%\n' +
       '\n' +
       'Canaux d\'accompagnements\n' +
       'À domicile;0\n' +
       'À distance;0\n' +
       'Lieu d\'activité;23\n' +
       'Autre lieu;0\n' +
+      '\n' +
+      'Temps en accompagnements\n' +
+      'Total d\'heures;16h\n' +
+      'Individuels;10h\n' +
+      'Collectifs;3h\n' +
+      'Ponctuels;3h\n' +
       '\n' +
       'Durée des accompagnements\n' +
       'Moins de 30 minutes;4\n' +

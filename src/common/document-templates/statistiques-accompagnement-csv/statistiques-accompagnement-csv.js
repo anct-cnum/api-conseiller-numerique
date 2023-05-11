@@ -21,7 +21,8 @@ const general = statistiques => [
 
 const statsThemes = statistiques => [
   'Thèmes des accompagnements',
-  ...statistiques.statsThemes.map(theme => `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur}`),
+  ...statistiques.statsThemes.map(theme =>
+    `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur};${theme.pourcent}%`),
   ''
 ];
 
@@ -33,6 +34,17 @@ const statsLieux = (statistiques, isAdminCoop) => [
     'Lieu d\'activité',
     'Autre lieu'
   ].map((statLieux, index) => `${statLieux};${statistiques.statsLieux[index].valeur}`),
+  ''
+];
+
+const statsTempsAccompagnements = statistiques => [
+  'Temps en accompagnements',
+  ...[
+    'Total d\'heures',
+    'Individuels',
+    'Collectifs',
+    'Ponctuels'
+  ].map((statsTempsAccompagnement, index) => `${statsTempsAccompagnement};${statistiques.statsTempsAccompagnements[index].valeur}h`),
   ''
 ];
 
@@ -107,6 +119,7 @@ const buildExportStatistiquesCsvFileContent = (statistiques, dateDebut, dateFin,
   ...general(statistiques),
   ...statsThemes(statistiques),
   ...statsLieux(statistiques, isAdminCoop),
+  ...statsTempsAccompagnements(statistiques),
   ...statsDurees(statistiques),
   ...statsAges(statistiques),
   ...statsUsagers(statistiques),
