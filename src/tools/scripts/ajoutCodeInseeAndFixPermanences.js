@@ -21,7 +21,14 @@ const updatePermanenceAndCRAS = db => async (logger, matchLocation, coordinates,
   const incoherenceNomCommune = await db.collection('cras').distinct('cra.nomCommune', { 'permanence.$id': _id });
   const incoherenceCodePostal = await db.collection('cras').distinct('cra.codePostal', { 'permanence.$id': _id });
   if ((incoherenceNomCommune.length >= 2) || (incoherenceCodePostal.length >= 2)) {
-    logger.error(`Permanence id : ${_id} a des différences dans les cras ${incoherenceCodePostal} / ${incoherenceNomCommune}`);
+    logger.error(`- Différences : perm ${_id} a des différences dans les cras ${incoherenceCodePostal} / ${incoherenceNomCommune}`);
+    return;
+  }
+  const verificationDateCreateCras = await db.collection('cras').distinct('createdAt', { 'permanence.$id': _id });
+  const verifDateUpdatePermanence = await db.collection('permanences').distinct('updatedAt', { '_id': _id });
+  if (verificationDateCreateCras[verificationDateCreateCras.length - 1] <= verifDateUpdatePermanence[0]) {
+    // eslint-disable-next-line max-len
+    logger.error(`- Vérification : perm ${_id} vérification nescessaire côté cras ${incoherenceCodePostal} ${incoherenceNomCommune} => ${matchLocation.codePostal} ${matchLocation.ville}`);
     return;
   }
   // pas de update de numeroRue si dans l'api adresse => le numeroRue n'est pas présent

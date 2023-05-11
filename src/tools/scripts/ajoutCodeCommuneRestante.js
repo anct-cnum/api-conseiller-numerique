@@ -36,6 +36,8 @@ execute(__filename, async ({ db, logger, exit }) => {
     const permanenceCorriger = await db.collection('permanences').findOne({ '_id': idPerm });
     const incoherenceNomCommune = await db.collection('cras').distinct('cra.nomCommune', { 'permanence.$id': idPerm });
     const incoherenceCodePostal = await db.collection('cras').distinct('cra.codePostal', { 'permanence.$id': idPerm });
+    const verificationDateCreateCras = await db.collection('cras').distinct('createdAt', { 'permanence.$id': idPerm });
+    const verifDateUpdatePermanence = await db.collection('permanences').distinct('updatedAt', { '_id': idPerm });
 
     if (!permanenceCorriger?.adresse?.codeCommune) {
       if (log) {
@@ -50,6 +52,12 @@ execute(__filename, async ({ db, logger, exit }) => {
     } else if (((incoherenceNomCommune.length >= 2) || (incoherenceCodePostal.length >= 2)) && !ignored) {
       if (log || comparatif) {
         logger.error(`Permanence id : ${idPerm} a des différences dans les cras ${incoherenceCodePostal} / ${incoherenceNomCommune}`);
+      }
+      countIncoherence++;
+    } else if ((verificationDateCreateCras[verificationDateCreateCras.length - 1] <= verifDateUpdatePermanence[0]) && !ignored) {
+      if (log || comparatif) {
+        // eslint-disable-next-line max-len
+        logger.error(`- Vérification : perm ${idPerm} vérification nescessaire côté cras ${incoherenceCodePostal} ${incoherenceNomCommune} => ${permanenceCorriger?.adresse?.codePostal} ${permanenceCorriger?.adresse?.ville}`);
       }
       countIncoherence++;
     } else if (correction) {
