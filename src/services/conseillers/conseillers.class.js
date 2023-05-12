@@ -19,6 +19,7 @@ const axios = require('axios');
 const {
   checkAuth,
   checkRoleCandidat,
+  checkRoleConseiller,
   checkRoleAdminCoop,
   checkConseillerExist,
   checkCvExistsS3,
@@ -171,7 +172,8 @@ exports.Conseillers = class Conseillers extends Service {
       //Verification role candidat
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!candidatUser?.roles.includes('candidat')) {
+
+      if (!candidatUser?.roles.includes('candidat') && !candidatUser?.roles.includes('conseiller')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -188,7 +190,8 @@ exports.Conseillers = class Conseillers extends Service {
       const allowedMime = ['application/pdf'];
       let detectingFormat = await fileType.fromBuffer(cvFile.buffer);
 
-      if (!allowedExt.includes(detectingFormat.ext) || !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
+      if (detectingFormat === undefined || !allowedExt.includes(detectingFormat.ext) ||
+          !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
         res.status(400).send(new BadRequest('Erreur : format de CV non autorisé').toJSON());
         return;
       }
@@ -290,7 +293,7 @@ exports.Conseillers = class Conseillers extends Service {
       checkAuth(req, res);
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!checkRoleCandidat(user, req)) {
+      if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req)) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -324,7 +327,7 @@ exports.Conseillers = class Conseillers extends Service {
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       // eslint-disable-next-line max-len
-      if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString()) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
+      if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -1143,7 +1146,7 @@ exports.Conseillers = class Conseillers extends Service {
         rolesGuard(userId, [Role.Conseiller], getUserById)
       ).then(async () => {
         try {
-          /*await pool.query(`UPDATE djapp_coach
+          await pool.query(`UPDATE djapp_coach
           (
             max_distance,
             zip_code,
@@ -1155,12 +1158,11 @@ exports.Conseillers = class Conseillers extends Service {
             =
             ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8))
             WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);*/
-          await this.patch(conseiller._id, {
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);
+          const result = await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax },
           });
-          res.send({ conseiller });
-
+          res.send({ conseiller: result });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
