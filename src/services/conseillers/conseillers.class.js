@@ -1113,6 +1113,7 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
+      const updatedAt = new Date();
       const distanceMax = req.body.distanceMax;
       const codeCommune = req.body.codeCommune;
       const codePostal = req.body.codePostal;
@@ -1143,7 +1144,7 @@ exports.Conseillers = class Conseillers extends Service {
         rolesGuard(userId, [Role.Conseiller], getUserById)
       ).then(async () => {
         try {
-          /*await pool.query(`UPDATE djapp_coach
+          await pool.query(`UPDATE djapp_coach
           (
             max_distance,
             zip_code,
@@ -1155,10 +1156,23 @@ exports.Conseillers = class Conseillers extends Service {
             =
             ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8))
             WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);*/
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);
+
           await this.patch(conseiller._id, {
-            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax },
+            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt },
           });
+
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set:{
+            'conseillerObj.nomCommune': nomCommune,
+            'conseillerObj.codePostal': codePostal,
+            'conseillerObj.codeCommune': codeCommune,
+            'conseillerObj.codeDepartement': codeDepartement,
+            'conseillerObj.codeRegion': codeRegion,
+            'conseillerObj.location': location,
+            'conseillerObj.distanceMax': distanceMax,
+            'conseillerObj.updatedAt': updatedAt,
+          }});
+
           res.send({ conseiller });
 
         } catch (err) {
