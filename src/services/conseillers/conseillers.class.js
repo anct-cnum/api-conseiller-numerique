@@ -789,7 +789,11 @@ exports.Conseillers = class Conseillers extends Service {
         }
 
         const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
+
         try {
+          await pool.query(`UPDATE djapp_coach
+          SET phone = $2 WHERE id = $1`,
+          [conseiller.idPG, telephone]);
           await app.service('conseillers').patch(idConseiller, changeInfos);
         } catch (err) {
           app.get('sentry').captureException(err);
