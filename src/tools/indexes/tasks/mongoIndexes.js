@@ -43,6 +43,8 @@ module.exports = {
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.disponible': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.email': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.cv': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'conseillerObj.estCoordinateur': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'conseillerObj.listeSubordonnes': 1 }),
       db.collection('misesEnRelation').createIndex({
         'conseillerObj.nom': 'text',
         'conseillerObj.prenom': 'text',
@@ -90,7 +92,8 @@ module.exports = {
       db.collection('cras').createIndex({ 'cra.dateAccompagnement': 1 }),
       db.collection('cras').createIndex({ 'cra.activite': 1 }),
       db.collection('cras').createIndex({ 'cra.nomCommune': 1 }),
-      db.collection('cras').createIndex({ 'cra.organisme': 1 })
+      db.collection('cras').createIndex({ 'cra.codeCommune': 1 }),
+      db.collection('cras').createIndex({ 'cra.organismes': 1 })
     ]);
   },
   stats_conseillers_cras: db => {
@@ -129,12 +132,6 @@ module.exports = {
       db.collection('permanences').createIndex({ 'conseillersItinerants': 1 }),
       db.collection('permanences').createIndex({ 'lieuPrincipalPour': 1 }),
       db.collection('permanences').createIndex({ 'structure.$id': 1 }),
-    ]);
-  },
-  adressesIntrouvables: db => {
-    return Promise.all([
-      db.collection('adressesIntrouvables').createIndex({ 'conseiller.$id': 1 }),
-      db.collection('adressesIntrouvables').createIndex({ 'permanenceId': 1 }),
     ]);
   },
 };
