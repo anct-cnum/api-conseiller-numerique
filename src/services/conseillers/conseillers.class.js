@@ -897,10 +897,11 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
+        /*
         await pool.query(`UPDATE djapp_coach
             SET disponible = $2 WHERE id = $1`,
         [conseiller.idPG, disponible]);
-
+*/
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
@@ -947,6 +948,63 @@ exports.Conseillers = class Conseillers extends Service {
       }
       res.send({ disponible });
     });
+
+    app.patch('/conseillers/update_date_disponibilite/:id', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idConseiller = req.params.id;
+      const { dateDisponibilite } = req.body;
+
+      const dateDisponibleValidation =
+        Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')).validate(dateDisponibilite);
+      if (dateDisponibleValidation.error) {
+        res.status(400).json(new BadRequest(dateDisponibleValidation.error));
+        return;
+      }
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+          idConseiller,
+        }).toJSON());
+        return;
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden('User not authorized', {
+          userId
+        }).toJSON());
+        return;
+      }
+      try {
+        /*
+        await pool.query(`UPDATE djapp_coach
+            SET start_date = $2 WHERE id = $1`,
+        [conseiller.idPG, dateDisponible]);
+        */
+      } catch (err) {
+        logger.error(err);
+        app.get('sentry').captureException(err);
+      }
+      try {
+        console.log(dateDisponibilite);
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite: dateDisponibilite } });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      try {
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id, 'statut': 'nouvelle' }, {
+          $set: { 'conseillerObj.dateDisponible': dateDisponibilite }
+        });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+
+      res.send({ dateDisponibilite });
+    });
+
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
