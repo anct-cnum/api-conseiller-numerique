@@ -897,11 +897,10 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        /*
+
         await pool.query(`UPDATE djapp_coach
             SET disponible = $2 WHERE id = $1`,
         [conseiller.idPG, disponible]);
-*/
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
@@ -977,11 +976,9 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        /*
         await pool.query(`UPDATE djapp_coach
             SET start_date = $2 WHERE id = $1`,
-        [conseiller.idPG, dateDisponible]);
-        */
+        [conseiller.idPG, dateDisponibilite]);
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
