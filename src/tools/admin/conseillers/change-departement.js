@@ -42,7 +42,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     nomCommune: data.properties.nom,
     codeCommune: data.properties.code,
     codeDepartement: data.properties.codeDepartement,
-    codeRegion: data.properties.codeRegion
+    codeRegion: data.properties.codeRegion,
+    updatedAt: new Date()
   };
   const miseAJourMiseEnRelation = {
     'conseillerObj.location': data.geometry,
@@ -50,7 +51,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     'conseillerObj.nomCommune': data.properties.nom,
     'conseillerObj.codeCommune': data.properties.code,
     'conseillerObj.codeDepartement': data.properties.codeDepartement,
-    'conseillerObj.codeRegion': data.properties.codeRegion
+    'conseillerObj.codeRegion': data.properties.codeRegion,
+    'conseillerObj.updatedAt': new Date()
   };
 
   try {

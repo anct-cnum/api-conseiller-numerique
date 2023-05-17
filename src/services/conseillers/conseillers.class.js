@@ -903,7 +903,7 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(err);
       }
       try {
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt: new Date() } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -918,7 +918,8 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'nouvelle'
+                  'statut': 'nouvelle',
+                  'conseillerObj.updatedAt': new Date()
                 }
             });
         } else {
@@ -930,12 +931,15 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'non_disponible'
+                  'statut': 'non_disponible',
+                  'conseillerObj.updatedAt': new Date()
                 }
             });
         }
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
-          $set: { 'conseillerObj.disponible': disponible }
+          $set: {
+            'conseillerObj.disponible': disponible,
+            'conseillerObj.updatedAt': new Date() }
         });
 
       } catch (err) {
@@ -944,6 +948,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       res.send({ disponible });
     });
+
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
