@@ -956,7 +956,7 @@ exports.Conseillers = class Conseillers extends Service {
       const { dateDisponibilite } = req.body;
 
       const dateDisponibleValidation =
-        Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')).validate(dateDisponibilite);
+        Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieure ou égale à la date du jour')).validate(dateDisponibilite);
       if (dateDisponibleValidation.error) {
         res.status(400).json(new BadRequest(dateDisponibleValidation.error));
         return;
