@@ -7,6 +7,8 @@ module.exports = {
       db.collection('users').createIndex({ 'tokenCreatedAt': 1 }),
       db.collection('users').createIndex({ 'mailSentDate': 1 }),
       db.collection('users').createIndex({ 'passwordCreated': 1 }),
+      db.collection('users').createIndex({ 'lastlogin': 1 }),
+      db.collection('users').createIndex({ 'createdAt': 1 }),
     ]);
   },
   structures: db => {
@@ -29,6 +31,7 @@ module.exports = {
         'nom': 'text',
         'contact.email': 'text',
       }, { name: 'bo-search-fulltext' }),
+      db.collection('structures').createIndex({ 'contact.inactivite': 1 }),
     ]);
   },
   misesEnRelation: db => {
@@ -76,7 +79,8 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'codeDepartementStructure': 1 }),
       db.collection('conseillers').createIndex({ 'estCoordinateur': 1 }),
       db.collection('conseillers').createIndex({ 'listeSubordonnes.type': 1 }),
-      db.collection('conseillers').createIndex({ 'listeSubordonnes.liste': 1 })
+      db.collection('conseillers').createIndex({ 'listeSubordonnes.liste': 1 }),
+      db.collection('conseillers').createIndex({ 'inactivite': 1 }),
     ]);
   },
   cras: db => {
@@ -132,6 +136,12 @@ module.exports = {
       db.collection('permanences').createIndex({ 'conseillersItinerants': 1 }),
       db.collection('permanences').createIndex({ 'lieuPrincipalPour': 1 }),
       db.collection('permanences').createIndex({ 'structure.$id': 1 }),
+    ]);
+  },
+  accessLogs: db => {
+    return Promise.all([
+      db.collection('accessLogs').createIndex({ 'createdAt': 1 }),
+      db.collection('accessLogs').createIndex({ 'name': 1 }),
     ]);
   },
 };
