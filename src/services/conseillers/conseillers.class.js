@@ -969,7 +969,7 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       if (String(conseiller._id) !== String(user.entity.oid)) {
-        res.status(403).send(new Forbidden('User not authorized', {
+        res.status(403).send(new Forbidden('Action non autorisée', {
           userId
         }).toJSON());
         return;
