@@ -978,20 +978,14 @@ exports.Conseillers = class Conseillers extends Service {
         await pool.query(`UPDATE djapp_coach
             SET start_date = $2 WHERE id = $1`,
         [conseiller.idPG, dateDisponibilite]);
-      } catch (err) {
-        logger.error(err);
-        app.get('sentry').captureException(err);
-      }
-      try {
-        console.log(dateDisponibilite);
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite: dateDisponibilite } });
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      try {
-        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id, 'statut': 'nouvelle' }, {
-          $set: { 'conseillerObj.dateDisponible': dateDisponibilite }
+
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite: dateDisponibilite, updatedAt: new Date() } });
+
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+          $set: {
+            'conseillerObj.dateDisponible': dateDisponibilite,
+            'conseillerObj.updatedAt': new Date()
+          }
         });
       } catch (err) {
         app.get('sentry').captureException(err);
