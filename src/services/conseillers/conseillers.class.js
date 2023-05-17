@@ -326,7 +326,6 @@ exports.Conseillers = class Conseillers extends Service {
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      // eslint-disable-next-line max-len
       if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
