@@ -1154,7 +1154,7 @@ exports.Conseillers = class Conseillers extends Service {
             geo_name,
             location)
             =
-            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8))
+            ($2,$3,$4,$5,$6,$7,ST_GeomFromGeoJSON ($8))
             WHERE id = $1`,
           [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);
 
@@ -1162,7 +1162,7 @@ exports.Conseillers = class Conseillers extends Service {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt },
           });
 
-          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set:{
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
             'conseillerObj.nomCommune': nomCommune,
             'conseillerObj.codePostal': codePostal,
             'conseillerObj.codeCommune': codeCommune,
@@ -1171,7 +1171,7 @@ exports.Conseillers = class Conseillers extends Service {
             'conseillerObj.location': location,
             'conseillerObj.distanceMax': distanceMax,
             'conseillerObj.updatedAt': updatedAt,
-          }});
+          } });
 
           res.send({ conseiller });
 
