@@ -1,6 +1,7 @@
 const { Service } = require('feathers-mongodb');
 const { Conflict, GeneralError, BadRequest } = require('@feathersjs/errors');
 const logger = require('../../logger');
+const sentryExclus = require('../../../data/sentryExclus.json');
 
 const {
   canActivate,
@@ -191,7 +192,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
             return res.send({ isUpdated: true });
           }
         }).catch(error => {
-          if (error !== '"numeroRue" is not allowed') {
+          if (!sentryExclus.includes(erreur => erreur.message === error)) {
             app.get('sentry').captureException(error);
           }
           logger.error(error);
