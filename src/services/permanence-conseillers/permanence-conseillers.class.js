@@ -191,7 +191,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
             return res.send({ isUpdated: true });
           }
         }).catch(error => {
-          app.get('sentry').captureException(error);
+          if (error !== '"numeroRue" is not allowed') {
+            app.get('sentry').captureException(error);
+          }
           logger.error(error);
           return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
         });
