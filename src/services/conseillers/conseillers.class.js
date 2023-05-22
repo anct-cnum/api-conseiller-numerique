@@ -901,7 +901,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         await pool.query(`UPDATE djapp_coach
         ( disponible, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, disponible, updatedAt]);
+        [conseiller.idPG, disponible, dayjs(updatedAt).toDate()]);
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
@@ -984,7 +984,7 @@ exports.Conseillers = class Conseillers extends Service {
       try {
         await pool.query(`UPDATE djapp_coach
           (start_date, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, dateDisponibilite, updatedAt]);
+        [conseiller.idPG, dateDisponibilite, dayjs(updatedAt).toDate()]);
 
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite: dateDisponibilite, updatedAt } });
 
@@ -1216,7 +1216,7 @@ exports.Conseillers = class Conseillers extends Service {
             =
             ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9)
             WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, updatedAt]);
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, dayjs(updatedAt).toDate()]);
           const result = await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt },
           });
