@@ -129,7 +129,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
         if (error) {
-          app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
@@ -173,7 +172,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
         if (error) {
-          app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
@@ -192,9 +190,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
             return res.send({ isUpdated: true });
           }
         }).catch(error => {
-          if (!sentryExclus.includes(erreur => erreur.message === error)) {
-            app.get('sentry').captureException(error);
-          }
+          app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
         });
