@@ -1,7 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const { Conflict, GeneralError, BadRequest } = require('@feathersjs/errors');
 const logger = require('../../logger');
-const sentryExclus = require('../../../data/sentryExclus.json');
 
 const {
   canActivate,
