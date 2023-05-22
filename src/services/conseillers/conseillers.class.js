@@ -986,7 +986,7 @@ exports.Conseillers = class Conseillers extends Service {
           (start_date, updated) = ($2, $3) WHERE id = $1`,
         [conseiller.idPG, dateDisponibilite, updatedAt]);
 
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite: dateDisponibilite, updatedAt } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
 
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: {
