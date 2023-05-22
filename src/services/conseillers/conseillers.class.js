@@ -926,7 +926,7 @@ exports.Conseillers = class Conseillers extends Service {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
-              'statut': 'nouvelle'
+              'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
             },
             {
               $set:
