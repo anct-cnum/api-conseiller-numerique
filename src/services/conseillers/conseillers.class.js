@@ -877,6 +877,8 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { disponible } = req.body;
+      const updatedAt = new Date();
+
       const disponibleValidation = Joi.boolean().required().error(new Error('Le format de la disponibilité est invalide')).validate(disponible);
       if (disponibleValidation.error) {
         res.status(400).json(new BadRequest(disponibleValidation.error));
@@ -898,14 +900,14 @@ exports.Conseillers = class Conseillers extends Service {
       try {
 
         await pool.query(`UPDATE djapp_coach
-            SET disponible = $2 WHERE id = $1`,
-        [conseiller.idPG, disponible]);
+        ( disponible, updated) = ($2, $3) WHERE id = $1`,
+        [conseiller.idPG, disponible, updatedAt]);
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
       }
       try {
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -920,7 +922,8 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'nouvelle'
+                  'statut': 'nouvelle',
+                  'conseillerObj.updatedAt': updatedAt,
                 }
             });
         } else {
@@ -932,12 +935,15 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'non_disponible'
+                  'statut': 'non_disponible',
+                  'conseillerObj.updatedAt': updatedAt,
                 }
             });
         }
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
-          $set: { 'conseillerObj.disponible': disponible }
+          $set: {
+            'conseillerObj.disponible': disponible,
+            'conseillerObj.updatedAt': updatedAt }
         });
 
       } catch (err) {
@@ -954,6 +960,7 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { dateDisponibilite } = req.body;
+      const updatedAt = new Date();
 
       const dateDisponibleValidation =
         Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieure ou égale à la date du jour')).validate(dateDisponibilite);
@@ -976,15 +983,15 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await pool.query(`UPDATE djapp_coach
-            SET start_date = $2 WHERE id = $1`,
-        [conseiller.idPG, dateDisponibilite]);
+          (start_date, updated) = ($2, $3) WHERE id = $1`,
+        [conseiller.idPG, dateDisponibilite, updatedAt]);
 
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite: dateDisponibilite, updatedAt: new Date() } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite: dateDisponibilite, updatedAt } });
 
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: {
             'conseillerObj.dateDisponible': dateDisponibilite,
-            'conseillerObj.updatedAt': new Date()
+            'conseillerObj.updatedAt': updatedAt
           }
         });
       } catch (err) {
@@ -1169,6 +1176,8 @@ exports.Conseillers = class Conseillers extends Service {
       const codePostal = req.body.codePostal;
       const nomCommune = req.body.ville;
       const location = req.body.location;
+      const updatedAt = new Date();
+
       let codeDepartement = codePostal.substr(0, 2);
       if (codePostal.substr(0, 2) === 97) {
         codeDepartement = codePostal.substr(0, 3);
@@ -1202,13 +1211,14 @@ exports.Conseillers = class Conseillers extends Service {
             departement_code,
             region_code,
             geo_name,
-            location)
+            location,
+            updated)
             =
-            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8))
+            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9)
             WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, updatedAt]);
           const result = await this.patch(conseiller._id, {
-            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax },
+            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt },
           });
           res.send({ conseiller: result });
         } catch (err) {
