@@ -900,7 +900,7 @@ exports.Conseillers = class Conseillers extends Service {
       try {
 
         await pool.query(`UPDATE djapp_coach
-        ( disponible, updated) = ($2, $3) WHERE id = $1`,
+        (disponible, updated) = ($2, $3) WHERE id = $1`,
         [conseiller.idPG, disponible, updatedAt]);
       } catch (err) {
         logger.error(err);
