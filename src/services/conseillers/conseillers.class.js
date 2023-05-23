@@ -1128,13 +1128,13 @@ exports.Conseillers = class Conseillers extends Service {
       let codeCom = null;
       if (codePostal.substr(0, 2) === 97) {
         codeDepartement = codePostal.substr(0, 3);
-        codeCom = '978';
       }
       let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
       let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
       if (codePostal === 97150) {
         codeDepartement = '00';
         codeRegion = '00';
+        codeCom = '978';
       }
       const schema = Joi.object({
         ville: Joi.string().required().error(new Error('La ville est invalide')),
