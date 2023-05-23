@@ -1132,7 +1132,6 @@ exports.Conseillers = class Conseillers extends Service {
       let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
       if (codePostal === 97150) {
         codeDepartement = '00';
-        nomRegion = 'Saint Martin';
         codeRegion = '00';
       }
       const schema = Joi.object({
