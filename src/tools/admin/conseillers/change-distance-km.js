@@ -28,11 +28,13 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
   distance = parseInt(distance, 10);
+  const updateAt = new Date();
+
   try {
-    await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance } });
+    await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance, updateAt } });
     await db.collection('misesEnRelation').updateMany(
       { 'conseiller.$id': conseiller._id },
-      { $set: { 'conseillerObj.distanceMax': distance }
+      { $set: { 'conseillerObj.distanceMax': distance, 'conseillerObj.updatedAt': updateAt }
       });
   } catch (error) {
     logger.error(error);
@@ -41,8 +43,14 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   }
   try {
     await pool.query(`UPDATE djapp_coach
-      SET max_distance = $2 WHERE id = $1`,
-    [id, distance]);
+    (
+      max_distance,
+      updated
+    )
+    =
+    ($2,$3)
+    WHERE id = $1`,
+    [id, distance, updateAt]);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
