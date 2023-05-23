@@ -658,8 +658,8 @@ exports.Conseillers = class Conseillers extends Service {
         const conseillerUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
         user = conseillerUser;
         if (conseillerUser === null) {
-          // message d'erreur dans le cas où le cron n'est pas encore passer
-          res.status(404).send(new NotFound('Une erreur est survenue, veuillez réessayez plus tard', {
+          // Cas où le cron n'est pas encore passé, doublon ou user inactif
+          res.status(404).send(new NotFound('Utilisateur inexistant (doublon ou inactivité)', {
             conseillerId,
           }).toJSON());
           return;
@@ -795,7 +795,11 @@ exports.Conseillers = class Conseillers extends Service {
         }
 
         const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
+
         try {
+          await pool.query(`UPDATE djapp_coach
+          SET phone = $2 WHERE id = $1`,
+          [conseiller.idPG, telephone]);
           await app.service('conseillers').patch(idConseiller, changeInfos);
         } catch (err) {
           app.get('sentry').captureException(err);
@@ -917,7 +921,7 @@ exports.Conseillers = class Conseillers extends Service {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
-              'statut': 'non_disponible'
+              'statut': 'finalisee_non_disponible'
             },
             {
               $set:
@@ -930,7 +934,7 @@ exports.Conseillers = class Conseillers extends Service {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
-              'statut': 'nouvelle'
+              'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
             },
             {
               $set:
@@ -1171,6 +1175,7 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
+      const updatedAt = new Date();
       const distanceMax = req.body.distanceMax;
       const codeCommune = req.body.codeCommune;
       const codePostal = req.body.codePostal;
@@ -1179,12 +1184,17 @@ exports.Conseillers = class Conseillers extends Service {
       const updatedAt = new Date();
 
       let codeDepartement = codePostal.substr(0, 2);
+      let codeCom = null;
       if (codePostal.substr(0, 2) === 97) {
         codeDepartement = codePostal.substr(0, 3);
       }
-      const nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
-      const codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
-
+      let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
+      let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
+      if (codePostal === 97150) {
+        codeDepartement = '00';
+        codeRegion = '00';
+        codeCom = '978';
+      }
       const schema = Joi.object({
         ville: Joi.string().required().error(new Error('La ville est invalide')),
         codePostal: Joi.string().required().min(5).max(5).error(new Error('Le codePostal est invalide')),
@@ -1212,15 +1222,31 @@ exports.Conseillers = class Conseillers extends Service {
             region_code,
             geo_name,
             location,
-            updated)
+            updated,
+            codeCom
+           )
             =
-            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9)
+            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9, $10)
             WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, dayjs(updatedAt).toDate()]);
-          const result = await this.patch(conseiller._id, {
-            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt },
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, dayjs(updatedAt).toDate(), codeCom]);
+
+          await this.patch(conseiller._id, {
+            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
           });
-          res.send({ conseiller: result });
+
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
+            'conseillerObj.nomCommune': nomCommune,
+            'conseillerObj.codePostal': codePostal,
+            'conseillerObj.codeCommune': codeCommune,
+            'conseillerObj.codeDepartement': codeDepartement,
+            'conseillerObj.codeRegion': codeRegion,
+            'conseillerObj.location': location,
+            'conseillerObj.distanceMax': distanceMax,
+            'conseillerObj.updatedAt': updatedAt,
+            'conseillerObj.codeCom': codeCom,
+          } });
+          
+          res.send({ conseiller });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);

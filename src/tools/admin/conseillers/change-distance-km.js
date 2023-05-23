@@ -34,7 +34,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance, updateAt } });
     await db.collection('misesEnRelation').updateMany(
       { 'conseiller.$id': conseiller._id },
-      { $set: { 'conseillerObj.distanceMax': distance, updateAt }
+      { $set: { 'conseillerObj.distanceMax': distance, 'conseillerObj.updatedAt': updateAt }
       });
   } catch (error) {
     logger.error(error);

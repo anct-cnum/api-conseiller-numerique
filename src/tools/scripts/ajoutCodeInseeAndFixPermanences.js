@@ -17,13 +17,27 @@ const statCras = async db => {
   );
   return { crasRestantSansPerm, crasRestantAvecPerm };
 };
-const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) => {
+const updatePermanenceAndCRAS = db => async (logger, matchLocation, coordinates, _id) => {
+  const incoherenceNomCommune = await db.collection('cras').distinct('cra.nomCommune', { 'permanence.$id': _id });
+  const incoherenceCodePostal = await db.collection('cras').distinct('cra.codePostal', { 'permanence.$id': _id });
+  if ((incoherenceNomCommune.length >= 2) || (incoherenceCodePostal.length >= 2)) {
+    logger.error(`- Différences : perm ${_id} a des différences dans les cras ${incoherenceCodePostal} / ${incoherenceNomCommune}`);
+    return;
+  }
+  const verificationDateCreateCras = await db.collection('cras').distinct('createdAt', { 'permanence.$id': _id });
+  const verifDateUpdatePermanence = await db.collection('permanences').distinct('updatedAt', { '_id': _id });
+  if (verificationDateCreateCras[verificationDateCreateCras.length - 1] <= verifDateUpdatePermanence[0]) {
+    // eslint-disable-next-line max-len
+    logger.error(`- Vérification : perm ${_id} vérification nescessaire côté cras ${incoherenceCodePostal} ${incoherenceNomCommune} => ${matchLocation.codePostal} ${matchLocation.ville}`);
+    return;
+  }
   // pas de update de numeroRue si dans l'api adresse => le numeroRue n'est pas présent
   const setPermanence = matchLocation.numeroRue !== '' ? { 'adresse.numeroRue': matchLocation.numeroRue } : {};
   await db.collection('permanences').updateOne({ _id },
     { '$set': {
       ...setPermanence,
       'adresse.rue': matchLocation.rue,
+      'adresse.codePostal': matchLocation.codePostal,
       'adresse.ville': matchLocation.ville,
       'adresse.codeCommune': matchLocation.codeCommune,
       'location.coordinates': coordinates
@@ -31,6 +45,7 @@ const updatePermanenceAndCRAS = db => async (matchLocation, coordinates, _id) =>
     });
   await db.collection('cras').updateMany({ 'permanence.$id': _id },
     { '$set': {
+      'cra.codePostal': matchLocation.codePostal,
       'cra.nomCommune': matchLocation.ville,
       'cra.codeCommune': matchLocation.codeCommune,
     }
@@ -54,7 +69,18 @@ const adressePerm = rue => rue?.replace(/\bST\b/gi, 'SAINT')
 .replace(/\bSQ\b/gi, 'SQUARE')
 .replace(/\bNULL\b/gi, '')
 .replace('.', '')
+.replace('Œ', 'OE')
 .trim();
+
+const articleRue = rue => rue?.replace(/\bDU\b/gi, '')
+.replace(/\bDE LA\b/gi, '')
+.replace(/\bDE\b/gi, '')
+.replace(/\bDES\b/gi, '')
+.replace(/\bUN\b/gi, '')
+.replace(/\bUNE\b/gi, '')
+.replace(/\bLE\b/gi, '')
+.replace(/\bLA\b/gi, '')
+.replace(/\bLES\b/gi, '');
 
 const resultApi = obj => ({
   'numeroRue': obj?.housenumber ?? '',
@@ -68,8 +94,9 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
     { label: 'permMatchOK', colonne: 'id permanence;Adresse permanence;matchOK\n' },
     // eslint-disable-next-line max-len
     { label: 'permNotOK', colonne: 'nombre CN;id permanence;Adresse permanence;nombre résultat Api adresse (query lat/lon); Resultat Api Adresse (query lat/lon)\n' },
-    { label: 'diffCityAndCodePostal', colonne: 'nombre CN;total de diff;id permanence;Adresse permanence;Resultat Api Adresse;STATUT\n' },
+    { label: 'diffCityAndCodePostal', colonne: 'nombre CN;total de diff;id permanence;Adresse permanence;Resultat Api Adresse;STATUT;TRIE\n' },
     { label: 'permError', colonne: 'id permanence;message;detail\n' },
+    { label: 'adressesContact', colonne: 'id permanence;CN total in Permanence;Un Email CN;Raison\n' }
   ];
   const objectCsv = obj => `${obj?.numeroRue} ${obj?.rue} ${obj?.codePostal} ${obj?.ville}`;
   Object.keys(exportsCSv).forEach(function(key) {
@@ -87,7 +114,11 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
         return;
       }
       if (key === 'diffCityAndCodePostal') {
-        file.write(`${i.cnfsCount};${i.nombreDiff};${i._id};${objectCsv(i.adresse)};${objectCsv(i.matchLocation)};${i.statut}\n`);
+        file.write(`${i.cnfsCount};${i.nombreDiff};${i._id};${objectCsv(i.adresse)};${objectCsv(i.matchLocation)};${i.statut};${i.raison}\n`);
+        return;
+      }
+      if (key === 'adressesContact') {
+        file.write(`${i._id};${i.cnfsCount};${i.emailCN};${i.raison}\n`);
         return;
       }
       file.write(`${i._id};${i.message};${i.detail}\n`);
@@ -133,13 +164,18 @@ execute(__filename, async ({ logger, db, exit }) => {
   if (partie === 'permanences') {
     logger.info(`Partie Permanences , par défaut la vérification ${acte ? 'AVEC' : 'SANS'} correction`);
     // eslint-disable-next-line max-len
-    const permanences = await db.collection('permanences').find({ 'adresse.codeCommune': { '$exists': false } }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1 }).toArray();
+    const permanences = await db.collection('permanences').find({
+      'adresse.codeCommune': { '$exists': false }
+    }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1 }).toArray();
     const exportsCSv = {
       permMatchOK: [],
       permNotOK: [],
       permError: [],
       diffCityAndCodePostal: [],
+      adressesContact: []
     };
+    logger.info(`Permanences au total: ${permanences.length}`);
+    const countApiNotHouseNumber = [];
     for (const { adresse, location, conseillers, _id } of permanences) {
       const adresseComplete = `${adresse?.numeroRue ?? ''} ${adresse?.rue} ${adresse?.codePostal} ${adresse?.ville}`;
       const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${encodeURI(adresseComplete)}`;
@@ -147,7 +183,7 @@ execute(__filename, async ({ logger, db, exit }) => {
         let resultQueryLatLong = {};
         let matchLocation = result?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
         if (!matchLocation) {
-          resultQueryLatLong = await axios.get(`${urlAPI}&lat=${location?.coordinates[0]}&lon=${location?.coordinates[1]}`, { params: {} });
+          resultQueryLatLong = await axios.get(`${urlAPI}&lon=${location?.coordinates[0]}&lat=${location?.coordinates[1]}`, { params: {} });
           matchLocation = resultQueryLatLong?.data?.features?.find(i => String(i?.geometry?.coordinates) === String(location?.coordinates));
         }
         const district = matchLocation?.properties?.district ? matchLocation?.properties?.district?.replace('e Arrondissement', '') : undefined;
@@ -165,13 +201,21 @@ execute(__filename, async ({ logger, db, exit }) => {
           matchLocation = resultQueryLatLong?.data?.features?.find(e => api(e) === permanence);
         }
         if (!matchLocation) {
+          const emailConseillers = conseillers[0] ? await db.collection('users').findOne({ 'entity.$id': conseillers[0] }) : '';
           exportsCSv.permNotOK.push({ _id,
             adresse: { ...adresse, coordinates: location?.coordinates },
             resultApi: {
               total: resultQueryLatLong?.data?.features?.length,
               fields: resultQueryLatLong?.data?.features?.map(i => ({ ...resultApi(i.properties), coordinates: i.geometry.coordinates }))
             },
-            cnfsCount: conseillers?.length
+            cnfsCount: conseillers?.length,
+            emailCN: conseillers
+          });
+          exportsCSv.adressesContact.push({
+            _id,
+            cnfsCount: conseillers?.length,
+            raison: 'MULTIPLE RESULTAT',
+            emailCN: emailConseillers?.name ?? ''
           });
           return;
         }
@@ -179,11 +223,15 @@ execute(__filename, async ({ logger, db, exit }) => {
           // eslint-disable-next-line max-len
           diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== (adresse?.numeroRue?.toUpperCase())?.replace(' BIS', 'BIS') && ![null, '', 'null'].includes(adresse?.numeroRue),
           // eslint-disable-next-line max-len
-          diffRue: formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase() !== adressePerm(formatText(adresse.rue)?.toUpperCase()),
+          diffRue: articleRue(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase()) !== articleRue(adressePerm(formatText(adresse.rue)?.toUpperCase())),
           diffCodePostal: matchLocation?.properties?.postcode?.toUpperCase() !== adresse?.codePostal?.toUpperCase(),
-          diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase() &&
-          formatText(matchLocation?.properties?.city)?.toUpperCase() !== adressePerm(formatText(adresse.ville))?.toUpperCase()
+          diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville)?.toUpperCase()) &&
+          adressePerm(formatText(matchLocation?.properties?.city)?.toUpperCase()) !== adressePerm(formatText(adresse.ville)?.toUpperCase())
         };
+        if (adresseControleDiff?.diffRue === true) {// gérer le cas où l'api adresse à des nom "raccourdie" "bd ou Pl etc..."
+          // eslint-disable-next-line max-len
+          adresseControleDiff.diffRue = articleRue(adressePerm(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase())) !== articleRue(adressePerm(formatText(adresse.rue)?.toUpperCase()));
+        }
         if (adresseControleDiff?.diffville === true) {// dans le cas où "SAINT" est écrit entièrement pour la ville
           adresseControleDiff.diffville = formatText(district)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase() &&
           formatText(matchLocation?.properties?.city)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase();
@@ -195,25 +243,44 @@ execute(__filename, async ({ logger, db, exit }) => {
         if (adresseControleDiff?.diffNumber === true) {// ignorer le cas il y a la perm avec un numéro de rue et dans le résultat api, il y en a pas.
           adresseControleDiff.diffNumber = ![null, '', 'null'].includes(adresse?.numeroRue) && adresse?.numeroRue?.length <= 8 ?
             !(!matchLocation?.properties?.housenumber && ![null, '', 'null'].includes(adresse?.numeroRue)) : adresseControleDiff.diffNumber;
+          if (adresseControleDiff?.diffNumber === false) {
+            countApiNotHouseNumber.push('Api sans numero rue');
+          }
         }
         if (Object.values(adresseControleDiff).includes(true)) {
+          const emailConseillers = conseillers[0] ? await db.collection('users').findOne({ 'entity.$id': conseillers[0] }) : '';
+          const raisonLabel = {
+            0: 'NUMERORUEDIFF',
+            1: 'RUEDIFF',
+            2: 'CODEPOSTALDIFF',
+            3: 'VILLEDIFF'
+          };
+          const raisonIndexOf = raisonLabel[Object.values(adresseControleDiff).indexOf(true)];
           exportsCSv.diffCityAndCodePostal.push({
             statut: [adresseControleDiff.diffCodePostal, adresseControleDiff.diffville, adresseControleDiff.diffNumber].includes(true) ? 'MAJEUR' : 'AUTRE',
             nombreDiff: Object.values(adresseControleDiff).filter(i => i === true).length,
             _id,
             adresse,
             matchLocation: resultApi(matchLocation.properties),
-            cnfsCount: conseillers?.length
+            cnfsCount: conseillers?.length,
+            raison: conseillers?.length === 1 ? raisonIndexOf : 'MULTIPLEDIFF',
+          });
+          exportsCSv.adressesContact.push({
+            _id,
+            cnfsCount: conseillers?.length,
+            raison: conseillers?.length === 1 ? raisonIndexOf : 'MULTIPLEDIFF',
+            emailCN: emailConseillers?.name ?? ''
           });
         } else {
           exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation?.properties) });
           if (acte === 'correction') {
-            await updatePermanenceAndCRAS(db)(resultApi(matchLocation?.properties), matchLocation?.geometry?.coordinates, _id);
+            await updatePermanenceAndCRAS(db)(logger, resultApi(matchLocation?.properties), matchLocation?.geometry?.coordinates, _id);
           }
         }
       }).catch(error =>
         exportsCSv.permError.push({ _id, message: error.message, detail: adresseComplete }));
     }
+    logger.info(`Permanence avec un numeroRue contrairement au résultat Api adresse: ${countApiNotHouseNumber.length}`);
     await exportCsvPermanences(exportsCSv, lot, logger);
   }
   logger.info(`Fin du lot ${lot} pour la partie ${partie}`);
