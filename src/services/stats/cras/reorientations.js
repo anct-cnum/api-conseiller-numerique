@@ -3,8 +3,7 @@ const getStatsReorientations = async (db, query) => {
     [
       { $unwind: '$cra.organismes' },
       { $match: { ...query, 'cra.organismes': { '$ne': null } } },
-      { $group: { 'keys': { $objectToArray: '$cra.organismes' } } },
-      { $project: { '_id': 0, 'organismes': '$cra.organismes', 'keys': '$keys' } }
+      { $project: { '_id': 0, 'organismes': '$cra.organismes' } }
     ]
   ).toArray();
 
