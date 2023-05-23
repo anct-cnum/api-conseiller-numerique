@@ -1128,9 +1128,13 @@ exports.Conseillers = class Conseillers extends Service {
       if (codePostal.substr(0, 2) === 97) {
         codeDepartement = codePostal.substr(0, 3);
       }
-      const nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
-      const codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
-
+      let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
+      let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
+      if (codePostal === 97150) {
+        codeDepartement = '00';
+        nomRegion = 'Saint Martin';
+        codeRegion = '00';
+      }
       const schema = Joi.object({
         ville: Joi.string().required().error(new Error('La ville est invalide')),
         codePostal: Joi.string().required().min(5).max(5).error(new Error('Le codePostal est invalide')),
