@@ -1125,8 +1125,10 @@ exports.Conseillers = class Conseillers extends Service {
       const nomCommune = req.body.ville;
       const location = req.body.location;
       let codeDepartement = codePostal.substr(0, 2);
+      let codeCom = null;
       if (codePostal.substr(0, 2) === 97) {
         codeDepartement = codePostal.substr(0, 3);
+        codeCom = '978';
       }
       let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
       let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
@@ -1160,14 +1162,15 @@ exports.Conseillers = class Conseillers extends Service {
             departement_code,
             region_code,
             geo_name,
-            location)
+            location,
+            codeCom)
             =
-            ($2,$3,$4,$5,$6,$7,ST_GeomFromGeoJSON ($8))
+            ($2,$3,$4,$5,$6,$7,ST_GeomFromGeoJSON ($8), $9)
             WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location]);
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, codeCom]);
 
           await this.patch(conseiller._id, {
-            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt },
+            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
           });
 
           await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
@@ -1179,6 +1182,7 @@ exports.Conseillers = class Conseillers extends Service {
             'conseillerObj.location': location,
             'conseillerObj.distanceMax': distanceMax,
             'conseillerObj.updatedAt': updatedAt,
+            'conseillerObj.codeCom': codeCom,
           } });
 
           res.send({ conseiller });
