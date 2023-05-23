@@ -28,10 +28,10 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   }
   //Update dans MongoDb
   try {
-    await db.collection('conseillers').updateOne({ idPG: id }, { $set: { dateDisponibilite: disponible } });
+    await db.collection('conseillers').updateOne({ idPG: id }, { $set: { dateDisponibilite: disponible, updatedAt: new Date() } });
     await db.collection('misesEnRelation').updateMany(
       { 'conseillerObj._id': conseiller._id },
-      { $set: { 'conseillerObj.dateDisponibilite': disponible }
+      { $set: { 'conseillerObj.dateDisponibilite': disponible, 'conseillerObj.updatedAt': new Date() }
       });
 
   } catch (error) {

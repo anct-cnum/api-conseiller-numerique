@@ -15,6 +15,7 @@ const Joi = require('joi');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 const {
   checkAuth,
   checkRoleCandidat,
@@ -65,6 +66,9 @@ const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geoloc
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
 const { permanenceDetailsFromStructureId, permanenceDetails, aggregationByLocation } = require('./permanence/core/permanence-details.core');
+
+const codeRegions = require('../../../data/imports/code_region.json');
+const codeDepartements = require('../../../data/imports/departements-region.json');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -903,7 +907,7 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(err);
       }
       try {
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt: new Date() } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -913,29 +917,33 @@ exports.Conseillers = class Conseillers extends Service {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
-              'statut': 'non_disponible'
+              'statut': 'finalisee_non_disponible'
             },
             {
               $set:
                 {
-                  'statut': 'nouvelle'
+                  'statut': 'nouvelle',
+                  'conseillerObj.updatedAt': new Date()
                 }
             });
         } else {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
-              'statut': 'nouvelle'
+              'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
             },
             {
               $set:
                 {
-                  'statut': 'non_disponible'
+                  'statut': 'finalisee_non_disponible',
+                  'conseillerObj.updatedAt': new Date()
                 }
             });
         }
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
-          $set: { 'conseillerObj.disponible': disponible }
+          $set: {
+            'conseillerObj.disponible': disponible,
+            'conseillerObj.updatedAt': new Date() }
         });
 
       } catch (err) {
@@ -944,6 +952,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       res.send({ disponible });
     });
+
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
@@ -1076,6 +1085,112 @@ exports.Conseillers = class Conseillers extends Service {
         try {
           const boolSubordonne = await isSubordonne(db)(idCoordinateur, idConseiller);
           res.send({ 'isSubordonne': boolSubordonne });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseiller/candidat/searchZoneGeographique/:adresse', async (req, res) => {
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const { adresse } = JSON.parse(req.params.adresse);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adresse}&type=municipality`;
+        try {
+          const params = {};
+          const result = await axios.get(urlAPI, { params: params });
+          return res.send({ 'adresseApi': result.data?.features });
+        } catch (e) {
+          return res.send({ 'adresseApi': null });
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.patch('/conseiller/candidat/zoneGeographique/:id', async (req, res) => {
+      checkAuth(req, res);
+      const userId = userIdFromRequestJwt(req);
+      const getUserById = userAuthenticationRepository(db);
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(req.params.id) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Le conseiller n\'existe pas !', {
+          id: new ObjectId(req.params.id)
+        }).toJSON());
+        return;
+      }
+      const updatedAt = new Date();
+      const distanceMax = req.body.distanceMax;
+      const codeCommune = req.body.codeCommune;
+      const codePostal = req.body.codePostal;
+      const nomCommune = req.body.ville;
+      const location = req.body.location;
+      let codeDepartement = codePostal.substr(0, 2);
+      let codeCom = null;
+      if (codePostal.substr(0, 2) === 97) {
+        codeDepartement = codePostal.substr(0, 3);
+      }
+      let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
+      let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
+      if (codePostal === 97150) {
+        codeDepartement = '00';
+        codeRegion = '00';
+        codeCom = '978';
+      }
+      const schema = Joi.object({
+        ville: Joi.string().required().error(new Error('La ville est invalide')),
+        codePostal: Joi.string().required().min(5).max(5).error(new Error('Le codePostal est invalide')),
+        codeCommune: Joi.string().required().min(4).max(5).error(new Error('Le codeCommune est invalide')),
+        location: Joi.object().required().error(new Error('La localisation doit obligatoirement être saisie')),
+        distanceMax: Joi.number().required().allow(5, 10, 15, 20, 40, 100, 2000).error(new Error('La distance est invalide'))
+      }).validate(req.body);
+
+      if (schema.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
+      }
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Conseiller], getUserById)
+      ).then(async () => {
+        try {
+          await pool.query(`UPDATE djapp_coach
+          (
+            max_distance,
+            zip_code,
+            commune_code,
+            departement_code,
+            region_code,
+            geo_name,
+            location,
+            codeCom)
+            =
+            ($2,$3,$4,$5,$6,$7,ST_GeomFromGeoJSON ($8), $9)
+            WHERE id = $1`,
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, codeCom]);
+
+          await this.patch(conseiller._id, {
+            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
+          });
+
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
+            'conseillerObj.nomCommune': nomCommune,
+            'conseillerObj.codePostal': codePostal,
+            'conseillerObj.codeCommune': codeCommune,
+            'conseillerObj.codeDepartement': codeDepartement,
+            'conseillerObj.codeRegion': codeRegion,
+            'conseillerObj.location': location,
+            'conseillerObj.distanceMax': distanceMax,
+            'conseillerObj.updatedAt': updatedAt,
+            'conseillerObj.codeCom': codeCom,
+          } });
+
+          res.send({ conseiller });
+
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
