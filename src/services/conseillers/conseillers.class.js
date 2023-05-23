@@ -1181,7 +1181,6 @@ exports.Conseillers = class Conseillers extends Service {
       const codePostal = req.body.codePostal;
       const nomCommune = req.body.ville;
       const location = req.body.location;
-      const updatedAt = new Date();
 
       let codeDepartement = codePostal.substr(0, 2);
       let codeCom = null;
@@ -1245,7 +1244,7 @@ exports.Conseillers = class Conseillers extends Service {
             'conseillerObj.updatedAt': updatedAt,
             'conseillerObj.codeCom': codeCom,
           } });
-          
+
           res.send({ conseiller });
         } catch (err) {
           app.get('sentry').captureException(err);
