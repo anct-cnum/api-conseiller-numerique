@@ -652,8 +652,8 @@ exports.Conseillers = class Conseillers extends Service {
         const conseillerUser = await db.collection('users').findOne({ 'entity.$id': conseillerId });
         user = conseillerUser;
         if (conseillerUser === null) {
-          // message d'erreur dans le cas où le cron n'est pas encore passer
-          res.status(404).send(new NotFound('Une erreur est survenue, veuillez réessayez plus tard', {
+          // Cas où le cron n'est pas encore passé, doublon ou user inactif
+          res.status(404).send(new NotFound('Utilisateur inexistant (doublon ou inactivité)', {
             conseillerId,
           }).toJSON());
           return;
@@ -789,7 +789,11 @@ exports.Conseillers = class Conseillers extends Service {
         }
 
         const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
+
         try {
+          await pool.query(`UPDATE djapp_coach
+          SET phone = $2 WHERE id = $1`,
+          [conseiller.idPG, telephone]);
           await app.service('conseillers').patch(idConseiller, changeInfos);
         } catch (err) {
           app.get('sentry').captureException(err);

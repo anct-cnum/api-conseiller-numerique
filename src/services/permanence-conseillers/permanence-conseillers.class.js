@@ -128,7 +128,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
         if (error) {
-          app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
@@ -172,7 +171,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
         if (error) {
-          app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
