@@ -19,6 +19,7 @@ const axios = require('axios');
 const {
   checkAuth,
   checkRoleCandidat,
+  checkRoleConseiller,
   checkRoleAdminCoop,
   checkConseillerExist,
   checkCvExistsS3,
@@ -171,7 +172,8 @@ exports.Conseillers = class Conseillers extends Service {
       //Verification role candidat
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!candidatUser?.roles.includes('candidat')) {
+
+      if (!candidatUser?.roles.includes('candidat') && !candidatUser?.roles.includes('conseiller')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -188,7 +190,8 @@ exports.Conseillers = class Conseillers extends Service {
       const allowedMime = ['application/pdf'];
       let detectingFormat = await fileType.fromBuffer(cvFile.buffer);
 
-      if (!allowedExt.includes(detectingFormat.ext) || !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
+      if (detectingFormat === undefined || !allowedExt.includes(detectingFormat.ext) ||
+          !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
         res.status(400).send(new BadRequest('Erreur : format de CV non autorisé').toJSON());
         return;
       }
@@ -290,7 +293,7 @@ exports.Conseillers = class Conseillers extends Service {
       checkAuth(req, res);
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!checkRoleCandidat(user, req)) {
+      if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req)) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -323,8 +326,7 @@ exports.Conseillers = class Conseillers extends Service {
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      // eslint-disable-next-line max-len
-      if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString()) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
+      if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -879,6 +881,8 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { disponible } = req.body;
+      const updatedAt = new Date();
+
       const disponibleValidation = Joi.boolean().required().error(new Error('Le format de la disponibilité est invalide')).validate(disponible);
       if (disponibleValidation.error) {
         res.status(400).json(new BadRequest(disponibleValidation.error));
@@ -898,16 +902,16 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        await pool.query(`UPDATE djapp_coach
-            SET disponible = $2 WHERE id = $1`,
-        [conseiller.idPG, disponible]);
 
+        await pool.query(`UPDATE djapp_coach
+        (disponible, updated) = ($2, $3) WHERE id = $1`,
+        [conseiller.idPG, disponible, dayjs(updatedAt).toDate()]);
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
       }
       try {
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt: new Date() } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -923,7 +927,7 @@ exports.Conseillers = class Conseillers extends Service {
               $set:
                 {
                   'statut': 'nouvelle',
-                  'conseillerObj.updatedAt': new Date()
+                  'conseillerObj.updatedAt': updatedAt,
                 }
             });
         } else {
@@ -935,15 +939,15 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'finalisee_non_disponible',
-                  'conseillerObj.updatedAt': new Date()
+                  'statut': 'non_disponible',
+                  'conseillerObj.updatedAt': updatedAt,
                 }
             });
         }
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: {
             'conseillerObj.disponible': disponible,
-            'conseillerObj.updatedAt': new Date() }
+            'conseillerObj.updatedAt': updatedAt }
         });
 
       } catch (err) {
@@ -951,6 +955,55 @@ exports.Conseillers = class Conseillers extends Service {
         logger.error(err);
       }
       res.send({ disponible });
+    });
+
+    app.patch('/conseillers/update_date_disponibilite/:id', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idConseiller = req.params.id;
+      const { dateDisponibilite } = req.body;
+      const updatedAt = new Date();
+
+      const dateDisponibleValidation =
+        Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieure ou égale à la date du jour')).validate(dateDisponibilite);
+      if (dateDisponibleValidation.error) {
+        res.status(400).json(new BadRequest(dateDisponibleValidation.error));
+        return;
+      }
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Ce conseiller n\'existe pas', {
+          idConseiller,
+        }).toJSON());
+        return;
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden('Action non autorisée', {
+          userId
+        }).toJSON());
+        return;
+      }
+      try {
+        await pool.query(`UPDATE djapp_coach
+          (start_date, updated) = ($2, $3) WHERE id = $1`,
+        [conseiller.idPG, dateDisponibilite, dayjs(updatedAt).toDate()]);
+
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
+
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+          $set: {
+            'conseillerObj.dateDisponible': dateDisponibilite,
+            'conseillerObj.updatedAt': updatedAt
+          }
+        });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+
+      res.send({ dateDisponibilite });
     });
 
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
@@ -1128,6 +1181,7 @@ exports.Conseillers = class Conseillers extends Service {
       const codePostal = req.body.codePostal;
       const nomCommune = req.body.ville;
       const location = req.body.location;
+
       let codeDepartement = codePostal.substr(0, 2);
       let codeCom = null;
       if (codePostal.substr(0, 2) === 97) {
@@ -1167,11 +1221,13 @@ exports.Conseillers = class Conseillers extends Service {
             region_code,
             geo_name,
             location,
-            codeCom)
+            updated,
+            codeCom
+           )
             =
-            ($2,$3,$4,$5,$6,$7,ST_GeomFromGeoJSON ($8), $9)
+            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9, $10)
             WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, codeCom]);
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement, codeRegion, nomCommune, location, dayjs(updatedAt).toDate(), codeCom]);
 
           await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
@@ -1190,7 +1246,6 @@ exports.Conseillers = class Conseillers extends Service {
           } });
 
           res.send({ conseiller });
-
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
