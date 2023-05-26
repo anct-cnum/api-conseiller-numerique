@@ -47,7 +47,17 @@ execute(__filename, async ({ db, logger }) => {
       reject();
       return;
     }
-
+    if ((conseiller?.ruptures.length >= 2) && (statut === 'nouvelle')) {
+      logger.warn(`Le conseiller a déjà était Cnfs ${idConseiller}, utilisez le statut recrutee`);
+      reject();
+      return;
+    }
+    let structureRupture = conseiller?.ruptures[conseiller?.ruptures.length - 1]?.structureId;
+    if (String(structureRupture) !== String(structure._id)) {
+      logger.error(`La dernière rupture du conseiller ne correspond pas à la structure: ${structureRupture} !== ${structure._id}`);
+      reject();
+      return;
+    }
     // Suppression dans l'historisation
     await db.collection('conseillersRuptures').deleteOne({ conseillerId: conseiller._id, structureId: structure._id });
 
@@ -64,7 +74,11 @@ execute(__filename, async ({ db, logger }) => {
       'datePrisePoste': '',
       'dateFinFormation': '',
       'groupeCRA': '',
-      'groupeCRAHistorique': ''
+      'groupeCRAHistorique': '',
+      'supHierarchique': '',
+      'telephonePro': '',
+      'emailPro': '',
+      'mailActiviteCRAMois': '',
     };
     if (conseiller?.ruptures.length === 1) {
       delete deleteTags['ruptures.$'];
