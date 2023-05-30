@@ -48,7 +48,7 @@ execute(__filename, async ({ db, logger }) => {
       return;
     }
     if ((conseiller?.ruptures.length >= 2) && (statut === 'nouvelle')) {
-      logger.warn(`Le conseiller a déjà était Cnfs ${idConseiller}, utilisez le statut recrutee`);
+      logger.warn(`Le conseiller ${idConseiller} a déjà été Cnfs, utilisez le statut recrutee`);
       reject();
       return;
     }
