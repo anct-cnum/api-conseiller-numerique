@@ -8,7 +8,7 @@ const { program } = require('commander');
 
 program.option('-c, --idConseiller <idConseiller>', 'IdPG du conseiller', parseInt);
 program.option('-s, --idStructure <idStructure>', 'IdPG de la structure', parseInt);
-program.option('-st, --statut <statut>', 'statut: recrutee ou nouvelle');
+program.option('-st, --statut <statut>', 'modification de statut en recrutee ou nouvelle');
 program.parse(process.argv);
 
 execute(__filename, async ({ db, logger }) => {
