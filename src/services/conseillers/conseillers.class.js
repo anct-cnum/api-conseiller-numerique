@@ -903,7 +903,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await pool.query(`UPDATE djapp_coach
-        (disponible, updated) = ($2, $3) WHERE id = $1`,
+        SET (disponible, updated) = ($2, $3) WHERE id = $1`,
         [conseiller.idPG, disponible, updatedAt]);
       } catch (err) {
         logger.error(err);
@@ -986,7 +986,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await pool.query(`UPDATE djapp_coach
-          (start_date, updated) = ($2, $3) WHERE id = $1`,
+        SET (start_date, updated) = ($2, $3) WHERE id = $1`,
         [conseiller.idPG, dateDisponibilite, updatedAt]);
 
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
@@ -1212,7 +1212,7 @@ exports.Conseillers = class Conseillers extends Service {
       ).then(async () => {
         try {
           await pool.query(`UPDATE djapp_coach
-          (
+          SET (
             max_distance,
             zip_code,
             commune_code,
