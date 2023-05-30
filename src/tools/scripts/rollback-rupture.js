@@ -52,7 +52,7 @@ execute(__filename, async ({ db, logger }) => {
       reject();
       return;
     }
-    let structureRupture = conseiller?.ruptures[conseiller?.ruptures.length - 1]?.structureId;
+    const structureRupture = conseiller?.ruptures[conseiller?.ruptures?.length - 1]?.structureId;
     if (String(structureRupture) !== String(structure._id)) {
       logger.error(`La dernière rupture du conseiller ne correspond pas à la structure: ${structureRupture} !== ${structure._id}`);
       reject();
