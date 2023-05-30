@@ -43,7 +43,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   }
   try {
     await pool.query(`UPDATE djapp_coach
-    (
+    SET (
       max_distance,
       updated
     )
