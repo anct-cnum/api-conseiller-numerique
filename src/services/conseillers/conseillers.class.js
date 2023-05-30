@@ -1233,16 +1233,18 @@ exports.Conseillers = class Conseillers extends Service {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
           });
 
+          conseiller.nomCommune = nomCommune;
+          conseiller.codePostal = codePostal;
+          conseiller.codeCommune = codeCommune;
+          conseiller.codeDepartement = codeDepartement;
+          conseiller.codeRegion = codeRegion;
+          conseiller.location = location;
+          conseiller.distanceMax = distanceMax;
+          conseiller.updatedAt = updatedAt;
+          conseiller.codeCom = codeCom;
+
           await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
-            'conseillerObj.nomCommune': nomCommune,
-            'conseillerObj.codePostal': codePostal,
-            'conseillerObj.codeCommune': codeCommune,
-            'conseillerObj.codeDepartement': codeDepartement,
-            'conseillerObj.codeRegion': codeRegion,
-            'conseillerObj.location': location,
-            'conseillerObj.distanceMax': distanceMax,
-            'conseillerObj.updatedAt': updatedAt,
-            'conseillerObj.codeCom': codeCom,
+            'conseillerObj': conseiller,
           } });
 
           res.send({ conseiller });
