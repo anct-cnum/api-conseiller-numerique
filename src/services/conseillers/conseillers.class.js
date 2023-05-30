@@ -1221,7 +1221,7 @@ exports.Conseillers = class Conseillers extends Service {
             geo_name,
             location,
             updated,
-            codeCom
+            com_code
            )
             =
             ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9, $10)
