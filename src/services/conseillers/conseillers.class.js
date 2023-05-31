@@ -901,14 +901,14 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-      /*try {
+      try {
         await pool.query(`UPDATE djapp_coach
         SET (disponible, updated) = ($2, $3) WHERE id = $1`,
         [conseiller.idPG, disponible, updatedAt]);
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
-      }*/
+      }
       try {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
       } catch (err) {
@@ -984,9 +984,9 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        /*await pool.query(`UPDATE djapp_coach
+        await pool.query(`UPDATE djapp_coach
         SET (start_date, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, dateDisponibilite, updatedAt]);*/
+        [conseiller.idPG, dateDisponibilite, updatedAt]);
 
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
 
