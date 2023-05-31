@@ -920,13 +920,12 @@ exports.Conseillers = class Conseillers extends Service {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
-              'statut': 'finalisee_non_disponible'
+              'statut': user?.roles.includes('conseiller') ? 'finalisee_non_disponible' : 'non_disponible'
             },
             {
               $set:
                 {
                   'statut': 'nouvelle',
-                  'conseillerObj.updatedAt': updatedAt,
                 }
             });
         } else {
@@ -938,11 +937,11 @@ exports.Conseillers = class Conseillers extends Service {
             {
               $set:
                 {
-                  'statut': 'non_disponible',
-                  'conseillerObj.updatedAt': updatedAt,
+                  'statut': user?.roles.includes('conseiller') ? 'finalisee_non_disponible' : 'non_disponible',
                 }
             });
         }
+
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: {
             'conseillerObj.disponible': disponible,
