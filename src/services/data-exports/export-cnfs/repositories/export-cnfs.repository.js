@@ -57,9 +57,9 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     {
       $match: {
         statut: 'RECRUTE',
-        $and: [
-          { datePrisePoste: { $gt: dateDebut } },
-          { datePrisePoste: { $lt: dateFin } },
+        $or: [
+          { datePrisePoste: { $gt: dateDebut, $lt: dateFin } },
+          { datePrisePoste: null },
         ],
         ...filterUserActif(isUserActif),
         ...filterGroupeCRA(groupeCRA),
