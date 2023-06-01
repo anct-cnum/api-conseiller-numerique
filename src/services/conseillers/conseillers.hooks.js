@@ -35,11 +35,19 @@ module.exports = {
           const page = context.params.query.$skip;
           context.params.query.$skip = page > 0 ? ((page - 1) * paginate.default) : 0;
         }
+        const dateFormation = [
+          { datePrisePoste: null },
+          { datePrisePoste: {} }
+        ];
         if (context.params.query.datePrisePoste?.$gt) {
-          context.params.query.datePrisePoste.$gt = parseStringToDate(context.params.query.datePrisePoste.$gt);
+          dateFormation[1].datePrisePoste.$gt = parseStringToDate(context.params.query.datePrisePoste.$gt);
+          delete context.params.query.datePrisePoste;
+          context.params.query.$or = dateFormation;
         }
         if (context.params.query.datePrisePoste?.$lt) {
-          context.params.query.datePrisePoste.$lt = parseStringToDate(context.params.query.datePrisePoste.$lt);
+          dateFormation[1].datePrisePoste.$lt = parseStringToDate(context.params.query.datePrisePoste.$lt);
+          delete context.params.query.datePrisePoste;
+          context.params.query.$or = dateFormation;
         }
         if (context.params.query.userCreated) {
           context.params.query.userCreated = context.params.query.userCreated === 'true';
