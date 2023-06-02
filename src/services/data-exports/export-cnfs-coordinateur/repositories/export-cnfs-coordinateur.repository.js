@@ -15,7 +15,8 @@ function filterUserActif(isUserActif) {
 }
 
 function filterByTypeCoordinateur(coordinateur) {
-  return { [coordinateur?.listeSubordonnes?.type === 'conseillers' ? '_id' : coordinateur?.listeSubordonnes?.type]:
+  const codeStructure = coordinateur?.listeSubordonnes?.type === 'codeRegion' ? 'codeRegionStructure' : 'codeDepartementStructure';
+  return { [coordinateur?.listeSubordonnes?.type === 'conseillers' ? '_id' : codeStructure]:
   { '$in': coordinateur?.listeSubordonnes?.liste } };
 }
 
@@ -32,10 +33,10 @@ const getStatsCnfsCoordinateur = db => async (dateDebut, dateFin, nomOrdre, ordr
 
   const conseillers = db.collection('conseillers').find({
     statut: 'RECRUTE',
-    datePrisePoste: {
-      '$gte': dateDebut,
-      '$lte': dateFin
-    },
+    $or: [
+      { datePrisePoste: { '$gte': dateDebut, '$lte': dateFin } },
+      { datePrisePoste: null }
+    ],
     ...filterUserActif(isUserActif),
     ...filterByTypeCoordinateur(coordinateur)
   }).project({
