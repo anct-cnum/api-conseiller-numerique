@@ -1,6 +1,6 @@
 const Joi = require('joi');
-const axios = require('axios');
 const { NotFound, BadRequest } = require('@feathersjs/errors');
+const { getEtablissementBySiretEntrepriseApiV3, getEntrepriseBySirenEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
 
 /* eslint-disable no-unused-vars */
 exports.Siret = class Siret {
@@ -9,7 +9,7 @@ exports.Siret = class Siret {
     this.app = app;
   }
 
-  async get(siret, params) {
+  async get(siret) {
     const parameters = Joi.object({
       siret: Joi.string().alphanum().min(3).max(14).required(),
     }, { abortEarly: false }).validate({ siret });
@@ -18,29 +18,16 @@ exports.Siret = class Siret {
       return new BadRequest('Invalid parameters');
     }
 
-    const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${parameters.value.siret}`;
-    const urlSiren = `https://entreprise.api.gouv.fr/v2/entreprises/${parameters.value.siret.substring(0, 9)}`;
-
-
-    params = {
-      token: this.app.get('api_entreprise'),
-      context: 'cnum',
-      recipient: 'cnum',
-      object: 'checkSiret',
-    };
-
     let result;
     try {
-      const results = await axios.get(urlSiret, { params: params });
-      result = results.data.etablissement;
-
+      result = await getEtablissementBySiretEntrepriseApiV3(parameters.value.siret, this.app.get('api_entreprise'));
     } catch (e) {
       return new NotFound('SIRET not found');
     }
     try {
-      const resultsSiren = await axios.get(urlSiren, { params: params });
+      const resultsSiren = await getEntrepriseBySirenEntrepriseApiV3(parameters.value.siret.substring(0, 9), this.app.get('api_entreprise'));
       return {
-        raison_sociale: resultsSiren.data.entreprise.raison_sociale,
+        raison_sociale: resultsSiren?.unite_legale?.personne_morale_attributs?.raison_sociale,
         code_postal: result.adresse.code_postal,
       };
     } catch (err) {

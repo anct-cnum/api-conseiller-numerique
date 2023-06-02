@@ -1,7 +1,7 @@
-const axios = require('axios');
 const CSVToJSON = require('csvtojson');
 const { Pool } = require('pg');
 const { program } = require('commander');
+const { getEtablissementBySiretEntrepriseApiV3, getEntrepriseBySirenEntrepriseApiV3 } = require('../../../utils/entreprise.api.gouv');
 program.version('0.0.1');
 
 program
@@ -10,22 +10,13 @@ program
 
 program.parse(process.argv);
 
-const params = {
-  token: program.token,
-  context: 'cnum',
-  recipient: 'cnum',
-  object: 'checkSiret',
-};
-
 const pool = new Pool();
 
 // Vérifie un SIRET (établissement) avec l'API Entreprise
 const checkSiret = async siret => {
-  const url = `https://entreprise.api.gouv.fr/v2/etablissements/${siret}`;
-
   try {
-    const res = await axios.get(url, { params: params });
-    return res.data.etablissement;
+    const resultEtablissement = await getEtablissementBySiretEntrepriseApiV3(siret, this.app.get('api_entreprise'));
+    return resultEtablissement;
   } catch (err) {
     throw err;
   }
@@ -33,11 +24,9 @@ const checkSiret = async siret => {
 
 // Vérifie un SIREN (entreprise) avec l'API Entreprise
 const checkSiren = async siren => {
-  const url = `https://entreprise.api.gouv.fr/v2/entreprises/${siren}`;
-
   try {
-    const res = await axios.get(url, { params: params });
-    return res.data;
+    const res = await getEntrepriseBySirenEntrepriseApiV3(siren, this.app.get('api_entreprise'));
+    return res;
   } catch (err) {
     throw err;
   }
@@ -85,9 +74,9 @@ readCSV(program.csv).then(async replies => {
         const infosEntreprise = await checkSiren(siren);
         // infosEntreprise.entreprise.siret_siege_social
         // infosEntreprise.entreprise.raison_sociale
-        console.log(`OK ${id} ${siret} ${infosEntreprise.entreprise.raison_sociale}`);
+        console.log(`OK ${id} ${siret} ${infosEntreprise?.unite_legale?.personne_morale_attributs?.raison_sociale}`);
 
-        await updateDB(email, infosEntreprise.entreprise, conseillers);
+        await updateDB(email, infosEntreprise, conseillers);
       } catch (error) {
         console.log(`KO ${id} ${siret} : ${error.message}`);
       }
