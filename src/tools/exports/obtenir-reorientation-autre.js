@@ -3,7 +3,7 @@
 const path = require('path');
 const fs = require('fs');
 const cli = require('commander');
-
+const { lieuxReorientation } = require('../../../data/imports/LieuxRedirection.json');
 const { execute } = require('../utils');
 
 cli.description('Export reorientation autre')
@@ -21,28 +21,6 @@ execute(__filename, async ({ logger, db }) => {
   ];
 
   let count = 0;
-  const reorientationsExistantes = [
-    'ANTS',
-    'Assistante sociale',
-    'CAF',
-    'CARSAT',
-    'CCAS',
-    'CEFS',
-    'CIP',
-    'CPAM',
-    'DGFIP',
-    'France Services',
-    'Mairie',
-    'Médiathèque',
-    'Mission locale',
-    'Pôle emploi',
-    'Préfecture',
-    'Sous-préfecture',
-    'Service de police',
-    'Gendarmerie',
-    'Revendeur informatique',
-    'Tiers-lieu / Fablab'
-  ];
   try {
     const cras = await db.collection('cras').aggregate(query).toArray();
     if (cras) {
@@ -57,7 +35,7 @@ execute(__filename, async ({ logger, db }) => {
       file.write('Nom de la réorientation; nombre\n');
 
       cras.forEach(cra => {
-        if (!reorientationsExistantes.includes(String(cra._id))) {
+        if (!lieuxReorientation.includes(String(cra._id))) {
           file.write(`${cra?._id};${cra?.count};\n`);
           count++;
         }
