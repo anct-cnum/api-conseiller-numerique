@@ -14,11 +14,13 @@ execute(__filename, async ({ logger, db }) => {
   let query = [
     { $unwind: '$cra.organismes' },
     { $match: { 'cra.organismes': { '$ne': null } } },
-    { $project: { '_id': 0, 'organismes': '$cra.organismes' } }
+    { $addFields: { 'organismeTab': { $objectToArray: '$cra.organismes' } } },
+    { $unwind: '$organismeTab' },
+    { $group: { '_id': '$organismeTab.k', 'count': { '$sum': '$organismeTab.v' } } },
+    { $project: { '_id': 1, 'count': 1 } }
   ];
+
   let count = 0;
-  let reorientations = [];
-  let promises = [];
   const reorientationsExistantes = [
     'ANTS',
     'Assistante sociale',
@@ -41,39 +43,31 @@ execute(__filename, async ({ logger, db }) => {
     'Revendeur informatique',
     'Tiers-lieu / Fablab'
   ];
-  const cras = await db.collection('cras').aggregate(query).toArray();
+  try {
+    const cras = await db.collection('cras').aggregate(query).toArray();
+    if (cras) {
+      logger.info(`Génération du fichier CSV...`);
 
-  logger.info(`Génération du fichier CSV...`);
+      let csvFile = path.join(__dirname, '../../../data/exports', `reorientation_autre.csv`);
 
-  let csvFile = path.join(__dirname, '../../../data/exports', `reorientation_autre.csv`);
+      let file = fs.createWriteStream(csvFile, {
+        flags: 'w'
+      });
 
-  let file = fs.createWriteStream(csvFile, {
-    flags: 'w'
-  });
-  file.write('Nom de la réorientation; nombre\n');
+      file.write('Nom de la réorientation; nombre\n');
 
-  cras.forEach(cra => {
-    if (!reorientationsExistantes.includes(String(Object.keys(cra.organismes)[0]))) {
-      promises.push(new Promise(async resolve => {
-        if (reorientations.filter(reorientation => reorientation.nom === String(Object.keys(cra.organismes)[0]))?.length > 0) {
-          reorientations.filter(reorientation => reorientation.nom === Object.keys(cra.organismes)[0])[0].valeur +=
-          cra.organismes[Object.keys(cra.organismes)[0]];
-        } else {
-          reorientations.push({
-            nom: String(Object.keys(cra.organismes)[0]),
-            valeur: cra.organismes[Object.keys(cra.organismes)[0]]
-          });
+      cras.forEach(cra => {
+        if (!reorientationsExistantes.includes(String(cra._id))) {
+          file.write(`${cra?._id};${cra?.count};\n`);
+          count++;
         }
-        resolve();
-      }));
-    }
-  });
+      });
 
-  reorientations.forEach(reorientation => {
-    file.write(`${reorientation?.nom};${reorientation?.valeur};\n`);
-    count++;
-  });
-  await Promise.all(promises);
-  logger.info(`${count} réorientations exportées`);
-  file.close();
+      logger.info(`${count} réorientations exportées`);
+      file.close();
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
 });
