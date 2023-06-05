@@ -72,8 +72,7 @@ readCSV(program.csv).then(async replies => {
         //const infosEtablissement = await checkSiret(siret);
         // infosEtablissement.adresse
         const infosEntreprise = await checkSiren(siren);
-        // infosEntreprise.entreprise.siret_siege_social
-        // infosEntreprise.entreprise.raison_sociale
+        // infosEntreprise?.unite_legale?.personne_morale_attributs?.raison_sociale
         console.log(`OK ${id} ${siret} ${infosEntreprise?.unite_legale?.personne_morale_attributs?.raison_sociale}`);
 
         await updateDB(email, infosEntreprise, conseillers);
