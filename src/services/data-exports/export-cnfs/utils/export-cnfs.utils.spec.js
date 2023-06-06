@@ -33,6 +33,7 @@ let statsCnfsForAdminCoop = [
       codeDepartement: '69000',
       contact: {
         email: 'test@mail.fr',
+        telephone: '0606060606'
       },
       nom: 'Association pour l\'accès au numérique',
     },
@@ -257,9 +258,9 @@ describe('export cnfs utils', () => {
 
     expect(fileContent).toEqual(
       // eslint-disable-next-line max-len
-      'Id du conseiller;Prénom;Nom;Email;Email @conseiller-numerique.fr;Compte Activé;Id de la structure;Id long de la structure;Nom de la structure;Email de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Code département du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nombre de personnes accompagnées;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique;Historique des groupes CRA\n' +
+      'Id du conseiller;Prénom;Nom;Email;Email @conseiller-numerique.fr;Compte Activé;Id de la structure;Id long de la structure;Nom de la structure;Email de la structure;Numéro téléphone de la structure;Adresse de la structure;Code département de la structure;Code Postal du conseiller;Code département du conseiller;Date de recrutement;Date de fin de formation;GroupeCRA;Certification;Activé;CRA Saisis;Nombre de personnes accompagnées;Nom Supérieur hiérarchique;Prénom supérieur hiérarchique;Fonction supérieur hiérarchique;Email supérieur hiérarchique;Numéro téléphone supérieur hiérarchique;Historique des groupes CRA\n' +
       // eslint-disable-next-line max-len
-      '50;John;Doe;john.doe@conseiller-numerique.fr;;Non;1234;5effaa5662679b5af2c58829;Association pour laccès au numérique;test@mail.fr;12 avenue du pont;69000;69005;;27/01/2021;12/03/2021;0;Non;Non;12;10;;;;;"";"groupe 0 le 25/04/2022|groupe 1 le 25/04/2022"'
+      '50;John;Doe;john.doe@conseiller-numerique.fr;;Non;1234;5effaa5662679b5af2c58829;Association pour laccès au numérique;test@mail.fr;0606060606;12 avenue du pont;69000;69005;;27/01/2021;12/03/2021;0;Non;Non;12;10;;;;;"";"groupe 0 le 25/04/2022|groupe 1 le 25/04/2022"'
     );
   });
 });

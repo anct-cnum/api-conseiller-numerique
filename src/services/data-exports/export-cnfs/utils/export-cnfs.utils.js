@@ -79,11 +79,12 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
     fileHeaders.splice(6, 0, 'Id de la structure');
     fileHeaders.splice(7, 0, 'Id long de la structure');
     fileHeaders.splice(9, 0, 'Email de la structure');
-    fileHeaders.splice(10, 0, 'Adresse de la structure');
-    fileHeaders.splice(11, 0, 'Code département de la structure');
-    fileHeaders.splice(13, 0, 'Code département du conseiller');
-    fileHeaders.splice(16, 0, 'GroupeCRA');
-    fileHeaders.splice(21, 0, 'Nombre de personnes accompagnées');
+    fileHeaders.splice(10, 0, 'Numéro téléphone de la structure');
+    fileHeaders.splice(11, 0, 'Adresse de la structure');
+    fileHeaders.splice(12, 0, 'Code département de la structure');
+    fileHeaders.splice(14, 0, 'Code département du conseiller');
+    fileHeaders.splice(17, 0, 'GroupeCRA');
+    fileHeaders.splice(22, 0, 'Nombre de personnes accompagnées');
     fileHeaders.push('Nom Supérieur hiérarchique');
     fileHeaders.push('Prénom supérieur hiérarchique');
     fileHeaders.push('Fonction supérieur hiérarchique');
@@ -105,6 +106,7 @@ const buildExportCnfsCsvFileContent = async (statsCnfs, user) => {
         statCnfs.structure?._id.toString(),
         statCnfs.structure?.nom.replace(/["',]/g, ''),
         statCnfs.structure?.contact?.email,
+        statCnfs.structure?.contact?.telephone?.length >= 10 ? statCnfs.structure?.contact?.telephone.replace(/[- ]/g, '') : 'Non renseigné',
         statCnfs.adresseStructure,
         statCnfs.structure?.codeDepartement,
         statCnfs.codePostal,
