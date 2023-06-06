@@ -41,6 +41,8 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         unsubscribedAt: s.unsubscribed, // "cliquez ici pour ne plus recevoir de propositions"
         unsubscribeExtras: s.unsubscribe_extras, // JSON, pas utilisé
         nombreConseillersSouhaites: s.coaches_requested,
+        coordinateurCandidature: s.wants_coordinators,
+        coordinateurTypeContrat: s.coordinator_type,
         createdAt: s.created,
         updatedAt: s.updated,
         validatedAt: s.validated, // pas utilisé ?
@@ -139,7 +141,9 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           unsubscribe_extras,
           unsubscribed,
           siret,
-          coaches_requested
+          coaches_requested,
+          coordinator_type,
+          wants_coordinators
         FROM djapp_hostorganization ORDER BY id ASC LIMIT $1`,
       [program.limit]);
       return rows;
