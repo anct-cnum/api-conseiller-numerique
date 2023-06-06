@@ -111,7 +111,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
             errors++;
             if (formatDate(datePrisePoste) === formatDate(dateFinFormation) && commentaire === '') {
-              logger.error(`Conseiller ${idPGConseiller} semble non former => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
+              logger.error(`Conseiller ${idPGConseiller} semble non formé => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
             } else if (formatDate(datePrisePoste) !== formatDate(dateFinFormation) && commentaire !== '') {
               // eslint-disable-next-line max-len
               logger.error(`Conseiller ${idPGConseiller} semble ne pas etre en attente/exempté => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
@@ -159,7 +159,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                   'conseillerObj.dateFinFormation': null
                 } });
             } else if (!['', 'exempté', 'Formation en septembre'].includes(commentaire)) {
-              logger.error(`"${commentaire}" commentaire non gérer pour le conseiller avec l'id: ${idPGConseiller} (RECRUTE)`);
+              logger.error(`"${commentaire}" commentaire non géré pour le conseiller avec l'id: ${idPGConseiller} (RECRUTE)`);
             }
           } else if (structure?.contact?.email === conseillerOriginal?.email) {
             logger.error(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
@@ -182,10 +182,10 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             Sentry.captureException(`La structure ${structureId} a dépassé le quota (conseiller: ${idPGConseiller})`);
             errors++;
           } else if (!['', 'exempté', 'Formation en septembre'].includes(commentaire)) {
-            logger.error(`"${commentaire}" commentaire non gérer pour le conseiller avec l'id: ${idPGConseiller}`);
+            logger.error(`"${commentaire}" commentaire non géré pour le conseiller avec l'id: ${idPGConseiller}`);
             errors++;
           } else if (formatDate(datePrisePoste) === formatDate(dateFinFormation) && commentaire === '') {
-            logger.error(`Conseiller ${idPGConseiller} semble non former => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)}`);
+            logger.error(`Conseiller ${idPGConseiller} semble non formé => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)}`);
             errors++;
           } else if (formatDate(datePrisePoste) !== formatDate(dateFinFormation) && commentaire !== '') {
             logger.error(`Conseiller ${idPGConseiller} semble ne pas etre en attente/exempté => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)}`);

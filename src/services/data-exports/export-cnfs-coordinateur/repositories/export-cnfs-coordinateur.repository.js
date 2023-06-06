@@ -15,9 +15,19 @@ function filterUserActif(isUserActif) {
 }
 
 function filterByTypeCoordinateur(coordinateur) {
-  const codeStructure = coordinateur?.listeSubordonnes?.type === 'codeRegion' ? 'codeRegionStructure' : 'codeDepartementStructure';
-  return { [coordinateur?.listeSubordonnes?.type === 'conseillers' ? '_id' : codeStructure]:
-  { '$in': coordinateur?.listeSubordonnes?.liste } };
+  let typeCoordo = '';
+  switch (coordinateur?.listeSubordonnes?.type) {
+    case 'codeRegion':
+      typeCoordo = '_id';
+      break;
+    case 'codeDepartement':
+      typeCoordo = 'codeDepartementStructure';
+      break;
+    default:
+      typeCoordo = '_id';
+  }
+
+  return { [typeCoordo]: { '$in': coordinateur?.listeSubordonnes?.liste } };
 }
 
 const getStructureNameFromId = db => async id => {
