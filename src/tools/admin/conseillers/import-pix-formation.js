@@ -11,7 +11,7 @@ program
 
 program.parse(process.argv);
 
-// Fichier xslx à convertir en csv avec en remplaçant la première ligne par :
+// Fichier xslx à convertir en csv en remplaçant les entêtes par : Prenom,Nom,Email,IdPG,Pix
 // Prenom,Nom,Email,IdPG,Pix
 // CSV PIX
 const readCSV = async filePath => {
