@@ -47,13 +47,6 @@ const updateConseillerIsCoordinateur = db => async idConseiller => {
   );
 };
 
-const getListeExistante = db => async idConseiller => {
-  const conseiller = await db.collection('conseillers').findOne({
-    '_id': idConseiller
-  });
-  return conseiller?.listeSubordonnes?.liste ?? [];
-};
-
 const addListSubordonnes = db => async (idConseiller, list, type) => {
   await db.collection('conseillers').updateOne(
     { '_id': idConseiller },
@@ -79,7 +72,7 @@ const updateSubordonnes = db => async (coordinateur, list, type) => {
   const updateCnSubordonnes = db => async (match, queryUpdate) =>
     await db.collection('conseillers').updateMany({ statut: 'RECRUTE', ...match }, queryUpdate);
   // Maj du tag coordinateur dans le cas d'un changement de la liste custom ou autre (exemple coordo d'une region qui change en coordo departement)
-  await updateCnSubordonnes(db)({ 'coordinateurs.id': coordinateur.id }, { $pull: { 'coordinateurs.id': coordinateur.id } });
+  await updateCnSubordonnes(db)({ 'coordinateurs': { $elemMatch: { id: coordinateur.id } } }, { $pull: { 'coordinateurs': { id: coordinateur.id } } });
   switch (type) {
     case 'codeRegion':
       await updateCnSubordonnes(db)({ 'codeRegionStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
@@ -88,27 +81,10 @@ const updateSubordonnes = db => async (coordinateur, list, type) => {
       await updateCnSubordonnes(db)({ 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     default: // conseillers
-      await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } }); // ok
       break;
   }
   await updateCnSubordonnes(db)({ 'coordinateurs.0': { $exists: false } }, { $unset: { 'coordinateurs': '' } });
-};
-
-const setListeFinale = (listeFile, listeExistante) => {
-  let listFinale = [];
-  listeFile.forEach(element => {
-    let isPush = true;
-    //forEach car includes ne fonctionne pas sur les ObjectId
-    listeExistante.forEach(existant => {
-      if (String(existant) === String(element)) {
-        isPush = false;
-      }
-    });
-    if (isPush) {
-      listFinale.push(element);
-    }
-  });
-  return listFinale.concat(listeExistante);
 };
 
 // CSV importé
@@ -153,18 +129,16 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               await updateUserRole(db)(idCoordinateur);
             }
 
-            let listeExistante = await getListeExistante(db)(idCoordinateur);
-
-            let listFinale = [];
+            let listMaille = [];
 
             if (mailleRegional.length > 0) {
-              listFinale = setListeFinale(mailleRegional.split('/'), listeExistante);
-              await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeRegion');
-              await updateSubordonnes(db)(coordinateur, listFinale, 'codeRegion');
+              listMaille = mailleRegional.split('/');
+              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeRegion');
+              await updateSubordonnes(db)(coordinateur, listMaille, 'codeRegion');
             } else if (mailleDepartement.length > 0) {
-              listFinale = setListeFinale(mailleDepartement.split('/'), listeExistante);
-              await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeDepartement');
-              await updateSubordonnes(db)(coordinateur, listFinale, 'codeDepartement');
+              listMaille = mailleDepartement.split('/');
+              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeDepartement');
+              await updateSubordonnes(db)(coordinateur, listMaille, 'codeDepartement');
             } else if (listCustom.length > 0) {
               const emailsSubordonnes = listCustom.split('/');
               const promisesEmails = [];
