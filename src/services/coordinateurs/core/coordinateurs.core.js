@@ -1,0 +1,79 @@
+const { formatAddressFromInsee, formatAddressFromPermanence } = require('../../conseillers/common');
+
+const formatTexte = texte => texte.toLowerCase().replace(/(^\w{1})|([\s,-]+\w{1})/g, letter => letter.toUpperCase());
+
+// eslint-disable-next-line max-len
+const COURRIEL_REGEXP = /^(?:(?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@(?:(?:\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}])|(?:(?:[A-Za-zÀ-ÖØ-öø-ÿ\-\d]+\.)+[a-zA-Z]{2,}))$/;
+const courrielIfAny = courriel => courriel && COURRIEL_REGEXP.test(courriel) ? { courriel } : {};
+
+const PHONE_REGEX = /^(?:(?:\+)(33|590|596|594|262|269))(?:\d{3}){3}$/;
+const checkLengthPhone = telephone => PHONE_REGEX.test(telephone) || (telephone.startsWith('0') && telephone.length === 10);
+const telephoneIfAny = telephone => telephone && checkLengthPhone(telephone) ? { telephone } : {};
+
+const PERIMETRES_LIST = { 'conseillers': 'Bassin de vie', 'codeDepartement': 'Départemental', 'codeRegion': 'Régional' };
+const formatPerimetre = type => PERIMETRES_LIST[type] ? { perimetre: PERIMETRES_LIST[type] } : {};
+
+const getGeometryPositions = coordinateur => {
+  let longitude;
+  let latitude;
+  if (coordinateur.permanence?.location?.coordinates) {
+    longitude = coordinateur.permanence.location.coordinates[0];
+    latitude = coordinateur.permanence.location.coordinates[1];
+  } else if (coordinateur.structure.coordonneesInsee?.coordinates) {
+    longitude = coordinateur.structure.coordonneesInsee?.coordinates[0];
+    latitude = coordinateur.structure.coordonneesInsee?.coordinates[1];
+  } else {
+    longitude = coordinateur.structure.location?.coordinates[0];
+    latitude = coordinateur.structure.location?.coordinates[1];
+  }
+
+  return { latitude, longitude };
+};
+
+const getStats = async (getStatsCoordination, subordonnes, coordinateurId) => {
+  let query;
+  switch (subordonnes.type) {
+    case 'codeDepartement':
+      query = { codeDepartementStructure: { $in: subordonnes.liste }, _id: { $ne: coordinateurId } };
+      break;
+    case 'codeRegion':
+      query = { codeRegionStructure: { $in: subordonnes.liste }, _id: { $ne: coordinateurId } };
+      break;
+    default: //type conseillers
+      query = { _id: { $in: subordonnes.liste } };
+      break;
+  }
+  const stats = await getStatsCoordination(query);
+  return {
+    nombreDePersonnesCoordonnees: stats[0]?.nbConseillers ?? 0,
+    nombreDeStructuresAvecDesPersonnesCoordonnees: stats[0]?.nbStructures?.length ?? 0
+  };
+};
+
+const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination }) => {
+  let coordinateurs = await getCoordinateurs();
+  return await Promise.all(coordinateurs.map(async coordinateur => {
+    return {
+      id: coordinateur._id.toString(),
+      prenom: formatTexte(coordinateur.prenom),
+      nom: formatTexte(coordinateur.nom),
+      commune: coordinateur.permanence?.adresse?.ville ?? coordinateur.structure.nomCommune,
+      codePostal: coordinateur.permanence?.adresse?.codePostal ?? coordinateur.structure.codePostal,
+      adresse:
+        coordinateur.permanence?.adresse ?
+          formatAddressFromPermanence(coordinateur.permanence?.adresse) :
+          formatAddressFromInsee(coordinateur.structure?.insee?.etablissement?.adresse),
+      ...courrielIfAny(coordinateur.emailPro),
+      ...telephoneIfAny(coordinateur.telephonePro),
+      ...formatPerimetre(coordinateur.listeSubordonnes.type),
+      ...await getStats(getStatsCoordination, coordinateur.listeSubordonnes, coordinateur._id),
+      dispositif: 'CnFS',
+      ...getGeometryPositions(coordinateur, 1),
+    };
+  }));
+};
+
+module.exports = {
+  listeCoordinateurs,
+};
+
