@@ -6,7 +6,7 @@ const { execute } = require('../../utils');
 const { program } = require('commander');
 
 program
-.option('-c, --csv <path>', 'CSV file path')
+.option('-c, --csv <path>', 'CSV file path');
 
 program.parse(process.argv);
 
