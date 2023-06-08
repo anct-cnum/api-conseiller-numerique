@@ -13,7 +13,7 @@ const isAlreadyCoordinateur = db => async emailConseiller => {
   return Boolean(user);
 };
 
-const getIdConseillerByMail = db => async emailConseiller => {
+const getConseillerByMail = db => async emailConseiller => {
   const user = await db.collection('users').findOne({
     'name': emailConseiller.replace(/\s/g, ''),
     'roles': { '$in': ['conseiller'] }
@@ -122,7 +122,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           const mailleDepartement = ressource['Code département'];
 
           const estCoordinateur = await isAlreadyCoordinateur(db)(adresseCoordo);
-          const coordinateur = await getIdConseillerByMail(db)(adresseCoordo);
+          const coordinateur = await getConseillerByMail(db)(adresseCoordo);
           const idCoordinateur = coordinateur?.id;
           if (idCoordinateur) {
             if (!estCoordinateur) {
