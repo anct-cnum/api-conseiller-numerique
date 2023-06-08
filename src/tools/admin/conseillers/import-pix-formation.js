@@ -7,12 +7,10 @@ const { program } = require('commander');
 
 program
 .option('-c, --csv <path>', 'CSV file path')
-.option('-w, --whitelist <path>', 'CSV whitelist path');
 
 program.parse(process.argv);
 
 // Fichier xslx à convertir en csv en remplaçant les entêtes par : Prenom,Nom,Email,IdPG,Pix
-// Prenom,Nom,Email,IdPG,Pix
 // CSV PIX
 const readCSV = async filePath => {
   try {
@@ -55,6 +53,7 @@ execute(__filename, async ({ db, logger }) => {
             email: String(certification.Email),
           };
         }
+        params.statut = { $in: ['RECRUTE', 'RUPTURE'] };
         let query = {
           $set: {
             certificationPixFormation: certification.Pix.toLowerCase().trim() === 'oui',
