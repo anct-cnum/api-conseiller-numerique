@@ -17,8 +17,8 @@ program.parse(process.argv);
 const readCSV = async filePath => {
   try {
     // eslint-disable-next-line new-cap
-    const users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
-    return users;
+    const conseillers = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
+    return conseillers;
   } catch (err) {
     throw err;
   }
