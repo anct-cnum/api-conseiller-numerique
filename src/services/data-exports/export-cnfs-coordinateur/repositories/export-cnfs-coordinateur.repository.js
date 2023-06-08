@@ -15,8 +15,19 @@ function filterUserActif(isUserActif) {
 }
 
 function filterByTypeCoordinateur(coordinateur) {
-  return { [coordinateur?.listeSubordonnes?.type === 'conseillers' ? '_id' : coordinateur?.listeSubordonnes?.type]:
-  { '$in': coordinateur?.listeSubordonnes?.liste } };
+  let typeCoordo = '';
+  switch (coordinateur?.listeSubordonnes?.type) {
+    case 'codeRegion':
+      typeCoordo = '_id';
+      break;
+    case 'codeDepartement':
+      typeCoordo = 'codeDepartementStructure';
+      break;
+    default:
+      typeCoordo = '_id';
+  }
+
+  return { [typeCoordo]: { '$in': coordinateur?.listeSubordonnes?.liste } };
 }
 
 const getStructureNameFromId = db => async id => {
@@ -32,10 +43,10 @@ const getStatsCnfsCoordinateur = db => async (dateDebut, dateFin, nomOrdre, ordr
 
   const conseillers = db.collection('conseillers').find({
     statut: 'RECRUTE',
-    datePrisePoste: {
-      '$gte': dateDebut,
-      '$lte': dateFin
-    },
+    $or: [
+      { datePrisePoste: { '$gte': dateDebut, '$lte': dateFin } },
+      { datePrisePoste: null }
+    ],
     ...filterUserActif(isUserActif),
     ...filterByTypeCoordinateur(coordinateur)
   }).project({

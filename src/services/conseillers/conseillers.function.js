@@ -317,7 +317,10 @@ const getConseillersByCoordinateurId = db => async (idCoordinateur, page, dateDe
         break;
     }
 
-    query.datePrisePoste = { '$gte': dateDebut, '$lte': dateFin };
+    query.$or = [
+      { datePrisePoste: { '$gte': dateDebut, '$lte': dateFin } },
+      { datePrisePoste: null }
+    ];
 
     switch (coordinateur.listeSubordonnes.type) {
       case 'conseillers':

@@ -25,8 +25,8 @@ const prettifyAndComplete = () => async statCnfs => {
   const { emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
   return {
     ...nextStatCnfs,
-    datePrisePoste: formatDate(nextStatCnfs.datePrisePoste),
-    dateFinFormation: formatDate(nextStatCnfs.dateFinFormation),
+    datePrisePoste: nextStatCnfs?.datePrisePoste ? formatDate(nextStatCnfs?.datePrisePoste) : 'Non renseignée',
+    dateFinFormation: nextStatCnfs?.dateFinFormation ? formatDate(nextStatCnfs?.dateFinFormation) : 'Non renseignée',
     adresseStructure: nextStatCnfs.structure?.insee ? formatAdresseStructure(nextStatCnfs.structure.insee) : '',
     groupeCRA: nextStatCnfs.groupeCRA ?? '',
     certifie: nextStatCnfs.certifie === true ? 'Oui' : 'Non',
