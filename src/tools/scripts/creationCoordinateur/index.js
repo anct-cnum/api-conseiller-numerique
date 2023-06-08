@@ -81,7 +81,7 @@ const updateSubordonnes = db => async (coordinateur, list, type) => {
       await updateCnSubordonnes(db)({ 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     default: // conseillers
-      await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } }); // ok
+      await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
   }
   await updateCnSubordonnes(db)({ 'coordinateurs.0': { $exists: false } }, { $unset: { 'coordinateurs': '' } });
