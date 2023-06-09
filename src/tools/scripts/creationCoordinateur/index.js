@@ -75,10 +75,11 @@ const updateSubordonnes = db => async (coordinateur, list, type) => {
   await updateCnSubordonnes(db)({ 'coordinateurs': { $elemMatch: { id: coordinateur.id } } }, { $pull: { 'coordinateurs': { id: coordinateur.id } } });
   switch (type) {
     case 'codeRegion':
-      await updateCnSubordonnes(db)({ 'codeRegionStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeRegionStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     case 'codeDepartement':
-      await updateCnSubordonnes(db)({ 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      // eslint-disable-next-line max-len
+      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     default: // conseillers
       await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
