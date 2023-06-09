@@ -30,6 +30,10 @@ const insertCertificationFormationPix = db => async (idConseiller, query) => {
   return await db.collection('conseillers').updateOne({ _id: idConseiller }, query);
 };
 
+const getRegex = string => {
+  return new RegExp(['^', String(string), '$'].join(''), 'i');
+};
+
 execute(__filename, async ({ db, logger }) => {
 
   const csvCertificationFormationPix = await readCSV(program.csv);
@@ -42,15 +46,15 @@ execute(__filename, async ({ db, logger }) => {
   try {
     csvCertificationFormationPix.forEach(certification => {
       promises.push(new Promise(async resolve => {
-        if (certification.IdPG !== 0) {
+        if (Number(certification.IdPG) !== 0) {
           params = {
             idPG: Number(certification.IdPG)
           };
         } else {
           params = {
-            nom: String(certification.Nom),
-            prenom: String(certification.Prenom),
-            email: String(certification.Email),
+            nom: getRegex(certification.Nom),
+            prenom: getRegex(certification.Prenom),
+            email: getRegex(certification.Email),
           };
         }
         params.statut = { $in: ['RECRUTE', 'RUPTURE'] };
@@ -64,8 +68,8 @@ execute(__filename, async ({ db, logger }) => {
           await insertCertificationFormationPix(db)(conseiller._id, query);
           c++;
         } else {
-          logger.error('Conseiller introuvable avec les paramaètres suivant : {idPG:' +
-          certification.IdPG + ', nom: ' + certification.Nom + ',prenom: ' + certification.Prenom + ' }');
+          logger.error('Conseiller introuvable avec les paramètres suivant : {idPG:' +
+          certification.IdPG + ', nom: ' + certification.Nom + ',prenom: ' + certification.Prenom + ', email: ' + certification.Email + ' }');
           e++;
         }
         resolve();
