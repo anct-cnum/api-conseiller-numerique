@@ -160,7 +160,7 @@ exports.DataExports = class DataExports {
           let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
           let structure = await db.collection('structures').findOne({ _id: miseEnrelation.structure.oid });
           // eslint-disable-next-line max-len
-          res.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email};${conseiller.idPG};${structure.nom};${structure.idPG};${miseEnrelation.dateRupture ? formatDate(miseEnrelation.dateRupture) : 'Non renseignée'};${miseEnrelation.motifRupture}\n`);
+          res.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email};${conseiller.idPG};${structure.nom};${structure.idPG};${miseEnrelation?.dateRupture ? formatDate(miseEnrelation.dateRupture) : 'Non renseignée'};${miseEnrelation.motifRupture}\n`);
           resolve();
         }));
       });
