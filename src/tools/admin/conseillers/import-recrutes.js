@@ -70,8 +70,11 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           const idPGConseiller = parseInt(conseiller['ID conseiller']);
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ idPG: idPGConseiller, estRecrute: true });
           const conseillerOriginal = await db.collection('conseillers').findOne({ idPG: idPGConseiller });
+          // eslint-disable-next-line max-len
+          const conseillerDoublon = await db.collection('conseillers').findOne({ idPG: { '$ne': idPGConseiller }, email: conseillerOriginal?.email, statut: { '$exists': true } });
           const structureId = parseInt(conseiller['ID structure']);
           const structure = await db.collection('structures').findOne({ idPG: structureId });
+          const commentaire = conseiller['Commentaires'];
           const miseEnRelation = await db.collection('misesEnRelation').findOne({
             'conseillerObj.idPG': idPGConseiller,
             'structureObj.idPG': structureId,
@@ -83,48 +86,17 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           const date = date => dayjs(date, 'YYYY-MM-DD').toDate();
           const dateRupture = conseillerOriginal?.ruptures?.slice(-1)[0]?.dateRupture;
           const query = conseillerOriginal?.ruptures ? { '$gt': dateRupture } : { '$gte': miseEnRelation?.dateRecrutement };
-          const matchCras = { 'conseiller.$id': conseillerOriginal._id, 'cra.dateAccompagnement': query };
+          const matchCras = { 'conseiller.$id': conseillerOriginal?._id, 'cra.dateAccompagnement': query };
           const countCras = await db.collection('cras').countDocuments(matchCras);
           const connection = app.get('mongodb');
           const database = connection.substr(connection.lastIndexOf('/') + 1);
-          const dernierCoselec = utils.getCoselec(structure);
+          const dernierCoselec = structure ? utils.getCoselec(structure) : null;
           const countMiseEnrelation = await db.collection('misesEnRelation').countDocuments({
-            'structure.$id': structure._id,
+            'structure.$id': structure?._id,
             'statut': { $in: ['recrutee', 'finalisee'] },
           });
 
-          if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
-            logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
-            errors++;
-          } else if (alreadyRecruted > 0) {
-            logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
-            errors++;
-            // eslint-disable-next-line max-len
-            if (((formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation)) || (formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste)))) {
-              // eslint-disable-next-line max-len
-              const loggerDateFinFormation = `La date fin formation indiquée dans le fichier:${formatDate(dateFinFormation)} n'est pas identique que celui en base:${formatDate(conseillerOriginal.dateFinFormation)}`;
-              // eslint-disable-next-line max-len
-              const loggerDatePrisePoste = `La date Prise de poste indiquée dans le fichier:${formatDate(datePrisePoste)} n'est pas identique que celui en base:${formatDate(conseillerOriginal.datePrisePoste)}`;
-              const loggerDateFin = `${formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation) ? loggerDateFinFormation : ''}`;
-              const loggerDateDebut = `${formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste) ? loggerDatePrisePoste : ''}`;
-              if (loggerDateFin !== '') {
-                logger.info(`${loggerDateFin} pour le conseiller avec l'id: ${idPGConseiller}`);
-              }
-              if (loggerDateDebut !== '') {
-                logger.info(`${loggerDateDebut} pour le conseiller avec l'id: ${idPGConseiller}`);
-              }
-              await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, {
-                $set: {
-                  datePrisePoste: date(datePrisePoste),
-                  dateFinFormation: date(dateFinFormation)
-                } });
-              await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseillerOriginal._id }, {
-                $set: {
-                  'conseillerObj.datePrisePoste': date(datePrisePoste),
-                  'conseillerObj.dateFinFormation': date(dateFinFormation)
-                } });
-            }
-          } else if (conseillerOriginal === null) {
+          if (conseillerOriginal === null) {
             logger.error(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
             Sentry.captureException(`Conseiller avec l'id: ${idPGConseiller} introuvable`);
             errors++;
@@ -132,7 +104,64 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             logger.error(`Structure avec l'idPG '${structureId}' introuvable`);
             Sentry.captureException(`Structure avec l'idPG '${structureId}' introuvable`);
             errors++;
-          } else if (structure.contact.email === conseillerOriginal.email) {
+          } else if (!regexDateFormation.test(conseiller['Date de fin de formation']) || !regexDateFormation.test(conseiller['Date de départ en formation'])) {
+            logger.error(`Format date invalide (attendu DD/MM/YYYY) pour les dates de formation pour le conseiller avec l'id: ${idPGConseiller}`);
+            errors++;
+          } else if (alreadyRecruted > 0) {
+            logger.warn(`Un conseiller avec l'id: ${idPGConseiller} a déjà été recruté`);
+            errors++;
+            if (formatDate(datePrisePoste) === formatDate(dateFinFormation) && commentaire === '') {
+              logger.error(`Conseiller ${idPGConseiller} semble non formé => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
+            } else if (formatDate(datePrisePoste) !== formatDate(dateFinFormation) && commentaire !== '') {
+              // eslint-disable-next-line max-len
+              logger.error(`Conseiller ${idPGConseiller} semble ne pas etre en attente/exempté => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
+              errors++;
+            } else if (commentaire === '') {
+              // eslint-disable-next-line max-len
+              if ((formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation)) || (formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste))) {
+                const loggerDateFormationAvant = `${formatDate(conseillerOriginal.datePrisePoste)}-${formatDate(conseillerOriginal.dateFinFormation)}`;
+                const loggerDatePrisePosteApres = `${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)}`;
+                // eslint-disable-next-line max-len
+                if ((formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste)) || (formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation))) {
+                  logger.info(`Update : ${loggerDateFormationAvant} => ${loggerDatePrisePosteApres} pour le conseiller avec l'id: ${idPGConseiller} (RECRUTE)`);
+                }
+                await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, {
+                  $set: {
+                    datePrisePoste: date(datePrisePoste),
+                    dateFinFormation: date(dateFinFormation)
+                  } });
+                await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseillerOriginal._id }, {
+                  $set: {
+                    'conseillerObj.datePrisePoste': date(datePrisePoste),
+                    'conseillerObj.dateFinFormation': date(dateFinFormation)
+                  } });
+              }
+            } else if (commentaire === 'exempté' && conseillerOriginal?.datePrisePoste !== undefined) {
+              await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, {
+                $unset: {
+                  datePrisePoste: '',
+                  dateFinFormation: ''
+                } });
+              await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseillerOriginal._id }, {
+                $unset: {
+                  'conseillerObj.datePrisePoste': '',
+                  'conseillerObj.dateFinFormation': ''
+                } });
+            } else if (commentaire === 'Formation en septembre' && conseillerOriginal?.datePrisePoste !== null) {
+              await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, {
+                $set: {
+                  datePrisePoste: null,
+                  dateFinFormation: null
+                } });
+              await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseillerOriginal._id }, {
+                $set: {
+                  'conseillerObj.datePrisePoste': null,
+                  'conseillerObj.dateFinFormation': null
+                } });
+            } else if (!['', 'exempté', 'Formation en septembre'].includes(commentaire)) {
+              logger.error(`"${commentaire}" commentaire non géré pour le conseiller avec l'id: ${idPGConseiller} (RECRUTE)`);
+            }
+          } else if (structure?.contact?.email === conseillerOriginal?.email) {
             logger.error(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
             Sentry.captureException(`Email identique entre le conseiller ${idPGConseiller} et la structure '${structureId}'`);
             errors++;
@@ -140,17 +169,29 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             logger.error(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             errors++;
-          } else if (dateRupture && (dateRupture > miseEnRelation.dateRecrutement)) {
+          } else if (dateRupture && (dateRupture > miseEnRelation?.dateRecrutement)) {
             // eslint-disable-next-line max-len
             logger.error(`Un conseiller avec l'id: ${idPGConseiller} a une date de Rupture ${formatDate(dateRupture)} supérieure à la date de recrutement ${formatDate(miseEnRelation.dateRecrutement)}`);
             errors++;
-          } else if (structure.statut !== 'VALIDATION_COSELEC') {
-            logger.error(`La structure ${structureId} est en statut ${structure.statut} (conseiller: ${idPGConseiller})`);
-            Sentry.captureException(`La structure ${structureId} est en statut ${structure.statut} (conseiller: ${idPGConseiller})`);
+          } else if (structure?.statut !== 'VALIDATION_COSELEC') {
+            logger.error(`La structure ${structureId} est en statut ${structure?.statut} (conseiller: ${idPGConseiller})`);
+            Sentry.captureException(`La structure ${structureId} est en statut ${structure?.statut} (conseiller: ${idPGConseiller})`);
             errors++;
-          } else if (countMiseEnrelation > dernierCoselec.nombreConseillersCoselec) {
+          } else if (countMiseEnrelation > dernierCoselec?.nombreConseillersCoselec) {
             logger.error(`La structure ${structureId} a dépassé le quota (conseiller: ${idPGConseiller})`);
             Sentry.captureException(`La structure ${structureId} a dépassé le quota (conseiller: ${idPGConseiller})`);
+            errors++;
+          } else if (!['', 'exempté', 'Formation en septembre'].includes(commentaire)) {
+            logger.error(`"${commentaire}" commentaire non géré pour le conseiller avec l'id: ${idPGConseiller}`);
+            errors++;
+          } else if (formatDate(datePrisePoste) === formatDate(dateFinFormation) && commentaire === '') {
+            logger.error(`Conseiller ${idPGConseiller} semble non formé => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)}`);
+            errors++;
+          } else if (formatDate(datePrisePoste) !== formatDate(dateFinFormation) && commentaire !== '') {
+            logger.error(`Conseiller ${idPGConseiller} semble ne pas etre en attente/exempté => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)}`);
+            errors++;
+          } else if (conseillerDoublon) {
+            logger.error(`Conseiller ${idPGConseiller} a un doublon avec un statut ${conseillerDoublon?.statut} ${conseillerDoublon?.idPG}`);
             errors++;
           } else {
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
@@ -194,14 +235,19 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                 }
               });
             }
+            const conseillerCommentaire = [
+              { commentaire: 'exempté', update: {} },
+              { commentaire: 'Formation en septembre', update: { datePrisePoste: null, dateFinFormation: null } },
+              { commentaire: '', update: { datePrisePoste: date(datePrisePoste), dateFinFormation: date(dateFinFormation) } },
+            ];
+            const conseillerExempte = commentaire === 'exempté' ? { datePrisePoste: '', dateFinFormation: '' } : {};
             await db.collection('conseillers').updateOne({ _id: conseillerOriginal._id }, { $set: {
               statut: 'RECRUTE',
               codeRegionStructure: structure.codeRegion,
               codeDepartementStructure: structure.codeDepartement,
               disponible: false,
               estRecrute: true,
-              datePrisePoste: date(datePrisePoste),
-              dateFinFormation: date(dateFinFormation),
+              ...conseillerCommentaire.find(e => e.commentaire === commentaire)?.update,
               structureId: structure._id,
               userCreated: true
             }, $unset: {
@@ -209,7 +255,8 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               userCreationError: '',
               supHierarchique: '',
               telephonePro: '',
-              emailPro: ''
+              emailPro: '',
+              ...conseillerExempte
             } });
             const conseillerUpdated = await db.collection('conseillers').findOne({ _id: conseillerOriginal._id });
 
@@ -252,7 +299,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
                 'conseillerObj.userCreated': false
               },
               $unset: {
-                inactivite: '',
+                'conseillerObj.inactivite': '',
               }
             });
             if (countCras >= 1) {
