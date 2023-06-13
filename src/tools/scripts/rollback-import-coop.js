@@ -78,6 +78,11 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
         },
         $unset: {
           dateRecrutement: '',
+          dateDebutDeContrat: '',
+          dateFinDeContrat: '',
+          dureeEffectiveContrat: '',
+          numeroDSContrat: '',
+          typeDeContrat: ''
         }
       });
     // MAJ des autres mise en relation
@@ -182,7 +187,9 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
           resetPasswordCNError: '',
           codeRegionStructure: '',
           codeDepartementStructure: '',
-          hasPermanence: ''
+          hasPermanence: '',
+          groupeCRAHistorique: '',
+          groupeCRA: ''
         }
       });
     // partie mise à jour des conseillerObj dans les misesEnRelation
