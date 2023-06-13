@@ -91,7 +91,84 @@ const getStatsCoordination = db => async query =>
     }
   ]).toArray();
 
+const getConseillers = db => async () => await db.collection('conseillers').aggregate([
+  {
+    $match: {
+      'statut': 'RECRUTE',
+      'estCoordinateur': { $ne: true },
+      'nonAffichageCarto': { $ne: true }
+    },
+  },
+  {
+    $lookup: {
+      from: 'structures',
+      let: { idStructure: '$structureId' },
+      as: 'structure',
+      pipeline: [
+        {
+          $match: { $expr: { $eq: ['$$idStructure', '$_id'] } },
+        },
+        {
+          $project: {
+            'nom': 1,
+            'insee.etablissement.adresse': 1,
+            'coordonneesInsee': 1,
+            'location': 1,
+          }
+        }
+      ]
+    }
+  },
+  { $unwind: '$structure' },
+  {
+    $project: {
+      '_id': 1,
+      'prenom': 1,
+      'nom': 1,
+      'emailPro': 1,
+      'telephonePro': 1,
+      'coordinateurs': 1,
+      'structure.nom': 1,
+      'structure.insee.etablissement.adresse': 1,
+      'structure.coordonneesInsee': 1,
+      'structure.location': 1,
+    }
+  }
+]).toArray();
+
+const getPermanences = db => async id => await db.collection('permanences').aggregate([{
+  $match: {
+    $or: [
+      { conseillers: { $in: [id] } },
+      { conseillersItinerants: { $in: [id] } },
+      { lieuPrincipalPour: { $in: [id] } }
+    ]
+  }
+},
+{
+  $addFields: {
+    estPrincipale: {
+      $cond: [
+        { $in: [id, '$lieuPrincipalPour'] },
+        true,
+        false
+      ]
+    }
+  }
+},
+{
+  $project: {
+    _id: 1,
+    nomEnseigne: 1,
+    adresse: 1,
+    location: 1,
+    estPrincipale: 1
+  }
+}]).toArray();
+
 module.exports = {
   getCoordinateurs,
   getStatsCoordination,
+  getConseillers,
+  getPermanences,
 };

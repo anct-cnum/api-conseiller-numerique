@@ -1,4 +1,4 @@
-const { listeCoordinateurs } = require('./coordinateurs.core');
+const { listeCoordinateurs, listeConseillers } = require('./coordinateurs.core');
 
 
 describe('liste des coordinateurs', () => {
@@ -419,5 +419,451 @@ describe('liste des coordinateurs', () => {
     ]);
   });
 
+
+});
+
+describe('liste des conseillers', () => {
+  it('devrait avoir les informations de base (id, nom, prénom) avec les informations de sa structure', async () => {
+    const conseiller = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      prenom: 'Riri',
+      nom: 'FIFI',
+      listeSubordonnes: {
+        type: 'codeRegion',
+        liste: ['01', '02']
+      },
+      structure: {
+        nom: 'CCAS',
+        location: {
+          type: 'Point',
+          coordinates: [2.1681, 48.8173]
+        },
+        coordonneesInsee: {
+          type: 'Point',
+          coordinates: [2.51, 48.813453]
+        },
+        insee: {
+          etablissement: {
+            adresse: {
+              numero_voie: '14',
+              type_voie: 'RUE',
+              nom_voie: 'LOUIS TALAMONI',
+              complement_adresse: null,
+              code_postal: '94500',
+              localite: 'CHAMPIGNY-SUR-MARNE',
+            }
+          }
+        },
+      },
+    };
+
+    const resultat = await listeConseillers({
+      getConseillers: () => [conseiller],
+      getPermanences: () => []
+    });
+
+    expect(resultat).toStrictEqual([
+      {
+        'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        'nom': 'Riri Fifi',
+        'latitude': 48.813453,
+        'longitude': 2.51,
+        'structurePorteuse': {
+          'nom': 'CCAS',
+          'adresse': '14 RUE LOUIS TALAMONI, 94500 CHAMPIGNY-SUR-MARNE',
+        },
+        'lieuActivitePrincipal': {},
+        'lieuActivite': [],
+      }
+    ]);
+  });
+
+  it('devrait avoir les informations email et téléphone si renseignées', async () => {
+    const conseiller = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      prenom: 'Riri',
+      nom: 'FIFI',
+      emailPro: 'riri.fifi@test.fr',
+      telephonePro: '+33122223333',
+      listeSubordonnes: {
+        type: 'codeRegion',
+        liste: ['01', '02']
+      },
+      structure: {
+        nom: 'CCAS',
+        location: {
+          type: 'Point',
+          coordinates: [2.1681, 48.8173]
+        },
+        coordonneesInsee: {
+          type: 'Point',
+          coordinates: [2.51, 48.813453]
+        },
+        insee: {
+          etablissement: {
+            adresse: {
+              numero_voie: '14',
+              type_voie: 'RUE',
+              nom_voie: 'LOUIS TALAMONI',
+              complement_adresse: null,
+              code_postal: '94500',
+              localite: 'CHAMPIGNY-SUR-MARNE',
+            }
+          }
+        },
+      },
+    };
+
+    const resultat = await listeConseillers({
+      getConseillers: () => [conseiller],
+      getPermanences: () => []
+    });
+
+    expect(resultat).toStrictEqual([
+      {
+        'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        'nom': 'Riri Fifi',
+        'latitude': 48.813453,
+        'longitude': 2.51,
+        'courriel': 'riri.fifi@test.fr',
+        'telephone': '+33122223333',
+        'structurePorteuse': {
+          'nom': 'CCAS',
+          'adresse': '14 RUE LOUIS TALAMONI, 94500 CHAMPIGNY-SUR-MARNE',
+        },
+        'lieuActivitePrincipal': {},
+        'lieuActivite': [],
+      }
+    ]);
+  });
+
+  it('devrait avoir les informations de la permanence principale si renseignée', async () => {
+    const conseiller = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      prenom: 'Riri',
+      nom: 'FIFI',
+      emailPro: 'riri.fifi@test.fr',
+      telephonePro: '+33122223333',
+      listeSubordonnes: {
+        type: 'codeRegion',
+        liste: ['01', '02']
+      },
+      structure: {
+        nom: 'CCAS',
+        location: {
+          type: 'Point',
+          coordinates: [2.1681, 48.8173]
+        },
+        coordonneesInsee: {
+          type: 'Point',
+          coordinates: [2.51, 48.813453]
+        },
+        insee: {
+          etablissement: {
+            adresse: {
+              numero_voie: '14',
+              type_voie: 'RUE',
+              nom_voie: 'LOUIS TALAMONI',
+              complement_adresse: null,
+              code_postal: '94500',
+              localite: 'CHAMPIGNY-SUR-MARNE',
+            }
+          }
+        },
+      },
+    };
+
+    const permanences = [{
+      _id: 'abf48891b3f44bdf86bb7bc2601d3666',
+      nomEnseigne: 'Super permanence',
+      adresse: {
+        ville: 'Paris',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [6.195988106, 49.10819284]
+      },
+      estPrincipale: true,
+    }];
+
+    const resultat = await listeConseillers({
+      getConseillers: () => [conseiller],
+      getPermanences: () => permanences
+    });
+
+    expect(resultat).toStrictEqual([
+      {
+        'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        'nom': 'Riri Fifi',
+        'latitude': 49.10819284,
+        'longitude': 6.195988106,
+        'courriel': 'riri.fifi@test.fr',
+        'telephone': '+33122223333',
+        'structurePorteuse': {
+          'nom': 'CCAS',
+          'adresse': '14 RUE LOUIS TALAMONI, 94500 CHAMPIGNY-SUR-MARNE',
+        },
+        'lieuActivitePrincipal': {
+          'nom': 'Super permanence',
+          'adresse': '12 BIS RUE DE LECLERCQ, 51100 Paris',
+        },
+        'lieuActivite': [],
+      }
+    ]);
+  });
+
+  it('devrait avoir les informations des permanences secondaires si renseignées', async () => {
+    const conseiller = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      prenom: 'Riri',
+      nom: 'FIFI',
+      emailPro: 'riri.fifi@test.fr',
+      telephonePro: '+33122223333',
+      listeSubordonnes: {
+        type: 'codeRegion',
+        liste: ['01', '02']
+      },
+      structure: {
+        nom: 'CCAS',
+        location: {
+          type: 'Point',
+          coordinates: [2.1681, 48.8173]
+        },
+        coordonneesInsee: {
+          type: 'Point',
+          coordinates: [2.51, 48.813453]
+        },
+        insee: {
+          etablissement: {
+            adresse: {
+              numero_voie: '14',
+              type_voie: 'RUE',
+              nom_voie: 'LOUIS TALAMONI',
+              complement_adresse: null,
+              code_postal: '94500',
+              localite: 'CHAMPIGNY-SUR-MARNE',
+            }
+          }
+        },
+      },
+    };
+
+    const permanences = [{
+      _id: 'abf48891b3f44bdf86bb7bc2601d3666',
+      nomEnseigne: 'Super permanence',
+      adresse: {
+        ville: 'Paris',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [6.195988106, 49.10819284]
+      },
+      estPrincipale: true,
+    }, {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3777',
+      nomEnseigne: 'Permanence secondaire',
+      adresse: {
+        ville: 'Nantes',
+        codePostal: '44000',
+        numeroRue: '13',
+        rue: 'RUE DE NANTES'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [6.195988106, 49.10819284]
+      },
+      estPrincipale: false,
+    }, {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3888',
+      nomEnseigne: 'Permanence secondaire 2',
+      adresse: {
+        ville: 'Rennes',
+        codePostal: '35000',
+        numeroRue: '12',
+        rue: 'RUE DE RENNES'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [6.195988106, 49.10819284]
+      },
+      estPrincipale: false,
+    }];
+
+    const resultat = await listeConseillers({
+      getConseillers: () => [conseiller],
+      getPermanences: () => permanences
+    });
+
+    expect(resultat).toStrictEqual([
+      {
+        'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        'nom': 'Riri Fifi',
+        'latitude': 49.10819284,
+        'longitude': 6.195988106,
+        'courriel': 'riri.fifi@test.fr',
+        'telephone': '+33122223333',
+        'structurePorteuse': {
+          'nom': 'CCAS',
+          'adresse': '14 RUE LOUIS TALAMONI, 94500 CHAMPIGNY-SUR-MARNE',
+        },
+        'lieuActivitePrincipal': {
+          'nom': 'Super permanence',
+          'adresse': '12 BIS RUE DE LECLERCQ, 51100 Paris',
+        },
+        'lieuActivite': [{
+          'id': 'abf48891b3f44bdf86bb7bc2601d3777',
+          'nom': 'Permanence secondaire',
+          'commune': 'Nantes',
+          'codePostal': '44000'
+        }, {
+          'id': 'abf48891b3f44bdf86bb7bc2601d3888',
+          'nom': 'Permanence secondaire 2',
+          'commune': 'Rennes',
+          'codePostal': '35000'
+        }],
+      }
+    ]);
+  });
+
+  it('devrait avoir les informations des coordinateurs si coordoné', async () => {
+    const conseiller = {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',
+      prenom: 'Riri',
+      nom: 'FIFI',
+      emailPro: 'riri.fifi@test.fr',
+      telephonePro: '+33122223333',
+      listeSubordonnes: {
+        type: 'codeRegion',
+        liste: ['01', '02']
+      },
+      structure: {
+        nom: 'CCAS',
+        location: {
+          type: 'Point',
+          coordinates: [2.1681, 48.8173]
+        },
+        coordonneesInsee: {
+          type: 'Point',
+          coordinates: [2.51, 48.813453]
+        },
+        insee: {
+          etablissement: {
+            adresse: {
+              numero_voie: '14',
+              type_voie: 'RUE',
+              nom_voie: 'LOUIS TALAMONI',
+              complement_adresse: null,
+              code_postal: '94500',
+              localite: 'CHAMPIGNY-SUR-MARNE',
+            }
+          }
+        },
+      },
+      coordinateurs: [{
+        id: 'abf48891b3f44bdf86bb7bc2601d3665',
+        prenom: 'carole',
+        nom: 'animatrice',
+      }, {
+        id: 'abf48891b3f44bdf86bb7bc2601d3775',
+        prenom: 'jean',
+        nom: 'animateur',
+      }]
+    };
+
+    const permanences = [{
+      _id: 'abf48891b3f44bdf86bb7bc2601d3666',
+      nomEnseigne: 'Super permanence',
+      adresse: {
+        ville: 'Paris',
+        codePostal: '51100',
+        numeroRue: '12 BIS',
+        rue: 'RUE DE LECLERCQ'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [6.195988106, 49.10819284]
+      },
+      estPrincipale: true,
+    }, {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3777',
+      nomEnseigne: 'Permanence secondaire',
+      adresse: {
+        ville: 'Nantes',
+        codePostal: '44000',
+        numeroRue: '13',
+        rue: 'RUE DE NANTES'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [6.195988106, 49.10819284]
+      },
+      estPrincipale: false,
+    }, {
+      _id: 'abf48891b3f44bdf86bb7bc2601d3888',
+      nomEnseigne: 'Permanence secondaire 2',
+      adresse: {
+        ville: 'Rennes',
+        codePostal: '35000',
+        numeroRue: '12',
+        rue: 'RUE DE RENNES'
+      },
+      location: {
+        type: 'Point',
+        coordinates: [6.195988106, 49.10819284]
+      },
+      estPrincipale: false,
+    }];
+
+    const resultat = await listeConseillers({
+      getConseillers: () => [conseiller],
+      getPermanences: () => permanences
+    });
+
+    expect(resultat).toStrictEqual([
+      {
+        'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
+        'coordinateurs': [
+          {
+            'id': 'abf48891b3f44bdf86bb7bc2601d3665',
+            'nom': 'Carole Animatrice'
+          },
+          {
+            'id': 'abf48891b3f44bdf86bb7bc2601d3775',
+            'nom': 'Jean Animateur'
+          }
+        ],
+        'nom': 'Riri Fifi',
+        'latitude': 49.10819284,
+        'longitude': 6.195988106,
+        'courriel': 'riri.fifi@test.fr',
+        'telephone': '+33122223333',
+        'structurePorteuse': {
+          'nom': 'CCAS',
+          'adresse': '14 RUE LOUIS TALAMONI, 94500 CHAMPIGNY-SUR-MARNE',
+        },
+        'lieuActivitePrincipal': {
+          'nom': 'Super permanence',
+          'adresse': '12 BIS RUE DE LECLERCQ, 51100 Paris',
+        },
+        'lieuActivite': [{
+          'id': 'abf48891b3f44bdf86bb7bc2601d3777',
+          'nom': 'Permanence secondaire',
+          'commune': 'Nantes',
+          'codePostal': '44000'
+        }, {
+          'id': 'abf48891b3f44bdf86bb7bc2601d3888',
+          'nom': 'Permanence secondaire 2',
+          'commune': 'Rennes',
+          'codePostal': '35000'
+        }],
+      }
+    ]);
+  });
 
 });

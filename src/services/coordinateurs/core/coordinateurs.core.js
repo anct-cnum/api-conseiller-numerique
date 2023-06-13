@@ -13,18 +13,18 @@ const telephoneIfAny = telephone => telephone && checkLengthPhone(telephone) ? {
 const PERIMETRES_LIST = { 'conseillers': 'Bassin de vie', 'codeDepartement': 'Départemental', 'codeRegion': 'Régional' };
 const formatPerimetre = type => PERIMETRES_LIST[type] ? { perimetre: PERIMETRES_LIST[type] } : {};
 
-const getGeometryPositions = coordinateur => {
+const getGeometryPositions = conseiller => {
   let longitude;
   let latitude;
-  if (coordinateur.permanence?.location?.coordinates) {
-    longitude = coordinateur.permanence.location.coordinates[0];
-    latitude = coordinateur.permanence.location.coordinates[1];
-  } else if (coordinateur.structure.coordonneesInsee?.coordinates) {
-    longitude = coordinateur.structure.coordonneesInsee?.coordinates[0];
-    latitude = coordinateur.structure.coordonneesInsee?.coordinates[1];
+  if (conseiller.permanence?.location?.coordinates) {
+    longitude = conseiller.permanence.location.coordinates[0];
+    latitude = conseiller.permanence.location.coordinates[1];
+  } else if (conseiller.structure.coordonneesInsee?.coordinates) {
+    longitude = conseiller.structure.coordonneesInsee?.coordinates[0];
+    latitude = conseiller.structure.coordonneesInsee?.coordinates[1];
   } else {
-    longitude = coordinateur.structure.location?.coordinates[0];
-    latitude = coordinateur.structure.location?.coordinates[1];
+    longitude = conseiller.structure.location?.coordinates[0];
+    latitude = conseiller.structure.location?.coordinates[1];
   }
 
   return { latitude, longitude };
@@ -68,12 +68,68 @@ const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination }) =>
       ...formatPerimetre(coordinateur.listeSubordonnes.type),
       ...await getStats(getStatsCoordination, coordinateur.listeSubordonnes, coordinateur._id),
       dispositif: 'CnFS',
-      ...getGeometryPositions(coordinateur, 1),
+      ...getGeometryPositions(coordinateur),
+    };
+  }));
+};
+
+const listePermanences = permanences => {
+  const lieuActivitePrincipal = permanences.filter(permanence => permanence.estPrincipale === true)?.map(lieuPrincipal => {
+    return {
+      nom: lieuPrincipal.nomEnseigne,
+      adresse: formatAddressFromPermanence(lieuPrincipal.adresse)
+    };
+  })[0] ?? {};
+  const lieuActivite = permanences.filter(permanence => permanence.estPrincipale !== true)?.map(permanence => {
+    return {
+      id: permanence._id.toString(),
+      nom: permanence.nomEnseigne,
+      commune: permanence.adresse?.ville,
+      codePostal: permanence.adresse?.codePostal,
+    };
+  }) ?? {};
+  return {
+    lieuActivitePrincipal,
+    lieuActivite
+  };
+};
+
+const coordinateursIfAny = coordinateurs => {
+  if (coordinateurs) {
+    return {
+      coordinateurs: coordinateurs.map(coordinateur => {
+        return {
+          id: coordinateur.id.toString(),
+          nom: formatTexte(coordinateur.prenom) + ' ' + formatTexte(coordinateur.nom),
+        };
+      })
+    };
+  }
+  return {};
+};
+
+const listeConseillers = async ({ getConseillers, getPermanences }) => {
+  let conseillers = await getConseillers();
+  return await Promise.all(conseillers.map(async conseiller => {
+    const permanences = await getPermanences(conseiller._id);
+    return {
+      id: conseiller._id.toString(),
+      ...coordinateursIfAny(conseiller.coordinateurs),
+      nom: formatTexte(conseiller.prenom) + ' ' + formatTexte(conseiller.nom),
+      ...getGeometryPositions({ ...conseiller, permanence: permanences.filter(permanence => permanence.estPrincipale === true)[0] }),
+      ...courrielIfAny(conseiller.emailPro),
+      ...telephoneIfAny(conseiller.telephonePro),
+      structurePorteuse: {
+        nom: conseiller.structure.nom,
+        adresse: formatAddressFromInsee(conseiller.structure.insee?.etablissement?.adresse),
+      },
+      ...listePermanences(permanences),
     };
   }));
 };
 
 module.exports = {
   listeCoordinateurs,
+  listeConseillers,
 };
 
