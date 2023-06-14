@@ -59,12 +59,12 @@ describe('liste des coordinateurs', () => {
       ]
     };
 
-    const lieux = await listeCoordinateurs({
+    const resultat = await listeCoordinateurs({
       getCoordinateurs: () => [coordinateur],
       getStatsCoordination: () => [statsCoordination]
     });
 
-    expect(lieux).toStrictEqual([
+    expect(resultat).toStrictEqual([
       {
         'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
         'prenom': 'Jean-Claude',
@@ -126,12 +126,12 @@ describe('liste des coordinateurs', () => {
       ]
     };
 
-    const lieux = await listeCoordinateurs({
+    const resultat = await listeCoordinateurs({
       getCoordinateurs: () => [coordinateur],
       getStatsCoordination: () => [statsCoordination]
     });
 
-    expect(lieux).toStrictEqual([
+    expect(resultat).toStrictEqual([
       {
         'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
         'prenom': 'Jean-Claude',
@@ -196,12 +196,12 @@ describe('liste des coordinateurs', () => {
       ]
     };
 
-    const lieux = await listeCoordinateurs({
+    const resultat = await listeCoordinateurs({
       getCoordinateurs: () => [coordinateur],
       getStatsCoordination: () => [statsCoordination]
     });
 
-    expect(lieux).toStrictEqual([
+    expect(resultat).toStrictEqual([
       {
         'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
         'prenom': 'Jean-Claude',
@@ -264,12 +264,12 @@ describe('liste des coordinateurs', () => {
       ]
     };
 
-    const lieux = await listeCoordinateurs({
+    const resultat = await listeCoordinateurs({
       getCoordinateurs: () => [coordinateur],
       getStatsCoordination: () => [statsCoordination]
     });
 
-    expect(lieux).toStrictEqual([
+    expect(resultat).toStrictEqual([
       {
         'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
         'prenom': 'Jean-Claude',
@@ -330,12 +330,12 @@ describe('liste des coordinateurs', () => {
       ]
     };
 
-    const lieux = await listeCoordinateurs({
+    const resultat = await listeCoordinateurs({
       getCoordinateurs: () => [coordinateur],
       getStatsCoordination: () => [statsCoordination]
     });
 
-    expect(lieux).toStrictEqual([
+    expect(resultat).toStrictEqual([
       {
         'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
         'prenom': 'Jean-Claude',
@@ -396,12 +396,12 @@ describe('liste des coordinateurs', () => {
       ]
     };
 
-    const lieux = await listeCoordinateurs({
+    const resultat = await listeCoordinateurs({
       getCoordinateurs: () => [coordinateur],
       getStatsCoordination: () => [statsCoordination]
     });
 
-    expect(lieux).toStrictEqual([
+    expect(resultat).toStrictEqual([
       {
         'id': 'abf48891b3f44bdf86bb7bc2601d3d5b',
         'prenom': 'Jean-Claude',
