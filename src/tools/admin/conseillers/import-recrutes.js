@@ -269,7 +269,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
 
             await db.collection('misesEnRelation').updateMany({
               'conseillerObj.idPG': idPGConseiller,
-              'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee'] }
+              'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee','recrutee'] }
             }, {
               $set: {
                 statut: 'finalisee_non_disponible',
