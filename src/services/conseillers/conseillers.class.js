@@ -992,7 +992,7 @@ exports.Conseillers = class Conseillers extends Service {
 
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: {
-            'conseillerObj.dateDisponible': dateDisponibilite,
+            'conseillerObj.dateDisponibilite': dateDisponibilite,
             'conseillerObj.updatedAt': updatedAt
           }
         });
