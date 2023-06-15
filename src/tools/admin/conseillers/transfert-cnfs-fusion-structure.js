@@ -5,24 +5,21 @@ const { program } = require('commander');
 const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
-const dayjs = require('dayjs');
+
 
 execute(__filename, async ({ db, logger, exit, app }) => {
-  const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
 
   program.option('-i, --id <id>', 'id: id Mongo du conseiller à transférer');
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: structure de destination');
-  program.option('-d, --date <date>', 'date: date de recrutement');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   let idCNFS = program.id;
   let ancienneSA = program.ancienne;
   let nouvelleSA = program.nouvelle;
-  let dateEmbauche = program.date;
 
-  if (!idCNFS || !ancienneSA || !nouvelleSA || !dateEmbauche) {
+  if (!idCNFS || !ancienneSA || !nouvelleSA) {
     exit('Paramètres invalides. Veuillez préciser un id du conseiller ainsi qu\'un id de la structure actuelle; un id de la structure destinataire et la date');
     return;
   }
@@ -30,7 +27,6 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   idCNFS = new ObjectID(program.id);
   ancienneSA = new ObjectID(program.ancienne);
   nouvelleSA = new ObjectID(program.nouvelle);
-  dateEmbauche = formatDate(program.dateEmbauche);
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
   if (!cnfsRecrute) {
@@ -53,7 +49,11 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     exit(`La structure destinataire est seulement autorisé  à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recrutée(s)`);
     return;
   }
-
+  // eslint-disable-next-line max-len
+  if (cnfsRecrute?.codeRegionStructure !== structureDestination?.codeRegion || cnfsRecrute?.codeDepartementStructure !== structureDestination?.codeDepartement) {
+  // eslint-disable-next-line max-len
+    logger.warn(`Une différence de departement ou région a été détecté ! Region:${cnfsRecrute?.codeRegionStructure} vs ${structureDestination?.codeRegion} / departement: ${cnfsRecrute.codeDepartementStructure} vs ${structureDestination?.codeDepartement}`);
+  }
   await db.collection('conseillers').updateOne({ _id: idCNFS }, { $set: { structureId: nouvelleSA } });
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj.structureId': nouvelleSA } });
 
@@ -61,7 +61,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     { 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA },
     { $set: {
       statut: 'finalisee_non_disponible',
-      transfert: {
+      fusion: {
         'destinationStructureId': nouvelleSA,
         'date': new Date()
       }
@@ -69,7 +69,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     });
 
   const misesEnrelationNouvelleSA = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': nouvelleSA });
-  const transfert = {
+  const fusion = {
     'ancienneStructureId': ancienneSA,
     'date': new Date()
   };
@@ -87,24 +87,69 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       createdAt: new Date(),
       conseillerObj: conseiller,
       structureObj: structure,
-      transfert
+      fusion
     });
   } else {
     await db.collection('misesEnRelation').updateOne(
       { 'conseiller.$id': idCNFS, 'structure.$id': nouvelleSA },
       { $set: {
         statut: 'finalisee',
-        transfert
+        fusion
       }
       });
   }
+  // Partie CRAS
   await db.collection('cras').updateMany(
     { 'conseiller.$id': idCNFS,
-      'cra.dateAccompagnement': { '$gte': dateEmbauche }
+      'structure.$id': ancienneSA
     }, {
       $set: { 'structure.$id': nouvelleSA }
     });
+  // Partie Permanence
+  const getPermAncienneSA = await db.collection('permanences').find(
+    { 'conseillers': { $in: idCNFS }, 'structure.$id': ancienneSA },
+  ).toArray();
+  const getPermNouvelleSA = await db.collection('permanences').find(
+    { 'structure.$id': nouvelleSA },
+  ).toArray();
 
-  logger.info(`Le conseiller id: ${idCNFS} a été transféré de la structure: ${ancienneSA} vers la structure: ${nouvelleSA}`);
+  for (let permanence of getPermAncienneSA) {
+    // eslint-disable-next-line max-len
+    const verifDoublon = getPermNouvelleSA.filter(i => i.location.coordinates === permanence.location.coordinates && i.adresse.rue === permanence.adresse.rue);
+    if (permanence.conseillers.length === 1) {
+      await db.collection('permanences').updateOne(
+        { _id: permanence?._id },
+        { $set: { 'structure.$id': nouvelleSA } }
+      );
+      return;
+    }
+    await db.collection('permanences').updateOne(
+      { _id: permanence?._id },
+      { $pull: { conseillers: idCNFS, conseillersItinerants: idCNFS, lieuPrincipalPour: idCNFS } }
+    );
+    if (verifDoublon.length === 0) {
+      delete permanence._id;
+      const insertPermanence = {
+        ...permanence,
+        'conseillers': [idCNFS],
+        'conseillersItinerants': permanence.conseillersItinerants.filter(i => i === idCNFS),
+        'lieuPrincipalPour': permanence.lieuPrincipalPour.filter(i => i === idCNFS),
+        'structure.$id': nouvelleSA,
+        'updatedBy': idCNFS,
+        'updatedAt': new Date()
+      };
+      await db.collection('permanences').insertOne(insertPermanence);
+    } else {
+      await db.collection('permanences').updateOne(
+        { _id: verifDoublon[0]?._id },
+        { $push: { conseillers: idCNFS } }
+      );
+    }
+  }
+  const getPermAncienneSARestante = await db.collection('permanences').find(
+    { 'conseillers': { $in: idCNFS }, 'structure.$id': ancienneSA }
+  ).toArray();
+  logger.info(`Il reste ${getPermAncienneSARestante.length} permanences à traiter`);
+  logger.info(`Le conseiller id: ${idCNFS} a été transféré de la structure: ${ancienneSA} vers la structure: ${nouvelleSA} (FUSION)`);
   exit();
 });
