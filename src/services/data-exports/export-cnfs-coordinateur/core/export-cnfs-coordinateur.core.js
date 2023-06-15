@@ -7,8 +7,8 @@ const prettifyAndComplete = () => async statCnfs => {
   const { mattermost, certifie, ...nextStatCnfs } = statCnfs;
   return {
     ...nextStatCnfs,
-    datePrisePoste: nextStatCnfs.datePrisePoste ? formatDate(nextStatCnfs.datePrisePoste) : 'Non renseignée',
-    dateFinFormation: nextStatCnfs.dateFinFormation ? formatDate(nextStatCnfs.dateFinFormation) : 'Non renseignée',
+    datePrisePoste: nextStatCnfs?.datePrisePoste ? formatDate(nextStatCnfs.datePrisePoste) : 'Non renseignée',
+    dateFinFormation: nextStatCnfs?.dateFinFormation ? formatDate(nextStatCnfs.dateFinFormation) : 'Non renseignée',
     isUserActif: userActifStatus(mattermost),
     certifie: certifie === true ? 'Oui' : 'Non',
   };
