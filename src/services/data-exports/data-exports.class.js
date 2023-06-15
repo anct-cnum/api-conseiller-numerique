@@ -115,7 +115,7 @@ exports.DataExports = class DataExports {
       // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
 
-      const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
+      const formatDate = date => dayjs(new Date(date?.getTime() + 120 * 60000)).format('DD/MM/YYYY');
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
@@ -303,17 +303,17 @@ exports.DataExports = class DataExports {
             }
 
             // Adresse
-            let adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
-            (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
-            (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + '\n' +
-            (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + '\n' : '') +
-            (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
-            (structure?.insee?.etablissement?.adresse?.localite ?? '');
+            let adresse = (structure?.insee?.adresse?.numero_voie ?? '') + ' ' +
+            (structure?.insee?.adresse?.type_voie ?? '') + ' ' +
+            (structure?.insee?.adresse?.libelle_voie ?? '') + '\n' +
+            (structure?.insee?.adresse?.complement_adresse ? structure.insee.adresse.complement_adresse + '\n' : '') +
+            (structure?.insee?.adresse?.code_postal ?? '') + ' ' +
+            (structure?.insee?.adresse?.libelle_commune ?? '');
 
             adresse = adresse.replace(/["']/g, '');
 
             // eslint-disable-next-line max-len
-            res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}";${structure?.insee?.entreprise?.forme_juridique ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
+            res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ? structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale : ''};${structure?.insee?.adresse?.libelle_commune ? structure?.insee?.adresse?.libelle_commune : ''};${structure?.insee?.adresse?.code_commune ? structure?.insee?.adresse?.code_commune : ''};"${adresse}";${structure?.insee?.unite_legale?.forme_juridique?.libelle ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
           } catch (e) {
             // TODO : logger
           }
@@ -366,17 +366,17 @@ exports.DataExports = class DataExports {
             label = 'non';
           }
           // Adresse
-          let adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
-          (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
-          (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + '\n' +
-          (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + '\n' : '') +
-          (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
-          (structure?.insee?.etablissement?.adresse?.localite ?? '');
+          let adresse = (structure?.insee?.adresse?.numero_voie ?? '') + ' ' +
+          (structure?.insee?.adresse?.type_voie ?? '') + ' ' +
+          (structure?.insee?.adresse?.libelle_voie ?? '') + '\n' +
+          (structure?.insee?.adresse?.complement_adresse ? structure.insee.adresse.complement_adresse + '\n' : '') +
+          (structure?.insee?.adresse?.code_postal ?? '') + ' ' +
+          (structure?.insee?.adresse?.libelle_commune ?? '');
 
           adresse = adresse.replace(/["']/g, '');
 
           // eslint-disable-next-line max-len
-          res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${isActiveStructure >= 1 ? 'OUI' : 'NON'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.entreprise?.raison_sociale ? structure?.insee?.entreprise?.raison_sociale : ''};${structure?.insee?.etablissement?.commune_implantation?.value ? structure?.insee?.etablissement?.commune_implantation?.value : ''};${structure?.insee?.etablissement?.commune_implantation?.code ? structure?.insee?.etablissement?.commune_implantation?.code : ''};"${adresse}";${structure?.insee?.entreprise?.forme_juridique ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
+          res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${isActiveStructure >= 1 ? 'OUI' : 'NON'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ? structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale : ''};${structure?.insee?.adresse?.libelle_commune ? structure?.insee?.adresse?.libelle_commune : ''};${structure?.insee?.adresse?.code_commune ? structure?.insee?.adresse?.code_commune : ''};"${adresse}";${structure?.insee?.unite_legale?.forme_juridique?.libelle ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
           resolve();
         }));
       });

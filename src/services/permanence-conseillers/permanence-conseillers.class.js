@@ -221,9 +221,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
               l2: adresse?.l2 ?? '',
               numero_voie: voie ?? '',
               type_voie: adresse?.type_voie ?? '',
-              nom_voie: adresse?.libelle_voie ?? '',
+              libelle_voie: adresse?.libelle_voie ?? '',
               code_postal: adresse?.code_postal ?? '',
-              localite: adresse?.libelle_commune ?? '',
+              libelle_commune: adresse?.libelle_commune ?? '',
               adresseComplete: adresseComplete,
             };
 

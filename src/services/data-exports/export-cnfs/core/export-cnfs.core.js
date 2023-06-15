@@ -6,12 +6,12 @@ const userActifStatus = (mattermost, emailCNError) => mattermost !== undefined &
 
 const formatAdresseStructure = insee => {
 
-  let adresse = (insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
-  (insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
-  (insee?.etablissement?.adresse?.nom_voie ?? '') + ' ' +
-  (insee?.etablissement?.adresse?.complement_adresse ? insee.etablissement.adresse.complement_adresse + ' ' : ' ') +
-  (insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
-  (insee?.etablissement?.adresse?.localite ?? '');
+  let adresse = (insee?.adresse?.numero_voie ?? '') + ' ' +
+  (insee?.adresse?.type_voie ?? '') + ' ' +
+  (insee?.adresse?.libelle_voie ?? '') + ' ' +
+  (insee?.adresse?.complement_adresse ? insee.adresse.complement_adresse + ' ' : ' ') +
+  (insee?.adresse?.code_postal ?? '') + ' ' +
+  (insee?.adresse?.libelle_commune ?? '');
 
   return adresse.replace(/["']/g, '');
 };
@@ -22,6 +22,7 @@ const valueHistoryCra = groupeCRAHistorique =>
   JSON.stringify(`${groupeCRAHistorique.map(h => `${`groupe ${h.numero} le ${dayjs(h.dateDeChangement).format('DD/MM/YYYY')}`}`)}`);
 
 const prettifyAndComplete = () => async statCnfs => {
+  console.log(statCnfs);
   const { emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
   return {
     ...nextStatCnfs,

@@ -37,7 +37,7 @@ execute(__filename, async ({ logger, db }) => {
         'structure.nom': 1,
         'structure.siret': 1,
         'structure.codePostal': 1,
-        'structure.insee.etablissement.adresse': 1
+        'structure.insee.adresse': 1
       }
     }
   ]).toArray();
@@ -54,12 +54,12 @@ execute(__filename, async ({ logger, db }) => {
 
   cnfs.forEach(conseiller => {
     promises.push(new Promise(async resolve => {
-      let adresse = (conseiller.structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
-      (conseiller.structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
-      (conseiller.structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + ' ' +
-      (conseiller.structure?.insee?.etablissement?.adresse?.complement_adresse ? conseiller.structure.insee.etablissement.adresse.complement_adresse + ' ' : '') +
-      (conseiller.structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
-      (conseiller.structure?.insee?.etablissement?.adresse?.localite ?? '');
+      let adresse = (conseiller.structure?.insee?.adresse?.numero_voie ?? '') + ' ' +
+      (conseiller.structure?.insee?.adresse?.type_voie ?? '') + ' ' +
+      (conseiller.structure?.insee?.adresse?.libelle_voie ?? '') + ' ' +
+      (conseiller.structure?.insee?.adresse?.complement_adresse ? conseiller.structure.insee.adresse.complement_adresse + ' ' : '') +
+      (conseiller.structure?.insee?.adresse?.code_postal ?? '') + ' ' +
+      (conseiller.structure?.insee?.adresse?.libelle_commube ?? '');
       adresse = adresse.replace(/["',]/g, '');
 
       file.write(`${conseiller.nom};${conseiller.prenom};${conseiller.emailPro ?? 'Non renseigné'};${conseiller.emailCN.address};${conseiller.structure.nom.replace(/["',]/g, '')};${conseiller.structure.siret ?? 'non renseigné'};${conseiller.structure.codePostal};${adresse}\n`);
