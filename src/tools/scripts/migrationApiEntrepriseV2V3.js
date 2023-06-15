@@ -8,7 +8,7 @@ const { program } = require('commander');
 program.option('-limit, --limit <limit>', 'Nombre de structures traitées', parseInt).parse(process.argv);
 
 const getStructureApiEntrepriseV2 = db => async limit => {
-  return await db.collection('structures').find({ 'inseeV2.etablissement': { '$exists': true }, 'insee.adresse': { '$exists': false } }).limit(limit).toArray();
+  return await db.collection('structures').find({ 'insee.etablissement': { '$exists': true }, 'insee.adresse': { '$exists': false } }).limit(limit).toArray();
 };
 const renameInseeStructure = db => async structure => {
   await db.collection('structures').updateOne({ '_id': structure._id },
@@ -36,7 +36,7 @@ execute(__filename, async ({ logger, db, app }) => {
     structures?.forEach(structure => {
       promises.push(new Promise(async resolve => {
         //récupération de la data insee V3
-        const insee = await getEtablissementBySiretEntrepriseApiV3(structure.inseeV2.etablissement.siret, app.get('api_entreprise'));
+        const insee = await getEtablissementBySiretEntrepriseApiV3(structure.insee.etablissement.siret, app.get('api_entreprise'));
         if (insee) {
           //renommer insee en inseeV2 le temps de valider la migration
           await renameInseeStructure(db)(structure);
