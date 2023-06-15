@@ -35,6 +35,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
   const cp = codePostal === undefined ? data.properties.codesPostaux[0] : codePostal;
+  const updatedAt = new Date();
 
   const miseAJour = {
     location: data.geometry,
@@ -42,7 +43,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     nomCommune: data.properties.nom,
     codeCommune: data.properties.code,
     codeDepartement: data.properties.codeDepartement,
-    codeRegion: data.properties.codeRegion
+    codeRegion: data.properties.codeRegion,
+    updatedAt: updatedAt
   };
   const miseAJourMiseEnRelation = {
     'conseillerObj.location': data.geometry,
@@ -50,7 +52,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     'conseillerObj.nomCommune': data.properties.nom,
     'conseillerObj.codeCommune': data.properties.code,
     'conseillerObj.codeDepartement': data.properties.codeDepartement,
-    'conseillerObj.codeRegion': data.properties.codeRegion
+    'conseillerObj.codeRegion': data.properties.codeRegion,
+    'conseillerObj.updatedAt': updatedAt
   };
 
   try {
@@ -69,8 +72,9 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       geo_name,
       commune_code,
       departement_code,
-      region_code
-      ) = (ST_GeomFromGeoJSON ($2),$3,$4,$5,$6,$7)
+      region_code,
+      updtated
+      ) = (ST_GeomFromGeoJSON ($2),$3,$4,$5,$6,$7,$8)
        WHERE id = $1`,
     [
       id,
@@ -79,7 +83,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       data.properties.nom,
       data.properties.code,
       data.properties.codeDepartement,
-      data.properties.codeRegion
+      data.properties.codeRegion,
+      updatedAt
     ]);
   } catch (error) {
     logger.error(error);
