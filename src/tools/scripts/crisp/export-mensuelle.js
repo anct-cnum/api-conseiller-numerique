@@ -15,7 +15,7 @@ execute(__filename, async ({ logger, app, exit }) => {
   program.option('-p, --page <page>', 'page: numero de page max');
   program.option('-t, --type <type>', 'type: mensuelle ou notResolved');
   program.option('-m, --mois <mois>', 'mois: numero de mois');
-  program.option('-a, --annee <annee>', 'annee: numero de mois');
+  program.option('-a, --annee <annee>', 'annee: annee');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
   const page = ~~program.page;

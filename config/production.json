@@ -59,6 +59,10 @@
     "endPoint": "GANDI_ENDPOINT",
     "domain": "GANDI_DOMAIN"
   },
+  "crisp": {
+    "token": "CRISP_TOKEN",
+    "idSite": "CRISP_IDSITE"
+  },
   "open_cage_data": {
     "token": "OPEN_CAGE_DATA_TOKEN",
     "endPoint": "OPEN_CAGE_DATA_ENDPOINT",
