@@ -55,7 +55,7 @@ execute(__filename, async ({ logger, db, app }) => {
         const insee = await getEtablissementBySiretEntrepriseApiV3(structure.insee.etablissement.siret, app.get('api_entreprise'));
         if (insee) {
           //renommer insee en inseeV2 le temps de valider la migration
-          await renameInseeStructure(db)(structure);
+          await renameInseeStructure(db)(structure, versionDb);
           //mise à jour avec la data insee V3
           await addInseeV3ToStructure(db)(structure, insee);
           count++;
