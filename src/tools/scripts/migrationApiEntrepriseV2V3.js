@@ -5,28 +5,31 @@ const { getEtablissementBySiretEntrepriseApiV3 } = require('../../utils/entrepri
 const { execute } = require('../utils');
 const { program } = require('commander');
 
-program.option('-limit, --limit <limit>', 'Nombre de structures traitées', parseInt).parse(process.argv);
+program.option('-limit, --limit <limit>', 'Nombre de structures traitées', parseInt)
+.option('-versionDb, --versionDb <limit>', 'Version de Mongodb', parseInt).parse(process.argv);
 
 const getStructureApiEntrepriseV2 = db => async limit => {
   return await db.collection('structures').find({ 'insee.etablissement': { '$exists': true }, 'insee.adresse': { '$exists': false } }).limit(limit).toArray();
 };
 
-const renameInseeStructure = db => async structure => {
-  /* Mongodb V5 et +
-  await db.collection('structures').updateOne({ '_id': structure._id },
-    { $rename: { 'insee': 'inseeV2' } });
-  await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
-    { $rename: { 'structureObj.insee': 'structureObj.inseeV2' } });
-  */
+const renameInseeStructure = db => async (structure, versionDb) => {
+  /* Mongodb V5 et plus */
+  if (versionDb >= 5) {
+    await db.collection('structures').updateOne({ '_id': structure._id },
+      { $rename: { 'insee': 'inseeV2' } });
+    await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
+      { $rename: { 'structureObj.insee': 'structureObj.inseeV2' } });
   /* Mongodb inférieur à V5 */
-  await db.collection('structures').updateOne({ '_id': structure._id },
-    { $unset: { 'insee': '' } });
-  await db.collection('structures').updateOne({ '_id': structure._id },
-    { $set: { 'inseeV2': structure.insee } });
-  await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
-    { $unset: { 'structureObj.insee': '' } });
-  await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
-    { $set: { 'structureObj.inseeV2': structure.insee } });
+  } else {
+    await db.collection('structures').updateOne({ '_id': structure._id },
+      { $unset: { 'insee': '' } });
+    await db.collection('structures').updateOne({ '_id': structure._id },
+      { $set: { 'inseeV2': structure.insee } });
+    await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
+      { $unset: { 'structureObj.insee': '' } });
+    await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
+      { $set: { 'structureObj.inseeV2': structure.insee } });
+  }
   return;
 };
 
@@ -40,7 +43,7 @@ const addInseeV3ToStructure = db => async (structure, insee) => {
 
 execute(__filename, async ({ logger, db, app }) => {
   //250 requêtes/min/jeton côté entreprise api V3
-  const { limit = 250 } = program;
+  const { limit = 250, versionDb = 4 } = program;
   const promises = [];
   let count = 0;
   //récupérer les structures qui possède des données de l'api V2 uniquement
