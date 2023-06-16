@@ -26,18 +26,18 @@ const getStatsThemes = async (db, query) => {
     [
       { $match: { ...query } },
       { $unwind: '$cra.themes' },
-      { $group: { _id: '$cra.themes', count: { $sum: 1 } } },
-      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
+      { $group: { _id: '$cra.themes', countCra: { $sum: 1 }, countAccompagnements: { $sum: '$cra.nbParticipants' } } },
+      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$countAccompagnements' } }
     ]
   ).toArray();
 
   //Affichage temporaire pour la sous thématique Mon espace Santé
   let sousThemes = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.sousThemes' },
       { $match: { ...query, 'cra.sousThemes.sante': { '$in': ['espace-sante'] } } },
-      { $group: { _id: 'espace-sante', count: { $sum: 1 } } },
-      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
+      { $unwind: '$cra.sousThemes' },
+      { $group: { _id: 'espace-sante', totalCra: { $sum: 1 }, countAccompagnements: { $sum: '$cra.nbParticipants' } } },
+      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$countAccompagnements' } }
     ]
   ).toArray();
 
@@ -49,18 +49,19 @@ const getStatsThemes = async (db, query) => {
   }
 
   // Pourcentage
-  const total = statsThemes.reduce(
-    (previousValue, currentValue) => previousValue + currentValue.valeur,
-    0,
-  );
-  if (total > 0) {
+  let total = await db.collection('cras').aggregate(
+    [
+      { $match: { ...query } },
+      { $group: { _id: 'accompagnement', countAccompagnements: { $sum: '$cra.nbParticipants' } } }
+    ]
+  ).toArray();
+
+  if (total[0].countAccompagnements > 0) {
     statsThemes.forEach(theme => {
-      theme.pourcent = Number((theme.valeur > 0 ? theme.valeur * 100 / total : 0).toFixed(1));
+      theme.pourcent = Number((theme.valeur > 0 ? theme.valeur * 100 / total[0].countAccompagnements : 0).toFixed(1));
     });
   }
-
   return statsThemes;
-
 };
 
 module.exports = { getStatsThemes };
