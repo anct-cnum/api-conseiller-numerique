@@ -7,8 +7,8 @@ const getStatsTempsAccompagnements = async (db, query) => {
 
   const tempsAccompagnementArray = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.duree' },
       { $match: { ...query } },
+      { $unwind: '$cra.duree' },
       { $group: { _id: '$cra.activite', count: { $sum: {
         $switch: {
           branches:

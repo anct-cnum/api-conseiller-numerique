@@ -9,8 +9,8 @@ const getStatsDurees = async (db, query) => {
   //Gestion des categories 0-30 / 30-60
   let durees = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.duree' },
       { $match: { ...query, 'cra.duree': { $in: ['0-30', '30-60'] } } },
+      { $unwind: '$cra.duree' },
       { $group: { _id: '$cra.duree', count: { $sum: 1 } } },
       { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
     ]

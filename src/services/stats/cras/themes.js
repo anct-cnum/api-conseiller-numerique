@@ -24,8 +24,8 @@ const getStatsThemes = async (db, query) => {
 
   let themes = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.themes' },
       { $match: { ...query } },
+      { $unwind: '$cra.themes' },
       { $group: { _id: '$cra.themes', count: { $sum: 1 } } },
       { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
     ]

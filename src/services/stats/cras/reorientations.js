@@ -1,8 +1,8 @@
 const getStatsReorientations = async (db, query) => {
   let statsReorientations = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.organismes' },
       { $match: { ...query, 'cra.organismes': { '$ne': null } } },
+      { $unwind: '$cra.organismes' },
       { $addFields: { 'organismeTab': { $objectToArray: '$cra.organismes' } } },
       { $unwind: '$organismeTab' },
       { $group: { '_id': '$organismeTab.k', 'count': { '$sum': '$organismeTab.v' } } },

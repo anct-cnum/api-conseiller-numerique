@@ -10,8 +10,8 @@ const getStatsCanaux = async (db, query) => {
 
   let lieux = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.canal' },
       { $match: { ...query } },
+      { $unwind: '$cra.canal' },
       { $group: { _id: '$cra.canal', count: { $sum: 1 } } },
       { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$count' } }
     ]
