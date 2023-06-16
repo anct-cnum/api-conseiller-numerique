@@ -8,8 +8,8 @@ const { program } = require('commander');
 
 const { execute } = require('../../utils');
 
-// node src/tools/scripts/crisp/export-mensuelle.js -p 15 --type notResolved
-// node src/tools/scripts/crisp/export-mensuelle.js -p 2 --type mensuelle -m 06 -a 2023
+// node src/tools/scripts/crisp/export-stat-crisp.js -p 15 --type notResolved
+// node src/tools/scripts/crisp/export-stat-crisp.js -p 2 --type mensuelle -m 06 -a 2023
 
 execute(__filename, async ({ logger, app, exit }) => {
   program.option('-p, --page <page>', 'page: numero de page max');
@@ -30,11 +30,11 @@ execute(__filename, async ({ logger, app, exit }) => {
     return;
   }
   if (!mois && type === 'mensuelle') {
-    exit('Preciser le numero de mois souhaiter');
+    exit('Préciser le numéro de mois souhaité');
     return;
   }
   if (page === 0) {
-    exit('Il faut presciser le nombre de page à parcourir');
+    exit('Il faut préciser le nombre de page à parcourir');
     return;
   }
   if (!annee && type === 'mensuelle') {
@@ -43,7 +43,7 @@ execute(__filename, async ({ logger, app, exit }) => {
   }
   const arrayDate = [
     { mois: '01', fin: '31', name: 'janvier' },
-    { mois: '02', fin: '28', name: 'fevrier' },
+    { mois: '02', fin: '29', name: 'fevrier' },
     { mois: '03', fin: '31', name: 'mars' },
     { mois: '04', fin: '30', name: 'avril' },
     { mois: '05', fin: '31', name: 'mai' },
@@ -69,7 +69,6 @@ execute(__filename, async ({ logger, app, exit }) => {
       url: `https://app.crisp.chat/api/v1/website/${crisp.idSite}/conversations/${i}${stat}`,
       headers: {
         'X-Crisp-Tier': 'plugin',
-        // eslint-disable-next-line max-len
         'Authorization': `Basic ${crisp.token}`
       }
     };
@@ -78,7 +77,7 @@ execute(__filename, async ({ logger, app, exit }) => {
   }
   const formatDate = date => dayjs(date).format('DD/MM/YYYY');
   // eslint-disable-next-line max-len
-  logger.info(`Aux total ${datas.length} conversations fait le ${new Date()} (${type} : ${type}-${(mois ? filterMois?.name : formatDate(new Date()))?.replaceAll('/', '-')})`);
+  logger.info(`Au total ${datas.length} conversations fait le ${new Date()} (${type} : ${type}-${(mois ? filterMois?.name : formatDate(new Date()))?.replaceAll('/', '-')})`);
 
   let count = 0;
   logger.info(`Generating CSV file...`);
