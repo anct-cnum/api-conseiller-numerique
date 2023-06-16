@@ -211,7 +211,7 @@ const gestionMailStructure = async (emails, miseEnRelation, structure) => {
   await messageStructure.send(miseEnRelation, structure.contact.email);
 };
 const gestionMailPix = async (emails, conseiller) => {
-  const messagePix = emails.getEmailMessageByTemplateName('conseillersRupturePix');
+  const messagePix = emails.getEmailMessageByTemplateName('conseillersRupturePixEchec');
   await messagePix.send(conseiller);
 };
 const majErrorDeleteAccount = db => async idCNFS => await db.collection('conseillers').updateOne({ _id: idCNFS },
