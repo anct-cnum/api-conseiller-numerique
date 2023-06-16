@@ -10,13 +10,26 @@ program.option('-limit, --limit <limit>', 'Nombre de structures traitées', pars
 const getStructureApiEntrepriseV2 = db => async limit => {
   return await db.collection('structures').find({ 'insee.etablissement': { '$exists': true }, 'insee.adresse': { '$exists': false } }).limit(limit).toArray();
 };
+
 const renameInseeStructure = db => async structure => {
+  /* Mongodb V5 et +
   await db.collection('structures').updateOne({ '_id': structure._id },
     { $rename: { 'insee': 'inseeV2' } });
   await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
     { $rename: { 'structureObj.insee': 'structureObj.inseeV2' } });
+  */
+  /* Mongodb inférieur à V5 */
+  await db.collection('structures').updateOne({ '_id': structure._id },
+    { $unset: { 'insee': '' } });
+  await db.collection('structures').updateOne({ '_id': structure._id },
+    { $set: { 'inseeV2': structure.insee } });
+  await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
+    { $unset: { 'structureObj.insee': '' } });
+  await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
+    { $set: { 'structureObj.inseeV2': structure.insee } });
   return;
 };
+
 const addInseeV3ToStructure = db => async (structure, insee) => {
   await db.collection('structures').updateOne({ '_id': structure._id },
     { $set: { 'insee': insee } });

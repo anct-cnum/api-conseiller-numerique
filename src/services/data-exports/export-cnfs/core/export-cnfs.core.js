@@ -22,7 +22,6 @@ const valueHistoryCra = groupeCRAHistorique =>
   JSON.stringify(`${groupeCRAHistorique.map(h => `${`groupe ${h.numero} le ${dayjs(h.dateDeChangement).format('DD/MM/YYYY')}`}`)}`);
 
 const prettifyAndComplete = () => async statCnfs => {
-  console.log(statCnfs);
   const { emailCNError, mattermost, ...nextStatCnfs } = statCnfs;
   return {
     ...nextStatCnfs,
