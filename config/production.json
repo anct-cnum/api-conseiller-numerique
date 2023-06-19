@@ -57,7 +57,8 @@
   "gandi": {
     "token": "GANDI_TOKEN",
     "endPoint": "GANDI_ENDPOINT",
-    "domain": "GANDI_DOMAIN"
+    "domain": "GANDI_DOMAIN",
+    "type": "GANDI_TYPE"
   },
   "open_cage_data": {
     "token": "OPEN_CAGE_DATA_TOKEN",
