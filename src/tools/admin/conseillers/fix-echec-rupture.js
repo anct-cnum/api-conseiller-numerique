@@ -87,6 +87,7 @@ const updateConseillerSubordonnee = db => async idCNFS => await db.collection('c
 const getDoublon = db => async (idCNFS, emailPerso) => await db.collection('conseillers').findOne({
   _id: { $ne: idCNFS },
   email: emailPerso,
+  disponible: false
 });
 const updateDoublon = db => async (idCNFS, emailPerso) => {
   await db.collection('conseillers').updateMany({
@@ -227,8 +228,8 @@ const majDeleteMailboxCNError = db => async idCNFS => await db.collection('conse
 
 execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry }) => {
 
-  program.option('-c, --conseillerId <conseillerId>', 'conseillerId: id cn Mongo du conseiller à transférer');
-  program.option('-s, --structure <structure>', 'structure: id structure Mongo du conseiller à transférer');
+  program.option('-c, --conseillerId <conseillerId>', 'conseillerId: id cn Mongo du conseiller');
+  program.option('-s, --structure <structure>', 'structure: id structure Mongo du conseiller');
   program.option('-d, --dateFinDeContrat <dateFinDeContrat>', 'dateFinDeContrat: date rupture DD/MM/YYYY');
   program.option('-m, --motif <motif>', 'motif: motif rupture');
   program.option('-v, --validateur <validateur>', 'validateur: email validateur rupture');
@@ -287,7 +288,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     }
     // Partie Doc conseiller
     if (conseiller?.disponible === false) {
-      logger.info(``);
+      logger.info(`Correction disponible false à true`);
       await updateConseillersPG(pool)(conseiller.email, true);
     }
     const verifConseiller = { // verif si tout à était effectuer true==Ok / false==NotOK
@@ -308,29 +309,29 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       coordinateurs: conseiller?.coordinateurs === null,
     };
     if (Object.values(verifConseiller).includes(false)) {
-      logger.info(``);
+      logger.info(`Correction des tags : ${Object.keys(verifConseiller.filter(i => i === true))}`);
       await updateConseiller(db)(idCNFS, idStructure, motif, verifConseiller, dateRupture);
     }
     const conseillerSubordonnee = await getConseillerSubordonnee(db)(idCNFS);
     if (conseillerSubordonnee) {
-      logger.info(``);
+      logger.info(`Correction $pull subordonnee`);
       await updateConseillerSubordonnee(db)(idCNFS);
     }
     const doublon = await getDoublon(db)(idCNFS, conseiller?.email);
     if (doublon) {
-      logger.info(``);
+      logger.info(`Correction Doublon disponible false à true`);
       await updateDoublon(db)(idCNFS, conseiller?.email); // doc conseiller et misesEnRelation !
     }
     // Partie users
     // Cas spécifique : conseiller recruté s'est réinscrit sur le formulaire d'inscription => compte coop + compte candidat
     const userCandidatDoublon = await getUserCandidatDoublon(db)(conseiller);
     if (userCandidatDoublon !== null) {
-      logger.info(``);
+      logger.info(`Correction candidat users en doublon`);
       await conseillerRecruteReinscriptionCandidat(db)(userCandidatDoublon);
     }
     const getUserConseiller = await getCoop(db)(idCNFS);
     if (!['candidat'].includes(getUserConseiller?.roles) && getUserConseiller?.name !== conseiller?.email) {
-      logger.info(``);
+      logger.info(`Correction compte conseiller en candidat`);
       await updateUserCompteCandidat(db)(conseiller, getUserConseiller, userCandidatDoublon);
     }
     // Partie misesEnRelation
@@ -340,45 +341,45 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       validateurRupture: !(!misesEnRelation?.validateurRupture),
     };
     if (Object.values(verifMisesEnRelation).includes(false)) {
-      logger.info(``);
+      logger.info(`Correction rupture dans la mise en relation`);
       await updateMisesEnRelationRupture(db)(idCNFS, idStructure, dateRupture, validateur);
     }
     const visibleSA = await getMisesEnRelationNonDispo(db)(idCNFS);
     if (visibleSA) {
-      logger.info(``);
+      logger.info(`Correction mise en relation visible par les structures`);
       await updateMisesEnRelationNonDispo(db)(idCNFS);
     }
     // Partie Permanence
     const permanences = await getPermanences(db)(idCNFS);
     if (permanences) {
-      logger.info(``);
+      logger.info(`Correction pour les permanences`);
       await updatePermanences(db)(idCNFS);
     }
     // Partie MAIL PIX & SA
     const login = conseiller?.emailCN?.address?.substring(0, conseiller?.emailCN?.address?.lastIndexOf('@')) ?? `${conseiller.prenom}.${conseiller.nom}`;
     if (!misesEnRelation?.mailCnfsRuptureSentDate) {
-      logger.info(``);
+      logger.info(`Correction sur l'envoi d'email structure et Pix Orga`);
       await gestionMailStructure(emails, misesEnRelation, structure);
       await gestionMailPix(emails, conseiller);
     }
     // Partie gandi
     const getWebmail = await getMailBox({ gandi, login }); // A tester comment ça renvoi
     if (getWebmail) {
-      logger.info(``);
+      logger.info(`Correction webmail gandi (gandi)`);
       await deleteMailbox(gandi, db, logger, Sentry)(conseiller._id, login);
     }
     if (conseiller?.emailCN?.deleteMailboxCNError === true) { // garder car si ça passe en erreur et que au final réellement supprimer
+      logger.info(`Correction webmail gandi (doc conseiller)`);
       await majDeleteMailboxCNError(db)(idCNFS);
-      logger.info(``);
     }
     // Partie Mattermost
     const getAccountMattermost = await searchUser(mattermost, null, conseiller); // idem A tester
     if (!getAccountMattermost) {
-      logger.info(``);
+      logger.info(`Correction mattermost (MM)`);
       await deleteAccount(mattermost, conseiller, db, logger, Sentry);
     }
     if (conseiller?.mattermost?.errorDeleteAccount === true) {
-      logger.info(``);
+      logger.info(`Correction mattermost (doc conseiller)`);
       await majErrorDeleteAccount(db)(idCNFS);
     }
   } catch (error) {
