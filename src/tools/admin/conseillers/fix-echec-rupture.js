@@ -274,10 +274,10 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     }
     let misesEnRelation = await getMisesEnRelation(db)(idCNFS, idStructure);
     if (!misesEnRelation) {
-      logger.error(`Pas de misesEnRelation entre le conseiller et la strcuture !`);
+      logger.error(`Pas de mise en relation entre le conseiller et la structure !`);
       return;
     }
-    if (misesEnRelation.length >= 2 && !id) { // Dans le cas si une SA recrute le meme CN, pour ciblé la bonne mise en relation
+    if (misesEnRelation.length >= 2 && !id) { // Dans le cas si une SA recrute le même CN, pour cibler la bonne mise en relation
       logger.error(`Il y a 2 misesEnrelation, veuillez indiquer l'id de la mise en relation.`);
       return;
     }
@@ -368,17 +368,17 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       logger.info(`Correction webmail gandi (gandi)`);
       await deleteMailbox(gandi, db, logger, Sentry)(conseiller._id, login);
     }
-    if (conseiller?.emailCN?.deleteMailboxCNError === true) { // garder car si ça passe en erreur et que au final réellement supprimer
+    if (conseiller?.emailCN?.deleteMailboxCNError === true && !getWebmail) { // garder car si ça passe en erreur et que au final réellement supprimer
       logger.info(`Correction webmail gandi (doc conseiller)`);
       await majDeleteMailboxCNError(db)(idCNFS);
     }
     // Partie Mattermost
     const getAccountMattermost = await searchUser(mattermost, null, conseiller); // idem A tester
-    if (!getAccountMattermost) {
+    if (getAccountMattermost) {
       logger.info(`Correction mattermost (MM)`);
       await deleteAccount(mattermost, conseiller, db, logger, Sentry);
     }
-    if (conseiller?.mattermost?.errorDeleteAccount === true) {
+    if (conseiller?.mattermost?.errorDeleteAccount === true && !getAccountMattermost) {
       logger.info(`Correction mattermost (doc conseiller)`);
       await majErrorDeleteAccount(db)(idCNFS);
     }
