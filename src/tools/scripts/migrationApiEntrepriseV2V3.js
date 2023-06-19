@@ -22,13 +22,13 @@ const renameInseeStructure = db => async (structure, versionDb) => {
   /* Mongodb inférieur à V5 */
   } else {
     await db.collection('structures').updateOne({ '_id': structure._id },
-      { $unset: { 'insee': '' } });
-    await db.collection('structures').updateOne({ '_id': structure._id },
       { $set: { 'inseeV2': structure.insee } });
     await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
-      { $unset: { 'structureObj.insee': '' } });
-    await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
       { $set: { 'structureObj.inseeV2': structure.insee } });
+    await db.collection('structures').updateOne({ '_id': structure._id },
+      { $unset: { 'insee': '' } });
+    await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id },
+      { $unset: { 'structureObj.insee': '' } });
   }
   return;
 };
