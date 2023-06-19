@@ -74,6 +74,10 @@
     "domain": "conseiller-numerique.fr",
     "type": "GANDI_TYPE"
   },
+  "crisp": {
+    "token": "xxxx",
+    "idSite": "xxx"
+  },
   "open_cage_data": {
     "token": "1234",
     "endPoint": "https://api.opencagedata.com/geocode/v1/geojson",
