@@ -21,7 +21,7 @@ const getCoordinateurs = db => async () => await db.collection('conseillers').ag
           $project: {
             'nomCommune': 1,
             'codePostal': 1,
-            'insee.etablissement.adresse': 1,
+            'insee.adresse': 1,
             'coordonneesInsee': 1,
             'location': 1,
           }
@@ -62,7 +62,7 @@ const getCoordinateurs = db => async () => await db.collection('conseillers').ag
       'permanence.adresse': 1,
       'structure.nomCommune': 1,
       'structure.codePostal': 1,
-      'structure.insee.etablissement.adresse': 1,
+      'structure.insee.adresse': 1,
       'emailPro': 1,
       'telephonePro': 1,
       'listeSubordonnes.type': 1,
@@ -111,7 +111,7 @@ const getConseillers = db => async () => await db.collection('conseillers').aggr
         {
           $project: {
             'nom': 1,
-            'insee.etablissement.adresse': 1,
+            'insee.adresse': 1,
             'coordonneesInsee': 1,
             'location': 1,
           }
@@ -129,7 +129,7 @@ const getConseillers = db => async () => await db.collection('conseillers').aggr
       'telephonePro': 1,
       'coordinateurs': 1,
       'structure.nom': 1,
-      'structure.insee.etablissement.adresse': 1,
+      'structure.insee.adresse': 1,
       'structure.coordonneesInsee': 1,
       'structure.location': 1,
     }

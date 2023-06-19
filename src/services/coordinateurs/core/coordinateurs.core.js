@@ -62,7 +62,7 @@ const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination }) =>
       adresse:
         coordinateur.permanence?.adresse ?
           formatAddressFromPermanence(coordinateur.permanence?.adresse) :
-          formatAddressFromInsee(coordinateur.structure?.insee?.etablissement?.adresse),
+          formatAddressFromInsee(coordinateur.structure?.insee?.adresse),
       ...courrielIfAny(coordinateur.emailPro),
       ...telephoneIfAny(coordinateur.telephonePro),
       ...formatPerimetre(coordinateur.listeSubordonnes.type),
@@ -100,7 +100,7 @@ const coordinateursIfAny = coordinateurs => {
       coordinateurs: coordinateurs.map(coordinateur => {
         return {
           id: coordinateur.id.toString(),
-          nom: formatTexte(coordinateur.prenom) + ' ' + formatTexte(coordinateur.nom),
+          nom: coordinateur.nonAffichageCarto === true ? 'Anonyme' : formatTexte(coordinateur.prenom) + ' ' + formatTexte(coordinateur.nom),
         };
       })
     };
@@ -121,7 +121,7 @@ const listeConseillers = async ({ getConseillers, getPermanences }) => {
       ...telephoneIfAny(conseiller.telephonePro),
       structurePorteuse: {
         nom: conseiller.structure.nom,
-        adresse: formatAddressFromInsee(conseiller.structure.insee?.etablissement?.adresse),
+        adresse: formatAddressFromInsee(conseiller.structure.insee?.adresse),
       },
       ...listePermanences(permanences),
     };
