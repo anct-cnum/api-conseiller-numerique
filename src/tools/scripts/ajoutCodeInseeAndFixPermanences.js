@@ -6,6 +6,7 @@ const fs = require('fs');
 const { execute } = require('../utils');
 const axios = require('axios');
 const codePostauxFichier = require('../../../data/imports/code-commune.json');
+const codePostauxFichierCrasRestant = require('../../../data/imports/correction-cras-restante.json');
 const { program } = require('commander');
 
 const statCras = async db => {
@@ -130,13 +131,14 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
 execute(__filename, async ({ logger, db, exit }) => {
   program.option('-l, --limit <limit>', 'limit: limit');
   program.option('-p, --partie <partie>', 'partie: cras ou permanences');
+  program.option('-f, --fichier <fichier>', 'fichier: choix 1 : tous les codes postaux ou 2: fichier personnalisé');
   program.option('-a, --acte <acte>', 'acte: correction');
   program.option('-lt, --lot <lot>', 'lot: numero lot');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   const limit = ~~program.limit === 0 ? 1 : ~~program.limit;
-  const { partie, lot, acte } = program;
+  const { partie, lot, acte, fichier } = program;
 
   if (!['cras', 'permanences'].includes(partie)) {
     exit(`Partie incorrecte, veuillez choisir parmi la liste ['cras', 'permanences']`);
@@ -146,12 +148,17 @@ execute(__filename, async ({ logger, db, exit }) => {
     exit(`Préciser numéro de lot pour la partie ${partie} ?`);
     return;
   }
+  if (!fichier && partie === 'cras' || !['1', '2'].includes(fichier)) {
+    exit(`Veuillez choisir 1 (code postaux à jour) ou 2 (code postaux restant) ?`);
+    return;
+  }
 
   if (partie === 'cras') {
     const statAvant = await statCras(db);
     let count = 0;
     logger.info(`${statAvant.crasRestantAvecPerm} CRAS avec une permanence & ${statAvant.crasRestantSansPerm} CRAS sans permanence (AVANT la correction) `);
-    for (let obj of codePostauxFichier) {
+    const fichierCodePostaux = fichier === '1' ? codePostauxFichier : codePostauxFichierCrasRestant;
+    for (let obj of fichierCodePostaux) {
       const correctionCras = await db.collection('cras').updateMany(
         { 'cra.codePostal': obj.Code_postal, 'cra.nomCommune': obj.Nom_commune, 'cra.codeCommune': { '$exists': false } },
         { '$set': { 'cra.codeCommune': obj.Code_Commune } });
