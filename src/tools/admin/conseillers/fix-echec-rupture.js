@@ -166,6 +166,18 @@ const updateMisesEnRelationNonDispo = db => async idCNFS => await db.collection(
   },
   { $set: { statut: 'nouvelle' } },
 );
+const getHistorisationRupture = db => async (idCNFS, idStructure, dateRupture) => await db.collection('conseillersRuptures').findOne({
+  conseillerId: idCNFS,
+  structureId: idStructure,
+  dateRupture: formatDateDb(dateRupture)
+});
+const updateHistorisationRupture = db => async (idCNFS, idStructure, dateRupture, motifRupture) =>
+  await db.collection('conseillersRuptures').insertOne({
+    conseillerId: idCNFS,
+    structureId: idStructure,
+    dateRupture: formatDateDb(dateRupture),
+    motifRupture
+  });
 const getPermanences = db => async idCNFS => await db.collection('permanences').findOne(
   {
     $or: [
@@ -234,10 +246,11 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
   program.option('-m, --motif <motif>', 'motif: motif rupture');
   program.option('-v, --validateur <validateur>', 'validateur: email validateur rupture');
   program.option('-i, --id <id>', 'id: id de la mise en relation');
+  program.option('-mr, --motifRupture <motifRupture>', 'motifRupture: motif Rupture');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { conseillerId, structure, dateFinDeContrat, motif, validateur, id } = program;
+  const { conseillerId, structure, dateFinDeContrat, motif, validateur, id, motifRupture } = program;
   const regexDateRupture = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
   const dateRupture = dateFinDeContrat.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
   const idCNFS = new ObjectID(conseillerId);
@@ -348,6 +361,15 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     if (visibleSA) {
       logger.info(`Correction mise en relation visible par les structures`);
       await updateMisesEnRelationNonDispo(db)(idCNFS);
+    }
+    // Partie historisation conseillersRuptures
+    const getHistorisation = await getHistorisationRupture(db)(idCNFS, idStructure, dateRupture);
+    if (!getHistorisation) {
+      if (!motifRupture) {
+        logger.error(`Motif rupture requise car la rupture est Non historiser`);
+        return;
+      }
+      await updateHistorisationRupture(db)(idCNFS, idStructure, dateRupture, motifRupture);
     }
     // Partie Permanence
     const permanences = await getPermanences(db)(idCNFS);
