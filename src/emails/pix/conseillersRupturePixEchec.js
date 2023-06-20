@@ -3,8 +3,8 @@ module.exports = (db, mailer) => {
   const templateName = 'conseillersRupturePixEchec';
   const { utils } = mailer;
 
-  const render = () => {
-    return mailer.render(__dirname, templateName);
+  const render = (conseiller) => {
+    return mailer.render(__dirname, templateName, { conseiller });
   };
 
   return {
