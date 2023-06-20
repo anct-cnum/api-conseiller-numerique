@@ -60,7 +60,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   await db.collection('misesEnRelation').updateOne(
     { 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA },
     { $set: {
-      statut: 'finalisee_non_disponible',
+      statut: cnfsRecrute?.conseillerObj?.disponible === false ? 'finalisee_non_disponible' : 'nouvelle',
       transfert: {
         'destinationStructureId': nouvelleSA,
         'date': new Date()
