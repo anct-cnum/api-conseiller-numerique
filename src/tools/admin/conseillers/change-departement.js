@@ -3,6 +3,7 @@ const { execute } = require('../../utils');
 const { Pool } = require('pg');
 const pool = new Pool();
 const axios = require('axios');
+const dayjs = require('dayjs');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
@@ -36,6 +37,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   }
   const cp = codePostal === undefined ? data.properties.codesPostaux[0] : codePostal;
   const updatedAt = new Date();
+  const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
 
   const miseAJour = {
     location: data.geometry,
@@ -84,7 +86,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       data.properties.code,
       data.properties.codeDepartement,
       data.properties.codeRegion,
-      updatedAt
+      datePG
     ]);
   } catch (error) {
     logger.error(error);

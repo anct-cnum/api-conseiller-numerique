@@ -50,7 +50,7 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
     nom
   };
   try {
-    await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { token: uuidv4() } });
+    await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
     const mailbox = await getMailBox({ gandi, login });
     if (mailbox.data.length === 0) {
       const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
