@@ -170,8 +170,8 @@ execute(__filename, async ({ db }) => {
       }).toArray();
       for (const r of match) {
         if (getDistanceFromLatLonInKm(
-          r.conseillerObj.location.coordinates[0], r.conseillerObj.location.coordinates[1],
-          r.structureObj.location.coordinates[0], r.structureObj.location.coordinates[1]) <= r.conseillerObj.distanceMax) {
+          r.conseillerObj.location.coordinates[1], r.conseillerObj.location.coordinates[0],
+          r.structureObj.location.coordinates[1], r.structureObj.location.coordinates[0]) <= r.conseillerObj.distanceMax) {
           db.collection('misesEnRelation').deleteOne({ '_id': r._id });
         }
       }
