@@ -917,17 +917,10 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         if (disponible) {
-          await db.collection('misesEnRelation').updateMany(
-            {
-              'conseiller.$id': conseiller._id,
-              'statut': user?.roles.includes('conseiller') ? 'finalisee_non_disponible' : 'non_disponible'
-            },
-            {
-              $set:
-                {
-                  'statut': 'nouvelle',
-                }
-            });
+          //Si disponible suppression des mises en relation autres que celles finalisées et reconventionnement, pour régénération par le CRON
+          await db.collection('misesEnRelation').deleteMany({
+            'conseiller.$id': conseiller._id,
+            'statut': { '$in': ['finalisee_non_disponible', 'non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
         } else {
           await db.collection('misesEnRelation').updateMany(
             {
@@ -938,16 +931,11 @@ exports.Conseillers = class Conseillers extends Service {
               $set:
                 {
                   'statut': user?.roles.includes('conseiller') ? 'finalisee_non_disponible' : 'non_disponible',
+                  'conseillerObj.disponible': disponible,
+                  'conseillerObj.updatedAt': updatedAt
                 }
             });
         }
-
-        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
-          $set: {
-            'conseillerObj.disponible': disponible,
-            'conseillerObj.updatedAt': updatedAt }
-        });
-
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -1241,6 +1229,10 @@ exports.Conseillers = class Conseillers extends Service {
           conseiller.distanceMax = distanceMax;
           conseiller.updatedAt = updatedAt;
           conseiller.codeCom = codeCom;
+
+          await db.collection('misesEnRelation').deleteMany({
+            'conseiller.$id': conseiller._id,
+            'statut': { '$in': ['finalisee_non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
 
           await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
             'conseillerObj': conseiller,
