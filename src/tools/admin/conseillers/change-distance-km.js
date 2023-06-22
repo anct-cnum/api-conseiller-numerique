@@ -38,7 +38,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       { 'conseiller.$id': conseiller._id },
       { $set: { 'conseillerObj.distanceMax': distance, 'conseillerObj.updatedAt': updateAt }
       });
-    if (conseiller.distanceMax < distance) {
+    if (distance < conseiller.distanceMax) {
       await db.collection('misesEnRelation').deleteMany({
         'conseiller.$id': conseiller._id,
         'statut': { '$in': ['finalisee_non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
