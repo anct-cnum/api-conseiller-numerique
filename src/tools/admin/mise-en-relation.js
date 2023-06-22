@@ -76,6 +76,12 @@ execute(__filename, async ({ db }) => {
       'conseiller.$id': c._id
     };
 
+    //Vérifie le statut du candidat/conseiller
+    let statutConseiller = c.disponible ? 'nouvelle' : 'non_disponible';
+    if (c.statut === 'RECRUTE') {
+      statutConseiller = c.disponible ? 'nouvelle' : 'finalisee_non_disponible';
+    }
+
     // Insere seulement si pas encore de mise en relation
     const updateDoc = {
       $set: {
@@ -86,7 +92,7 @@ execute(__filename, async ({ db }) => {
         distance: Math.round(c.dist.calculated)
       },
       $setOnInsert: {
-        statut: 'nouvelle',
+        statut: statutConseiller,
         createdAt: new Date(),
         conseillerCreatedAt: c.createdAt
       }
@@ -119,65 +125,23 @@ execute(__filename, async ({ db }) => {
     }]).toArray();
 
     let work = [];
-    const conseillersId = [];
+
     for (const c of match) {
       let r = await miseEnRelation(s, c);
       if (r) {
         work.push(r);
-        conseillersId.push(c._id);
       }
     }
 
     if (work.length > 0) {
       await db.collection('misesEnRelation').bulkWrite(work);
     }
-    return conseillersId;
   };
 
   // Chercher les structures pour lesquelles on doit créer des mises en relation
   const match = await db.collection('structures').find({ statut: 'VALIDATION_COSELEC' }).toArray();
 
-  const conseillersIds = [];
   for (const s of match) {
-    const result = await creation(s);
-    conseillersIds.push(result);
+    await creation(s);
   }
-
-  const deg2rad = deg => {
-    return (deg * Math.PI) / 180;
-  };
-
-  const getDistanceFromLatLonInKm = (lat1, lng1, lat2, lng2) => {
-    const Rayon = 6371; // Rayon de la terre en km
-    const distanceLat = deg2rad(lat2 - lat1);
-    const distanceLon = deg2rad(lng2 - lng1);
-    const a =
-      Math.sin(distanceLat / 2) * Math.sin(distanceLat / 2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-      Math.sin(distanceLon / 2) * Math.sin(distanceLon / 2)
-      ;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = Rayon * c; // Distance en km
-    return d;
-  };
-
-  //Suppression des relations qui ne respectent plus la distanceMax du conseiller
-  const deleteRelation = async conseillersIds => {
-    await conseillersIds.forEach(async conseillersId => {
-      const match = await db.collection('misesEnRelation').find({
-        'conseiller.$id': { '$in': [conseillersId] },
-        'statut': { '$nin': ['finalisee, finalisee_rupture'] }
-      }).toArray();
-      for (const r of match) {
-        if (getDistanceFromLatLonInKm(
-          r.conseillerObj.location.coordinates[1], r.conseillerObj.location.coordinates[0],
-          r.structureObj.location.coordinates[1], r.structureObj.location.coordinates[0]) <= r.conseillerObj.distanceMax) {
-          db.collection('misesEnRelation').deleteOne({ '_id': r._id });
-        }
-      }
-    });
-  };
-
-  await deleteRelation(conseillersIds);
-
 });
