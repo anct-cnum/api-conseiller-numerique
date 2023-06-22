@@ -76,12 +76,6 @@ execute(__filename, async ({ db }) => {
       'conseiller.$id': c._id
     };
 
-    //Vérifie le statut du candidat/conseiller
-    let statutConseiller = c.disponible ? 'nouvelle' : 'non_disponible';
-    if (c.statut === 'RECRUTE') {
-      statutConseiller = c.disponible ? 'nouvelle' : 'finalisee_non_disponible';
-    }
-
     // Insere seulement si pas encore de mise en relation
     const updateDoc = {
       $set: {
@@ -92,7 +86,7 @@ execute(__filename, async ({ db }) => {
         distance: Math.round(c.dist.calculated)
       },
       $setOnInsert: {
-        statut: statutConseiller,
+        statut: 'nouvelle',
         createdAt: new Date(),
         conseillerCreatedAt: c.createdAt
       }
