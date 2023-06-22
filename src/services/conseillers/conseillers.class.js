@@ -1232,7 +1232,7 @@ exports.Conseillers = class Conseillers extends Service {
 
           await db.collection('misesEnRelation').deleteMany({
             'conseiller.$id': conseiller._id,
-            'statut': { '$in': ['finalisee_non_disponible', 'non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
+            'statut': { '$in': ['finalisee_non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
 
           await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
             'conseillerObj': conseiller,
