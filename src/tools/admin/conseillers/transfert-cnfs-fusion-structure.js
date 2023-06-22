@@ -110,11 +110,14 @@ const updateCrasPermanenceId = db => async (permanence, idCNFS, permId) =>
     { 'permanence.$id': permanence?._id, 'conseiller.$id': idCNFS },
     { $set: { 'permanence.$id': permId } }
   );
-const pushConseillerPerm = db => async (idCNFS, idPerm) =>
+const pushConseillerPerm = db => async (permanence, idCNFS, idPerm) => {
+  const conseillersItinerants = permanence.conseillersItinerants.map(i => String(i)).includes(String(idCNFS)) ? { conseillersItinerants: idCNFS } : {};
+  const lieuPrincipalPour = permanence.lieuPrincipalPour.map(i => String(i)).includes(String(idCNFS)) ? { lieuPrincipalPour: idCNFS } : {};
   await db.collection('permanences').updateOne(
     { _id: idPerm },
-    { $push: { conseillers: idCNFS } }
+    { $push: { conseillers: idCNFS, ...lieuPrincipalPour, ...conseillersItinerants } }
   );
+};
 const createPermNouvelleSA = db => async (permanence, idCNFS, idNouvelleSA) => {
   const insertPermanence = {
     ...permanence,
@@ -214,7 +217,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       if (verifDoublon.length !== 0) {
         await updatePullPermanence(db)(permanence, idCNFS);
         if (!verifDoublon[0].conseillers.find(i => String(i) === String(idCNFS))) {// Dans le cas où il y a des doublons de perm côté CN
-          await pushConseillerPerm(db)(idCNFS, verifDoublon[0]?._id);
+          await pushConseillerPerm(db)(permanence, idCNFS, verifDoublon[0]?._id);
         }
         await updateCrasPermanenceId(db)(permanence, idCNFS, verifDoublon[0]?._id);
       }
