@@ -50,7 +50,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   };
   const miseAJourMiseEnRelation = {
     'conseillerObj.location': data.geometry,
-    'conseillerObj.codePostal': codePostal,
+    'conseillerObj.codePostal': cp,
     'conseillerObj.nomCommune': data.properties.nom,
     'conseillerObj.codeCommune': data.properties.code,
     'conseillerObj.codeDepartement': data.properties.codeDepartement,
@@ -73,7 +73,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       commune_code,
       departement_code,
       region_code,
-      updtated
+      updated
       ) = (ST_GeomFromGeoJSON ($2),$3,$4,$5,$6,$7,$8)
        WHERE id = $1`,
     [
