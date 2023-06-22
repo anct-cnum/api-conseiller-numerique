@@ -1,4 +1,4 @@
-const { deleteMailbox, getMailBox } = require('../../../utils/mailbox');
+const { deleteMailbox, getMailBox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
 const { deleteAccountRuptureEchec, searchUser } = require('../../../utils/mattermost');
 const { execute } = require('../../utils');
 const dayjs = require('dayjs');
@@ -227,10 +227,11 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
   program.option('-m, --motif <motif>', 'motif: motif rupture');
   program.option('-v, --validateur <validateur>', 'validateur: email validateur rupture');
   program.option('-i, --id <id>', 'id: id de la mise en relation');
+  program.option('-u, --user <user>', 'user: prenom.nom dans le cas d\'un homonyme');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { conseillerId, structureId, dateFinDeContrat, motif, validateur, id } = program;
+  const { conseillerId, structureId, dateFinDeContrat, motif, validateur, id, user } = program;
   const regexDateRupture = new RegExp(/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)((202)[0-9])$/);
   const dateRupture = dateFinDeContrat?.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
   const idCNFS = new ObjectID(conseillerId);
@@ -364,8 +365,17 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       logger.info(`Correction pour les permanences`);
       await updatePermanences(db)(idCNFS);
     }
+    // Partie verif Homonyme
+    let login = conseiller?.emailCN?.address?.substring(0, conseiller?.emailCN?.address?.lastIndexOf('@')) ?? `non renseignée`;
+    if (login === 'non renseigné') {
+      const verifHomonyme = await fixHomonymesCreateMailbox(gandi, conseiller.nom, conseiller.prenom, db);
+      if (verifHomonyme !== login) {
+        exit(`Homonyme détecté, veuillez saisir le prenom.nom`);
+        return;
+      }
+      login = user ?? `${conseiller.prenom}.${conseiller.nom}`;
+    }
     // Partie MAIL PIX & SA
-    const login = conseiller?.emailCN?.address?.substring(0, conseiller?.emailCN?.address?.lastIndexOf('@')) ?? `${conseiller.prenom}.${conseiller.nom}`;
     if (!misesEnRelation?.mailCnfsRuptureSentDate) {
       logger.info(`Correction sur l'envoi d'email structure et Pix Orga`);
       await gestionMailPix(emails, conseiller, login, gandi);
