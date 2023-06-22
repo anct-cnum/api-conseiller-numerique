@@ -57,16 +57,14 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     'conseillerObj.codeRegion': data.properties.codeRegion,
     'conseillerObj.updatedAt': updatedAt
   };
-
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: miseAJour });
+    await db.collection('misesEnRelation').deleteMany({
+      'conseiller.$id': conseiller._id,
+      'statut': { '$in': ['finalisee_non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] }
+    });
     await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: miseAJourMiseEnRelation });
-  } catch (error) {
-    logger.error(error);
-    Sentry.captureException(error);
-    return;
-  }
-  try {
+
     await pool.query(`UPDATE djapp_coach
       SET (
       location,
