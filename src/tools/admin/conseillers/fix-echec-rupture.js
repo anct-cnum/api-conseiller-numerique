@@ -66,6 +66,8 @@ const updateConseiller = db => async (idCNFS, idStructure, verifConseiller, date
       codeDepartementStructure: '',
       hasPermanence: '',
       coordinateurs: '',
+      listeSubordonnes: '',
+      estCoordinateur: ''
     },
   }
   );
@@ -113,7 +115,7 @@ const updateUserCompteCandidat = db => async (conseiller, getUserConseiller, use
     } },
   );
 };
-const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStructure, dateRupture, validateur) =>
+const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif) =>
   await db.collection('misesEnRelation').updateOne(
     {
       '_id': misesEnRelation._id,
@@ -125,6 +127,7 @@ const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStr
         statut: 'finalisee_rupture',
         dateRupture: new Date(dateRupture),
         validateurRupture: { email: validateur, date: new Date() },
+        motifRupture: motif
       },
       $unset: {
         dossierIncompletRupture: '',
@@ -147,7 +150,7 @@ const updateMisesEnRelationNonDispo = db => async idCNFS => await db.collection(
 const getHistorisationRupture = db => async (idCNFS, idStructure, dateRupture) => await db.collection('conseillersRuptures').findOne({
   conseillerId: idCNFS,
   structureId: idStructure,
-  dateRupture: formatDateDb(dateRupture)
+  dateRupture: { $gte: formatDateDb(dateRupture), $lte: formatDateDb(dateRupture) }
 });
 const updateHistorisationRupture = db => async (idCNFS, idStructure, dateRupture, motifRupture) =>
   await db.collection('conseillersRuptures').insertOne({
@@ -237,8 +240,8 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     exit(`ATTENTION : les 6 vars d'env PG n'ont pas été configurées`);
     return;
   }
-  if (!conseillerId || !structureId) {
-    exit('Paramètres invalides. Veuillez entrer l\'id du conseiller et de la stucture');
+  if (!conseillerId || !structureId || !validateur || !motif) {
+    exit('Paramètres invalides. Veuillez entrer l\'id du conseiller / id stucture/ email validateur / le motif');
     return;
   }
   if (!regexDateRupture.test(dateFinDeContrat)) {
@@ -261,7 +264,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       logger.error(`La structure ${idCNFS} n'existe pas`);
       return;
     }
-    let misesEnRelationCnAndSa = await getMisesEnRelation(db)(idCNFS, idStructure);
+    const misesEnRelationCnAndSa = await getMisesEnRelation(db)(idCNFS, idStructure);
     let misesEnRelation = misesEnRelationCnAndSa[0];
     if (!misesEnRelationCnAndSa[0]) {
       logger.error(`Pas de mise en relation entre le conseiller et la structure !`);
@@ -289,7 +292,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       }
       await updateConseillersPG(pool)(conseiller.email, true);
     }
-    const verifConseiller = { // verif si tout à était effectuer true==Ok / false==NotOK
+    const verifConseiller = { // verif si tout a été effectué true==Ok / false==NotOK
       statut: conseiller?.statut === 'RUPTURE',
       ruptures: conseiller?.ruptures.filter(i => String(i.structureId) === structureId)?.length === misesEnRelationCnAndSa.length,
       estRecrute: !conseiller?.estRecrute,
@@ -307,12 +310,6 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       coordinateurs: !conseiller?.coordinateurs,
     };
     if (Object.values(verifConseiller).includes(false)) {
-      if (verifConseiller.ruptures === false) {
-        if (!motif) {
-          logger.error(`Motif rupture requise !`);
-          return;
-        }
-      }
       const arrayLog = [];
       for (const [key, value] of Object.entries(verifConseiller)) {
         if (value === false) {
@@ -344,14 +341,11 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       statut: misesEnRelation?.statut === 'finalisee_rupture',
       dateRupture: !(!misesEnRelation?.dateRupture),
       validateurRupture: !(!misesEnRelation?.validateurRupture),
+      motifRupture: !(!misesEnRelation?.motifRupture)
     };
     if (Object.values(verifMisesEnRelation).includes(false)) {
-      if (verifMisesEnRelation.validateurRupture === false && !validateur) {
-        exit(`Email du validateur est requise`);
-        return;
-      }
       logger.info(`Correction rupture dans la mise en relation`);
-      await updateMisesEnRelationRupture(db)(misesEnRelation, idCNFS, idStructure, dateRupture, validateur);
+      await updateMisesEnRelationRupture(db)(misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif);
     }
     const visibleSA = await getMisesEnRelationNonDispo(db)(idCNFS);
     if (visibleSA) {
@@ -361,10 +355,6 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     // Partie historisation conseillersRuptures
     const getHistorisation = await getHistorisationRupture(db)(idCNFS, idStructure, dateRupture);
     if (!getHistorisation) {
-      if (!motif) {
-        logger.error(`Motif rupture requise car la rupture est Non historiser`);
-        return;
-      }
       logger.info(`Correction historisation de la rupture`);
       await updateHistorisationRupture(db)(idCNFS, idStructure, dateRupture, motif);
     }
@@ -379,10 +369,10 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     if (!misesEnRelation?.mailCnfsRuptureSentDate) {
       logger.info(`Correction sur l'envoi d'email structure et Pix Orga`);
       await gestionMailPix(emails, conseiller, login, gandi);
-      await gestionMailStructure(emails, misesEnRelation, structure);
+      // await gestionMailStructure(emails, misesEnRelation, structure); // Commenter temporairement pour les 3 cas.
     }
     // Partie gandi
-    const getWebmail = await getMailBox({ gandi, login }); // A tester comment ça renvoi
+    const getWebmail = await getMailBox({ gandi, login });
     if (getWebmail.data.filter(i => i.login === login)?.length === 1) {
       logger.info(`Correction webmail gandi (gandi)`);
       await deleteMailbox(gandi, db, logger, Sentry)(conseiller._id, login);

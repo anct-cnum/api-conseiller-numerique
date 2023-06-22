@@ -3,7 +3,7 @@ module.exports = (db, mailer) => {
   const templateName = 'conseillersRupturePixEchec';
   const { utils } = mailer;
 
-  const render = (conseiller) => {
+  const render = conseiller => {
     return mailer.render(__dirname, templateName, { conseiller });
   };
 
