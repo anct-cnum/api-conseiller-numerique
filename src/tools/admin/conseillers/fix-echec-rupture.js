@@ -200,10 +200,11 @@ const updatePermanences = db => async idCNFS => await db.collection('permanences
     },
   },
 );
-const gestionMailStructure = async (emails, miseEnRelation, structure) => {
-  const messageStructure = emails.getEmailMessageByTemplateName('conseillerRuptureStructure');
-  await messageStructure.send(miseEnRelation, structure.contact.email);
-};
+// Commenter temporairement pour les 3 cas.
+// const gestionMailStructure = async (emails, miseEnRelation, structure) => {
+//   const messageStructure = emails.getEmailMessageByTemplateName('conseillerRuptureStructure');
+//   await messageStructure.send(miseEnRelation, structure.contact.email);
+// };
 const gestionMailPix = async (emails, conseiller, login, gandi) => {
   let infoMailPixRupture = { ...conseiller, emailCN: { address: login + '@' + gandi.domain } };
   const messagePix = emails.getEmailMessageByTemplateName('conseillersRupturePixEchec');
@@ -295,7 +296,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     }
     const verifConseiller = { // verif si tout a été effectué true==Ok / false==NotOK
       statut: conseiller?.statut === 'RUPTURE',
-      ruptures: conseiller?.ruptures.filter(i => String(i.structureId) === structureId)?.length === misesEnRelationCnAndSa.length,
+      ruptures: conseiller?.ruptures.filter(i => String(i.structureId) === structureId)?.length >= misesEnRelationCnAndSa.length,
       estRecrute: !conseiller?.estRecrute,
       structureId: !conseiller?.structureId,
       emailCNError: !conseiller?.emailCNError,
@@ -367,10 +368,10 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     }
     // Partie verif Homonyme
     let login = conseiller?.emailCN?.address?.substring(0, conseiller?.emailCN?.address?.lastIndexOf('@')) ?? `non renseignée`;
-    if (login === 'non renseigné') {
+    if (login === 'non renseignée') {
       const verifHomonyme = await fixHomonymesCreateMailbox(gandi, conseiller.nom, conseiller.prenom, db);
-      if (verifHomonyme !== login) {
-        exit(`Homonyme détecté, veuillez saisir le prenom.nom`);
+      if (verifHomonyme !== `${conseiller.prenom}.${conseiller.nom}`) {
+        exit(`Homonyme détecté, veuillez saisir le prenom.nom (homonyme: ${verifHomonyme})`);
         return;
       }
       login = user ?? `${conseiller.prenom}.${conseiller.nom}`;
@@ -379,7 +380,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     if (!misesEnRelation?.mailCnfsRuptureSentDate) {
       logger.info(`Correction sur l'envoi d'email structure et Pix Orga`);
       await gestionMailPix(emails, conseiller, login, gandi);
-      // await gestionMailStructure(emails, misesEnRelation, structure); // Commenter temporairement pour les 3 cas.
+      // await gestionMailStructure(emails, misesEnRelation, structure);
     }
     // Partie gandi
     const getWebmail = await getMailBox({ gandi, login });
