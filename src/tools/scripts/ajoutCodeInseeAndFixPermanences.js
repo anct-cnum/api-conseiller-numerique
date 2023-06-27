@@ -177,7 +177,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     logger.info(`Partie Permanences , par défaut la vérification ${acte ? 'AVEC' : 'SANS'} correction`);
     // eslint-disable-next-line max-len
     const permanences = await db.collection('permanences').find({
-      'adresse.codeCommune': { '$exists': false }
+      'adresse.codeCommune': { '$exists': true }
     }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1, structure: 1 }).toArray();
     const exportsCSv = {
       permMatchOK: [],
@@ -214,7 +214,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           matchLocation = resultQueryLatLong?.data?.features?.find(e => api(e) === permanence);
         }
         if (!matchLocation) {
-          const emailConseillers = conseillers[0] ? await db.collection('users').findOne({ 'entity.$id': conseillers[0] }) : '';
+          const emailConseillersPerso = conseillers[0] ? await db.collection('conseillers').findOne({ '_id': conseillers[0] }) : '';
           exportsCSv.permNotOK.push({ _id,
             adresse: { ...adresse, coordinates: location?.coordinates },
             resultApi: {
@@ -228,7 +228,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             _id,
             cnfsCount: conseillers?.length,
             raison: 'MULTIPLE RESULTAT',
-            emailCN: emailConseillers?.name ?? ''
+            emailCN: emailConseillersPerso?.email ?? ''
           });
           return;
         }
