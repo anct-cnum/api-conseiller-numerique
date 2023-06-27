@@ -177,7 +177,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     logger.info(`Partie Permanences , par défaut la vérification ${acte ? 'AVEC' : 'SANS'} correction`);
     // eslint-disable-next-line max-len
     const permanences = await db.collection('permanences').find({
-      'adresse.codeCommune': { '$exists': true }
+      'adresse.codeCommune': { '$exists': false }
     }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1, structure: 1 }).toArray();
     const exportsCSv = {
       permMatchOK: [],
@@ -261,7 +261,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           }
         }
         if (Object.values(adresseControleDiff).includes(true)) {
-          const emailConseillers = conseillers[0] ? await db.collection('users').findOne({ 'entity.$id': conseillers[0] }) : '';
+          const emailConseillersPerso = conseillers[0] ? await db.collection('conseillers').findOne({ '_id': conseillers[0] }) : '';
           const raisonLabel = {
             0: 'NUMERORUEDIFF',
             1: 'RUEDIFF',
@@ -282,7 +282,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             _id,
             cnfsCount: conseillers?.length,
             raison: conseillers?.length === 1 ? raisonIndexOf : 'MULTIPLEDIFF',
-            emailCN: emailConseillers?.name ?? ''
+            emailCN: emailConseillersPerso?.email ?? ''
           });
         } else {
           exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation?.properties) });
