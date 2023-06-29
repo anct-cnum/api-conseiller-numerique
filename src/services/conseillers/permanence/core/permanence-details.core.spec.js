@@ -17,17 +17,15 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
           ]
         },
         insee: {
-          etablissement: {
-            adresse: {
-              numero_voie: '12',
-              type_voie: 'RUE',
-              nom_voie: 'DE LA PLACE',
-              complement_adresse: null,
-              code_postal: '87100',
-              localite: 'LIMOGES',
-              code_insee_localite: '87085',
-              cedex: null
-            }
+          adresse: {
+            numero_voie: '12',
+            type_voie: 'RUE',
+            libelle_voie: 'DE LA PLACE',
+            complement_adresse: null,
+            code_postal: '87100',
+            libelle_commune: 'LIMOGES',
+            code_commune: '87085',
+            cedex: null
           }
         }
       }),
@@ -78,7 +76,7 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
         contact: {
           email: 'john.doe@aide-rurale.net',
           telephone: '+33 4 23 45 68 97'
-        }
+        },
       }),
       getCnfs: () => [
         {
@@ -123,17 +121,15 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
       getStructureById: () => ({
         nom: 'Aide rurale',
         insee: {
-          etablissement: {
-            adresse: {
-              numero_voie: '12',
-              type_voie: 'RUE',
-              nom_voie: 'DE LA PLACE',
-              complement_adresse: null,
-              code_postal: '87100',
-              localite: 'LIMOGES',
-              code_insee_localite: '87085',
-              cedex: null
-            }
+          adresse: {
+            numero_voie: '12',
+            type_voie: 'RUE',
+            libelle_voie: 'DE LA PLACE',
+            complement_adresse: null,
+            code_postal: '87100',
+            libelle_commune: 'LIMOGES',
+            code_commune: '87085',
+            cedex: null
           }
         }
       }),
@@ -182,17 +178,15 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
           email: 'john.doe@aide-rurale.net'
         },
         insee: {
-          etablissement: {
-            adresse: {
-              numero_voie: '12',
-              type_voie: 'RUE',
-              nom_voie: 'DE LA PLACE',
-              complement_adresse: null,
-              code_postal: '87100',
-              localite: 'LIMOGES',
-              code_insee_localite: '87085',
-              cedex: null
-            }
+          adresse: {
+            numero_voie: '12',
+            type_voie: 'RUE',
+            libelle_voie: 'DE LA PLACE',
+            complement_adresse: null,
+            code_postal: '87100',
+            libelle_commune: 'LIMOGES',
+            code_commune: '87085',
+            cedex: null
           }
         }
       }),
@@ -242,17 +236,15 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
           telephone: '+33423456897'
         },
         insee: {
-          etablissement: {
-            adresse: {
-              numero_voie: '12',
-              type_voie: 'RUE',
-              nom_voie: 'DE LA PLACE',
-              complement_adresse: null,
-              code_postal: '87100',
-              localite: 'LIMOGES',
-              code_insee_localite: '87085',
-              cedex: null
-            }
+          adresse: {
+            numero_voie: '12',
+            type_voie: 'RUE',
+            libelle_voie: 'DE LA PLACE',
+            complement_adresse: null,
+            code_postal: '87100',
+            libelle_commune: 'LIMOGES',
+            code_commune: '87085',
+            cedex: null
           }
         }
       }),
@@ -309,17 +301,15 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
         contact: {},
         estLabelliseAidantsConnect: 'OUI',
         insee: {
-          etablissement: {
-            adresse: {
-              numero_voie: '12',
-              type_voie: 'RUE',
-              nom_voie: 'DE LA PLACE',
-              complement_adresse: null,
-              code_postal: '87100',
-              localite: 'LIMOGES',
-              code_insee_localite: '87085',
-              cedex: null
-            }
+          adresse: {
+            numero_voie: '12',
+            type_voie: 'RUE',
+            libelle_voie: 'DE LA PLACE',
+            complement_adresse: null,
+            code_postal: '87100',
+            libelle_commune: 'LIMOGES',
+            code_commune: '87085',
+            cedex: null
           }
         }
       }),
@@ -349,17 +339,15 @@ describe('détails de la permanence avec l\'identifiant de la structure', () => 
         contact: {},
         estLabelliseFranceServices: 'OUI',
         insee: {
-          etablissement: {
-            adresse: {
-              numero_voie: '12',
-              type_voie: 'RUE',
-              nom_voie: 'DE LA PLACE',
-              complement_adresse: null,
-              code_postal: '87100',
-              localite: 'LIMOGES',
-              code_insee_localite: '87085',
-              cedex: null
-            }
+          adresse: {
+            numero_voie: '12',
+            type_voie: 'RUE',
+            libelle_voie: 'DE LA PLACE',
+            complement_adresse: null,
+            code_postal: '87100',
+            libelle_commune: 'LIMOGES',
+            code_commune: '87085',
+            cedex: null
           }
         }
       }),

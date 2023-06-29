@@ -4,7 +4,7 @@ const formatStructure = structure => ({
   name: structure.nom,
   isLabeledAidantsConnect: structure.estLabelliseAidantsConnect === 'OUI',
   isLabeledFranceServices: structure.estLabelliseFranceServices === 'OUI',
-  ...structure.insee ? { address: formatAddressFromInsee(structure.insee.etablissement.adresse) } : {}
+  ...structure.insee ? { address: formatAddressFromInsee(structure.insee.adresse) } : {}
 });
 
 const getGeometry = structure =>

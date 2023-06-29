@@ -12,6 +12,7 @@ const isAlreadyCoordinateur = db => async emailConseiller => {
   });
   return Boolean(user);
 };
+const anonymeCoordinateur = async db => await db.collection('conseillers').distinct('_id', { nonAffichageCarto: true });
 
 const getConseillerByMail = db => async emailConseiller => {
   const user = await db.collection('users').findOne({
@@ -107,6 +108,8 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
 
   logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
+  let coordoAnonyme = await anonymeCoordinateur(db);
+  coordoAnonyme = coordoAnonyme.map(i => String(i));
   await new Promise(resolve => {
     readCSV(program.csv).then(async ressources => {
 
@@ -123,13 +126,16 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           const mailleDepartement = ressource['Code département'];
 
           const estCoordinateur = await isAlreadyCoordinateur(db)(adresseCoordo);
-          const coordinateur = await getConseillerByMail(db)(adresseCoordo);
+          let coordinateur = await getConseillerByMail(db)(adresseCoordo);
           const idCoordinateur = coordinateur?.id;
           if (idCoordinateur) {
             if (!estCoordinateur) {
               await updateUserRole(db)(idCoordinateur);
             }
-
+            coordinateur = {
+              ...coordinateur,
+              nonAffichageCarto: coordoAnonyme.includes(String(idCoordinateur))
+            };
             let listMaille = [];
 
             if (mailleRegional.length > 0) {
