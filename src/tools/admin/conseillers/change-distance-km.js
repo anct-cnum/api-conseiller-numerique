@@ -29,19 +29,19 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
   distance = parseInt(distance, 10);
-  const updateAt = new Date();
-  const datePG = dayjs(updateAt).format('YYYY-MM-DD');
+  const updatedAt = new Date();
+  const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
 
   try {
-    await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance, updatedAt: updateAt } });
+    await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance, updatedAt } });
     await db.collection('misesEnRelation').updateMany(
       { 'conseiller.$id': conseiller._id },
-      { $set: { 'conseillerObj.distanceMax': distance, 'conseillerObj.updatedAt': updateAt }
+      { $set: { 'conseillerObj.distanceMax': distance, 'conseillerObj.updatedAt': updatedAt }
       });
     if (distance < conseiller.distanceMax) {
       await db.collection('misesEnRelation').deleteMany({
         'conseiller.$id': conseiller._id,
-        'statut': { '$in': ['finalisee_non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
+        'statut': { '$in': ['finalisee_non_disponible', 'non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
     }
   } catch (error) {
     logger.error(error);
