@@ -54,25 +54,23 @@ describe('conseillers géolocalisés', () => {
             ]
           },
           insee: {
-            etablissement: {
-              adresse: {
-                l1: 'Association pour la formation au numérique à Bessenay',
-                l2: null,
-                l3: null,
-                l4: '6 rue de la Mairie',
-                l5: null,
-                l6: '69690 Bessenay',
-                l7: 'France',
-                numero_voie: '6',
-                type_voie: 'rue',
-                nom_voie: 'de la Mairie',
-                complement_adresse: null,
-                code_postal: '69690',
-                localite: 'Bessenay',
-                code_insee_localite: '69194',
-                cedex: null
-              },
-            }
+            adresse: {
+              l1: 'Association pour la formation au numérique à Bessenay',
+              l2: null,
+              l3: null,
+              l4: '6 rue de la Mairie',
+              l5: null,
+              l6: '69690 Bessenay',
+              l7: 'France',
+              numero_voie: '6',
+              type_voie: 'rue',
+              libelle_voie: 'de la Mairie',
+              complement_adresse: null,
+              code_postal: '69690',
+              libelle_commune: 'Bessenay',
+              code_commune: '69194',
+              cedex: null
+            },
           }
         }
       },
@@ -90,21 +88,19 @@ describe('conseillers géolocalisés', () => {
             ]
           },
           insee: {
-            etablissement: {
-              adresse: {
-                l1: 'Les artisans du numérique',
-                l2: 'ZI les deux clochers',
-                l3: '62300, Lens',
-                numero_voie: null,
-                type_voie: null,
-                nom_voie: null,
-                complement_adresse: 'ZI les deux clochers',
-                code_postal: '62300',
-                localite: 'Lens',
-                code_insee_localite: '62072',
-                cedex: null
-              },
-            }
+            adresse: {
+              l1: 'Les artisans du numérique',
+              l2: 'ZI les deux clochers',
+              l3: '62300, Lens',
+              numero_voie: null,
+              type_voie: null,
+              libelle_voie: null,
+              complement_adresse: 'ZI les deux clochers',
+              code_postal: '62300',
+              libelle_commune: 'Lens',
+              code_commune: '62072',
+              cedex: null
+            },
           }
         }
       }

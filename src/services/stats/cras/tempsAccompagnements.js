@@ -36,6 +36,9 @@ const getStatsTempsAccompagnements = async (db, query) => {
     temps.valeur = temps.valeur === 0 ? 0 : Math.round(temps.valeur / 60);
     total += temps.valeur;
   });
+  await tempsAccompagnement.forEach(temps => {
+    temps.pourcent = temps.valeur > 0 && total > 0 ? Number((temps.valeur * 100 / total).toFixed(1)) : 0;
+  });
   tempsAccompagnement.unshift({ nom: 'total', valeur: total });
 
   return tempsAccompagnement;

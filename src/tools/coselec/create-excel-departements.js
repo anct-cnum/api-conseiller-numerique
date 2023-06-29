@@ -156,12 +156,12 @@ execute(__filename, async ({ db, exit }) => {
       s.estLabelliseFranceServices = match.estLabelliseFranceServices;
 
       // Raison sociale
-      s.raisonSociale = match?.insee?.entreprise?.raison_sociale ?
-        match?.insee?.entreprise?.raison_sociale : '';
+      s.raisonSociale = match?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ?
+        match?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale : '';
 
       // Commune INSEE
-      s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
-        match?.insee?.etablissement?.commune_implantation?.value : '';
+      s.communeInsee = match?.insee?.adresse?.libelle_commune ?
+        match?.insee?.adresse?.libelle_commune : '';
 
       // Cherche le bon Coselec précédent
       s.coselecPrecedent = utils.getCoselec(match) || '';
@@ -202,12 +202,12 @@ execute(__filename, async ({ db, exit }) => {
         s.nomCommune = match.nomCommune;
 
         // Raison sociale
-        s.raison_sociale = match?.insee?.entreprise?.raison_sociale ?
-          match?.insee?.entreprise?.raison_sociale : '';
+        s.raison_sociale = match?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ?
+          match?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale : '';
 
         // Commune INSEE
-        s.communeInsee = match?.insee?.etablissement?.commune_implantation?.value ?
-          match?.insee?.etablissement?.commune_implantation?.value : '';
+        s.communeInsee = match?.insee?.adresse?.libelle_commune ?
+          match?.insee?.adresse?.libelle_commune : '';
 
         // Cherche le bon Coselec précédent
         s.coselecPrecedent = utils.getCoselec(match) || '';

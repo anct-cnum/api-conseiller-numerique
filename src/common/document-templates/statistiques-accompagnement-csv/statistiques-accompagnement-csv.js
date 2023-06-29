@@ -21,7 +21,8 @@ const general = statistiques => [
 
 const statsThemes = statistiques => [
   'Thèmes des accompagnements',
-  ...statistiques.statsThemes.map(theme => `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur}`),
+  ...statistiques.statsThemes.map(theme =>
+    `${labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom};${theme.valeur};${theme.pourcent}%`),
   ''
 ];
 
@@ -40,9 +41,9 @@ const statsTempsAccompagnements = statistiques => [
   'Temps en accompagnements',
   ...[
     'Total d\'heures',
-    'Individuelles',
-    'Collectives',
-    'Ponctuelles'
+    'Individuels',
+    'Collectifs',
+    'Ponctuels'
   ].map((statsTempsAccompagnement, index) => `${statsTempsAccompagnement};${statistiques.statsTempsAccompagnements[index].valeur}h`),
   ''
 ];

@@ -42,6 +42,7 @@ const statsThemes = (ws, statistiques) => {
   statistiques.statsThemes.forEach((theme, i) => {
     ws.cell(17 + i, 1).string(labelsCorrespondance.find(label => label.nom === theme.nom)?.correspondance ?? theme.nom);
     ws.cell(17 + i, 2).number(theme.valeur);
+    ws.cell(17 + i, 3).string(theme.pourcent + '%');
   });
   return ws;
 };
@@ -64,9 +65,9 @@ const statsTempsAccompagnements = (ws, statistiques) => {
   ws.cell(42, 1).string('Temps en accompagnements');
   [
     'Total d\'heures',
-    'Individuelles',
-    'Collectives',
-    'Ponctuelles'
+    'Individuels',
+    'Collectifs',
+    'Ponctuels'
   ].forEach((statsTempsAccompagnement, i) => {
     ws.cell(43 + i, 1).string(statsTempsAccompagnement);
     ws.cell(43 + i, 2).string(statistiques.statsTempsAccompagnements[i].valeur + 'h');
