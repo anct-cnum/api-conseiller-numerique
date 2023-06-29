@@ -9,6 +9,7 @@ module.exports = {
       db.collection('users').createIndex({ 'passwordCreated': 1 }),
       db.collection('users').createIndex({ 'lastlogin': 1 }),
       db.collection('users').createIndex({ 'createdAt': 1 }),
+      db.collection('users').createIndex({ 'entity.$id': 1 }),
     ]);
   },
   structures: db => {
@@ -32,13 +33,13 @@ module.exports = {
         'contact.email': 'text',
       }, { name: 'bo-search-fulltext' }),
       db.collection('structures').createIndex({ 'contact.inactivite': 1 }),
+      db.collection('structures').createIndex({ 'conventionnement.statut': 1 }),
     ]);
   },
   misesEnRelation: db => {
     return Promise.all([
       db.collection('misesEnRelation').createIndex({ 'statut': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structure.$id': 1 }),
-      db.collection('misesEnRelation').createIndex({ 'structure.oid': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseiller.$id': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structureObj.codePostal': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structureObj.idPG': 1 }),
