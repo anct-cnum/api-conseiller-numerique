@@ -34,6 +34,8 @@ module.exports = {
       }, { name: 'bo-search-fulltext' }),
       db.collection('structures').createIndex({ 'contact.inactivite': 1 }),
       db.collection('structures').createIndex({ 'conventionnement.statut': 1 }),
+      db.collection('structures').createIndex({ 'conventionnement.dossierReconventionnement.dateDeValidation': 1 }),
+      db.collection('structures').createIndex({ 'conventionnement.dossierConventionnement.dateDeValidation': 1 }),
     ]);
   },
   misesEnRelation: db => {
@@ -51,6 +53,8 @@ module.exports = {
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.listeSubordonnes': 1 }),
       db.collection('misesEnRelation').createIndex({ 'emetteurRenouvellement.date': 1 }),
       db.collection('misesEnRelation').createIndex({ 'emetteurRupture.date': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'emetteurRecrutement.date': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'createdAt': 1 }),
       db.collection('misesEnRelation').createIndex({
         'conseillerObj.nom': 'text',
         'conseillerObj.prenom': 'text',
