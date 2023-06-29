@@ -9,12 +9,12 @@ const formatAddressFromInsee = adresse => [
   addressGroup([
     adresse.numero_voie,
     adresse.type_voie,
-    adresse.nom_voie
+    adresse.libelle_voie
   ]),
   adresse.complement_adresse,
   addressGroup([
     adresse.code_postal,
-    adresse.localite
+    adresse.libelle_commune
   ]),
 ].filter(isValidAddressPart).join(addressPartSeparator);
 

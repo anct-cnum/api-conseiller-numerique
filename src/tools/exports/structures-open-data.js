@@ -79,12 +79,12 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         }
 
         // Adresse
-        let adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
-          (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
-          (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + '\n' +
-          (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + '\n' : '') +
-          (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
-          (structure?.insee?.etablissement?.adresse?.localite ?? '');
+        let adresse = (structure?.insee?.adresse?.numero_voie ?? '') + ' ' +
+          (structure?.insee?.adresse?.type_voie ?? '') + ' ' +
+          (structure?.insee?.adresse?.libelle_voie ?? '') + '\n' +
+          (structure?.insee?.adresse?.complement_adresse ? structure.insee.adresse.complement_adresse + '\n' : '') +
+          (structure?.insee?.adresse?.code_postal ?? '') + ' ' +
+          (structure?.insee?.adresse?.libelle_commune ?? '');
 
         adresse = adresse.replace(/["']/g, '');
 
@@ -134,7 +134,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         }
 
         // eslint-disable-next-line max-len
-        file.write(`${structure?.insee?.entreprise?.raison_sociale ?? ''};${structure?.insee?.etablissement?.commune_implantation?.value ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${coselecs[coselec?.numero]};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.etablissement?.adresse?.code_insee_localite};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
+        file.write(`${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ?? ''};${structure?.insee?.adresse?.libelle_commune ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${coselecs[coselec?.numero]};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.adresse?.code_commune};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
       } catch (e) {
         Sentry.captureException(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
         logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);

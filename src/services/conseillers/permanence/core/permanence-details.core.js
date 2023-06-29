@@ -15,7 +15,7 @@ const permanenceFormattedAddress = formattedAddress =>
 
 const permanenceAddress = permanence =>
   permanenceFormattedAddress(
-    formatAddressFromInsee(permanence.insee?.etablissement.adresse ?? {})
+    formatAddressFromInsee(permanence.insee.adresse ?? {})
   );
 
 const permanenceContactEmail = permanence =>
