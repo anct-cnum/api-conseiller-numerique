@@ -25,6 +25,15 @@ execute(__filename, async ({ db, logger, exit }) => {
     { 'conseillerObj.listeSubordonnes': { '$exists': true } },
     { $unset: { 'conseillerObj.listeSubordonnes': '' } }
   );
+  // tag coordinateurs
+  await db.collection('conseillers').updateMany(
+    { 'coordinateurs': { '$exists': true } },
+    { $unset: { 'coordinateurs': '' } }
+  );
+  await db.collection('misesEnRelation').updateMany(
+    { 'conseillerObj.coordinateurs': { '$exists': true } },
+    { $unset: { 'conseillerObj.coordinateurs': '' } }
+  );
   // Role
   await db.collection('users').updateMany(
     { 'roles': { '$in': ['coordinateur_coop'] } },

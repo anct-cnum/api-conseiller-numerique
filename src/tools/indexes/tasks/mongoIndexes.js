@@ -83,6 +83,7 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'listeSubordonnes.type': 1 }),
       db.collection('conseillers').createIndex({ 'listeSubordonnes.liste': 1 }),
       db.collection('conseillers').createIndex({ 'inactivite': 1 }),
+      db.collection('conseillers').createIndex({ 'nonAffichageCarto': 1 }),
     ]);
   },
   cras: db => {

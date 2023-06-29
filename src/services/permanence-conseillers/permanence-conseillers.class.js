@@ -25,6 +25,7 @@ const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure
 
 const axios = require('axios');
 const { lieuxDeMediationNumerique } = require('./permanence/core/lieux-de-mediation-numerique.core');
+const { getAdresseEtablissementBySiretEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
 
 exports.PermanenceConseillers = class Sondages extends Service {
   constructor(options, app) {
@@ -128,7 +129,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
         if (error) {
-          app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
@@ -172,7 +172,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
         if (error) {
-          app.get('sentry').captureException(error);
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
@@ -206,31 +205,25 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user?._id, [Role.Conseiller], () => user)
       ).then(async () => {
         try {
-          const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.params.siret}`;
-          const params = {
-            token: app.get('api_entreprise'),
-            context: 'cnum',
-            recipient: 'cnum',
-            object: 'checkSiret',
-          };
-          const result = await axios.get(urlSiret, { params: params });
-          let adresse = result?.data?.etablissement?.adresse;
+          const adresse = await getAdresseEtablissementBySiretEntrepriseApiV3(req.params.siret, app.get('api_entreprise'));
+
           if (adresse) {
+            const voie = adresse?.numero_voie + adresse?.indice_repetition_voie?.toUpperCase();
             const adresseComplete = [
-              adresse?.numero_voie ?? '',
+              voie ?? '',
               adresse?.type_voie ?? '',
-              adresse?.nom_voie ?? '',
+              adresse?.libelle_voie ?? '',
               adresse?.code_postal ?? '',
-              adresse?.localite ?? ''
+              adresse?.libelle_commune ?? ''
             ].join(' ');
             let adresseParSiret = {
               l1: adresse?.l1 ?? '',
               l2: adresse?.l2 ?? '',
-              numero_voie: adresse?.numero_voie ?? '',
+              numero_voie: voie ?? '',
               type_voie: adresse?.type_voie ?? '',
-              nom_voie: adresse?.nom_voie ?? '',
+              nom_voie: adresse?.libelle_voie ?? '',
               code_postal: adresse?.code_postal ?? '',
-              localite: adresse?.localite ?? '',
+              localite: adresse?.libelle_commune ?? '',
               adresseComplete: adresseComplete,
             };
 

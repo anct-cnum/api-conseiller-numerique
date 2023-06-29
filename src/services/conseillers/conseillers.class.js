@@ -15,9 +15,11 @@ const Joi = require('joi');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 const {
   checkAuth,
   checkRoleCandidat,
+  checkRoleConseiller,
   checkRoleAdminCoop,
   checkConseillerExist,
   checkCvExistsS3,
@@ -65,6 +67,9 @@ const { geolocatedConseillersByRegion } = require('./geolocalisation/core/geoloc
 const { geolocatedConseillersByDepartement } = require('./geolocalisation/core/geolocation-par-departement.core');
 const { permanenceRepository } = require('./permanence/repository/permanence.repository');
 const { permanenceDetailsFromStructureId, permanenceDetails, aggregationByLocation } = require('./permanence/core/permanence-details.core');
+
+const codeRegions = require('../../../data/imports/code_region.json');
+const codeDepartements = require('../../../data/imports/departements-region.json');
 
 exports.Conseillers = class Conseillers extends Service {
   constructor(options, app) {
@@ -167,7 +172,8 @@ exports.Conseillers = class Conseillers extends Service {
       //Verification role candidat
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!candidatUser?.roles.includes('candidat')) {
+
+      if (!candidatUser?.roles.includes('candidat') && !candidatUser?.roles.includes('conseiller')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -184,7 +190,8 @@ exports.Conseillers = class Conseillers extends Service {
       const allowedMime = ['application/pdf'];
       let detectingFormat = await fileType.fromBuffer(cvFile.buffer);
 
-      if (!allowedExt.includes(detectingFormat.ext) || !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
+      if (detectingFormat === undefined || !allowedExt.includes(detectingFormat.ext) ||
+          !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
         res.status(400).send(new BadRequest('Erreur : format de CV non autorisé').toJSON());
         return;
       }
@@ -286,7 +293,7 @@ exports.Conseillers = class Conseillers extends Service {
       checkAuth(req, res);
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      if (!checkRoleCandidat(user, req)) {
+      if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req)) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -319,8 +326,7 @@ exports.Conseillers = class Conseillers extends Service {
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
       let userId = decode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      // eslint-disable-next-line max-len
-      if (!(user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString()) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
+      if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
           userId: userId
         }).toJSON());
@@ -875,6 +881,8 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { disponible } = req.body;
+      const updatedAt = new Date();
+
       const disponibleValidation = Joi.boolean().required().error(new Error('Le format de la disponibilité est invalide')).validate(disponible);
       if (disponibleValidation.error) {
         res.status(400).json(new BadRequest(disponibleValidation.error));
@@ -895,55 +903,95 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await pool.query(`UPDATE djapp_coach
-            SET disponible = $2 WHERE id = $1`,
-        [conseiller.idPG, disponible]);
-
+        SET (disponible, updated) = ($2, $3) WHERE id = $1`,
+        [conseiller.idPG, disponible, updatedAt]);
       } catch (err) {
         logger.error(err);
         app.get('sentry').captureException(err);
       }
       try {
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
       }
       try {
         if (disponible) {
-          await db.collection('misesEnRelation').updateMany(
-            {
-              'conseiller.$id': conseiller._id,
-              'statut': 'non_disponible'
-            },
-            {
-              $set:
-                {
-                  'statut': 'nouvelle'
-                }
-            });
+          //Si disponible suppression des mises en relation autres que celles finalisées et reconventionnement, pour régénération par le CRON
+          await db.collection('misesEnRelation').deleteMany({
+            'conseiller.$id': conseiller._id,
+            'statut': { '$in': ['finalisee_non_disponible', 'non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
         } else {
           await db.collection('misesEnRelation').updateMany(
             {
               'conseiller.$id': conseiller._id,
-              'statut': 'nouvelle'
+              'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
             },
             {
               $set:
                 {
-                  'statut': 'non_disponible'
+                  'statut': user?.roles.includes('conseiller') ? 'finalisee_non_disponible' : 'non_disponible',
+                  'conseillerObj.disponible': disponible,
+                  'conseillerObj.updatedAt': updatedAt
                 }
             });
         }
-        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
-          $set: { 'conseillerObj.disponible': disponible }
-        });
-
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
       }
       res.send({ disponible });
     });
+
+    app.patch('/conseillers/update_date_disponibilite/:id', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idConseiller = req.params.id;
+      const { dateDisponibilite } = req.body;
+      const updatedAt = new Date();
+
+      const dateDisponibleValidation =
+        Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieure ou égale à la date du jour')).validate(dateDisponibilite);
+      if (dateDisponibleValidation.error) {
+        res.status(400).json(new BadRequest(dateDisponibleValidation.error));
+        return;
+      }
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Ce conseiller n\'existe pas', {
+          idConseiller,
+        }).toJSON());
+        return;
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden('Action non autorisée', {
+          userId
+        }).toJSON());
+        return;
+      }
+      try {
+        await pool.query(`UPDATE djapp_coach
+        SET (start_date, updated) = ($2, $3) WHERE id = $1`,
+        [conseiller.idPG, dateDisponibilite, updatedAt]);
+
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
+
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+          $set: {
+            'conseillerObj.dateDisponibilite': dateDisponibilite,
+            'conseillerObj.updatedAt': updatedAt
+          }
+        });
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+
+      res.send({ dateDisponibilite });
+    });
+
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
@@ -1076,6 +1124,121 @@ exports.Conseillers = class Conseillers extends Service {
         try {
           const boolSubordonne = await isSubordonne(db)(idCoordinateur, idConseiller);
           res.send({ 'isSubordonne': boolSubordonne });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.get('/conseiller/candidat/searchZoneGeographique/:adresse', async (req, res) => {
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const { adresse } = JSON.parse(req.params.adresse);
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(user?._id, [Role.Conseiller], () => user)
+      ).then(async () => {
+        const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adresse}&type=municipality`;
+        try {
+          const params = {};
+          const result = await axios.get(urlAPI, { params: params });
+          return res.send({ 'adresseApi': result.data?.features });
+        } catch (e) {
+          return res.send({ 'adresseApi': null });
+        }
+      }).catch(routeActivationError => abort(res, routeActivationError));
+    });
+
+    app.patch('/conseiller/candidat/zoneGeographique/:id', async (req, res) => {
+      checkAuth(req, res);
+      const userId = userIdFromRequestJwt(req);
+      const getUserById = userAuthenticationRepository(db);
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(req.params.id) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Le conseiller n\'existe pas !', {
+          id: new ObjectId(req.params.id)
+        }).toJSON());
+        return;
+      }
+      const updatedAt = new Date();
+      const distanceMax = req.body.distanceMax;
+      const codeCommune = req.body.codeCommune;
+      const codePostal = req.body.codePostal;
+      const nomCommune = req.body.ville;
+      const location = req.body.location;
+
+      let codeDepartement = codePostal.substr(0, 2);
+      let codeCom = null;
+      if (codePostal.substr(0, 2) === 97) {
+        codeDepartement = codePostal.substr(0, 3);
+      }
+      let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
+      let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
+      if (codePostal === 97150) {
+        codeDepartement = '00';
+        codeRegion = '00';
+        codeCom = '978';
+      }
+      const schema = Joi.object({
+        ville: Joi.string().required().error(new Error('La ville est invalide')),
+        codePostal: Joi.string().required().min(5).max(5).error(new Error('Le codePostal est invalide')),
+        codeCommune: Joi.string().required().min(4).max(5).error(new Error('Le codeCommune est invalide')),
+        location: Joi.object().required().error(new Error('La localisation doit obligatoirement être saisie')),
+        distanceMax: Joi.number().required().allow(5, 10, 15, 20, 40, 100, 2000).error(new Error('La distance est invalide'))
+      }).validate(req.body);
+
+      if (schema.error) {
+        res.status(400).send(new BadRequest('Erreur : ' + schema.error).toJSON());
+        return;
+      }
+
+      canActivate(
+        authenticationGuard(authenticationFromRequest(req)),
+        rolesGuard(userId, [Role.Conseiller], getUserById)
+      ).then(async () => {
+        try {
+          await pool.query(`UPDATE djapp_coach
+          SET (
+            max_distance,
+            zip_code,
+            commune_code,
+            departement_code,
+            region_code,
+            geo_name,
+            location,
+            updated,
+            com_code
+           )
+            =
+            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9, $10)
+            WHERE id = $1`,
+          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement,
+            codeRegion, nomCommune, location, updatedAt, codeCom]);
+
+          await this.patch(conseiller._id, {
+            $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
+          });
+
+          conseiller.nomCommune = nomCommune;
+          conseiller.codePostal = codePostal;
+          conseiller.codeCommune = codeCommune;
+          conseiller.codeDepartement = codeDepartement;
+          conseiller.codeRegion = codeRegion;
+          conseiller.location = location;
+          conseiller.distanceMax = distanceMax;
+          conseiller.updatedAt = updatedAt;
+          conseiller.codeCom = codeCom;
+
+          await db.collection('misesEnRelation').deleteMany({
+            'conseiller.$id': conseiller._id,
+            'statut': { '$in': ['finalisee_non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
+
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
+            'conseillerObj': conseiller,
+          } });
+
+          res.send({ conseiller });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);

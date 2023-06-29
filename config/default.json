@@ -71,7 +71,12 @@
   "gandi": {
     "token": "1234",
     "endPoint": "https://api.gandi.net/v5/email",
-    "domain": "conseiller-numerique.fr"
+    "domain": "conseiller-numerique.fr",
+    "type": "GANDI_TYPE"
+  },
+  "crisp": {
+    "token": "xxxx",
+    "idSite": "xxx"
   },
   "open_cage_data": {
     "token": "1234",

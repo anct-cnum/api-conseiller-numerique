@@ -5,7 +5,6 @@ const { BadRequest, NotFound, Forbidden, NotAuthenticated, GeneralError, Conflic
 const { Service } = require('feathers-mongodb');
 
 const Joi = require('joi');
-const axios = require('axios');
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
@@ -13,6 +12,7 @@ const decode = require('jwt-decode');
 const { Pool } = require('pg');
 const utils = require('../../utils/index.js');
 const { v4: uuidv4 } = require('uuid');
+const { getRaisonSocialeBySiretEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
 
 const pool = new Pool();
 
@@ -176,7 +176,7 @@ exports.Structures = class Structures extends Service {
           if (filter !== 'toutes') {
             queryFilter = { statut: filter };
           } else {
-            queryFilter = { statut: { '$ne': 'non_disponible' } };
+            queryFilter = { statut: { '$nin': ['non_disponible', 'renouvellement_initiee', 'terminee', 'finalisee_non_disponible'] } };
           }
         } else {
           res.status(400).send(new BadRequest('Invalid filter', {
@@ -301,15 +301,8 @@ exports.Structures = class Structures extends Service {
       }
 
       try {
-        const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${req.body.siret}`;
-        const params = {
-          token: app.get('api_entreprise'),
-          context: 'cnum',
-          recipient: 'cnum',
-          object: 'checkSiret',
-        };
-        const result = await axios.get(urlSiret, { params: params });
-        return res.send({ 'nomStructure': result.data.etablissement.adresse.l1 });
+        const raisonSociale = await getRaisonSocialeBySiretEntrepriseApiV3(req.body.siret, app.get('api_entreprise'));
+        return res.send({ 'nomStructure': raisonSociale });
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);

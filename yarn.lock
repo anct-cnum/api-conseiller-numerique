@@ -483,10 +483,10 @@
     "lodash" "^4.17.20"
     "radix-router" "^3.0.1"
 
-"@gouvfr-anct/lieux-de-mediation-numerique@1.12.2":
-  "integrity" "sha512-q5Tyiws3T4JDVSmvnE5xfzh0Z5g3081LMgyNVslLeWjKDArRCtIbyg+X+lL3BOXvif4ZWGZblOjSl1tZ9COHqg=="
-  "resolved" "https://registry.npmjs.org/@gouvfr-anct/lieux-de-mediation-numerique/-/lieux-de-mediation-numerique-1.12.2.tgz"
-  "version" "1.12.2"
+"@gouvfr-anct/lieux-de-mediation-numerique@1.15.1":
+  "integrity" "sha512-NXiBve6qMR/DrjcU5CMMNculfJme6ROvcRE2Xiyk9/FDki3xG/FW1N6XXa89Imu8UDscZtAqT5B0ho8rAeDr8A=="
+  "resolved" "https://registry.npmjs.org/@gouvfr-anct/lieux-de-mediation-numerique/-/lieux-de-mediation-numerique-1.15.1.tgz"
+  "version" "1.15.1"
 
 "@hapi/boom@9.1.1":
   "integrity" "sha512-VNR8eDbBrOxBgbkddRYIe7+8DZ+vSbV6qlmaN2x7eWjsUjy2VmQgChkOKcVZIeupEZYj+I0dqNg430OhwzagjA=="
@@ -1619,6 +1619,7 @@
   dependencies:
     "anymatch" "~3.1.2"
     "braces" "~3.0.2"
+    "fsevents" "~2.3.2"
     "glob-parent" "~5.1.2"
     "is-binary-path" "~2.1.0"
     "is-glob" "~4.0.1"
@@ -2359,6 +2360,7 @@
     "estraverse" "^5.2.0"
     "esutils" "^2.0.2"
     "optionator" "^0.8.1"
+    "source-map" "~0.6.1"
   optionalDependencies:
     "source-map" "~0.6.1"
 
@@ -2617,6 +2619,7 @@
   "resolved" "https://registry.npmjs.org/extract-zip/-/extract-zip-2.0.1.tgz"
   "version" "2.0.1"
   dependencies:
+    "@types/yauzl" "^2.9.1"
     "debug" "^4.1.1"
     "get-stream" "^5.1.0"
     "yauzl" "^2.10.0"
@@ -3569,6 +3572,7 @@
     "@types/node" "*"
     "anymatch" "^3.0.3"
     "fb-watchman" "^2.0.0"
+    "fsevents" "^2.3.2"
     "graceful-fs" "^4.2.4"
     "jest-regex-util" "^27.0.6"
     "jest-serializer" "^27.0.6"
@@ -4776,6 +4780,7 @@
     "bson" "^1.1.1"
     "require_optional" "^1.0.1"
     "safe-buffer" "^5.1.2"
+    "saslprep" "^1.0.0"
   optionalDependencies:
     "saslprep" "^1.0.0"
 
@@ -4789,6 +4794,7 @@
     "denque" "^1.4.1"
     "require_optional" "^1.0.1"
     "safe-buffer" "^5.1.2"
+    "saslprep" "^1.0.0"
   optionalDependencies:
     "saslprep" "^1.0.0"
 

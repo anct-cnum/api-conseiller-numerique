@@ -9,7 +9,7 @@ const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, 
         'Content-Type': 'application/json',
         'Authorization': `Apikey ${gandi.token}`
       },
-      data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
+      data: { 'login': login, 'mailbox_type': gandi.type, 'password': password, 'aliases': [] }
     });
     const resultInfo = {
       status: resultCreation?.status,
