@@ -206,9 +206,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
       ).then(async () => {
         try {
           const adresse = await getAdresseEtablissementBySiretEntrepriseApiV3(req.params.siret, app.get('api_entreprise'));
-
           if (adresse) {
-            const voie = adresse?.numero_voie + adresse?.indice_repetition_voie?.toUpperCase();
+            const repetitionVoie = adresse?.indice_repetition_voie ? adresse?.indice_repetition_voie?.toUpperCase() : '';
+            const voie = adresse?.numero_voie + repetitionVoie;
             const adresseComplete = [
               voie ?? '',
               adresse?.type_voie ?? '',
@@ -217,8 +217,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
               adresse?.libelle_commune ?? ''
             ].join(' ');
             let adresseParSiret = {
-              l1: adresse?.l1 ?? '',
-              l2: adresse?.l2 ?? '',
+              l1: adresse?.acheminement_postal?.l1 ?? '',
+              l2: adresse?.acheminement_postal?.l2 ?? '',
               numero_voie: voie ?? '',
               type_voie: adresse?.type_voie ?? '',
               libelle_voie: adresse?.libelle_voie ?? '',
