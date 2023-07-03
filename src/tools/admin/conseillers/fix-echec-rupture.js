@@ -1,4 +1,4 @@
-const { deleteMailbox, getMailBox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
+const { deleteMailbox, getMailBox, verifHomonymesMailbox } = require('../../../utils/mailbox');
 const { deleteAccountRuptureEchec, searchUser } = require('../../../utils/mattermost');
 const { execute } = require('../../utils');
 const dayjs = require('dayjs');
@@ -134,15 +134,15 @@ const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStr
       },
     },
   );
-const getMisesEnRelationNonDispo = db => async idCNFS => await db.collection('misesEnRelation').findOne(
+const getMisesEnRelationNonDispo = db => async email => await db.collection('misesEnRelation').findOne(
   {
-    'conseiller.$id': idCNFS,
+    'conseillerObj.email': email,
     'statut': 'finalisee_non_disponible',
   }
 );
-const updateMisesEnRelationNonDispo = db => async idCNFS => await db.collection('misesEnRelation').updateMany(
+const updateMisesEnRelationNonDispo = db => async email => await db.collection('misesEnRelation').updateMany(
   {
-    'conseiller.$id': idCNFS,
+    'conseillerObj.email': email,
     'statut': 'finalisee_non_disponible',
   },
   { $set: { statut: 'nouvelle' } },
@@ -310,6 +310,8 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       codeDepartementStructure: !conseiller?.codeDepartementStructure,
       hasPermanence: !conseiller?.hasPermanence,
       coordinateurs: !conseiller?.coordinateurs,
+      listeSubordonnes: !conseiller?.listeSubordonnes,
+      estCoordinateur: !conseiller?.estCoordinateur
     };
     if (Object.values(verifConseiller).includes(false)) {
       const arrayLog = [];
@@ -349,10 +351,10 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       logger.info(`Correction rupture dans la mise en relation`);
       await updateMisesEnRelationRupture(db)(misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif);
     }
-    const visibleSA = await getMisesEnRelationNonDispo(db)(idCNFS);
+    const visibleSA = await getMisesEnRelationNonDispo(db)(conseiller.email);
     if (visibleSA) {
       logger.info(`Correction mise en relation visible par les structures`);
-      await updateMisesEnRelationNonDispo(db)(idCNFS);
+      await updateMisesEnRelationNonDispo(db)(conseiller.email);
     }
     // Partie historisation conseillersRuptures
     const getHistorisation = await getHistorisationRupture(db)(idCNFS, idStructure, dateRupture);
@@ -369,7 +371,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     // Partie verif Homonyme
     let login = conseiller?.emailCN?.address?.substring(0, conseiller?.emailCN?.address?.lastIndexOf('@')) ?? `non renseignée`;
     if (login === 'non renseignée') {
-      const verifHomonyme = await fixHomonymesCreateMailbox(gandi, conseiller.nom, conseiller.prenom, db);
+      const verifHomonyme = await verifHomonymesMailbox(conseiller.nom, conseiller.prenom, db);
       if (verifHomonyme !== `${conseiller.prenom}.${conseiller.nom}`) {
         exit(`Homonyme détecté, veuillez saisir le prenom.nom (homonyme: ${verifHomonyme})`);
         return;
@@ -394,7 +396,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     }
     // Partie Mattermost
     const getAccountMattermost = await searchUser(mattermost, null, conseiller);
-    const resultMattermost = getAccountMattermost.data.filter(i => i.email === `eliott.pesnel@${gandi.domain}`);
+    const resultMattermost = getAccountMattermost.data.filter(i => i.email === `${login}@${gandi.domain}`);
     if (resultMattermost?.length === 1) {
       logger.info(`Correction mattermost (MM)`);
       await deleteAccountRuptureEchec(resultMattermost[0]?.id, mattermost, conseiller, db, logger, Sentry);

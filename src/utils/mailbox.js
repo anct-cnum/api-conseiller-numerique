@@ -184,4 +184,16 @@ const fixHomonymesCreateMailbox = async (gandi, nom, prenom, db) => {
   return login;
 };
 
-module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox, fixHomonymesCreateMailbox };
+const verifHomonymesMailbox = async (nom, prenom, db) => {
+  let login = `${prenom}.${nom}`;
+  let conseillersHomonyme = await db.collection('conseillers').distinct(
+    {
+      'emailCN.address': { $regex: new RegExp(login, 'i') },
+      'statut': 'RECRUTE'
+    });
+
+  return conseillersHomonyme.length >= 1 ? conseillersHomonyme[0] : login;
+};
+
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox, fixHomonymesCreateMailbox, verifHomonymesMailbox };
+
