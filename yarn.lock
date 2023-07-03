@@ -1119,6 +1119,18 @@
   "resolved" "https://registry.npmjs.org/@gouvfr-anct/lieux-de-mediation-numerique/-/lieux-de-mediation-numerique-1.12.2.tgz"
   "version" "1.12.2"
 
+"@hapi/boom@10.0.1":
+  "integrity" "sha512-ERcCZaEjdH3OgSJlyjVk8pHIFeus91CjKP3v+MpgBNp5IvGzP2l/bRiD78nqYcKPaZdbKkK5vDBVPd2ohHBlsA=="
+  "resolved" "https://registry.npmjs.org/@hapi/boom/-/boom-10.0.1.tgz"
+  "version" "10.0.1"
+  dependencies:
+    "@hapi/hoek" "^11.0.2"
+
+"@hapi/hoek@^11.0.2":
+  "integrity" "sha512-aKmlCO57XFZ26wso4rJsW4oTUnrgTFw2jh3io7CAtO9w4UltBNwRXvXIVzzyfkaaLRo3nluP/19msA8vDUUuKw=="
+  "resolved" "https://registry.npmjs.org/@hapi/hoek/-/hoek-11.0.2.tgz"
+  "version" "11.0.2"
+
 "@hapi/hoek@^9.0.0":
   "integrity" "sha512-sqKVVVOe5ivCaXDWivIJYVSaEgdQK9ul7a4Kity5Iw7u9+wBAPbX1RMSnLLmp7O4Vzj0WOWwMAJsTL00xwaNug=="
   "resolved" "https://registry.npmjs.org/@hapi/hoek/-/hoek-9.2.0.tgz"
