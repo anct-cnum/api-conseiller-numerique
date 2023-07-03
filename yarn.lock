@@ -1114,19 +1114,12 @@
     "lodash" "^4.17.20"
     "radix-router" "^3.0.1"
 
-"@gouvfr-anct/lieux-de-mediation-numerique@1.15.1":
-  "integrity" "sha512-NXiBve6qMR/DrjcU5CMMNculfJme6ROvcRE2Xiyk9/FDki3xG/FW1N6XXa89Imu8UDscZtAqT5B0ho8rAeDr8A=="
-  "resolved" "https://registry.npmjs.org/@gouvfr-anct/lieux-de-mediation-numerique/-/lieux-de-mediation-numerique-1.15.1.tgz"
-  "version" "1.15.1"
+"@gouvfr-anct/lieux-de-mediation-numerique@1.12.2":
+  "integrity" "sha512-q5Tyiws3T4JDVSmvnE5xfzh0Z5g3081LMgyNVslLeWjKDArRCtIbyg+X+lL3BOXvif4ZWGZblOjSl1tZ9COHqg=="
+  "resolved" "https://registry.npmjs.org/@gouvfr-anct/lieux-de-mediation-numerique/-/lieux-de-mediation-numerique-1.12.2.tgz"
+  "version" "1.12.2"
 
-"@hapi/boom@9.1.1":
-  "integrity" "sha512-VNR8eDbBrOxBgbkddRYIe7+8DZ+vSbV6qlmaN2x7eWjsUjy2VmQgChkOKcVZIeupEZYj+I0dqNg430OhwzagjA=="
-  "resolved" "https://registry.npmjs.org/@hapi/boom/-/boom-9.1.1.tgz"
-  "version" "9.1.1"
-  dependencies:
-    "@hapi/hoek" "9.x.x"
-
-"@hapi/hoek@^9.0.0", "@hapi/hoek@9.x.x":
+"@hapi/hoek@^9.0.0":
   "integrity" "sha512-sqKVVVOe5ivCaXDWivIJYVSaEgdQK9ul7a4Kity5Iw7u9+wBAPbX1RMSnLLmp7O4Vzj0WOWwMAJsTL00xwaNug=="
   "resolved" "https://registry.npmjs.org/@hapi/hoek/-/hoek-9.2.0.tgz"
   "version" "9.2.0"
@@ -2505,7 +2498,7 @@
     "split-string" "^3.0.2"
     "to-regex" "^3.0.1"
 
-"braces@^3.0.2", "braces@~3.0.2", "braces@3.0.2":
+"braces@^3.0.2", "braces@~3.0.2":
   "integrity" "sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A=="
   "resolved" "https://registry.npmjs.org/braces/-/braces-3.0.2.tgz"
   "version" "3.0.2"
