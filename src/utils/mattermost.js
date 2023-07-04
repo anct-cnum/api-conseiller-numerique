@@ -515,6 +515,40 @@ const getIdUserChannel = async (mattermost, token, idChannel, idUser) => {
   });
 };
 
+const deleteAccountRuptureEchec = async (mattermostId, mattermost, conseiller, db, logger, Sentry) => {
+
+  try {
+    const token = await loginAPI({ mattermost });
+
+    //Query parameter permanent pour la suppression définitive (il faut que le paramètre ServiceSettings.EnableAPIUserDeletion soit configuré à true)
+    const resultDeleteAccount = await axios({
+      method: 'delete',
+      url: `${mattermost.endPoint}/api/v4/users/${mattermostId}?permanent=true`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    logger.info(resultDeleteAccount);
+    logger.info(`Suppresion compte Mattermost pour le conseiller id=${conseiller._id} (RUPTURE ECHEC)`);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      {
+        $set:
+          { 'mattermost.errorDeleteAccount': false }
+      });
+    return true;
+  } catch (e) {
+    Sentry.captureException(e);
+    logger.error(e);
+    await db.collection('conseillers').updateOne({ _id: conseiller._id },
+      {
+        $set:
+          { 'mattermost.errorDeleteAccount': true }
+      });
+    return false;
+  }
+};
+
 module.exports = {
   slugifyName,
   loginAPI,
@@ -536,5 +570,6 @@ module.exports = {
   searchUsersEmail,
   deleteMemberChannel,
   deleteJoinTeam,
-  getIdUserChannel
+  getIdUserChannel,
+  deleteAccountRuptureEchec
 };
