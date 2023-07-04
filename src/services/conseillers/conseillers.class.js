@@ -251,33 +251,31 @@ exports.Conseillers = class Conseillers extends Service {
       try {
         let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
         const command = new PutObjectCommand(params);
-        const response = await client.send(command);
-        if (response?.VersionId) {
-          try {
-            const cv = {
-              file: nameCVFile,
-              extension: detectingFormat.ext,
-              date: new Date()
-            };
+        await client.send(command).then(() => {
+          const cv = {
+            file: nameCVFile,
+            extension: detectingFormat.ext,
+            date: new Date()
+          };
 
-            db.collection('conseillers').updateMany({ email: conseiller.email },
-              {
-                $set: {
-                  cv: cv
-                }
-              });
-            db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
-              {
-                $set: {
-                  'conseillerObj.cv': cv
-                }
-              });
-          } catch (error) {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDB a échoué').toJSON());
-          }
-        }
+          db.collection('conseillers').updateMany({ email: conseiller.email },
+            {
+              $set: {
+                cv: cv
+              }
+            });
+          db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
+            {
+              $set: {
+                'conseillerObj.cv': cv
+              }
+            });
+          res.send({ isUploaded: true });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDB a échoué').toJSON());
+        });
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
