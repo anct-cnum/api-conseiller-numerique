@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 const pool = new Pool();
 const { ObjectID } = require('mongodb');
+const slugify = require('slugify');
 
 const configPG = {
   user: process.env.PGUSER,
@@ -371,12 +372,14 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     // Partie verif Homonyme
     let login = conseiller?.emailCN?.address?.substring(0, conseiller?.emailCN?.address?.lastIndexOf('@')) ?? `non renseignée`;
     if (login === 'non renseignée') {
-      const verifHomonyme = await verifHomonymesMailbox(conseiller.nom, conseiller.prenom, db);
-      if (verifHomonyme !== `${conseiller.prenom}.${conseiller.nom}`) {
+      const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+      const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+      const verifHomonyme = await verifHomonymesMailbox(nom, prenom, conseiller._id, db);
+      if (verifHomonyme !== `${prenom}.${nom}`) {
         exit(`Homonyme détecté, veuillez saisir le prenom.nom (homonyme: ${verifHomonyme})`);
         return;
       }
-      login = user ?? `${conseiller.prenom}.${conseiller.nom}`;
+      login = user ?? `${prenom}.${nom}`;
     }
     // Partie MAIL PIX & SA
     if (!misesEnRelation?.mailCnfsRuptureSentDate) {

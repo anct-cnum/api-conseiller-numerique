@@ -184,11 +184,12 @@ const fixHomonymesCreateMailbox = async (gandi, nom, prenom, db) => {
   return login;
 };
 
-const verifHomonymesMailbox = async (nom, prenom, db) => {
+const verifHomonymesMailbox = async (nom, prenom, conseillerId, db) => {
   let login = `${prenom}.${nom}`;
-  let conseillersHomonyme = await db.collection('conseillers').distinct(
+  let conseillersHomonyme = await db.collection('conseillers').distinct('emailCN.address',
     {
-      'emailCN.address': { $regex: new RegExp(login, 'i') },
+      '_id': { $ne: conseillerId },
+      'emailCN.address': { $regex: new RegExp(login) },
       'statut': 'RECRUTE'
     });
 
