@@ -115,7 +115,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             } else if (formatDate(datePrisePoste) !== formatDate(dateFinFormation) && commentaire !== '') {
               // eslint-disable-next-line max-len
               logger.error(`Conseiller ${idPGConseiller} semble ne pas etre en attente/exempté => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
-              errors++;
             } else if (commentaire === '') {
               // eslint-disable-next-line max-len
               if ((formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation)) || (formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste))) {
@@ -291,7 +290,7 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             await db.collection('misesEnRelation').updateMany({
               'conseillerObj.idPG': { $ne: idPGConseiller },
               'conseillerObj.email': conseillerOriginal.email,
-              'statut': { $ne: 'finalisee_rupture' }
+              'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
             }, {
               $set: {
                 'statut': 'finalisee_non_disponible',
