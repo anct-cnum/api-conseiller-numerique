@@ -70,8 +70,8 @@ execute(__filename, async ({ db, logger }) => {
   });
 
   while ((s = await matchSansCodeCommune.next())) {
-    if (s?.insee?.etablissement?.commune_implantation?.code) {
-      await store(s, zrr.includes(s.insee.etablissement.commune_implantation.code));
+    if (s?.insee?.adresse?.code_commune) {
+      await store(s, zrr.includes(s.insee.adresse?.code_commune));
     }
   }
 });

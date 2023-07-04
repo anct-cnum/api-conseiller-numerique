@@ -12,11 +12,11 @@ describe('format address', () => {
       l7: 'France',
       numero_voie: '6',
       type_voie: 'rue',
-      nom_voie: 'de la Mairie',
+      libelle_voie: 'de la Mairie',
       complement_adresse: null,
       code_postal: '69690',
-      localite: 'Bessenay',
-      code_insee_localite: '69194',
+      libelle_commune: 'Bessenay',
+      code_commune: '69194',
       cedex: null
     };
     const expectedAddress = '6 rue de la Mairie, 69690 Bessenay';
@@ -33,11 +33,11 @@ describe('format address', () => {
       l3: '62300, Lens',
       numero_voie: null,
       type_voie: null,
-      nom_voie: null,
+      libelle_voie: null,
       complement_adresse: 'ZI les deux clochers',
       code_postal: '62300',
-      localite: 'Lens',
-      code_insee_localite: '62072',
+      libelle_commune: 'Lens',
+      code_commune: '62072',
       cedex: null
     };
     const expectedAddress = 'ZI les deux clochers, 62300 Lens';

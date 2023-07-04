@@ -24,9 +24,10 @@ execute(__filename, async ({ logger, db }) => {
       if (conseiller) {
         const structure = await db.collection('structures').findOne({ _id: conseiller.structureId });
         // eslint-disable-next-line camelcase
-        const { numero_voie, type_voie, nom_voie, complement_adresse, code_postal, localite } = structure?.insee?.etablissement?.adresse;
+        const { numero_voie, type_voie, libelle_voie, complement_adresse, code_postal, libelle_commune } = structure?.insee?.adresse;
+        const adresse =
         // eslint-disable-next-line camelcase
-        const adresse = `${numero_voie ?? ''} ${type_voie ?? ''} ${nom_voie ?? ''} ${complement_adresse ?? ''} ${code_postal ?? ''} ${localite ?? ''}`;
+          `${numero_voie ?? ''} ${type_voie ?? ''} ${libelle_voie ?? ''} ${complement_adresse ?? ''} ${code_postal ?? ''} ${libelle_commune ?? ''}`;
         const craFiltre = await db.collection('cras').countDocuments({ 'conseiller.$id': id, 'cra.themes': { $in: ['demarche en ligne'] } });
         // eslint-disable-next-line max-len
         file.write(`${conseiller.nom};${conseiller.prenom};${conseiller?.emailCN?.address};${craFiltre};${structure.nom.replace(/["',]/g, '')};${structure.siret};${adresse.replace(/["',]/g, '')}\n`);

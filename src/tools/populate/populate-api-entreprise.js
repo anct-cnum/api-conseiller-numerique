@@ -2,7 +2,7 @@
 'use strict';
 const { execute } = require('../utils');
 const { program } = require('commander');
-const { getEtablissementBySiretEntrepriseApiV3, getEntrepriseBySirenEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
+const { getEtablissementBySiretEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
 
 program.parse(process.argv);
 
@@ -14,7 +14,7 @@ execute(__filename, async ({ db, app, logger }) => {
 
     const updateDoc = {
       $set: {
-        insee: insee
+        insee
       }
     };
 
@@ -34,12 +34,8 @@ execute(__filename, async ({ db, app, logger }) => {
     }
 
     try {
-      const resultEtablissement = await getEtablissementBySiretEntrepriseApiV3(siret, app.get('api_entreprise'));
-      const resultEntreprise = await getEntrepriseBySirenEntrepriseApiV3(siret.substring(0, 9), app.get('api_entreprise'));
-      return {
-        entreprise: resultEntreprise.unite_legale,
-        etablissement: resultEtablissement,
-      };
+      const resultBySiret = await getEtablissementBySiretEntrepriseApiV3(siret, app.get('api_entreprise'));
+      return resultBySiret;
     } catch (e) {
       logger.info(e);
       throw new Error('SIRET not found');

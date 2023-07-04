@@ -42,7 +42,7 @@ execute(__filename, async ({ logger, db }) => {
           'structure.contact.telephone': 1,
           'structure.estLabelliseAidantsConnect': 1,
           'structure.estLabelliseFranceServices': 1,
-          'structure.insee.etablissement.adresse': 1
+          'structure.insee.adresse': 1
         }
       }
     ]).toArray();
@@ -56,7 +56,7 @@ execute(__filename, async ({ logger, db }) => {
     name: structure.nom,
     isLabeledAidantsConnect: structure.estLabelliseAidantsConnect === 'OUI',
     isLabeledFranceServices: structure.estLabelliseFranceServices === 'OUI',
-    ...structure.insee ? { address: formatAddressFromInsee(structure.insee.etablissement.adresse) } : {}
+    ...structure.insee ? { address: formatAddressFromInsee(structure.insee.adresse) } : {}
   });
 
   const toGeoJsonFromConseillersWithGeolocation = geolocatedConseiller => ({
