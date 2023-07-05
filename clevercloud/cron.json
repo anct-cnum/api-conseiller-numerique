@@ -10,7 +10,7 @@
   "*/1 * * * * $ROOT/src/tools/jobs/create-account-candidats.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-candidats.sh",
   "0 0 * * * $ROOT/src/tools/jobs/delete-cv-six-mois.sh",
-  "*/30 * * * * $ROOT/src/tools/jobs/populate-rdv-aide-numerique.sh",
-  "0 7 1 * * $ROOT/src/tools/jobs/send-email-mensuelle-activite-cras.sh"
+  "15 0 * * * $ROOT/src/tools/jobs/delete-inactive-accounts.sh",
+  "*/30 * * * * $ROOT/src/tools/jobs/populate-rdv-aide-numerique.sh"
 ]
 

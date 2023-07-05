@@ -28,7 +28,7 @@ const getSiretList = db => async () =>
   .toArray();
 
 const setAidantConnectLabel = db => async siret => {
-  await db.collection('structures').updateOne(
+  await db.collection('structures').updateMany(
     {
       siret
     },

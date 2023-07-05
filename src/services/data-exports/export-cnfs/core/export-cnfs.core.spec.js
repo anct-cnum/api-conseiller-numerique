@@ -13,16 +13,13 @@ const getStatsCnfsNoUserActifSingleValue = () => [
       },
       nom: 'Association pour l\'accès au numérique',
       insee: {
-        entreprise: [Object],
-        etablissement: {
-          adresse: {
-            numero_voie: '5',
-            type_voie: 'RUE',
-            nom_voie: 'DE LA POMME',
-            complement_adresse: null,
-            code_postal: '84200',
-            localite: 'CARPENTRAS',
-          }
+        adresse: {
+          numero_voie: '5',
+          type_voie: 'RUE',
+          libelle_voie: 'DE LA POMME',
+          complement_adresse: null,
+          code_postal: '84200',
+          libelle_commune: 'CARPENTRAS',
         }
       }
     },
@@ -47,16 +44,13 @@ const getStatsCnfsUserActifSingleValue = () => [
       },
       nom: 'Association pour l\'accès au numérique',
       insee: {
-        entreprise: [Object],
-        etablissement: {
-          adresse: {
-            numero_voie: '5',
-            type_voie: 'RUE',
-            nom_voie: 'DE LA POMME',
-            complement_adresse: null,
-            code_postal: '84200',
-            localite: 'CARPENTRAS',
-          }
+        adresse: {
+          numero_voie: '5',
+          type_voie: 'RUE',
+          libelle_voie: 'DE LA POMME',
+          complement_adresse: null,
+          code_postal: '84200',
+          libelle_commune: 'CARPENTRAS',
         }
       }
     },
@@ -111,16 +105,13 @@ describe('export cnfs core', () => {
             email: 'john.does@letest.fr',
           },
           insee: {
-            entreprise: [Object],
-            etablissement: {
-              adresse: {
-                numero_voie: '5',
-                type_voie: 'RUE',
-                nom_voie: 'DE LA POMME',
-                complement_adresse: null,
-                code_postal: '84200',
-                localite: 'CARPENTRAS',
-              }
+            adresse: {
+              numero_voie: '5',
+              type_voie: 'RUE',
+              libelle_voie: 'DE LA POMME',
+              complement_adresse: null,
+              code_postal: '84200',
+              libelle_commune: 'CARPENTRAS',
             }
           },
           nom: 'Association pour l\'accès au numérique',
@@ -153,16 +144,13 @@ describe('export cnfs core', () => {
             email: 'john.does@letest.fr',
           },
           insee: {
-            entreprise: [Object],
-            etablissement: {
-              adresse: {
-                numero_voie: '5',
-                type_voie: 'RUE',
-                nom_voie: 'DE LA POMME',
-                complement_adresse: null,
-                code_postal: '84200',
-                localite: 'CARPENTRAS',
-              }
+            adresse: {
+              numero_voie: '5',
+              type_voie: 'RUE',
+              libelle_voie: 'DE LA POMME',
+              complement_adresse: null,
+              code_postal: '84200',
+              libelle_commune: 'CARPENTRAS',
             }
           },
           nom: 'Association pour l\'accès au numérique',

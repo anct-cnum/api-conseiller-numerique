@@ -233,9 +233,9 @@ const getConseillerRecruteInfo = (conseiller, structure) => ({
   departement: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.dep_name ?? conseiller.codeDepartement,
   region: departements.find(departement => departement.num_dep.toString() === conseiller.codeDepartement.toString())?.region_name ?? conseiller.codeRegion,
   codeDepartement: conseiller.codeDepartement,
-  siret: structure?.insee?.entreprise?.siret_siege_social,
+  siret: structure?.insee?.unite_legale?.siret_siege_social,
   structureId: structure?.idPG,
-  raisonSociale: structure?.insee?.entreprise?.raison_sociale,
+  raisonSociale: structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale,
   mailSa: structure?.contact?.email,
 });
 

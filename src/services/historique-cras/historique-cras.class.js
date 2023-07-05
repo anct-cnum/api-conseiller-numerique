@@ -40,15 +40,25 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
       if (ville !== 'null' && ville !== '') {
         query = { ...query, 'cra.nomCommune': ville };
       }
-      let sorting = { 'cra.dateAccompagnement': -1, 'createdAt': -1 };
+      let sorting = { 'cra.year': -1, 'cra.day': -1, 'createdAt': -1 };
       if (sort !== 'null') {
-        sorting = { 'updatedAt': sort === 'asc' ? 1 : -1 };
+        sorting = { 'cra.dateSaisiAndModif': sort === 'asc' ? 1 : -1 };
       }
 
       try {
         let items = {};
-        const cras = await db.collection('cras').find(query).sort(sorting)
-        .skip(page > 0 ? ((page - 1) * 30) : 0).limit(30).toArray();
+        const cras = await db.collection('cras').aggregate([
+          { $match: query },
+          { $addFields: {
+            'cra.day': { $dayOfYear: '$cra.dateAccompagnement' },
+            'cra.year': { $year: '$cra.dateAccompagnement' },
+            'cra.dateSaisiAndModif': { $ifNull: ['$updatedAt', '$createdAt'] },
+          } },
+          { $sort: sorting },
+          { $skip: page > 0 ? ((page - 1) * 30) : 0 },
+          { $limit: 30 },
+          { $project: { 'cra.day': 0, 'cra.year': 0, 'cra.dateSaisiAndModif': 0 } }
+        ]).toArray();
 
         items.total = await db.collection('cras').countDocuments(query);
         items.data = cras;

@@ -182,7 +182,8 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
           resetPasswordCNError: '',
           codeRegionStructure: '',
           codeDepartementStructure: '',
-          hasPermanence: ''
+          hasPermanence: '',
+          coordinateurs: ''
         }
       });
     // partie mise à jour des conseillerObj dans les misesEnRelation

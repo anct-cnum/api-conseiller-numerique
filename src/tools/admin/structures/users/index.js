@@ -81,7 +81,12 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     await doCreateUser(db, feathers, dbName, _id, logger, Sentry);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('structures').find({ userCreated: false, userCreationError: { $ne: true }, statut: 'VALIDATION_COSELEC' }).toArray();
+    const structures = await db.collection('structures').find({
+      'userCreated': false,
+      'userCreationError': { $ne: true },
+      'contact.inactivite': { $ne: true },
+      'statut': 'VALIDATION_COSELEC'
+    }).toArray();
     let promises = [];
     structures.forEach(structure => {
       const p = new Promise(async (resolve, reject) => {

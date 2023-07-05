@@ -23,7 +23,6 @@
               <span style="font-size:32px; display:inline-block; margin:10px"><%= cras.nbUsagers %></span></br>
             	nouveaux usagers</br>
           		accompagnés</br>
-              <span style="font-weight: 600;"><%= cras.pourcentageUsagers %>%</span>
             </mj-text>
           </mj-column>
         </mj-section>
@@ -35,7 +34,6 @@
           <span style="font-size:32px; display:inline-block; margin:10px"><%= cras.nbAccompagnements %></span></br>
           accompagnements </br>
           (avec récurrences)</br>
-          <span style="font-weight: 600;"><%= cras.pourcentageAccompagnements %>%</span>
         </mj-text>
         </mj-section>
       </mj-column>
@@ -44,10 +42,9 @@
         <mj-section background-url="<%= utils.getPublicUrl('/assets/img/email/mailActiviteMensuelle/losange-3.png') %>" background-position="top" background-repeat="no-repeat">
       <mj-column>
           <mj-text align="center" height="160px" width="140px" line-height="20px">
-            <span style="font-size:32px; display:inline-block; margin:10px"><%= cras.nbHeures %>h</span></br>
+            <span style="font-size:32px; display:inline-block; margin:10px"><%= cras.nbHeures %></span></br>
             d’accompagnement </br>
           	au total</br>
-            <span style="font-weight: 600;"><%= cras.pourcentageHeures %>%</span>
           </mj-text>
       </mj-column>
       	</mj-section>

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
-const axios = require('axios');
 const { execute } = require('../utils');
 const { program } = require('commander');
+const { getEtablissementBySiretEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
 
 program.parse(process.argv);
 
@@ -14,7 +14,7 @@ execute(__filename, async ({ db, app, logger }) => {
 
     const updateDoc = {
       $set: {
-        insee: insee
+        insee
       }
     };
 
@@ -33,24 +33,9 @@ execute(__filename, async ({ db, app, logger }) => {
       return;
     }
 
-    const urlSiret = `https://entreprise.api.gouv.fr/v2/etablissements/${siret}`;
-    const urlSiren = `https://entreprise.api.gouv.fr/v2/entreprises/${siret.substring(0, 9)}`;
-
-    const params = {
-      token: app.get('api_entreprise'),
-      context: 'cnum',
-      recipient: 'cnum',
-      object: 'checkSiret',
-    };
-
     try {
-      const resultEtablissement = await axios.get(urlSiret, { params: params });
-      const resultEntreprise = await axios.get(urlSiren, { params: params });
-
-      return {
-        entreprise: resultEntreprise.data.entreprise,
-        etablissement: resultEtablissement.data.etablissement,
-      };
+      const resultBySiret = await getEtablissementBySiretEntrepriseApiV3(siret, app.get('api_entreprise'));
+      return resultBySiret;
     } catch (e) {
       logger.info(e);
       throw new Error('SIRET not found');

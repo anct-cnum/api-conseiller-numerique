@@ -22,6 +22,9 @@ const checkAuth = (req, res) => {
 const checkRoleCandidat = (user, req) => {
   return user?.roles.includes('candidat') && req.params.id.toString() === user?.entity.oid.toString();
 };
+const checkRoleConseiller = (user, req) => {
+  return user?.roles.includes('conseiller') && req.params.id.toString() === user?.entity.oid.toString();
+};
 
 const checkRoleAdminCoop = user => {
   return user?.roles.includes(Role.AdminCoop);
@@ -314,7 +317,10 @@ const getConseillersByCoordinateurId = db => async (idCoordinateur, page, dateDe
         break;
     }
 
-    query.datePrisePoste = { '$gte': dateDebut, '$lte': dateFin };
+    query.$or = [
+      { datePrisePoste: { '$gte': dateDebut, '$lte': dateFin } },
+      { datePrisePoste: null }
+    ];
 
     switch (coordinateur.listeSubordonnes.type) {
       case 'conseillers':
@@ -377,6 +383,7 @@ const isSubordonne = db => async (coordinateurId, conseillerId) => {
 module.exports = {
   checkAuth,
   checkRoleCandidat,
+  checkRoleConseiller,
   checkRoleAdminCoop,
   checkConseillerExist,
   checkCvExistsS3,

@@ -1,26 +1,34 @@
 const getStatsReorientations = async (db, query) => {
-
   let statsReorientations = await db.collection('cras').aggregate(
     [
-      { $unwind: '$cra.accompagnement' },
-      { $match: { ...query, 'cra.organisme': { '$ne': null }, 'cra.accompagnement.redirection': { '$gte': 1 } } },
-      { $group: { _id: '$cra.organisme', redirection: { $sum: '$cra.accompagnement.redirection' } } },
-      { $project: { '_id': 0, 'nom': '$_id', 'valeur': '$redirection' } }
+      { $unwind: '$cra.organismes' },
+      { $match: { ...query, 'cra.organismes': { '$ne': null } } },
+      { $addFields: { 'organismeTab': { $objectToArray: '$cra.organismes' } } },
+      { $unwind: '$organismeTab' },
+      { $group: { '_id': '$organismeTab.k', 'count': { '$sum': '$organismeTab.v' } } },
+      { $project: { '_id': 1, 'count': 1 } }
     ]
   ).toArray();
-  const totalReorientations = statsReorientations.reduce(
-    (previousValue, currentValue) => previousValue + currentValue.valeur,
-    0
-  );
+
+  let reorientations = [];
+  let totalReorientations = 0;
+  statsReorientations.forEach(statsReorientation => {
+    totalReorientations += statsReorientation.count;
+    reorientations.push({
+      nom: statsReorientation._id,
+      valeur: statsReorientation.count
+    });
+  });
 
   //Conversion en % total
-  if (statsReorientations.length > 0) {
-    return statsReorientations.map(lieu => {
+  if (reorientations.length > 0) {
+    return reorientations.map(lieu => {
       lieu.valeur = totalReorientations > 0 ? Number((lieu.valeur / totalReorientations * 100).toFixed(2)) : 0;
       return lieu;
     });
   }
-  return statsReorientations;
+
+  return reorientations;
 };
 
 module.exports = { getStatsReorientations };

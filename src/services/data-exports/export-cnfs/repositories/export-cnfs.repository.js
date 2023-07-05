@@ -44,8 +44,8 @@ const getCraCount = db => async conseiller => await db.collection('cras').countD
 const countGetPersonnesAccompagnees = db => async (conseiller, dateDebut, dateFin) => await db.collection('cras').aggregate([
   { $match: { 'conseiller.$id': conseiller._id,
     '$and': [
-      { 'cra.dateAccompagnement': { $gt: dateDebut } },
-      { 'cra.dateAccompagnement': { $lt: dateFin } }
+      { 'cra.dateAccompagnement': { $gte: dateDebut } },
+      { 'cra.dateAccompagnement': { $lte: dateFin } }
     ]
   } },
   { $group: { _id: null, count: { $sum: '$cra.nbParticipants' } } },
@@ -57,9 +57,9 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
     {
       $match: {
         statut: 'RECRUTE',
-        $and: [
-          { datePrisePoste: { $gt: dateDebut } },
-          { datePrisePoste: { $lt: dateFin } },
+        $or: [
+          { datePrisePoste: { $gte: dateDebut, $lte: dateFin } },
+          { datePrisePoste: null },
         ],
         ...filterUserActif(isUserActif),
         ...filterGroupeCRA(groupeCRA),
@@ -104,6 +104,7 @@ const getStatsCnfs = db => async (dateDebut, dateFin, nomOrdre, ordre, certifie,
         'structure._id': 1,
         'structure.idPG': 1,
         'structure.contact.email': 1,
+        'structure.contact.telephone': 1,
         'structure.nom': 1,
         'structure.insee': 1,
         'structure.codeDepartement': 1,
