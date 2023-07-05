@@ -89,6 +89,7 @@
     "hubTeamId": "MATTERMOST_HUB_TEAM_ID"
   },
   "aws": {
+    "region": "AWS_REGION",
     "endpoint": "AWS_ENDPOINT",
     "access_key_id": "AWS_ACCESS_KEY_ID",
     "secret_access_key": "AWS_ACCESS_KEY_SECRET",

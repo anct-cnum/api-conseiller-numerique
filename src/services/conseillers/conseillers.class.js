@@ -3,7 +3,7 @@ const { NotFound, Conflict, GeneralError, NotAuthenticated, Forbidden, BadReques
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const decode = require('jwt-decode');
-const aws = require('aws-sdk');
+const { S3Client, DeleteObjectCommand, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const fileType = require('file-type');
 const { Pool } = require('pg');
@@ -224,69 +224,68 @@ exports.Conseillers = class Conseillers extends Service {
 
       //initialisation AWS
       const awsConfig = app.get('aws');
-      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
-      const ep = new aws.Endpoint(awsConfig.endpoint);
-      const s3 = new aws.S3({ endpoint: ep });
+      const client = new S3Client({
+        region: awsConfig.region,
+        credentials: {
+          accessKeyId: awsConfig.access_key_id,
+          secretAccessKey: awsConfig.secret_access_key,
+        },
+        endpoint: awsConfig.endpoint,
+      });
 
       //Suppression de l'ancien CV si présent dans S3 et dans MongoDb
       if (conseiller.cv?.file) {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
-        s3.deleteObject(paramsDelete, function(error, data) {
-          if (error) {
-            logger.error(error);
-            app.get('sentry').captureException(error);
-            res.status(500).send(new GeneralError('La suppression du cv a échoué.').toJSON());
-          }
-        });
-
-        try {
-          await suppressionCVConseiller(db, conseiller);
-        } catch (error) {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          res.status(500).send(new GeneralError('La suppression du CV dans MongoDb a échoué').toJSON());
-        }
-      }
-
-      let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
-      // eslint-disable-next-line no-unused-vars
-      s3.putObject(params, function(error, data) {
-        if (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
-          res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
-        } else {
-          //Insertion du cv dans MongoDb
+        const command = new DeleteObjectCommand(paramsDelete);
+        await client.send(command).then(async () => {
           try {
-            const cv = {
-              file: nameCVFile,
-              extension: detectingFormat.ext,
-              date: new Date()
-            };
-
-            db.collection('conseillers').updateMany({ email: conseiller.email },
-              {
-                $set: {
-                  cv: cv
-                }
-              });
-            db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
-              {
-                $set: {
-                  'conseillerObj.cv': cv
-                }
-              });
+            await suppressionCVConseiller(db, conseiller);
           } catch (error) {
             app.get('sentry').captureException(error);
             logger.error(error);
-            res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDB a échoué').toJSON());
+            res.status(500).send(new GeneralError('La suppression du CV dans MongoDb a échoué').toJSON());
           }
+        }).catch(error => {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError('La suppression du CV du dépôt a échoué, veuillez réessayer plus tard.').toJSON());
+        });
+      }
+      try {
+        let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
+        const command = new PutObjectCommand(params);
+        await client.send(command).then(() => {
+          const cv = {
+            file: nameCVFile,
+            extension: detectingFormat.ext,
+            date: new Date()
+          };
 
+          db.collection('conseillers').updateMany({ email: conseiller.email },
+            {
+              $set: {
+                cv: cv
+              }
+            });
+          db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email },
+            {
+              $set: {
+                'conseillerObj.cv': cv
+              }
+            });
           res.send({ isUploaded: true });
-        }
-      });
+        }).catch(error => {
+          app.get('sentry').captureException(error);
+          logger.error(error);
+          res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDB a échoué').toJSON());
+        });
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
+      }
     });
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
@@ -352,27 +351,33 @@ exports.Conseillers = class Conseillers extends Service {
 
       //Récupération du CV crypté
       const awsConfig = app.get('aws');
-      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
-      const ep = new aws.Endpoint(awsConfig.endpoint);
-      const s3 = new aws.S3({ endpoint: ep });
+      const client = new S3Client({
+        region: awsConfig.region,
+        credentials: {
+          accessKeyId: awsConfig.access_key_id,
+          secretAccessKey: awsConfig.secret_access_key,
+        },
+        endpoint: awsConfig.endpoint,
+      });
 
-      let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };/*  */
-      s3.getObject(params, function(error, data) {
-        if (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
-          res.status(500).send(new GeneralError('La récupération du cv a échoué.').toJSON());
-        } else {
-          //Dechiffrement du CV (le buffer se trouve dans data.Body)
-          const cryptoConfig = app.get('crypto');
-          let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
-          const iv = data.Body.slice(0, 16);
-          data.Body = data.Body.slice(16);
-          const decipher = crypto.createDecipheriv(cryptoConfig.algorithm, key, iv);
-          const bufferDecrypt = Buffer.concat([decipher.update(data.Body), decipher.final()]);
-
-          res.send(bufferDecrypt);
-        }
+      let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
+      const command = new GetObjectCommand(params);
+      await client
+      .send(command)
+      .then(async data => {
+        //Dechiffrement du CV (le buffer se trouve dans data.Body)
+        const cryptoConfig = app.get('crypto');
+        let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
+        const iv = data.Body.slice(0, 16);
+        data.Body = data.Body.slice(16);
+        const decipher = crypto.createDecipheriv(cryptoConfig.algorithm, key, iv);
+        const bufferDecrypt = Buffer.concat([decipher.update(data.Body), decipher.final()]);
+        res.send(bufferDecrypt);
+      })
+      .catch(error => {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        res.status(500).send(new GeneralError('La récupération du cv a échoué.').toJSON());
       });
     });
 

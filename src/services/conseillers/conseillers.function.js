@@ -3,7 +3,7 @@ const pool = new Pool();
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
-const aws = require('aws-sdk');
+const { S3Client, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const dayjs = require('dayjs');
 const Joi = require('joi');
 const decode = require('jwt-decode');
@@ -63,11 +63,18 @@ const suppressionCVConseiller = (db, conseiller) => {
 const checkCvExistsS3 = app => async conseiller => {
   //initialisation AWS
   const awsConfig = app.get('aws');
-  aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
-  const ep = new aws.Endpoint(awsConfig.endpoint);
-  const s3 = new aws.S3({ endpoint: ep });
+  const client = new S3Client({
+    region: awsConfig.region,
+    credentials: {
+      accessKeyId: awsConfig.access_key_id,
+      secretAccessKey: awsConfig.secret_access_key,
+    },
+    endpoint: awsConfig.endpoint,
+  });
   let params = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
-  await s3.getObject(params).promise();
+
+  const command = new GetObjectCommand(params);
+  return await client.send(command);
 };
 
 const verificationRoleUser = (db, decode, req, res) => async roles => {
@@ -231,26 +238,27 @@ const suppressionTotalCandidat = app => async tableauCandidat => {
 const suppressionCv = async (cv, app) => {
   let promise;
   promise = new Promise(async (resolve, reject) => {
-    try {
-      //initialisation AWS
-      const awsConfig = app.get('aws');
-      aws.config.update({ accessKeyId: awsConfig.access_key_id, secretAccessKey: awsConfig.secret_access_key });
-      const ep = new aws.Endpoint(awsConfig.endpoint);
-      const s3 = new aws.S3({ endpoint: ep });
+  //initialisation AWS
+    const awsConfig = app.get('aws');
+    const client = new S3Client({
+      region: awsConfig.region,
+      credentials: {
+        accessKeyId: awsConfig.access_key_id,
+        secretAccessKey: awsConfig.secret_access_key,
+      },
+      endpoint: awsConfig.endpoint,
+    });
 
-      //Suppression du fichier CV
-      let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: cv?.file };
-      s3.deleteObject(paramsDelete, function(error, data) {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(data);
-        }
-      });
-    } catch (error) {
+    //Suppression du fichier CV
+    let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: cv?.file };
+    const command = new DeleteObjectCommand(paramsDelete);
+    await client.send(command).then(async data => {
+      resolve(data);
+    }).catch(error => {
       logger.info(error);
       app.get('sentry').captureException(error);
-    }
+      reject(error);
+    });
   });
   await promise;
 };
