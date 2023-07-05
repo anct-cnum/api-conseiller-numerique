@@ -239,14 +239,19 @@ exports.Conseillers = class Conseillers extends Service {
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
         // eslint-disable-next-line no-unused-vars
         const command = new DeleteObjectCommand(paramsDelete);
-        await client.send(command);
-        try {
-          await suppressionCVConseiller(db, conseiller);
-        } catch (error) {
-          app.get('sentry').captureException(error);
+        await client.send(command).then(async () => {
+          try {
+            await suppressionCVConseiller(db, conseiller);
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).send(new GeneralError('La suppression du CV dans MongoDb a échoué').toJSON());
+          }
+        }).catch(error => {
           logger.error(error);
-          res.status(500).send(new GeneralError('La suppression du CV dans MongoDb a échoué').toJSON());
-        }
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError('La suppression du CV du dépôt a échoué, veuillez réessayer plus tard.').toJSON());
+        });
       }
       try {
         let params = { Bucket: awsConfig.cv_bucket, Key: nameCVFile, Body: bufferCrypt };
