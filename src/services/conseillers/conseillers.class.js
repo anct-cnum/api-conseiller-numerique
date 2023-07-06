@@ -217,7 +217,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       //Chiffrement du CV
       const cryptoConfig = app.get('crypto');
-      let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
+      let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substring(0, 32);
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv(cryptoConfig.algorithm, key, iv);
       const bufferCrypt = Buffer.concat([iv, cipher.update(cvFile.buffer), cipher.final()]);
@@ -275,17 +275,17 @@ exports.Conseillers = class Conseillers extends Service {
                 'conseillerObj.cv': cv
               }
             });
-          res.send({ isUploaded: true });
         }).catch(error => {
           app.get('sentry').captureException(error);
           logger.error(error);
-          res.status(500).send(new GeneralError('La mise à jour du CV dans MongoDB a échoué').toJSON());
+          res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
         });
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
         res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
       }
+      res.send({ isUploaded: true });
     });
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
@@ -365,13 +365,27 @@ exports.Conseillers = class Conseillers extends Service {
       await client
       .send(command)
       .then(async data => {
-        //Dechiffrement du CV (le buffer se trouve dans data.Body)
         const cryptoConfig = app.get('crypto');
-        let key = crypto.createHash('sha256').update(cryptoConfig.key).digest('base64').substr(0, 32);
-        const iv = data.Body.slice(0, 16);
-        data.Body = data.Body.slice(16);
-        const decipher = crypto.createDecipheriv(cryptoConfig.algorithm, key, iv);
-        const bufferDecrypt = Buffer.concat([decipher.update(data.Body), decipher.final()]);
+        const key = crypto
+        .createHash('sha256')
+        .update(cryptoConfig.key)
+        .digest('base64')
+        .substring(0, 32);
+        const file = await data.Body.transformToByteArray();
+        // @ts-ignore: Unreachable code error
+        const iv = file.slice(0, 16);
+        // @ts-ignore: Unreachable code error
+        const decipher = crypto.createDecipheriv(
+          cryptoConfig.algorithm,
+          key,
+          iv,
+        );
+        const bufferDecrypt = Buffer.concat([
+          // @ts-ignore: Unreachable code error
+          decipher.update(file.slice(16)),
+          decipher.final(),
+        ]);
+
         res.send(bufferDecrypt);
       })
       .catch(error => {
