@@ -245,10 +245,8 @@ exports.Stats = class Stats extends Service {
           }
         }
 
-        const conseillerIds = await statsFct.getConseillersIdsByStructure(idStructureParams, res, statsRepository(db));
-
         try {
-          const listCodePostaux = await statsFct.getCodesPostauxCrasStructure(conseillerIds, statsRepository(db));
+          const listCodePostaux = await statsFct.getCodesPostauxCrasStructure(idStructureParams, statsRepository(db));
           return res.send(listCodePostaux);
         } catch (error) {
           app.get('sentry').captureException(error);
@@ -767,7 +765,6 @@ exports.Stats = class Stats extends Service {
         let dateFin = new Date(req.query?.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
         const idStructure = new ObjectID(req.query?.idStructure);
-        const conseillerIds = await statsFct.getConseillersIdsByStructure(idStructure, res, statsRepository(db));
 
         //Construction des statistiques
         let stats = {};
@@ -776,7 +773,7 @@ exports.Stats = class Stats extends Service {
             '$gte': dateDebut,
             '$lte': dateFin,
           },
-          'conseiller.$id': { $in: conseillerIds },
+          'structure.$id': idStructure,
         };
         if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
           query['cra.codePostal'] = req.query?.codePostal;
@@ -784,7 +781,6 @@ exports.Stats = class Stats extends Service {
         if (req.query?.ville !== '' && req.query?.ville !== 'null' && req.query?.ville !== undefined) {
           query['cra.nomCommune'] = req.query?.ville;
         }
-
         stats = await statsCras.getStatsGlobales(db, query, statsCras, statsFct.checkRole(user.roles, Role.AdminCoop));
         res.send(stats);
       });

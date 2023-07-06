@@ -70,8 +70,8 @@ const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCr
   return listeDefinitive;
 };
 
-const getCodesPostauxCrasStructure = async (idConseiller, { getCodesPostauxStatistiquesCrasStructure }) => {
-  return await getCodesPostauxStatistiquesCrasStructure(idConseiller);
+const getCodesPostauxCrasStructure = async (idStructure, { getCodesPostauxStatistiquesCrasStructure }) => {
+  return await getCodesPostauxStatistiquesCrasStructure(idStructure);
 };
 
 const getConseillersIdsByStructure = async (idStructure, res, { getConseillersIdsByStructure }) => {

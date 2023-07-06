@@ -85,11 +85,9 @@ const getCodesPostauxStatistiquesCras = db => async conseillerId => await db.col
   { $group: { _id: { ville: '$cra.nomCommune', codePostal: '$cra.codePostal' } } },
 ]).toArray();
 
-const getCodesPostauxStatistiquesCrasStructure = db => async conseillersId => await db.collection('cras').distinct('cra.codePostal',
+const getCodesPostauxStatistiquesCrasStructure = db => async structureId => await db.collection('cras').distinct('cra.codePostal',
   {
-    'conseiller.$id': {
-      $in: conseillersId
-    }
+    'structure.$id': structureId
   });
 
 const getConseillersIdsByStructure = db => async idStructure => {
