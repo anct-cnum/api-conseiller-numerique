@@ -372,16 +372,13 @@ exports.Conseillers = class Conseillers extends Service {
         .digest('base64')
         .substring(0, 32);
         const file = await data.Body.transformToByteArray();
-        // @ts-ignore: Unreachable code error
         const iv = file.slice(0, 16);
-        // @ts-ignore: Unreachable code error
         const decipher = crypto.createDecipheriv(
           cryptoConfig.algorithm,
           key,
           iv,
         );
         const bufferDecrypt = Buffer.concat([
-          // @ts-ignore: Unreachable code error
           decipher.update(file.slice(16)),
           decipher.final(),
         ]);
