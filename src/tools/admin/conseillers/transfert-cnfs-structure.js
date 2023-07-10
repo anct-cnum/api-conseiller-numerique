@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+'use strict';
+require('dotenv').config();
 const { program } = require('commander');
 const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
@@ -8,8 +11,6 @@ const slugify = require('slugify');
 const departements = require('../../../../data/imports/departements-region.json');
 slugify.extend({ '-': ' ' });
 slugify.extend({ '\'': ' ' });
-
-require('dotenv').config();
 
 const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
 
