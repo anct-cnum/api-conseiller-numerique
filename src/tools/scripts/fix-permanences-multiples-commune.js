@@ -38,41 +38,41 @@ execute(__filename, async ({ db, logger, exit }) => {
   const idPermsInexistante = idPermsInCrasSansCodeCommune.map(i => String(i)).filter(i => !idsPermsTotal.map(i => String(i)).includes(i))?.length;
 
   logger.info(`${idPermsInCrasSansCodeCommune.length} permanences qui sont associées à au moins 1 cras (qui n'ont pas de code Commune)`);
-  logger.warn(`${idPermsInexistante} permanence(s) potentiellement supprimer !`);
+  logger.warn(`${idPermsInexistante} permanence(s) potentiellement supprimées !`);
 
-  if (partie) {
-    const countCrasPermanence =
+
+  const countCrasPermanence =
       await db.collection('cras').countDocuments({ 'permanence.$id': idPermanence, 'cra.nomCommune': ville, 'cra.codePostal': codePostal });
-    const getPermanence = await db.collection('permanences').findOne({ '_id': idPermanence });
-    logger.info(`- ${permanence} actuelle => ${getPermanence.adresse.codePostal} ${getPermanence.adresse.ville}`);
+  const getPermanence = await db.collection('permanences').findOne({ '_id': idPermanence });
+  logger.info(`- ${permanence} actuelle => ${getPermanence.adresse.codePostal} ${getPermanence.adresse.ville}`);
 
-    if (partie === 'modif') {
-      logger.info(`Il y a ${countCrasPermanence} qui n'auront plus la permanence.$id (MODIF)`);
-      if (correction) {
-        await db.collection('cras').updateMany(
-          { 'permanence.$id': idPermanence, 'cra.nomCommune': ville, 'cra.codePostal': codePostal },
-          { $set: { 'permanence': null, 'cra.codeCommune': codeCommune } }
-        );
-      }
-    }
-
-    if (partie === 'sauvegarde') {
-      // eslint-disable-next-line max-len
-      logger.info(`Il y a ${countCrasPermanence} (${codePostal} ${ville} => ${getPermanence.adresse.codePostal} ${getPermanence.adresse.ville}) qui auront bien la permanence.$id (SAUVEGARDE)`);
-      if (correction) {
-        if (!getPermanence.adresse?.codeCommune) {
-          await db.collection('permanences').updateOne(
-            { '_id': idPermanence },
-            { $set: { 'adresse.codeCommune': codeCommune } }
-          );
-        }
-        await db.collection('cras').updateMany(
-          { 'permanence.$id': idPermanence, 'cra.nomCommune': ville, 'cra.codePostal': codePostal },
-          { $set: { 'cra.codeCommune': codeCommune, 'cra.codePostal': getPermanence.adresse.codePostal, 'cra.nomCommune': getPermanence.adresse.ville }
-          });
-      }
+  if (partie === 'modif') {
+    logger.info(`Il y a ${countCrasPermanence} qui n'auront plus la permanence.$id (MODIF)`);
+    if (correction) {
+      await db.collection('cras').updateMany(
+        { 'permanence.$id': idPermanence, 'cra.nomCommune': ville, 'cra.codePostal': codePostal },
+        { $set: { 'permanence': null, 'cra.codeCommune': codeCommune } }
+      );
     }
   }
+
+  if (partie === 'sauvegarde') {
+    // eslint-disable-next-line max-len
+    logger.info(`Il y a ${countCrasPermanence} (${codePostal} ${ville} => ${getPermanence.adresse.codePostal} ${getPermanence.adresse.ville}) qui auront bien la permanence.$id (SAUVEGARDE)`);
+    if (correction) {
+      if (!getPermanence.adresse?.codeCommune) {
+        await db.collection('permanences').updateOne(
+          { '_id': idPermanence },
+          { $set: { 'adresse.codeCommune': codeCommune } }
+        );
+      }
+      await db.collection('cras').updateMany(
+        { 'permanence.$id': idPermanence, 'cra.nomCommune': ville, 'cra.codePostal': codePostal },
+        { $set: { 'cra.codeCommune': codeCommune, 'cra.codePostal': getPermanence.adresse.codePostal, 'cra.nomCommune': getPermanence.adresse.ville }
+        });
+    }
+  }
+
   if (analyse) {
     for (const idPerm of idPermsInCrasSansCodeCommune) {
       const permanenceCorriger = await db.collection('permanences').findOne({ '_id': idPerm });

@@ -14,7 +14,6 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.option('-c, --correction', 'correction: correction des cas restants');
   program.option('-a, --analyse', 'analyse: analyse des permanences ok');
   program.option('-i, --ignored', 'ignored: ignorer la partie de verification incoherence');
-  program.option('-p, --partie <partie>', 'partie: 1 ou 2');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -41,7 +40,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     const countCras = await db.collection('cras').countDocuments({ 'permanence.$id': idPerm });
 
     const formatText = mot => mot?.normalize('NFD').replace(/[\u0300-\u036f]/g, '')?.replace(/['’,-]/g, ' ');
-    const { ville, codePostal } = permanenceSansCodeCommune?.adresse;
+    const { ville, codePostal } = permanenceSansCodeCommune?.adresse ?? { ville: '', codePostal: '' };
     const params = {};
     const urlAPI = `https://geo.api.gouv.fr/communes?nom=${ville}&codePostal=${codePostal}&format=geojson&geometry=centre`;
     const { data } = await axios.get(urlAPI, { params: params });
