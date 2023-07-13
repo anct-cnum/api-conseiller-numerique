@@ -53,10 +53,10 @@ const readCSV = async filePath => {
 const readExcel = async file => {
   const start = 2;
   // Colonnes Excel
-  const IDPG = 1;
-  const PRENOM = 2;
-  const NOM = 3;
-  const EMAIL = 4;
+  const PRENOM = 1;
+  const NOM = 2;
+  const EMAIL = 3;
+  const IDPG = 4;
   const CERTIFIE = 5;
 
   const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(file);
