@@ -20,7 +20,7 @@ execute(__filename, async ({ logger, db }) => {
   file.write('email,idPG SA,nom SA\n');
   users.forEach(user => {
     promises.push(new Promise(async resolve => {
-      if (user.entity && user.entity.namespace === 'structures' && user.entity.oid) {
+      if (user.entity?.namespace === 'structures' && user.entity?.oid) {
         const structure = await db.collection('structures').findOne({ _id: new ObjectID(user.entity.oid) });
         if (structure) {
           file.write(`${user.name},${structure.idPG},${structure.nom}\n`);
