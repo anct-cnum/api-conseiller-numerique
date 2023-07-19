@@ -2,8 +2,10 @@
 'use strict';
 
 const dayjs = require('dayjs');
-const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { Pool } = require('pg');
+const pool = new Pool();
 const { execute } = require('../utils');
+const { suppressionCv, candidatSupprimeEmailPix, deleteMailSib } = require('../../services/conseillers/conseillers.function');
 
 const getCandidatsInactifs = db => async query =>
   await db.collection('conseillers').find(query).toArray();
@@ -23,11 +25,12 @@ const ajouterAuConseillersSupprimes = db => async candidatInactif => {
 };
 
 const deleteCandidatInactif = db => async candidatInactif => {
+  await pool.query(`DELETE FROM djapp_coach WHERE id = $1`, [candidatInactif.idPG]);
   await db.collection('conseillers').deleteOne({ '_id': candidatInactif._id });
-
 };
 
 const deleteMeRCandidatInactif = db => async candidatInactif => {
+  await pool.query(`DELETE FROM djapp_matching WHERE coach_id = $1`, [candidatInactif.idPG]);
   await db.collection('misesEnRelation').deleteMany({
     'statut': { '$in': [
       'finalisee_non_disponible',
@@ -52,34 +55,6 @@ const deleteMeRCandidatInactif = db => async candidatInactif => {
       conseillerObj: candidatInactif
     }
   });
-};
-
-const suppressionCv = async (cv, app, logger, Sentry) => {
-  let promise;
-  promise = new Promise(async (resolve, reject) => {
-  //initialisation AWS
-    const awsConfig = app.get('aws');
-    const client = new S3Client({
-      region: awsConfig.region,
-      credentials: {
-        accessKeyId: awsConfig.access_key_id,
-        secretAccessKey: awsConfig.secret_access_key,
-      },
-      endpoint: awsConfig.endpoint,
-    });
-
-    //Suppression du fichier CV
-    let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: cv?.file };
-    const command = new DeleteObjectCommand(paramsDelete);
-    await client.send(command).then(async data => {
-      resolve(data);
-    }).catch(error => {
-      logger.info(error);
-      Sentry.captureException(error);
-      reject(error);
-    });
-  });
-  await promise;
 };
 
 execute(__filename, async ({ app, logger, db, Sentry }) => {
@@ -115,12 +90,16 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
         }).then(async () => {
           if (candidatASupprimer.cv?.file) {
             try {
-              await suppressionCv(candidatASupprimer.cv, app, logger, Sentry);
+              await suppressionCv(candidatASupprimer.cv, app);
             } catch (error) {
               logger.error(error);
               Sentry.captureException(error);
             }
           }
+          return;
+        }).then(async () => {
+          await candidatSupprimeEmailPix(db, app)(candidatInactif);
+          await deleteMailSib(app)(candidatInactif.email);
           return;
         });
       } catch (error) {
