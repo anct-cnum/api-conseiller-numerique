@@ -88,13 +88,16 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
         promises.push(new Promise(async resolve => {
           const structure = await db.collection('structures').findOne({ _id: userStructure.entity.oid });
           if (structure.contact?.email === userStructure.name) {
-            await db.collection('structures').updateOne({ _id: userStructure.entity.oid }, { $set: { 'contact.inactivite': true, 'userCreated': false } });
+            await db.collection('structures').updateOne({ _id: userStructure.entity.oid }, { $set:
+              { 'contact.inactivite': true, 'userCreated': false, 'updatedAt': new Date() }
+            });
             await db.collection('misesEnRelation').updateMany(
               { 'structure.$id': userStructure.entity.oid },
               {
                 $set: {
                   'structureObj.contact.inactivite': true,
                   'structureObj.userCreated': false,
+                  'structureObj.updatedAt': new Date()
                 }
               }
             );
@@ -127,13 +130,14 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
     candidats.forEach(userCandidat => {
       promises.push(new Promise(async resolve => {
         // On cible par mail pour les doublons
-        await db.collection('conseillers').updateMany({ email: userCandidat.name }, { $set: { inactivite: true, userCreated: false } });
+        await db.collection('conseillers').updateMany({ email: userCandidat.name }, { $set: { inactivite: true, userCreated: false, updatedAt: new Date() } });
         await db.collection('misesEnRelation').updateMany(
           { 'conseillerObj.email': userCandidat.name },
           {
             $set: {
               'conseillerObj.inactivite': true,
               'conseillerObj.userCreated': false,
+              'conseillerObj.updatedAt': new Date()
             }
           }
         );
