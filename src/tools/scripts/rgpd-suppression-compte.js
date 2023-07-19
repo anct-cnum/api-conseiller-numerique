@@ -60,20 +60,11 @@ const deleteMeRCandidatInactif = db => async candidatInactif => {
 execute(__filename, async ({ app, logger, db, Sentry }) => {
 
   const promises = [];
-  const delayDefault = 30;
-  const EXPIRATION_DATE_DEFAUT = new Date(dayjs(new Date()).subtract(parseInt(delayDefault), 'month')); // RGPD 30 mois
-
   const queryCandidatInactif = {
     $or: [
       // Cas 1 : compte inactif depuis 30 mois
       {
         inactivite: true,
-      },
-      // Cas 2 : compte inactif depuis 30 mois, mais ne porte pas le flag
-      {
-        userCreated: false,
-        disponibilite: false,
-        updatedAt: { $lte: EXPIRATION_DATE_DEFAUT }
       }
     ]
   };
