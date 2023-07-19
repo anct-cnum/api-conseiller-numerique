@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-const dayjs = require('dayjs');
 const { Pool } = require('pg');
 const pool = new Pool();
 const { execute } = require('../utils');
@@ -32,28 +31,7 @@ const deleteCandidatInactif = db => async candidatInactif => {
 const deleteMeRCandidatInactif = db => async candidatInactif => {
   await pool.query(`DELETE FROM djapp_matching WHERE coach_id = $1`, [candidatInactif.idPG]);
   await db.collection('misesEnRelation').deleteMany({
-    'statut': { '$in': [
-      'finalisee_non_disponible',
-      'interessee',
-      'nonInteressee',
-      'non_disponible',
-      'nouvelle',
-      'nouvelle_rupture'
-    ] },
     'conseiller.$id': candidatInactif._id
-  });
-
-  await db.collection('misesEnRelation').updateMany({
-    'conseiller.$id': candidatInactif._id,
-    'statut': { '$in': [
-      'finalisee',
-      'finalisee_rupture',
-      'recrutee',
-    ] },
-  }, {
-    $set: {
-      conseillerObj: candidatInactif
-    }
   });
 };
 
