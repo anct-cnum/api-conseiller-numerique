@@ -3,6 +3,7 @@ coverage/
 .env
 config/local.json
 data/exports/*
+data/exports-historique/*
 .DS_Store
 .clever.json
 .idea/

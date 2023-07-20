@@ -7,6 +7,9 @@ module.exports = {
       db.collection('users').createIndex({ 'tokenCreatedAt': 1 }),
       db.collection('users').createIndex({ 'mailSentDate': 1 }),
       db.collection('users').createIndex({ 'passwordCreated': 1 }),
+      db.collection('users').createIndex({ 'lastlogin': 1 }),
+      db.collection('users').createIndex({ 'createdAt': 1 }),
+      db.collection('users').createIndex({ 'entity.$id': 1 }),
     ]);
   },
   structures: db => {
@@ -29,13 +32,16 @@ module.exports = {
         'nom': 'text',
         'contact.email': 'text',
       }, { name: 'bo-search-fulltext' }),
+      db.collection('structures').createIndex({ 'contact.inactivite': 1 }),
+      db.collection('structures').createIndex({ 'conventionnement.statut': 1 }),
+      db.collection('structures').createIndex({ 'conventionnement.dossierReconventionnement.dateDeValidation': 1 }),
+      db.collection('structures').createIndex({ 'conventionnement.dossierConventionnement.dateDeValidation': 1 }),
     ]);
   },
   misesEnRelation: db => {
     return Promise.all([
       db.collection('misesEnRelation').createIndex({ 'statut': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structure.$id': 1 }),
-      db.collection('misesEnRelation').createIndex({ 'structure.oid': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseiller.$id': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structureObj.codePostal': 1 }),
       db.collection('misesEnRelation').createIndex({ 'structureObj.idPG': 1 }),
@@ -45,6 +51,10 @@ module.exports = {
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.cv': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.estCoordinateur': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.listeSubordonnes': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'emetteurRenouvellement.date': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'emetteurRupture.date': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'emetteurRecrutement.date': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'createdAt': 1 }),
       db.collection('misesEnRelation').createIndex({
         'conseillerObj.nom': 'text',
         'conseillerObj.prenom': 'text',
@@ -76,7 +86,9 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'codeDepartementStructure': 1 }),
       db.collection('conseillers').createIndex({ 'estCoordinateur': 1 }),
       db.collection('conseillers').createIndex({ 'listeSubordonnes.type': 1 }),
-      db.collection('conseillers').createIndex({ 'listeSubordonnes.liste': 1 })
+      db.collection('conseillers').createIndex({ 'listeSubordonnes.liste': 1 }),
+      db.collection('conseillers').createIndex({ 'inactivite': 1 }),
+      db.collection('conseillers').createIndex({ 'nonAffichageCarto': 1 }),
     ]);
   },
   cras: db => {
@@ -132,6 +144,12 @@ module.exports = {
       db.collection('permanences').createIndex({ 'conseillersItinerants': 1 }),
       db.collection('permanences').createIndex({ 'lieuPrincipalPour': 1 }),
       db.collection('permanences').createIndex({ 'structure.$id': 1 }),
+    ]);
+  },
+  accessLogs: db => {
+    return Promise.all([
+      db.collection('accessLogs').createIndex({ 'createdAt': 1 }),
+      db.collection('accessLogs').createIndex({ 'name': 1 }),
     ]);
   },
 };

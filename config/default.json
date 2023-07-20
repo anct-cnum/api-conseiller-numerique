@@ -71,7 +71,12 @@
   "gandi": {
     "token": "1234",
     "endPoint": "https://api.gandi.net/v5/email",
-    "domain": "conseiller-numerique.fr"
+    "domain": "conseiller-numerique.fr",
+    "type": "GANDI_TYPE"
+  },
+  "crisp": {
+    "token": "xxxx",
+    "idSite": "xxx"
   },
   "open_cage_data": {
     "token": "1234",
@@ -98,6 +103,7 @@
     "hubTeamId": "hubTeamId"
   },
   "aws": {
+    "region": "AWS_REGION",
     "endpoint": "AWS_ENDPOINT",
     "access_key_id": "AWS_ACCESS_KEY_ID",
     "secret_access_key": "AWS_ACCESS_KEY_SECRET",
@@ -112,5 +118,9 @@
   "puppeteer_browser": "PUPPETEER_BROWSER",
   "browser_wss_link":"BROWSER_WSS_LINK",
   "browser_wss_token":"BROWSER_WSS_TOKEN",
-  "sib_api_key": "SIB_API_KEY"
+  "sib_api_key": "SIB_API_KEY",
+  "user_accounts": {
+    "expiration_default_months": "USER_ACCOUNTS_EXPIRATION_DEFAULT",
+    "expiration_admin_months": "USER_ACCOUNTS_EXPIRATION_ADMIN"
+  }
 }

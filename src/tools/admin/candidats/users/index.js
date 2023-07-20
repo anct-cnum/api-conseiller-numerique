@@ -94,6 +94,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     usersCreatedCount++;
   } else {
     const conseillers = await db.collection('conseillers').find({
+      inactivite: { $ne: true },
       userCreated: false,
       disponible: true, // si un des doublons a le statut RECRUTE, le disponible est passé à false
       userCreationError: { $ne: true },

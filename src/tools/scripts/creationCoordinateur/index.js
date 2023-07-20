@@ -12,13 +12,14 @@ const isAlreadyCoordinateur = db => async emailConseiller => {
   });
   return Boolean(user);
 };
+const anonymeCoordinateur = async db => await db.collection('conseillers').distinct('_id', { nonAffichageCarto: true });
 
-const getIdConseillerByMail = db => async emailConseiller => {
+const getConseillerByMail = db => async emailConseiller => {
   const user = await db.collection('users').findOne({
     'name': emailConseiller.replace(/\s/g, ''),
     'roles': { '$in': ['conseiller'] }
   });
-  return user?.entity?.oid ?? null;
+  return user?.entity?.oid ? { id: user?.entity?.oid, nom: user?.nom, prenom: user?.prenom } : null;
 };
 
 const getIdSubordonneByMail = db => async emailConseiller => {
@@ -47,13 +48,6 @@ const updateConseillerIsCoordinateur = db => async idConseiller => {
   );
 };
 
-const getListeExistante = db => async idConseiller => {
-  const conseiller = await db.collection('conseillers').findOne({
-    '_id': idConseiller
-  });
-  return conseiller?.listeSubordonnes?.liste ?? [];
-};
-
 const addListSubordonnes = db => async (idConseiller, list, type) => {
   await db.collection('conseillers').updateOne(
     { '_id': idConseiller },
@@ -75,21 +69,24 @@ const addListSubordonnes = db => async (idConseiller, list, type) => {
   );
 };
 
-const setListeFinale = (listeFile, listeExistante) => {
-  let listFinale = [];
-  listeFile.forEach(element => {
-    let isPush = true;
-    //forEach car includes ne fonctionne pas sur les ObjectId
-    listeExistante.forEach(existant => {
-      if (String(existant) === String(element)) {
-        isPush = false;
-      }
-    });
-    if (isPush) {
-      listFinale.push(element);
-    }
-  });
-  return listFinale.concat(listeExistante);
+const updateSubordonnes = db => async (coordinateur, list, type) => {
+  const updateCnSubordonnes = db => async (match, queryUpdate) =>
+    await db.collection('conseillers').updateMany({ statut: 'RECRUTE', ...match }, queryUpdate);
+  // Maj du tag coordinateur dans le cas d'un changement de la liste custom ou autre (exemple coordo d'une region qui change en coordo departement)
+  await updateCnSubordonnes(db)({ 'coordinateurs': { $elemMatch: { id: coordinateur.id } } }, { $pull: { 'coordinateurs': { id: coordinateur.id } } });
+  switch (type) {
+    case 'codeRegion':
+      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeRegionStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      break;
+    case 'codeDepartement':
+      // eslint-disable-next-line max-len
+      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      break;
+    default: // conseillers
+      await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      break;
+  }
+  await updateCnSubordonnes(db)({ 'coordinateurs.0': { $exists: false } }, { $unset: { 'coordinateurs': '' } });
 };
 
 // CSV importé
@@ -111,6 +108,8 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
 
   logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
+  let coordoAnonyme = await anonymeCoordinateur(db);
+  coordoAnonyme = coordoAnonyme.map(i => String(i));
   await new Promise(resolve => {
     readCSV(program.csv).then(async ressources => {
 
@@ -127,23 +126,26 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           const mailleDepartement = ressource['Code département'];
 
           const estCoordinateur = await isAlreadyCoordinateur(db)(adresseCoordo);
-          const idCoordinateur = await getIdConseillerByMail(db)(adresseCoordo);
-
+          let coordinateur = await getConseillerByMail(db)(adresseCoordo);
+          const idCoordinateur = coordinateur?.id;
           if (idCoordinateur) {
             if (!estCoordinateur) {
               await updateUserRole(db)(idCoordinateur);
             }
-
-            let listeExistante = await getListeExistante(db)(idCoordinateur);
-
-            let listFinale = [];
+            coordinateur = {
+              ...coordinateur,
+              nonAffichageCarto: coordoAnonyme.includes(String(idCoordinateur))
+            };
+            let listMaille = [];
 
             if (mailleRegional.length > 0) {
-              listFinale = setListeFinale(mailleRegional.split('/'), listeExistante);
-              await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeRegion');
+              listMaille = mailleRegional.split('/');
+              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeRegion');
+              await updateSubordonnes(db)(coordinateur, listMaille, 'codeRegion');
             } else if (mailleDepartement.length > 0) {
-              listFinale = setListeFinale(mailleDepartement.split('/'), listeExistante);
-              await addListSubordonnes(db)(idCoordinateur, listFinale, 'codeDepartement');
+              listMaille = mailleDepartement.split('/');
+              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeDepartement');
+              await updateSubordonnes(db)(coordinateur, listMaille, 'codeDepartement');
             } else if (listCustom.length > 0) {
               const emailsSubordonnes = listCustom.split('/');
               const promisesEmails = [];
@@ -165,6 +167,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
               //Maj avec la nouvelle liste des subordonnés directement (au cas où rupture entre temps par exemple)
               await addListSubordonnes(db)(idCoordinateur, idSubordonnes, 'conseillers');
+              await updateSubordonnes(db)(coordinateur, idSubordonnes, 'conseillers');
             } else {
               await updateConseillerIsCoordinateur(db)(idCoordinateur);
             }

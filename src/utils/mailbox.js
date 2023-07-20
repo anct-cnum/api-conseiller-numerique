@@ -9,7 +9,7 @@ const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, 
         'Content-Type': 'application/json',
         'Authorization': `Apikey ${gandi.token}`
       },
-      data: { 'login': login, 'mailbox_type': 'standard', 'password': password, 'aliases': [] }
+      data: { 'login': login, 'mailbox_type': gandi.type, 'password': password, 'aliases': [] }
     });
     const resultInfo = {
       status: resultCreation?.status,
@@ -184,4 +184,17 @@ const fixHomonymesCreateMailbox = async (gandi, nom, prenom, db) => {
   return login;
 };
 
-module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox, fixHomonymesCreateMailbox };
+const verifHomonymesMailbox = async (nom, prenom, conseillerId, db) => {
+  let login = `${prenom}.${nom}`;
+  let conseillersHomonyme = await db.collection('conseillers').distinct('emailCN.address',
+    {
+      '_id': { $ne: conseillerId },
+      'emailCN.address': { $regex: new RegExp(login) },
+      'statut': 'RECRUTE'
+    });
+
+  return conseillersHomonyme.length >= 1 ? conseillersHomonyme[0] : login;
+};
+
+module.exports = { createMailbox, updateMailboxPassword, deleteMailbox, getMailBox, fixHomonymesCreateMailbox, verifHomonymesMailbox };
+

@@ -1,0 +1,62 @@
+<mjml>
+
+  <%- include('../commun/head.mjml.ejs'); %>
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Conseillers en rupture de contrat
+            </mj-text>
+            <mj-text align="left">
+              Bonjour,
+            </mj-text>
+            <mj-text align="left">
+              Veuillez trouver ci-dessous le conseiller numérique en rupture de contrat de travail.
+            </mj-text>
+            <mj-table>
+              <tr style="border-bottom:1px solid;text-align:left;padding:15px 0;">
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th style="padding: 0 0 0 15px;">Email personnel</th>
+                <th style="padding: 0 0 0 15px;">Email professionnel</th>
+              </tr>
+              <tr>
+                <td style="padding: 0 15px 0 0;">
+                  <mj-text>
+                    <%= conseiller.nom %>
+                  </mj-text>
+                </td>
+                <td style="padding: 0 15px;">
+                  <mj-text>
+                    <%= conseiller.prenom %>
+                  </mj-text>
+                </td>
+                <td style="padding: 0 0 0 15px;">
+                  <mj-text>
+                    <%= conseiller.email %>
+                  </mj-text>
+                </td>
+                <td style="padding: 0 0 0 15px;">
+                  <mj-text>
+                    <%= conseiller.emailCN.address %>
+                  </mj-text>
+                </td>
+              </tr>
+            </mj-table>
+            <mj-text align="left">
+              Merci de bien vouloir supprimer ses accès à Pix orga.
+            </mj-text>
+             <mj-text align="left">
+              A bientôt,
+            </mj-text>
+            <mj-text align="left">
+              L'équipe Conseiller Numérique France Services
+            </mj-text>
+          </mj-column>
+      </mj-wrapper>
+  </mj-body>
+</mjml>

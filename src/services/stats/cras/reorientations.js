@@ -1,27 +1,23 @@
 const getStatsReorientations = async (db, query) => {
-
   let statsReorientations = await db.collection('cras').aggregate(
     [
       { $unwind: '$cra.organismes' },
       { $match: { ...query, 'cra.organismes': { '$ne': null } } },
-      { $group: { _id: '$cra.organismes' } },
-      { $project: { '_id': 0, 'organismes': '$_id' } }
+      { $addFields: { 'organismeTab': { $objectToArray: '$cra.organismes' } } },
+      { $unwind: '$organismeTab' },
+      { $group: { '_id': '$organismeTab.k', 'count': { '$sum': '$organismeTab.v' } } },
+      { $project: { '_id': 1, 'count': 1 } }
     ]
   ).toArray();
 
   let reorientations = [];
   let totalReorientations = 0;
   statsReorientations.forEach(statsReorientation => {
-    if (reorientations.filter(reorientation => reorientation.nom === String(Object.keys(statsReorientation.organismes)[0]))?.length > 0) {
-      reorientations.filter(reorientation => reorientation.nom === Object.keys(statsReorientation.organismes)[0])[0].valeur +=
-        statsReorientation.organismes[Object.keys(statsReorientation.organismes)[0]];
-    } else {
-      reorientations.push({
-        nom: String(Object.keys(statsReorientation.organismes)[0]),
-        valeur: statsReorientation.organismes[Object.keys(statsReorientation.organismes)[0]]
-      });
-    }
-    totalReorientations += statsReorientation.organismes[Object.keys(statsReorientation.organismes)[0]];
+    totalReorientations += statsReorientation.count;
+    reorientations.push({
+      nom: statsReorientation._id,
+      valeur: statsReorientation.count
+    });
   });
 
   //Conversion en % total

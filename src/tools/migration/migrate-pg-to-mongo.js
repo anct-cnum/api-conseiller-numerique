@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable quote-props */
 'use strict';
 
 const { execute } = require('../utils');
@@ -23,13 +24,11 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         siret: s.siret === null ? null : `${s.siret}`,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
-        contact: {
-          prenom: s.contact_first_name,
-          nom: s.contact_last_name,
-          fonction: s.contact_job,
-          email: s.contact_email,
-          telephone: s.contact_phone
-        },
+        'contact.prenom': s.contact_first_name,
+        'contact.nom': s.contact_last_name,
+        'contact.fonction': s.contact_job,
+        'contact.email': s.contact_email,
+        'contact.telephone': s.contact_phone,
         codePostal: s.zip_code,
         location: s.location,
         nomCommune: s.geo_name,

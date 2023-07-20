@@ -1,9 +1,11 @@
+#!/usr/bin/env node
+'use strict';
+require('dotenv').config();
 const { program } = require('commander');
 const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
 const dayjs = require('dayjs');
-require('dotenv').config();
 
 execute(__filename, async ({ db, logger, exit, app }) => {
   const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
@@ -60,7 +62,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   await db.collection('misesEnRelation').updateOne(
     { 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA },
     { $set: {
-      statut: 'finalisee_non_disponible',
+      statut: cnfsRecrute?.conseillerObj?.disponible === false ? 'finalisee_non_disponible' : 'nouvelle',
       transfert: {
         'destinationStructureId': nouvelleSA,
         'date': new Date()

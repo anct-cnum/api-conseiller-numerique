@@ -4,14 +4,13 @@
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-prefets.sh",
   "*/15 * * * * $ROOT/src/tools/jobs/create-account-structures.sh",
   "0 8 * * * $ROOT/src/tools/jobs/mail-relance-cra.sh",
-  "*/5 * * * * $ROOT/src/tools/jobs/send-email-structures.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh",
   "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
   "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/create-account-candidats.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-candidats.sh",
   "0 0 * * * $ROOT/src/tools/jobs/delete-cv-six-mois.sh",
-  "0 3 * * * $ROOT/src/tools/jobs/update-token-mot-de-passe.sh",
+  "15 0 * * * $ROOT/src/tools/jobs/delete-inactive-accounts.sh",
   "*/30 * * * * $ROOT/src/tools/jobs/populate-rdv-aide-numerique.sh"
 ]
 

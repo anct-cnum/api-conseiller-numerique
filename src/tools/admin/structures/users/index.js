@@ -25,6 +25,7 @@ const doCreateUser = async (db, feathers, dbName, _id, logger) => {
           '$db': dbName
         },
         token: uuidv4(),
+        migrationDashboard: true,
         tokenCreatedAt: new Date(),
         mailSentDate: null, // on stock la date du dernier envoi de mail de création pour le mécanisme de relance
         passwordCreated: false,
@@ -80,7 +81,12 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     await doCreateUser(db, feathers, dbName, _id, logger, Sentry);
     usersCreatedCount++;
   } else {
-    const structures = await db.collection('structures').find({ userCreated: false, userCreationError: { $ne: true }, statut: 'VALIDATION_COSELEC' }).toArray();
+    const structures = await db.collection('structures').find({
+      'userCreated': false,
+      'userCreationError': { $ne: true },
+      'contact.inactivite': { $ne: true },
+      'statut': 'VALIDATION_COSELEC'
+    }).toArray();
     let promises = [];
     structures.forEach(structure => {
       const p = new Promise(async (resolve, reject) => {

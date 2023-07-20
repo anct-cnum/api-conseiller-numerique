@@ -8,13 +8,14 @@ const { program } = require('commander');
 
 program.option('-c, --idConseiller <idConseiller>', 'IdPG du conseiller', parseInt);
 program.option('-s, --idStructure <idStructure>', 'IdPG de la structure', parseInt);
+program.option('-st, --statut <statut>', 'modification de statut en recrutee ou nouvelle');
 program.parse(process.argv);
 
 execute(__filename, async ({ db, logger }) => {
 
   await new Promise(async (resolve, reject) => {
 
-    const { idStructure, idConseiller } = program;
+    const { idStructure, idConseiller, statut } = program;
 
     if (~~idConseiller === 0) {
       logger.warn(`L'id conseiller n'est pas correct`);
@@ -24,6 +25,11 @@ execute(__filename, async ({ db, logger }) => {
 
     if (~~idStructure === 0) {
       logger.warn(`L'id structure n'est pas correct`);
+      reject();
+      return;
+    }
+    if (!['recrutee', 'nouvelle'].includes(statut)) {
+      logger.warn(`Le statut est invalide`);
       reject();
       return;
     }
@@ -41,36 +47,70 @@ execute(__filename, async ({ db, logger }) => {
       reject();
       return;
     }
-
+    if ((conseiller?.ruptures.length >= 2) && (statut === 'nouvelle')) {
+      logger.warn(`Le conseiller ${idConseiller} a déjà été Cnfs, utilisez le statut recrutee`);
+      reject();
+      return;
+    }
+    const structureRupture = conseiller?.ruptures[conseiller?.ruptures?.length - 1]?.structureId;
+    if (String(structureRupture) !== String(structure._id)) {
+      logger.error(`La dernière rupture du conseiller ne correspond pas à la structure: ${structureRupture} !== ${structure._id}`);
+      reject();
+      return;
+    }
     // Suppression dans l'historisation
     await db.collection('conseillersRuptures').deleteOne({ conseillerId: conseiller._id, structureId: structure._id });
 
     // Suppression des infos de rupture dans le doc conseiller
+    let deleteTags = statut === 'recrutee' ? {
+      'mattermost': '',
+      'emailCN': '',
+      'ruptures.$': ''
+    } : {
+      'mattermost': '',
+      'emailCN': '',
+      'ruptures.$': '',
+      'statut': '',
+      'datePrisePoste': '',
+      'dateFinFormation': '',
+      'groupeCRA': '',
+      'groupeCRAHistorique': '',
+      'supHierarchique': '',
+      'telephonePro': '',
+      'emailPro': '',
+      'mailActiviteCRAMois': '',
+    };
+    if (conseiller?.ruptures.length === 1) {
+      delete deleteTags['ruptures.$'];
+      deleteTags.ruptures = '';
+    }
+
     await db.collection('conseillers').updateOne(
       {
         _id: conseiller._id,
         ruptures: { $elemMatch: { structureId: structure._id } },
       },
       {
-        $unset: {
-          'mattermost': '',
-          'emailCN': '',
-          'ruptures.$': ''
-        }
+        $unset: deleteTags
       });
 
     // Modification de la mise en relation
+    let updateTags = statut === 'nouvelle' ? { dateRecrutement: null } : {};
+
     await db.collection('misesEnRelation').updateOne(
       { _id: miseEnRelation._id },
       {
         $set: {
-          statut: 'recrutee'
+          statut,
+          ...updateTags
         },
         $unset: {
           dateRupture: '',
           motifRupture: '',
           mailCnfsRuptureSentDate: '',
-          resendMailCnfsRupture: ''
+          resendMailCnfsRupture: '',
+          validateurRupture: '',
+          emetteurRupture: '',
         }
       });
 
