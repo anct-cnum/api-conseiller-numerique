@@ -133,17 +133,17 @@ exports.PermanenceConseillers = class Sondages extends Service {
           return res.status(400).send(new BadRequest(error).toJSON());
         }
         await locationDefault(permanence);
-        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async () => {
+        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async idPermanence => {
           if (idOldPermanence) {
             return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
-              return res.send({ isCreated: true });
+              return res.send({ isCreated: true, idPermanence });
             }).catch(error => {
               app.get('sentry').captureException(error);
               logger.error(error);
               return res.status(500).send(new GeneralError('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
             });
           } else {
-            return res.send({ isCreated: true });
+            return res.send({ isCreated: true, idPermanence });
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
