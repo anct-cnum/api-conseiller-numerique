@@ -33,6 +33,7 @@ const deleteCandidatInactif = db => async candidatInactif => {
 };
 
 const deleteMeRCandidatInactif = db => async candidatInactif => {
+  await pool.query(`DELETE FROM djapp_matching WHERE coach_id = $1`, [candidatInactif.idPG]);
   await db.collection('misesEnRelation').deleteMany({
     'conseiller.$id': candidatInactif._id
   });
