@@ -19,7 +19,11 @@ const ajouterAuConseillersSupprimes = db => async candidatInactif => {
   await db.collection('conseillersSupprimes').insertOne({
     deletedAt: new Date(),
     motif: 'suppression automatique du candidat (RGPD)',
-    conseiller: candidatInactif
+    conseiller: candidatInactif,
+    actionUser: {
+      role: 'CRON',
+      userId: null
+    }
   });
 };
 
@@ -38,14 +42,7 @@ const deleteMeRCandidatInactif = db => async candidatInactif => {
 execute(__filename, async ({ app, logger, db, Sentry }) => {
 
   const promises = [];
-  const queryCandidatInactif = {
-    $or: [
-      // Cas 1 : compte inactif depuis 30 mois
-      {
-        inactivite: true,
-      }
-    ]
-  };
+  const queryCandidatInactif = { inactivite: true };
   const candidatsInactifs = await getCandidatsInactifs(db)(queryCandidatInactif);
 
   candidatsInactifs?.forEach(candidatInactif => {

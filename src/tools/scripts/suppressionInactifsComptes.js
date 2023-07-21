@@ -97,7 +97,6 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
                 $set: {
                   'structureObj.contact.inactivite': true,
                   'structureObj.userCreated': false,
-                  'structureObj.updatedAt': new Date()
                 }
               }
             );
@@ -137,7 +136,6 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
             $set: {
               'conseillerObj.inactivite': true,
               'conseillerObj.userCreated': false,
-              'conseillerObj.updatedAt': new Date()
             }
           }
         );
