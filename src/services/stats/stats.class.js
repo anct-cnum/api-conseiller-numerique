@@ -177,7 +177,7 @@ exports.Stats = class Stats extends Service {
           'conseiller.$id': new ObjectID(conseiller._id),
           'cra.dateAccompagnement': {
             $gte: dateDebut,
-            $lt: dateFin,
+            $lte: dateFin,
           }
         };
 

@@ -475,7 +475,7 @@ exports.Conseillers = class Conseillers extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lte: dateFin }
         };
         if (query.codePostal !== '') {
           statsQuery = {
@@ -483,7 +483,7 @@ exports.Conseillers = class Conseillers extends Service {
             'cra.codePostal': req.query?.codePostal
           };
         }
-        if (query.codeCommune !== '') {
+        if (query.codeCommune !== '' && query.codeCommune !== 'null') {
           statsQuery = {
             ...statsQuery,
             'cra.codeCommune': req.query?.codeCommune
@@ -524,7 +524,7 @@ exports.Conseillers = class Conseillers extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lte: dateFin }
         };
         if (query?.codePostal !== '') {
           statsQuery = {
