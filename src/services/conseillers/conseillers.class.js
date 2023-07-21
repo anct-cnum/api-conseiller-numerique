@@ -495,7 +495,7 @@ exports.Conseillers = class Conseillers extends Service {
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, dateFin)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -542,7 +542,7 @@ exports.Conseillers = class Conseillers extends Service {
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         buildExportStatistiquesExcelFileContent(
-          app, res, stats, query?.dateDebut, dateFin,
+          app, res, stats, query?.dateDebut, query?.dateFin,
           `${conseiller?.prenom} ${conseiller?.nom}`,
           query?.idType, query?.codePostal, query?.ville,
           isAdminCoop
