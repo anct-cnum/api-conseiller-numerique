@@ -49,35 +49,15 @@ const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalR
 };
 
 const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras }) => {
-  const liste = await getCodesPostauxStatistiquesCras(idConseiller);
-  let listeDefinitive = [];
-
-  liste.forEach(paire => {
-    if (listeDefinitive.findIndex(item => item.id === paire._id.codePostal) > -1) {
-      listeDefinitive.find(item => item.id === paire._id.codePostal).villes.push({ ville: paire._id.ville, codeCommune: paire._id.codeCommune });
-    } else {
-      listeDefinitive.push({
-        id: paire._id.codePostal,
-        villes: [{ ville: paire._id.ville, codeCommune: paire._id.codeCommune }],
-      });
-    }
+  let listeDefinitive = await getCodesPostauxStatistiquesCras(idConseiller);
+  listeDefinitive = listeDefinitive.map(e => {
+    const removeDoublon = [...new Map(e.codeCommune.map(item => [item.codeCommune, item])).values()];
+    return {
+      ...e,
+      villes: removeDoublon.map(i => i.ville),
+      codeCommune: removeDoublon
+    };
   });
-
-  listeDefinitive = listeDefinitive.map(e => ({
-    ...e,
-    villes: [...new Map(e.villes.map(item => [item.codeCommune, item])).values()]
-    .filter(i => i.codeCommune)
-    .map(i => i.ville),
-    codeCommune: [...new Map(e.villes.map(item => [item.codeCommune, item])).values()]
-  }));
-
-  listeDefinitive.sort((a, b) => {
-    if (a.id !== b.id) {
-      return a.id - b.id;
-    }
-    return -1;
-  });
-
   return listeDefinitive;
 };
 
