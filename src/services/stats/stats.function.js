@@ -49,24 +49,15 @@ const getTotalTerritoires = async (date, type, { getTotalDepartements, getTotalR
 };
 
 const getCodesPostauxCras = async (idConseiller, { getCodesPostauxStatistiquesCras }) => {
-  const liste = await getCodesPostauxStatistiquesCras(idConseiller);
-  const listeDefinitive = [];
-
-  liste.forEach(paire => {
-    if (listeDefinitive.findIndex(item => item.id === paire._id.codePostal) > -1) {
-      listeDefinitive.find(item => item.id === paire._id.codePostal).villes.push(paire._id.ville);
-    } else {
-      listeDefinitive.push({ id: paire._id.codePostal, villes: [paire._id.ville] });
-    }
+  let listeDefinitive = await getCodesPostauxStatistiquesCras(idConseiller);
+  listeDefinitive = listeDefinitive.map(e => {
+    const removeDoublon = [...new Map(e.codeCommune.map(item => [item.codeCommune, item])).values()];
+    return {
+      ...e,
+      villes: removeDoublon.map(i => i.ville),
+      codeCommune: removeDoublon
+    };
   });
-
-  listeDefinitive.sort((a, b) => {
-    if (a.id !== b.id) {
-      return a.id - b.id;
-    }
-    return -1;
-  });
-
   return listeDefinitive;
 };
 
