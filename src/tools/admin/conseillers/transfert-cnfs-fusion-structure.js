@@ -19,11 +19,14 @@ const updateIdStructureRupture = db => async (cnfsRecrute, idCNFS, idAncienneSA,
     { conseillerId: idCNFS, structureId: idAncienneSA },
     { $set: { structureId: idNouvelleSA }
     });
-  await db.collection('misesEnRelation').deleteOne(
-    { _id: { '$ne': cnfsRecrute?._id, 'conseiller.$id': idCNFS, 'structure.$id': structureDestination } });
+  await db.collection('misesEnRelation').deleteOne({ '_id': { '$ne': cnfsRecrute?._id }, 'conseiller.$id': idCNFS, 'structure.$id': idNouvelleSA });
   await db.collection('misesEnRelation').updateOne(
     { _id: cnfsRecrute?._id },
     { $set: { 'structure.$id': idNouvelleSA, 'structureObj': structureDestination }
+    });
+  await db.collection('cras').updateMany(
+    { 'structure.$id': idAncienneSA, 'conseiller.$id': idCNFS },
+    { $set: { 'structure.$id': idNouvelleSA }
     });
 };
 const countCnfsNouvelleSA = db => async idNouvelleSA => await db.collection('misesEnRelation').countDocuments({
