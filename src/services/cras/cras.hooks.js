@@ -43,7 +43,7 @@ module.exports = {
         }
         // vérification du tag idStructure si elle est bien présente
         if (!context.data?.idStructure) {
-          throw new BadRequest('Une erreur est survenue, veuillez rafraîchir la page et ressayer');
+          throw new BadRequest('Une erreur est survenue, veuillez rafraîchir la page et réessayer');
         }
 
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
