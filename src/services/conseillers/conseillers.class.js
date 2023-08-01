@@ -475,7 +475,7 @@ exports.Conseillers = class Conseillers extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lte: dateFin }
         };
         if (query.codePostal !== '') {
           statsQuery = {
@@ -483,10 +483,10 @@ exports.Conseillers = class Conseillers extends Service {
             'cra.codePostal': req.query?.codePostal
           };
         }
-        if (query.ville !== '') {
+        if (query.codeCommune !== '' && query.codeCommune !== 'null') {
           statsQuery = {
             ...statsQuery,
-            'cra.nomCommune': req.query?.ville
+            'cra.codeCommune': req.query?.codeCommune
           };
         }
         const isAdminCoop = checkRoleAdminCoop(userById);
@@ -495,7 +495,7 @@ exports.Conseillers = class Conseillers extends Service {
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, dateFin)}.csv`,
           // eslint-disable-next-line max-len
-          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
+          buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
@@ -524,7 +524,7 @@ exports.Conseillers = class Conseillers extends Service {
         dateFin.setUTCHours(23, 59, 59, 59);
         let statsQuery = {
           'conseiller.$id': conseiller._id,
-          'cra.dateAccompagnement': { $gte: query.dateDebut, $lt: dateFin }
+          'cra.dateAccompagnement': { $gte: query.dateDebut, $lte: dateFin }
         };
         if (query?.codePostal !== '') {
           statsQuery = {
@@ -532,17 +532,17 @@ exports.Conseillers = class Conseillers extends Service {
             'cra.codePostal': query?.codePostal
           };
         }
-        if (query?.ville !== '') {
+        if (query?.codeCommune !== '') {
           statsQuery = {
             ...statsQuery,
-            'cra.nomCommune': query?.ville
+            'cra.codeCommune': query?.codeCommune
           };
         }
         const isAdminCoop = checkRoleAdminCoop(userById);
         const stats = await statsCras.getStatsGlobales(db, statsQuery, statsCras, isAdminCoop);
 
         buildExportStatistiquesExcelFileContent(
-          app, res, stats, query?.dateDebut, dateFin,
+          app, res, stats, query?.dateDebut, query?.dateFin,
           `${conseiller?.prenom} ${conseiller?.nom}`,
           query?.idType, query?.codePostal, query?.ville,
           isAdminCoop
