@@ -125,7 +125,7 @@ execute(__filename, async ({ db, logger }) => {
     return u;
   };
 
-  const creation = async s => {
+  const creationCandidats = async s => {
     // On recherche les candidats dans un périmètre autour de la structure
     // classés par distance
 
@@ -140,7 +140,7 @@ execute(__filename, async ({ db, logger }) => {
       }
     }]).toArray();
 
-    logger.info(`${s.nom} ${match.length} found`);
+    logger.info(`${s.nom} ${match.length} candidats trouvés`);
 
     let work = [];
 
@@ -157,7 +157,46 @@ execute(__filename, async ({ db, logger }) => {
       const result = await db.collection('misesEnRelation').bulkWrite(work);
 
       logger.info(
-        `misesEnRelation,BULK,${s._id},${s.nom},${s.idPG},` +
+        `misesEnRelation Candidats,BULK,${s._id},${s.nom},${s.idPG},` +
+        `${result.ok},${result.nMatched},${result.nInserted},${result.nUpserted}` +
+        `,${result.nModified}`
+      );
+    }
+  };
+
+  const creationConseillers = async s => {
+    // On recherche les conseillers candidats dans un périmètre autour de la structure
+    // classés par distance
+
+    const match = await db.collection('conseillers').aggregate([{
+      '$geoNear': {
+        'near': s.location,
+        'distanceField': 'dist.calculated',
+        'maxDistance': 500000,
+        'query': { disponible: true, statut: 'RECRUTE' },
+        'num': 10000, // xxx use $limit
+        'spherical': false
+      }
+    }]).toArray();
+
+    logger.info(`${s.nom} ${match.length} conseillers trouvés`);
+
+    let work = [];
+
+    for (const c of match) {
+      let r = await miseEnRelation(s, c);
+      if (r) {
+        work.push(r);
+      }
+    }
+
+    logger.info(`${s.nom} ${work.length} to upsert`);
+
+    if (work.length > 0) {
+      const result = await db.collection('misesEnRelation').bulkWrite(work);
+
+      logger.info(
+        `misesEnRelation Conseillers,BULK,${s._id},${s.nom},${s.idPG},` +
         `${result.ok},${result.nMatched},${result.nInserted},${result.nUpserted}` +
         `,${result.nModified}`
       );
@@ -169,6 +208,8 @@ execute(__filename, async ({ db, logger }) => {
 
   // Pour chaque structure, générer ses mises en relation
   for (const s of structures) {
-    await creation(s);
+    await creationConseillers(s);
+    count = 0; // reset
+    await creationCandidats(s);
   }
 });
