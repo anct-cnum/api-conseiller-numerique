@@ -50,9 +50,9 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
     promises.push(new Promise(async resolve => {
       try {
         await ajouterAuConseillersSupprimes(db)(candidatASupprimer).then(async () => {
-          return await deleteCandidatInactif(db)(candidatASupprimer);
-        }).then(async () => {
           return await deleteMeRCandidatInactif(db)(candidatASupprimer);
+        }).then(async () => {
+          return await deleteCandidatInactif(db)(candidatASupprimer);
         }).then(async () => {
           if (candidatASupprimer.cv?.file) {
             try {
