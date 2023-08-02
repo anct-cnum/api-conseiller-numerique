@@ -33,6 +33,46 @@ const coselecs = {
   'COSELEC 19': '15/09/2021',
   'COSELEC 20': '06/10/2021',
   'COSELEC 21': '13/10/2021',
+  'COSELEC 22': '29/10/2021',
+  'COSELEC 23': '10/11/2021',
+  'COSELEC 24': '08/12/2021',
+  'COSELEC 25': '05/01/2022',
+  'COSELEC 26': '12/01/2022',
+  'COSELEC 27': '19/01/2022',
+  'COSELEC 28': '26/01/2022',
+  'COSELEC 29': '04/02/2022',
+  'COSELEC 30': '09/02/2022',
+  'COSELEC 31': '17/02/2022',
+  'COSELEC 32': '22/02/2022',
+  'COSELEC 33': '02/03/2022',
+  'COSELEC 34': '09/03/2022',
+  'COSELEC 35': '17/03/2022',
+  'COSELEC 36': '23/03/2022',
+  'COSELEC 37': '30/03/2022',
+  'COSELEC 38': '06/04/2022',
+  'COSELEC 39': '13/04/2022',
+  'COSELEC 40': '20/04/2022',
+  'COSELEC 41': '27/04/2022',
+  'COSELEC 42': '04/05/2022',
+  'COSELEC 43': '11/05/2022',
+  'COSELEC 44': '18/05/2022',
+  'COSELEC 45': '25/05/2022',
+  'COSELEC 46': '01/06/2022',
+  'COSELEC 47': '08/06/2022',
+  'COSELEC 48': '29/06/2022',
+  'COSELEC 49': '28/07/2022',
+  'COSELEC 50': '09/08/2022',
+  'COSELEC 51': '08/09/2022',
+  'COSELEC 52': '04/10/2022',
+  'COSELEC 53': '02/11/2022',
+  'COSELEC 54': '06/12/2022',
+  'COSELEC 55': '22/12/2022',
+  'COSELEC 56': '30/01/2023',
+  'COSELEC 57': '23/02/2023',
+  'COSELEC 58': '05/04/2023',
+  'COSELEC 59': '30/05/2023',
+  'COSELEC 60': '29/06/2023',
+  'COSELEC 61': '26/07/2023',
 };
 
 execute(__filename, async ({ logger, db, Sentry }) => {
@@ -49,7 +89,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     toms.set(String(value.num_tom), value);
   }
 
-  let query = { statut: 'VALIDATION_COSELEC', userCreated: true };
+  let query = { statut: 'VALIDATION_COSELEC' };
   let count = 0;
 
   const structures = await db.collection('structures').find(query).toArray();
@@ -62,7 +102,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     flags: 'w'
   });
   // eslint-disable-next-line max-len
-  file.write('Raison sociale;Commune INSEE;Département;Région;Nombre de conseillers validés par le COSELEC;Date de validation en comité de sélection;Type;SIRET;Code département;Adresse;Code commune INSEE;Code postal;Investissement financier estimatif total de l’Etat;ZRR;QPV;France services\n');
+  file.write('id;Raison sociale;Commune INSEE;Département;Région;Nombre de conseillers validés par le COSELEC;Date de validation en comité de sélection;Type;SIRET;Code département;Adresse;Code commune INSEE;Code postal;Investissement financier estimatif total de l’Etat;ZRR;QPV;France services\n');
 
   structures.forEach(structure => {
     promises.push(new Promise(async resolve => {
@@ -79,12 +119,12 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         }
 
         // Adresse
-        let adresse = (structure?.insee?.adresse?.numero_voie ?? '') + ' ' +
-          (structure?.insee?.adresse?.type_voie ?? '') + ' ' +
-          (structure?.insee?.adresse?.libelle_voie ?? '') + '\n' +
-          (structure?.insee?.adresse?.complement_adresse ? structure.insee.adresse.complement_adresse + '\n' : '') +
-          (structure?.insee?.adresse?.code_postal ?? '') + ' ' +
-          (structure?.insee?.adresse?.libelle_commune ?? '');
+        let adresse = (structure?.insee?.etablissement?.adresse?.numero_voie ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.type_voie ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.nom_voie ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.complement_adresse ? structure.insee.etablissement.adresse.complement_adresse + ' ' : '') +
+          (structure?.insee?.etablissement?.adresse?.code_postal ?? '') + ' ' +
+          (structure?.insee?.etablissement?.adresse?.localite ?? '');
 
         adresse = adresse.replace(/["']/g, '');
 
@@ -105,20 +145,20 @@ execute(__filename, async ({ logger, db, Sentry }) => {
            *    297.228€
            *
            * + Certification
-           *    326,6€
+           *    326,60€
            *
            */
 
         let investissement = 0;
         const coutCnfs = 4805 + 297.228 + 326.6;
         if (structure.type === 'PRIVATE') {
-          investissement = (32000 + coutCnfs) * coselec.nombreConseillersCoselec;
+          investissement = Math.round((32000 + coutCnfs) * coselec.nombreConseillersCoselec);
         } else if (structure.codeDepartement === '971' || structure.codeDepartement === '972' || structure.codeDepartement === '973') {
-          investissement = (70000 + coutCnfs) * coselec.nombreConseillersCoselec;
+          investissement = Math.round((70000 + coutCnfs) * coselec.nombreConseillersCoselec);
         } else if (structure.codeDepartement === '974' || structure.codeDepartement === '976') {
-          investissement = (67500 + coutCnfs) * coselec.nombreConseillersCoselec;
+          investissement = Math.round((67500 + coutCnfs) * coselec.nombreConseillersCoselec);
         } else {
-          investissement = (50000 + coutCnfs) * coselec.nombreConseillersCoselec;
+          investissement = Math.round((50000 + coutCnfs) * coselec.nombreConseillersCoselec);
         }
 
         // Nom département, région ou TOM
@@ -134,7 +174,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         }
 
         // eslint-disable-next-line max-len
-        file.write(`${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ?? ''};${structure?.insee?.adresse?.libelle_commune ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${coselecs[coselec?.numero]};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.adresse?.code_commune};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
+        file.write(`${structure?.idPG};${structure?.insee?.entreprise?.raison_sociale ?? structure.nom};${structure?.insee?.etablissement?.commune_implantation?.value ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${coselecs[coselec?.numero]};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";"${structure?.insee?.etablissement?.adresse?.code_insee_localite}";"${structure.codePostal}";${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
       } catch (e) {
         Sentry.captureException(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
         logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
