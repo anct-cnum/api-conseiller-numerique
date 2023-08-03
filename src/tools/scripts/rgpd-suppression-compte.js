@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+require('dotenv').config();
 
 const { execute } = require('../utils');
 const {
@@ -20,14 +21,14 @@ execute(__filename, async ({ app, logger, db, Sentry }) => {
   const candidatsInactifs = await getCandidatsInactifs(db)(queryCandidatInactif);
 
   try {
-    await archiverLaSuppression(app, Sentry)(candidatsInactifs, null, 'suppression automatique du candidat (RGPD)', 'script').then(async () => {
-      return await suppressionTotalCandidat(app, Sentry)(candidatsInactifs);
+    await archiverLaSuppression(app)(candidatsInactifs, null, 'suppression automatique du candidat (RGPD)', 'script').then(async () => {
+      return await suppressionTotalCandidat(app)(candidatsInactifs);
     }).then(async () => {
       candidatsInactifs?.forEach(candidatInactif => {
         promises.push(new Promise(async resolve => {
           try {
             if (candidatInactif.cv) {
-              await suppressionCv(candidatInactif.cv, app, Sentry);
+              await suppressionCv(candidatInactif.cv, app);
             }
             await candidatSupprimeEmailPix(db, app)(candidatInactif);
             await deleteMailSib(app)(candidatInactif.email);

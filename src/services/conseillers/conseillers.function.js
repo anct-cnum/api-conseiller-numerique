@@ -148,7 +148,7 @@ const verificationCandidaturesRecrutee = (app, res) => async (tableauCandidat, i
 
 };
 
-const archiverLaSuppression = (app, Sentry = null) => async (tableauCandidat, user, motif, actionUser) => {
+const archiverLaSuppression = app => async (tableauCandidat, user, motif, actionUser) => {
   try {
     let promises = [];
     await app.get('mongoClient').then(async db => {
@@ -173,11 +173,7 @@ const archiverLaSuppression = (app, Sentry = null) => async (tableauCandidat, us
             await db.collection('conseillersSupprimes').insertOne(objAnonyme);
           } catch (error) {
             logger.info(error);
-            if (Sentry) {
-              Sentry.captureException(error);
-            } else {
-              app.get('sentry').captureException(error);
-            }
+            app.get('sentry').captureException(error);
           }
           resolve();
         }));
@@ -202,7 +198,7 @@ const deleteMailSib = app => async emailPerso => {
   }
 };
 
-const suppressionTotalCandidat = (app, Sentry = null) => async tableauCandidat => {
+const suppressionTotalCandidat = app => async tableauCandidat => {
   try {
     let promises = [];
     await app.get('mongoClient').then(async db => {
@@ -217,11 +213,7 @@ const suppressionTotalCandidat = (app, Sentry = null) => async tableauCandidat =
             [profil.idPG]);
           } catch (error) {
             logger.info(error);
-            if (Sentry) {
-              Sentry.captureException(error);
-            } else {
-              app.get('sentry').captureException(error);
-            }
+            app.get('sentry').captureException(error);
           }
           try {
             await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': profil._id });
@@ -230,11 +222,7 @@ const suppressionTotalCandidat = (app, Sentry = null) => async tableauCandidat =
 
           } catch (error) {
             logger.info(error);
-            if (Sentry) {
-              Sentry.captureException(error);
-            } else {
-              app.get('sentry').captureException(error);
-            }
+            app.get('sentry').captureException(error);
           }
           resolve();
         }));
@@ -243,15 +231,11 @@ const suppressionTotalCandidat = (app, Sentry = null) => async tableauCandidat =
     });
   } catch (error) {
     logger.error(error);
-    if (Sentry) {
-      Sentry.captureException(error);
-    } else {
-      app.get('sentry').captureException(error);
-    }
+    app.get('sentry').captureException(error);
   }
 };
 
-const suppressionCv = async (cv, app, Sentry = null) => {
+const suppressionCv = async (cv, app) => {
   let promise;
   promise = new Promise(async (resolve, reject) => {
   //initialisation AWS
@@ -272,11 +256,7 @@ const suppressionCv = async (cv, app, Sentry = null) => {
       resolve(data);
     }).catch(error => {
       logger.info(error);
-      if (Sentry) {
-        Sentry.captureException(error);
-      } else {
-        app.get('sentry').captureException(error);
-      }
+      app.get('sentry').captureException(error);
       reject(error);
     });
   });
