@@ -184,6 +184,35 @@ const updateConseillerStatut = db => async conseillerId => {
   });
 };
 
+const checkPermanenceExistsBySiret = db => async siret => {
+  const result = await db.collection('permanences').countDocuments({ 'siret': siret });
+  return result > 0;
+};
+
+const checkPermanenceExistsByLocation = db => async location => {
+  const result = await db.collection('permanences').countDocuments({ 'location': location });
+  return result > 0;
+};
+
+const getAdressesCheckedByLocation = db => async adresses => {
+  let foundExistedPermanence = false;
+  const adressesChecked = [];
+  const promises = [];
+  adresses.forEach(adresse => {
+    promises.push(new Promise(async resolve => {
+      const existsPermanence = await db.collection('permanences').countDocuments({ 'location': adresse.geometry });
+      if (existsPermanence === 0) {
+        adressesChecked.push(adresse);
+      } else {
+        foundExistedPermanence = true;
+      }
+      resolve();
+    }));
+  });
+  await Promise.all(promises);
+  return { adresseApi: adressesChecked, foundExistedPermanence };
+};
+
 module.exports = {
   getPermanences,
   getPermanenceById,
@@ -197,4 +226,7 @@ module.exports = {
   deleteCraPermanence,
   setReporterInsertion,
   updateConseillerStatut,
+  checkPermanenceExistsBySiret,
+  checkPermanenceExistsByLocation,
+  getAdressesCheckedByLocation,
 };
