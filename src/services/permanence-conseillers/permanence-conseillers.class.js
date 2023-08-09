@@ -136,7 +136,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
-        const existsPermanence = await checkPermanenceExistsByLocation(db)(permanence.location);
+        const existsPermanence = await checkPermanenceExistsByLocation(db)(permanence.location, permanence.structureId);
         if (existsPermanence) {
           return res.status(500).send(new GeneralError('La création de permanence est impossible : l\'adresse est déjà enregistrer en base.').toJSON());
         }
@@ -287,11 +287,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.get('/permanences/getAdresse/:adresse', async (req, res) => {
-
+    app.get('/permanences/getAdresse/:adresse/:structureId', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const { adresse } = JSON.parse(req.params.adresse);
+      const structureId = req.params.structureId;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -301,7 +301,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         try {
           const params = {};
           const result = await axios.get(urlAPI, { params: params });
-          let results = await getAdressesCheckedByLocation(db)(result.data?.features?.filter(adresse => adresse.properties.score > 0.7));
+          let results = await getAdressesCheckedByLocation(db)(result.data?.features?.filter(adresse => adresse.properties.score > 0.7), structureId);
           return res.send({ ...results });
         } catch (e) {
           return res.send({ 'adresseApi': null });

@@ -189,18 +189,18 @@ const checkPermanenceExistsBySiret = db => async siret => {
   return result > 0;
 };
 
-const checkPermanenceExistsByLocation = db => async location => {
-  const result = await db.collection('permanences').countDocuments({ 'location': location });
+const checkPermanenceExistsByLocation = db => async (location, structureId) => {
+  const result = await db.collection('permanences').countDocuments({ 'location': location, 'structure.$id': new ObjectId(structureId) });
   return result > 0;
 };
 
-const getAdressesCheckedByLocation = db => async adresses => {
+const getAdressesCheckedByLocation = db => async (adresses, structureId) => {
   let foundExistedPermanence = false;
   const adressesChecked = [];
   const promises = [];
   adresses.forEach(adresse => {
     promises.push(new Promise(async resolve => {
-      const existsPermanence = await db.collection('permanences').countDocuments({ 'location': adresse.geometry });
+      const existsPermanence = await db.collection('permanences').countDocuments({ 'location': adresse.geometry, 'structure.$id': new ObjectId(structureId) });
       if (existsPermanence === 0) {
         adressesChecked.push(adresse);
       } else {
