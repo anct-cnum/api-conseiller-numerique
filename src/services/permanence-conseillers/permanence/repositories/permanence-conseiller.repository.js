@@ -189,8 +189,20 @@ const checkPermanenceExistsBySiret = db => async siret => {
   return result > 0;
 };
 
-const checkPermanenceExistsByLocation = db => async (location, structureId) => {
-  const result = await db.collection('permanences').countDocuments({ 'location': location, 'structure.$id': new ObjectId(structureId) });
+const checkPermanenceExistsByLocation = db => async (location, adresse, structureId) => {
+  const result = await db.collection('permanences').countDocuments({
+    '$or': [
+      {
+        'location': location
+      },
+      {
+        'adresse.numeroRue': adresse.numeroRue,
+        'adresse.rue': adresse.rue,
+        'adresse.codeCommune': adresse.codeCommune,
+        'adresse.ville': adresse.ville
+      }
+    ],
+    'structure.$id': new ObjectId(structureId) });
   return result > 0;
 };
 

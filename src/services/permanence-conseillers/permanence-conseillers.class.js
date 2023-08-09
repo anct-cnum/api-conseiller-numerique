@@ -136,7 +136,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
-        const existsPermanence = await checkPermanenceExistsByLocation(db)(permanence.location, permanence.structureId);
+        const existsPermanence = await checkPermanenceExistsByLocation(db)(permanence.location, permanence.adresse, permanence.structureId);
         if (existsPermanence) {
           return res.status(500).send(new GeneralError('La création de permanence est impossible : l\'adresse est déjà enregistrer en base.').toJSON());
         }
