@@ -18,7 +18,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   let idPermanences = crasPermanenceId.filter(i => !permanences.includes(i)); // liste IdPermanence inconnu
 
   idPermanences = idPermanences.map(id => new ObjectId(id));
-  console.log('idPermanences:', idPermanences);
+
   logger.info(`Correction des ${idPermanences.length} idPermanences inconnus...`);
 
   const countCras = await db.collection('cras').countDocuments({
