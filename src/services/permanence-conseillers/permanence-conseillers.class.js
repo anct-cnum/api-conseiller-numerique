@@ -19,8 +19,12 @@ const {
   validationPermamences,
   locationDefault
 } = require('./permanence/utils/update-permanence.utils');
-const { getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure, createPermanence, setPermanence, setReporterInsertion, deletePermanence,
-  deleteConseillerPermanence, updatePermanences, updateConseillerStatut, getPermanences, deleteCraPermanence,
+const {
+  getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure,
+  createPermanence, setPermanence, setReporterInsertion, deletePermanence,
+  deleteConseillerPermanence, updatePermanences, updateConseillerStatut,
+  getPermanences, deleteCraPermanence, checkPermanenceExistsBySiret,
+  getAdressesCheckedByLocation, checkPermanenceExistsByLocation,
 } = require('./permanence/repositories/permanence-conseiller.repository');
 
 const axios = require('axios');
@@ -132,18 +136,22 @@ exports.PermanenceConseillers = class Sondages extends Service {
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
+        const existsPermanence = await checkPermanenceExistsByLocation(db)(permanence.location, permanence.adresse, permanence.structureId);
+        if (existsPermanence) {
+          return res.status(500).send(new GeneralError('La création de permanence est impossible : l\'adresse est déjà enregistrer en base.').toJSON());
+        }
         await locationDefault(permanence);
         await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async idPermanence => {
           if (idOldPermanence) {
             return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
-              return res.send({ isCreated: true, idPermanence });
+              return res.send({ isCreated: true, idPermanence, existsPermanence });
             }).catch(error => {
               app.get('sentry').captureException(error);
               logger.error(error);
               return res.status(500).send(new GeneralError('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
             });
           } else {
-            return res.send({ isCreated: true, idPermanence });
+            return res.send({ isCreated: true, idPermanence, existsPermanence });
           }
         }).catch(error => {
           app.get('sentry').captureException(error);
@@ -200,6 +208,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.get('/permanences/verifySiret/:siret', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user?._id, [Role.Conseiller], () => user)
@@ -234,7 +243,10 @@ exports.PermanenceConseillers = class Sondages extends Service {
               if (resultAPI.data?.features?.length > 0) {
                 adresseParSiret.listeAdresses = resultAPI.data?.features;
               }
-              return res.send({ adresseParSiret });
+
+              const existsPermanence = await checkPermanenceExistsBySiret(db)(req.params.siret);
+
+              return res.send({ adresseParSiret, existsPermanence });
             } catch (error) {
               logger.error(error);
               app.get('sentry').captureException(error);
@@ -275,10 +287,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.get('/permanences/getAdresse/:adresse', async (req, res) => {
+    app.get('/permanences/getAdresse/:adresse/:structureId', async (req, res) => {
       const db = await app.get('mongoClient');
       const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
       const { adresse } = JSON.parse(req.params.adresse);
+      const structureId = req.params.structureId;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -288,8 +301,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
         try {
           const params = {};
           const result = await axios.get(urlAPI, { params: params });
-          const adresses = result.data?.features?.filter(adresse => adresse.properties.score > 0.7);
-          return res.send({ 'adresseApi': adresses });
+          let results = await getAdressesCheckedByLocation(db)(result.data?.features?.filter(adresse => adresse.properties.score > 0.7), structureId);
+          return res.send({ ...results });
         } catch (e) {
           return res.send({ 'adresseApi': null });
         }
