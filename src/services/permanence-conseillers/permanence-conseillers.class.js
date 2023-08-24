@@ -254,7 +254,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
             }
           }
         } catch (error) {
-          if (!error.response.data?.gateway_error) {
+          // erreur 422 : Le numéro de siret n'est pas correctement formatté
+          if (!error.response.data?.gateway_error && error.response.status !== 422) {
             logger.error(error);
             app.get('sentry').captureException(error);
           }
