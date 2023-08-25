@@ -89,6 +89,7 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'listeSubordonnes.liste': 1 }),
       db.collection('conseillers').createIndex({ 'inactivite': 1 }),
       db.collection('conseillers').createIndex({ 'nonAffichageCarto': 1 }),
+      db.collection('conseillers').createIndex({ 'datePrisePoste': 1 }),
     ]);
   },
   cras: db => {
@@ -144,12 +145,19 @@ module.exports = {
       db.collection('permanences').createIndex({ 'conseillersItinerants': 1 }),
       db.collection('permanences').createIndex({ 'lieuPrincipalPour': 1 }),
       db.collection('permanences').createIndex({ 'structure.$id': 1 }),
+      db.collection('permanences').createIndex({ 'conseillersItinerants': 1 }),
+      db.collection('permanences').createIndex({ 'adresse.codeCommune': 1 }),
     ]);
   },
   accessLogs: db => {
     return Promise.all([
       db.collection('accessLogs').createIndex({ 'createdAt': 1 }),
       db.collection('accessLogs').createIndex({ 'name': 1 }),
+    ]);
+  },
+  qpv: db => {
+    return Promise.all([
+      db.collection('hubs').createIndex({ 'geometry': '2dsphere' }),
     ]);
   },
 };
