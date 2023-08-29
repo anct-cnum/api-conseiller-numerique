@@ -71,7 +71,7 @@ execute(__filename, async ({ db, logger, exit }) => {
 
     logger.info(`Le profil id: ${idCnRupture} fusion avec le profil ${idCnActif} : terminé`);
   } catch (e) {
-
+    logger.error(e.message);
   }
   exit();
 });
