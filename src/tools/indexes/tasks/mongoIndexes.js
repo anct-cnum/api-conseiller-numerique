@@ -157,7 +157,7 @@ module.exports = {
   },
   qpv: db => {
     return Promise.all([
-      db.collection('hubs').createIndex({ 'geometry': '2dsphere' }),
+      db.collection('qpv').createIndex({ 'geometry': '2dsphere' }),
     ]);
   },
 };
