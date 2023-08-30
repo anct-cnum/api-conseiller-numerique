@@ -13,10 +13,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let idCnRupture = program.id;
-  let idCnActif = program.conseiller;
-  idCnRupture = new ObjectID(program.id);
-  idCnActif = new ObjectID(program.id);
+  const idCnRupture = new ObjectID(program.id);
+  const idCnActif = new ObjectID(program.conseiller);
   try {
     const conseillerRupture = await db.collection('conseillers').findOne({ _id: idCnRupture, statut: 'RUPTURE' });
     const conseillerActif = await db.collection('conseillers').findOne({ _id: idCnActif, statut: 'RECRUTE' });
@@ -26,7 +24,8 @@ execute(__filename, async ({ db, logger, exit }) => {
       return;
     }
     if (conseillerRupture?.email !== conseillerActif?.email) {
-      if ((conseillerRupture?.nom !== conseillerActif?.nom) && (conseillerRupture?.prenom !== conseillerActif?.prenom)) {
+      // eslint-disable-next-line max-len
+      if ((conseillerRupture?.nom.toUpperCase() !== conseillerActif?.nom?.toUpperCase()) && (conseillerRupture?.prenom.toUpperCase() !== conseillerActif?.prenom.toUpperCase())) {
         // eslint-disable-next-line max-len
         exit(`Non éligible à la fusion de compte => ${conseillerRupture?.nom} ${conseillerRupture?.prenom} !== ${conseillerActif?.nom} ${conseillerActif?.prenom}`);
         return;
@@ -68,7 +67,6 @@ execute(__filename, async ({ db, logger, exit }) => {
       { 'conseiller.$id': idCnRupture }, {
         $set: { 'conseiller.$id': idCnActif }
       });
-
     logger.info(`Le profil id: ${idCnRupture} fusion avec le profil ${idCnActif} : terminé`);
   } catch (e) {
     logger.error(e.message);
