@@ -49,7 +49,7 @@ exports.Cras = class Cras extends Service {
             return res.status(404).send(new NotFound('Le cra n\'a pas pu être chargé ou a été supprimé.').toJSON());
           }
           if (JSON.stringify(cra.conseiller.oid) !== JSON.stringify(user.entity.oid)) {
-            return res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation de modifié ce cra.').toJSON());
+            return res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation de modifier ce cra.').toJSON());
           }
           return res.send({ cra });
         }).catch(error => {
@@ -73,10 +73,10 @@ exports.Cras = class Cras extends Service {
       ).then(async () => {
         const getCra = await getCraById(db)(cra._id);
         if (!getCra) {
-          return res.status(409).send(new Conflict('Le cra que vous voulez modifier n\'existe pas.').toJSON());
+          return res.status(404).send(new NotFound('Le cra que vous voulez modifier n\'existe pas.').toJSON());
         }
         if (JSON.stringify(getCra?.conseiller?.oid) !== JSON.stringify(user?.entity?.oid)) {
-          return res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation de modifié ce cra.').toJSON());
+          return res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation de modifier ce cra.').toJSON());
         }
         if (!validationCra(cra.cra)) {
           await updateCra(db)(cra).then(async () => {
