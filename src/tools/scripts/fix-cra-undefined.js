@@ -2,6 +2,7 @@
 'use strict';
 
 const { execute } = require('../utils');
+const dayjs = require('dayjs');
 
 // node src/tools/scripts/fix-cra-undefined.js
 
@@ -40,7 +41,8 @@ execute(__filename, async ({ logger, db }) => {
         });
         logger.info(`Le cra: ${cra._id} update => ${resultCra?.cra?.codePostal} ${resultCra?.cra?.nomCommune} (${resultCra?.cra?.codeCommune})`);
       } else {
-        logger.info(`Le cra: ${cra._id} (canal: ${cra.cra.canal}) ne match avec aucun autre cra du meme jour (${cra.cra.dateAccompagnement})`);
+        // eslint-disable-next-line max-len
+        logger.info(`Le cra: ${cra._id} (canal: ${cra.cra.canal}) ne match avec aucun autre cra du meme jour (${dayjs(cra.cra.dateAccompagnement).format('DD-MM-YYYY')})`);
       }
       resolve();
     }));

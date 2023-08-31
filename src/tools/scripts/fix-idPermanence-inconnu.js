@@ -13,7 +13,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   crasPermanenceId = crasPermanenceId.map(id => String(id));
   permanences = permanences.map(id => String(id));
 
-  logger.info(`${crasPermanenceId.length} idPermanences dans les cras / ${permanences.length} idPermanences dans la collection permanence`);
+  logger.info(`${crasPermanenceId.length} idPermanences distincts dans les cras / ${permanences.length} idPermanences dans la collection permanence`);
 
   let idPermanences = crasPermanenceId.filter(i => !permanences.includes(i)); // liste IdPermanence inconnu
 
