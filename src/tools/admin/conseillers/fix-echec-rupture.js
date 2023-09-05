@@ -135,19 +135,7 @@ const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStr
       },
     },
   );
-const getMisesEnRelationNonDispo = db => async email => await db.collection('misesEnRelation').findOne(
-  {
-    'conseillerObj.email': email,
-    'statut': 'finalisee_non_disponible',
-  }
-);
-const updateMisesEnRelationNonDispo = db => async email => await db.collection('misesEnRelation').updateMany(
-  {
-    'conseillerObj.email': email,
-    'statut': 'finalisee_non_disponible',
-  },
-  { $set: { statut: 'nouvelle' } },
-);
+
 const getHistorisationRupture = db => async (idCNFS, idStructure, dateRupture) => await db.collection('conseillersRuptures').findOne({
   conseillerId: idCNFS,
   structureId: idStructure,
@@ -351,11 +339,6 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     if (Object.values(verifMisesEnRelation).includes(false)) {
       logger.info(`Correction rupture dans la mise en relation`);
       await updateMisesEnRelationRupture(db)(misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif);
-    }
-    const visibleSA = await getMisesEnRelationNonDispo(db)(conseiller.email);
-    if (visibleSA) {
-      logger.info(`Correction mise en relation visible par les structures`);
-      await updateMisesEnRelationNonDispo(db)(conseiller.email);
     }
     // Partie historisation conseillersRuptures
     const getHistorisation = await getHistorisationRupture(db)(idCNFS, idStructure, dateRupture);

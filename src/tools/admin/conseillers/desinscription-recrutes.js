@@ -225,19 +225,6 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 }
               );
 
-              //Mise à jour des autres mises en relation en candidature nouvelle
-              await db.collection('misesEnRelation').updateMany(
-                { 'conseiller.$id': conseillerCoop._id,
-                  'statut': 'finalisee_non_disponible'
-                },
-                {
-                  $set: {
-                    statut: 'nouvelle',
-                    conseillerObj: conseillerUpdated
-                  }
-                }
-              );
-
               //Modification des doublons potentiels
               await db.collection('conseillers').updateMany(
                 {
@@ -247,18 +234,6 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 {
                   $set: {
                     disponible: true,
-                  }
-                }
-              );
-              await db.collection('misesEnRelation').updateMany(
-                { 'conseiller.$id': { $ne: conseillerCoop._id },
-                  'statut': 'finalisee_non_disponible',
-                  'conseillerObj.email': conseillerCoop.email
-                },
-                {
-                  $set: {
-                    'statut': 'nouvelle',
-                    'conseillerObj.disponible': true
                   }
                 }
               );

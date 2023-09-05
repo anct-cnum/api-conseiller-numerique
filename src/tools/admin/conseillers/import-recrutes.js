@@ -266,16 +266,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               }
             });
 
-            await db.collection('misesEnRelation').updateMany({
-              'conseillerObj.idPG': idPGConseiller,
-              'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
-            }, {
-              $set: {
-                statut: 'finalisee_non_disponible',
-                conseillerObj: conseillerUpdated
-              }
-            });
-
             //Mise à jour des doublons
             await db.collection('conseillers').updateMany({ _id: { $ne: conseillerOriginal._id }, email: conseillerOriginal.email }, {
               $set: {
@@ -287,20 +277,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               }
             });
 
-            await db.collection('misesEnRelation').updateMany({
-              'conseillerObj.idPG': { $ne: idPGConseiller },
-              'conseillerObj.email': conseillerOriginal.email,
-              'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
-            }, {
-              $set: {
-                'statut': 'finalisee_non_disponible',
-                'conseillerObj.disponible': false,
-                'conseillerObj.userCreated': false
-              },
-              $unset: {
-                'conseillerObj.inactivite': '',
-              }
-            });
             if (countCras >= 1) {
               // eslint-disable-next-line max-len
               logger.info(`Maj de ${countCras} CRAS pour le conseiller avec l'id: ${idPGConseiller}, cras => après la date ${query['$gte'] ? 'recrutement' : 'de rupture'}`);

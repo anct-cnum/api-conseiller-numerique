@@ -80,11 +80,6 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
           dateRecrutement: '',
         }
       });
-    // MAJ des autres mise en relation
-    await db.collection('misesEnRelation').updateMany(
-      { 'conseiller.$id': conseiller._id, 'statut': 'finalisee_non_disponible' },
-      { $set: { 'statut': 'nouvelle' } }
-    );
     //Modification des doublons potentiels
     await db.collection('conseillers').updateMany(
       {
@@ -94,18 +89,6 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
       {
         $set: {
           disponible: true,
-        }
-      }
-    );
-    await db.collection('misesEnRelation').updateMany(
-      { 'conseiller.$id': { $ne: conseiller._id },
-        'statut': 'finalisee_non_disponible',
-        'conseillerObj.email': conseiller.email
-      },
-      {
-        $set: {
-          'statut': 'nouvelle',
-          'conseillerObj.disponible': true
         }
       }
     );
