@@ -19,12 +19,14 @@ const {
   validationPermamences,
   locationDefault
 } = require('./permanence/utils/update-permanence.utils');
+
 const {
   getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure,
   createPermanence, setPermanence, setReporterInsertion, deletePermanence,
   deleteConseillerPermanence, updatePermanences, updateConseillerStatut,
-  getPermanences, deleteCraPermanence, checkPermanenceExistsBySiret,
-  getAdressesCheckedByLocation, checkPermanenceExistsByLocation,
+  getPermanences, deleteCraPermanence, deleteCraConseillerPermanence,
+  checkPermanenceExistsBySiret, getAdressesCheckedByLocation,
+  checkPermanenceExistsByLocation,
 } = require('./permanence/repositories/permanence-conseiller.repository');
 
 const axios = require('axios');
@@ -364,7 +366,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
         await deleteConseillerPermanence(db)(idPermanence, idConseiller).then(async () => {
-          await deleteCraPermanence(db)(idPermanence).then(() => {
+          await deleteCraConseillerPermanence(db)(idPermanence, idConseiller).then(() => {
             return res.send({ isConseillerDeleted: true });
           }).catch(error => {
             app.get('sentry').captureException(error);
