@@ -4,94 +4,93 @@
 require('dotenv').config();
 const { execute } = require('../utils');
 
-const getToutesPermanences = async db => db.collection('permanences').find();
-
-const getDoublons = db => async permanence => db.collection('permanences').find({
-  'nomEnseigne': permanence.nomEnseigne,
-  'adresse': permanence.adresse,
-  'location.coordinates': permanence.location?.coordinates,
-  'structure': permanence.structure,
-  // pour plus de précision (on tombe à 0 doublon avec ces champs)
-  //'numeroTelephone': permanence.location?.numeroTelephone,
-  // 'email': permanence.location?.email,
-}).toArray();
+const getPermanencesDoublons = async db => await db.collection('permanences').aggregate([
+  { '$unwind': '$location' },
+  { '$group': {
+    '_id': '$location',
+    'permanences': { '$push': '$$ROOT' },
+    'count': { '$sum': 1 }
+  } },
+  { '$match': {
+    'count': { '$gt': 1 }
+  } },
+  { '$project': {
+    '_id': 0,
+    'location': '$_id',
+    'permanences': '$permanences'
+  } }
+]).toArray();
 
 //ajout des conseillers à la première permanence de la liste
 const traitementDoublons = async doublons => {
-  let fusionPermanence = doublons[0];
   const idDoublonSuppression = [];
-
+  let fusionPermanence = doublons[0];
   doublons.shift();
-
-  for (let i = 0; i < doublons.length; i++) {
-    idDoublonSuppression.push(doublons[i]._id);
-
-    fusionPermanence.email = fusionPermanence.email ?? doublons[i].email;
-    fusionPermanence.numeroTelephone = fusionPermanence.numeroTelephone ?? doublons[i].numeroTelephone;
-
-    doublons[i].typeAcces.forEach(type => {
-      if (!fusionPermanence.typeAcces.includes(type)) {
-        fusionPermanence.typeAcces.push(type);
-      }
-    });
-    doublons[i].conseillers.forEach(idConseiller => {
-      if (!fusionPermanence.conseillers.includes(idConseiller)) {
-        fusionPermanence.conseillers.push(idConseiller);
-      }
-    });
-    doublons[i].conseillersItinerants.forEach(idConseiller => {
-      if (!fusionPermanence.conseillersItinerants.includes(idConseiller)) {
-        fusionPermanence.conseillersItinerants.push(idConseiller);
-      }
-    });
-    doublons[i].lieuPrincipalPour.forEach(idConseiller => {
-      if (!fusionPermanence.lieuPrincipalPour.includes(idConseiller)) {
-        fusionPermanence.lieuPrincipalPour.push(idConseiller);
-      }
-    });
-    //On prend la plage horaire la plus large possible
-    doublons[i].horaires.forEach((horaire, i) => {
-      let hmatinA = '';
-      let hmatinB = '';
-      let hapresmidiA = '';
-      let hapresmidiB = '';
-
-      if (fusionPermanence.horaires[i].matin[0] !== 'Fermé' && horaire.matin[0] !== 'Fermé') {
-        hmatinA = fusionPermanence.horaires[i].matin[0] > horaire.matin[0] ? horaire.matin[0] : fusionPermanence.horaires[i].matin[0];
-        hmatinB = fusionPermanence.horaires[i].matin[1] < horaire.matin[1] ? horaire.matin[1] : fusionPermanence.horaires[i].matin[1];
-      }
-
-      if (fusionPermanence.horaires[i].apresMidi[0] !== 'Fermé' && horaire.apresMidi[0] !== 'Fermé') {
-        hapresmidiA = fusionPermanence.horaires[i].apresMidi[0] > horaire.apresMidi[0] ? horaire.apresMidi[0] : fusionPermanence.horaires[i].apresMidi[0];
-        hapresmidiB = fusionPermanence.horaires[i].apresMidi[1] < horaire.apresMidi[1] ? horaire.apresMidi[1] : fusionPermanence.horaires[i].apresMidi[1];
-      }
-
-      if (fusionPermanence.horaires[i].matin[0] === 'Fermé') {
-        hmatinA = horaire.matin[0];
-        hmatinB = horaire.matin[1];
-      }
-
-      if (fusionPermanence.horaires[i].apresMidi[0] === 'Fermé') {
-        hapresmidiA = horaire.apresMidi[0];
-        hapresmidiB = horaire.apresMidi[1];
-      }
-
-      fusionPermanence.horaires[i].matin = [hmatinA, hmatinB];
-      fusionPermanence.horaires[i].apresMidi = [hapresmidiA, hapresmidiB];
-    });
-  }
+  doublons.forEach(doublon => {
+    //on filtre les doublons selon les champs
+    if (fusionPermanence.structure.$id === doublon.structure.$id &&
+        fusionPermanence.adresse === doublon.adresse &&
+        fusionPermanence.nomEnseigne === doublon.nomEnseigne
+    ) {
+      idDoublonSuppression.push(doublon._id);
+      fusionPermanence.email = fusionPermanence.email ?? doublon.email;
+      fusionPermanence.numeroTelephone = fusionPermanence.numeroTelephone ?? doublon.numeroTelephone;
+      doublon.typeAcces.forEach(type => {
+        if (!fusionPermanence.typeAcces.includes(type)) {
+          fusionPermanence.typeAcces.push(type);
+        }
+      });
+      doublon.conseillers.forEach(idConseiller => {
+        if (!fusionPermanence.conseillers.some(val => val.equals(idConseiller))) {
+          fusionPermanence.conseillers.push(idConseiller);
+        }
+      });
+      doublon.conseillersItinerants?.forEach(idConseiller => {
+        if (!fusionPermanence.conseillersItinerants.some(val => val.equals(idConseiller))) {
+          fusionPermanence.conseillersItinerants.push(idConseiller);
+        }
+      });
+      doublon.lieuPrincipalPour?.forEach(idConseiller => {
+        if (!fusionPermanence.lieuPrincipalPour.some(val => val.equals(idConseiller))) {
+          fusionPermanence.lieuPrincipalPour.push(idConseiller);
+        }
+      });
+      //On prend la plage horaire la plus large possible
+      doublon.horaires.forEach((horaire, i) => {
+        let hmatinA = '';
+        let hmatinB = '';
+        let hapresmidiA = '';
+        let hapresmidiB = '';
+        if (fusionPermanence.horaires[i].matin[0] !== 'Fermé' && horaire.matin[0] !== 'Fermé') {
+          hmatinA = fusionPermanence.horaires[i].matin[0] > horaire.matin[0] ? horaire.matin[0] : fusionPermanence.horaires[i].matin[0];
+          hmatinB = fusionPermanence.horaires[i].matin[1] < horaire.matin[1] ? horaire.matin[1] : fusionPermanence.horaires[i].matin[1];
+        }
+        if (fusionPermanence.horaires[i].apresMidi[0] !== 'Fermé' && horaire.apresMidi[0] !== 'Fermé') {
+          hapresmidiA = fusionPermanence.horaires[i].apresMidi[0] > horaire.apresMidi[0] ? horaire.apresMidi[0] : fusionPermanence.horaires[i].apresMidi[0];
+          hapresmidiB = fusionPermanence.horaires[i].apresMidi[1] < horaire.apresMidi[1] ? horaire.apresMidi[1] : fusionPermanence.horaires[i].apresMidi[1];
+        }
+        if (fusionPermanence.horaires[i].matin[0] === 'Fermé') {
+          hmatinA = horaire.matin[0];
+          hmatinB = horaire.matin[1];
+        }
+        if (fusionPermanence.horaires[i].apresMidi[0] === 'Fermé') {
+          hapresmidiA = horaire.apresMidi[0];
+          hapresmidiB = horaire.apresMidi[1];
+        }
+        fusionPermanence.horaires[i].matin = [hmatinA, hmatinB];
+        fusionPermanence.horaires[i].apresMidi = [hapresmidiA, hapresmidiB];
+      });
+    }
+  });
+  fusionPermanence.updatedAt = new Date();
 
   return [fusionPermanence, idDoublonSuppression];
-
 };
 
-const updatePermanence = db => async permanence => {
-  console.log(permanence);
-  await db.collection('permanences').replaceOne(
-    { '_id': permanence._id },
-    permanence,
-    { upsert: true });
-};
+const updatePermanence = db => async permanence => await db.collection('permanences').replaceOne(
+  { '_id': permanence._id },
+  permanence,
+  { upsert: true });
 
 const deletePermanences = db => async idPermanences => await db.collection('permanences').deleteMany({
   '_id': { '$in': idPermanences }
@@ -99,36 +98,21 @@ const deletePermanences = db => async idPermanences => await db.collection('perm
 
 execute(__filename, async ({ db, logger, exit }) => {
   logger.info('Correction des permanences en doublon');
-
   const promises = [];
-  const listeAvecDoublon = [];
-  let countDoublon = 0;
-  const permanences = await getToutesPermanences(db);
-  permanences.forEach(permanence => {
-    promises.push(new Promise(async resolve => {
-      const doublonsPerm = await getDoublons(db)(permanence);
-      if (doublonsPerm.length > 1 && !listeAvecDoublon.find(perm => perm.nomEnseigne === permanence.nomEnseigne)) {
-        try {
-          const result = await traitementDoublons(doublonsPerm);
-          await new Promise(async resolve => {
-            await updatePermanence(db)(result[0]);
-            resolve();
-          }).then(async resolve => {
-            //await deletePermanences(db)(result[1]);
-            resolve();
-          });
-          listeAvecDoublon.push(permanence);
-          countDoublon++;
-        } catch (error) {
-          logger.error(error);
-        }
-      }
-      resolve();
-    }));
-  });
+  const permanencesDoubons = await getPermanencesDoublons(db);
+  promises.push(new Promise(async resolve => {
+    await permanencesDoubons.forEach(async permanencesDoublon => {
+      await traitementDoublons(permanencesDoublon.permanences).then(async result => {
+        await updatePermanence(db)(result[0]).then(async () => {
+          logger.info(`Permanences mise à jour ` + result[0]._id);
+          console.log(result[1]);
+          await deletePermanences(db)(result[1]);
+        });
+      });
+    });
+    resolve();
+  }));
 
   await Promise.all(promises);
-
-  logger.info(`${countDoublon} permanences avec doublons ont été corrigées !`);
   exit();
 });
