@@ -96,6 +96,11 @@ const deletePermanences = db => async idPermanences => await db.collection('perm
   '_id': { '$in': idPermanences }
 });
 
+const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection('cras').updateMany(
+  { 'permanence.$id': { '$in': oldIds } },
+  { 'permanence.$id': newId }
+);
+
 execute(__filename, async ({ db, logger, exit }) => {
   logger.info('Correction des permanences en doublon');
   const promises = [];
@@ -105,8 +110,8 @@ execute(__filename, async ({ db, logger, exit }) => {
       await traitementDoublons(permanencesDoublon.permanences).then(async result => {
         await updatePermanence(db)(result[0]).then(async () => {
           logger.info(`Permanences mise à jour ` + result[0]._id);
-          console.log(result[1]);
           await deletePermanences(db)(result[1]);
+          await changePermanenceIdCra(db)(result[1], result[0]._id);
         });
       });
     });
