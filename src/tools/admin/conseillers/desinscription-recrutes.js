@@ -237,8 +237,9 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   }
                 }
               );
-              await db.collection('misesEnRelation').updateMany(
-                { 'conseiller.$id': { $ne: conseillerCoop._id },
+              await db.collection('misesEnRelation').deleteMany(
+                {
+                  'conseiller.$id': { $ne: conseillerCoop._id },
                   'statut': 'finalisee_non_disponible',
                   'conseillerObj.email': conseillerCoop.email
                 }

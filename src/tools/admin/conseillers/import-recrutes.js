@@ -266,10 +266,12 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               }
             });
 
-            await db.collection('misesEnRelation').deleteMany({
-              'conseillerObj.idPG': idPGConseiller,
-              'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
-            });
+            await db.collection('misesEnRelation').deleteMany(
+              {
+                'conseillerObj.idPG': idPGConseiller,
+                'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
+              }
+            );
 
             //Mise à jour des doublons
             await db.collection('conseillers').updateMany({ _id: { $ne: conseillerOriginal._id }, email: conseillerOriginal.email }, {
@@ -282,11 +284,13 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
               }
             });
 
-            await db.collection('misesEnRelation').deleteMany({
-              'conseillerObj.idPG': { $ne: idPGConseiller },
-              'conseillerObj.email': conseillerOriginal.email,
-              'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
-            });
+            await db.collection('misesEnRelation').deleteMany(
+              {
+                'conseillerObj.idPG': { $ne: idPGConseiller },
+                'conseillerObj.email': conseillerOriginal.email,
+                'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
+              }
+            );
 
             if (countCras >= 1) {
               // eslint-disable-next-line max-len
