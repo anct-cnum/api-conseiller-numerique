@@ -8,6 +8,9 @@ const { execute } = require('../utils');
 const { getCoordinateurs, getStatsCoordination } = require('../../services/coordinateurs/repository/coordinateurs.repository.js');
 const { listeCoordinateurs } = require('../../services/coordinateurs/core/coordinateurs.core.js');
 
+const formatNomStructure = coordinateur => coordinateur.permanence?.nomEnseigne ?? coordinateur.structure.nom;
+const formatNomCommune = coordinateur => coordinateur.permanence?.adresse?.codeCommune ?? coordinateur.structure.codeCommune;
+
 cli.description('Export coordinateurs open data')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
@@ -41,14 +44,14 @@ execute(__filename, async ({ logger, db, exit }) => {
         fileHeaders.join(csvCellSeparator),
         ...coordinateurs.map(coordinateur =>
           [
-            coordinateur?.nom,
-            coordinateur?.prenom,
+            coordinateur.nom,
+            coordinateur.prenom,
             coordinateur?.perimetre ?? 'Non renseigné',
-            coordinateur?.nomStructure,
-            coordinateur?.adresse,
-            coordinateur?.codePostal,
-            coordinateur?.codeCommune,
-            coordinateur?.commune,
+            formatNomStructure(coordinateur),
+            coordinateur.adresse,
+            coordinateur.codePostal,
+            formatNomCommune(coordinateur),
+            coordinateur.commune,
           ].join(csvCellSeparator),
         ),
       ].join(csvLineSeparator),
