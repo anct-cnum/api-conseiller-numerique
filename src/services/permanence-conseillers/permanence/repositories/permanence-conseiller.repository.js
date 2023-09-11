@@ -221,7 +221,21 @@ const getAdressesCheckedByLocation = db => async (adresses, structureId) => {
   const promises = [];
   adresses.forEach(adresse => {
     promises.push(new Promise(async resolve => {
-      const existsPermanence = await db.collection('permanences').countDocuments({ 'location': adresse.geometry, 'structure.$id': new ObjectId(structureId) });
+      const existsPermanence = await db.collection('permanences').countDocuments({
+        '$or': [
+          {
+            'location': adresse.geometry
+          },
+          {
+            'adresse.numeroRue': adresse.properties.housenumber,
+            'adresse.rue': adresse.properties.street,
+            'adresse.codeCommune': adresse.properties.citycode,
+            'adresse.ville': adresse.properties.city
+          }
+        ],
+        'structure.$id': new ObjectId(structureId) }
+      );
+
       if (existsPermanence === 0) {
         adressesChecked.push(adresse);
       } else {
