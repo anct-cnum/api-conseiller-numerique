@@ -110,6 +110,7 @@ execute(__filename, async ({ db, logger, exit }) => {
       await traitementDoublons(permanencesDoublon.permanences).then(async result => {
         await updatePermanence(db)(result[0]).then(async () => {
           logger.info(`Permanences mise à jour ` + result[0]._id);
+          logger.info(`Suppression des permanences avec les ids :` + result[1].toString());
           await deletePermanences(db)(result[1]);
           await changePermanenceIdCra(db)(result[1], result[0]._id);
         });
