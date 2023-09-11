@@ -237,6 +237,12 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   }
                 }
               );
+              await db.collection('misesEnRelation').updateMany(
+                { 'conseiller.$id': { $ne: conseillerCoop._id },
+                  'statut': 'finalisee_non_disponible',
+                  'conseillerObj.email': conseillerCoop.email
+                }
+              );
 
               //Cas spécifique : conseiller recruté s'est réinscrit sur le formulaire d'inscription => compte coop + compte candidat
               const userCandidatAlreadyPresent = await db.collection('users').findOne({
