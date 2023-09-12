@@ -82,8 +82,8 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
       { _id: miseEnRelation._id },
       {
         $set: {
-          statut: 'nouvelle',
-          updatedAt
+          'statut': 'nouvelle',
+          'conseillerObj.updatedAt': updatedAt,
         },
         $unset: {
           dateRecrutement: '',
@@ -124,7 +124,7 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
         { 'conseiller.$id': conseiller._id },
         { $set: {
           'conseillerObj.userCreated': false,
-          updatedAt
+          'conseillerObj.updatedAt': updatedAt
         } }
       );
     }

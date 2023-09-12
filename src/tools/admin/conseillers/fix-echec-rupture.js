@@ -131,11 +131,11 @@ const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStr
     },
     {
       $set: {
-        statut: 'finalisee_rupture',
-        dateRupture: new Date(dateRupture),
-        validateurRupture: { email: validateur, date: new Date() },
-        motifRupture: motif,
-        updatedAt
+        'statut': 'finalisee_rupture',
+        'conseillerObj.updatedAt': updatedAt,
+        'dateRupture': new Date(dateRupture),
+        'validateurRupture': { email: validateur, date: new Date() },
+        'motifRupture': motif,
       },
       $unset: {
         dossierIncompletRupture: '',

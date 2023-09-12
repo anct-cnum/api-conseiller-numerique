@@ -226,7 +226,6 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                     statut: 'finalisee_rupture',
                     dateRupture: formatDateDb(dateRupture),
                     motifRupture,
-                    updatedAt,
                     conseillerObj: conseillerUpdated
                   }
                 }
@@ -269,7 +268,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                   { 'conseiller.$id': conseillerCoop._id },
                   { $set: {
                     'conseillerObj.userCreated': false,
-                    updatedAt
+                    'conseillerObj.updatedAt': updatedAt
                   } }
                 );
               }

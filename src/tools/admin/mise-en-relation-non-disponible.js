@@ -11,7 +11,7 @@ execute(__filename, async ({ db, logger }) => {
     const result = await db.collection('misesEnRelation').deleteMany(
       {
         'conseiller.$id': c._id,
-        'statut': 'nouvelle'
+        'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee'] }
       }
     );
 
