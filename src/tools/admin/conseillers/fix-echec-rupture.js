@@ -21,12 +21,17 @@ const configPG = {
 const formatDateDb = date => dayjs(date, 'YYYY-MM-DD').toDate();
 const getConseiller = db => async idCNFS => await db.collection('conseillers').findOne({ _id: idCNFS });
 const getStructure = db => async idStructure => await db.collection('structures').findOne({ _id: idStructure });
-const updateConseillersPG = pool => async (email, disponible) =>
+const updateConseillersPG = pool => async (email, disponible, datePG) =>
   await pool.query(`
         UPDATE djapp_coach
-        SET disponible = $2
+        SET (
+          disponible,
+          updated
+        )
+        =
+        ($2,$3)
         WHERE LOWER(email) = LOWER($1)`,
-  [email, disponible]);
+  [email, disponible, datePG]);
 const getMisesEnRelation = db => async (idCNFS, idStructure) => await db.collection('misesEnRelation').find(
   {
     'conseiller.$id': idCNFS,
@@ -34,7 +39,7 @@ const getMisesEnRelation = db => async (idCNFS, idStructure) => await db.collect
     'statut': { '$in': ['nouvelle_rupture', 'finalisee', 'finalisee_rupture'] }
   }
 ).toArray();
-const updateConseiller = db => async (idCNFS, idStructure, verifConseiller, dateRupture, motif) => {
+const updateConseiller = db => async (idCNFS, idStructure, verifConseiller, dateRupture, motif, updatedAt) => {
   const pushRupture = verifConseiller.ruptures === true ? {} : {
     $push: {
       ruptures: {
@@ -51,6 +56,7 @@ const updateConseiller = db => async (idCNFS, idStructure, verifConseiller, date
     $set: {
       disponible: true,
       statut: 'RUPTURE',
+      updatedAt,
     },
     ...pushRupture,
     $unset: {
@@ -116,7 +122,7 @@ const updateUserCompteCandidat = db => async (conseiller, getUserConseiller, use
     } },
   );
 };
-const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif) =>
+const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif, updatedAt) =>
   await db.collection('misesEnRelation').updateOne(
     {
       '_id': misesEnRelation._id,
@@ -128,7 +134,8 @@ const updateMisesEnRelationRupture = db => async (misesEnRelation, idCNFS, idStr
         statut: 'finalisee_rupture',
         dateRupture: new Date(dateRupture),
         validateurRupture: { email: validateur, date: new Date() },
-        motifRupture: motif
+        motifRupture: motif,
+        updatedAt
       },
       $unset: {
         dossierIncompletRupture: '',
@@ -272,6 +279,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
         return;
       }
     }
+    const updatedAt = new Date();
     // Partie Doc conseiller & doublon
     const doublon = await getDoublon(db)(idCNFS, conseiller?.email);
     if (conseiller?.disponible === false || doublon) { // gestion du disponible doc CN => update PG => maj via la synchro doc CN
@@ -281,7 +289,8 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       if (doublon) {
         logger.info(`Correction Doublon disponible false à true`);
       }
-      await updateConseillersPG(pool)(conseiller.email, true);
+      const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
+      await updateConseillersPG(pool)(conseiller.email, true, datePG);
     }
     const verifConseiller = { // verif si tout a été effectué true==Ok / false==NotOK
       statut: conseiller?.statut === 'RUPTURE',
@@ -310,7 +319,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
         }
       }
       logger.info(`Correction des tags : ${arrayLog}`);
-      await updateConseiller(db)(idCNFS, idStructure, verifConseiller, dateRupture, motif);
+      await updateConseiller(db)(idCNFS, idStructure, verifConseiller, dateRupture, motif, updatedAt);
     }
     const conseillerSubordonnee = await getConseillerSubordonnee(db)(idCNFS);
     if (conseillerSubordonnee) {
@@ -338,7 +347,7 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
     };
     if (Object.values(verifMisesEnRelation).includes(false)) {
       logger.info(`Correction rupture dans la mise en relation`);
-      await updateMisesEnRelationRupture(db)(misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif);
+      await updateMisesEnRelationRupture(db)(misesEnRelation, idCNFS, idStructure, dateRupture, validateur, motif, updatedAt);
     }
     // Partie historisation conseillersRuptures
     const getHistorisation = await getHistorisationRupture(db)(idCNFS, idStructure, dateRupture);

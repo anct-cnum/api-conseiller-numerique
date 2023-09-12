@@ -43,13 +43,18 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
     return exit();
   }
 
-  const updateConseillersPG = async (email, disponible) => {
+  const updateConseillersPG = async (email, disponible, datePG) => {
     try {
       await pool.query(`
         UPDATE djapp_coach
-        SET disponible = $2
+        SET (
+          disponible,
+          updated
+        )
+        =
+        ($2,$3)
         WHERE LOWER(email) = LOWER($1)`,
-      [email, disponible]);
+      [email, disponible, datePG]);
     } catch (error) {
       logger.error(error);
       Sentry.captureException(error.message);
@@ -141,9 +146,10 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
             reject();
           } else {
             const motifRupture = conseiller['Motif de la sortie du dispositif (QCM)'];
-
+            const updatedAt = new Date();
+            const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
             //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
-            await updateConseillersPG(conseillerCoop.email, true);
+            await updateConseillersPG(conseillerCoop.email, true, datePG);
 
             try {
               //Historisation de la rupture
@@ -220,6 +226,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                     statut: 'finalisee_rupture',
                     dateRupture: formatDateDb(dateRupture),
                     motifRupture,
+                    updatedAt,
                     conseillerObj: conseillerUpdated
                   }
                 }
@@ -233,6 +240,7 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 },
                 {
                   $set: {
+                    updatedAt,
                     disponible: true,
                   }
                 }
@@ -260,7 +268,8 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 await db.collection('misesEnRelation').updateMany(
                   { 'conseiller.$id': conseillerCoop._id },
                   { $set: {
-                    'conseillerObj.userCreated': false
+                    'conseillerObj.userCreated': false,
+                    updatedAt
                   } }
                 );
               }
