@@ -8,41 +8,38 @@ const { execute } = require('../utils');
 
 const { formatAddressFromInsee, formatAddressFromPermanence, formatOpeningHours } = require('../../services/conseillers/common');
 
-const ConseillerStatut = {
-  Recrute: 'RECRUTE'
-};
-
 execute(__filename, async ({ logger, db }) => {
   const getConseillersWithGeolocation = db => async () =>
-    db.collection('conseillers').aggregate([
+    db.collection('misesEnRelation').aggregate([
       {
         $match: {
-          statut: ConseillerStatut.Recrute,
-          nonAffichageCarto: { $ne: true },
+          'statut': 'finalisee',
+          'conseillerObj.nonAffichageCarto': { $ne: true },
+          '$or': [
+            { typeDeContrat: 'CDI' },
+            { reconventionnement: true },
+            {
+              $and: [
+                { typeDeContrat: { $ne: 'CDI' } },
+                { dateFinDeContrat: { $gte: new Date('2023-11-01') } }
+              ]
+            }
+          ]
         }
       },
-      {
-        $lookup: {
-          localField: 'structureId',
-          from: 'structures',
-          foreignField: '_id',
-          as: 'structure'
-        }
-      },
-      { $unwind: '$structure' },
       {
         $project: {
           '_id': 1,
-          'nom': 1,
-          'prenom': 1,
-          'telephonePro': 1,
-          'structure.coordonneesInsee': 1,
-          'structure.location': 1,
-          'structure.nom': 1,
-          'structure.contact.telephone': 1,
-          'structure.estLabelliseAidantsConnect': 1,
-          'structure.estLabelliseFranceServices': 1,
-          'structure.insee.adresse': 1
+          'nom': '$conseillerObj.nom',
+          'prenom': '$conseillerObj.prenom',
+          'telephonePro': '$conseillerObj.telephonePro',
+          'structure.coordonneesInsee': '$structureObj.coordonneesInsee',
+          'structure.location': '$structureObj.location',
+          'structure.nom': '$structureObj.nom',
+          'structure.contact.telephone': '$structureObj.contact.telephone',
+          'structure.estLabelliseAidantsConnect': '$structureObj.estLabelliseAidantsConnect',
+          'structure.estLabelliseFranceServices': '$structureObj.estLabelliseFranceServices',
+          'structure.insee.adresse': '$structureObj.insee.adresse'
         }
       }
     ]).toArray();
