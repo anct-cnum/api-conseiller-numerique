@@ -18,10 +18,11 @@ execute(__filename, async ({ logger, db }) => {
           '$or': [
             { typeDeContrat: 'CDI' },
             { reconventionnement: true },
+            { typeDeContrat: { $exists: false } },
             {
               $and: [
                 { typeDeContrat: { $ne: 'CDI' } },
-                { dateFinDeContrat: { $gte: new Date('2023-11-01') } }
+                { dateFinDeContrat: { $gte: new Date('2023-11-30') } }
               ]
             }
           ]
