@@ -60,24 +60,24 @@ const createCsvPermanences = async permanencesDoublons => {
     flags: 'w'
   });
   file.write(
-    'Id de permanence;' +
-    'Est structure;' +
-    'Nom enseigne;' +
-    'Numero de telephone;' +
-    'Email;' +
-    'Site Web;' +
-    'Siret;' +
-    'Adresse;' +
-    'Géolocalisation;' +
-    'Horaires;' +
-    'Type acces;' +
-    'Conseillers;' +
-    'Lieu Principal Pour;' +
-    'Conseillers Itinerants;' +
-    'Structure;' +
-    'Date de mise à jour;' +
-    'Mise à jour par;' +
-    'Doublons trouvés;\n');
+    'idPermanence;' +
+    'estStructure;' +
+    'nomEnseigne;' +
+    'numeroTelephone;' +
+    'email;' +
+    'siteWeb;' +
+    'siret;' +
+    'adresse;' +
+    'location;' +
+    'horaires;' +
+    'typeAcces;' +
+    'conseillers;' +
+    'lieuPrincipalPour;' +
+    'conseillersItinerants;' +
+    'structure;' +
+    'updatedAt;' +
+    'updatedBy;' +
+    'doublons;\n');
 
   permanencesDoublons.forEach(doublon => {
     let writePermanence = '';
