@@ -2,9 +2,13 @@
 'use strict';
 
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const cli = require('commander');
+const { program } = require('commander');
 const { execute } = require('../utils');
 
-const getPermanencesDoublons = async db => await db.collection('permanences').aggregate([
+const getPermanencesDoublonsByLocation = async db => await db.collection('permanences').aggregate([
   { '$unwind': '$location' },
   { '$group': {
     '_id': '$location',
@@ -21,6 +25,76 @@ const getPermanencesDoublons = async db => await db.collection('permanences').ag
   } }
 ]).toArray();
 
+const getPermanencesDoublonsByAdresse = async db => await db.collection('permanences').aggregate([
+  { '$unwind': '$adresse' },
+  { '$unwind': '$location' },
+  { '$group': {
+    '_id': { 'adresse': '$adresse', 'location': '$location' },
+    'permanences': { '$push': '$$ROOT' },
+    'count': { '$sum': 1 }
+  } },
+  { '$match': {
+    'count': { '$gt': 1 }
+  } },
+  { '$project': {
+    '_id': 0,
+    'location': '$_id.location',
+    'permanences': '$permanences'
+  } }
+]).toArray();
+
+const getPermanencesDoublons = async (permByLocation, permByAdresse) => {
+  await permByLocation.forEach(pBylocation => {
+    if (!permByAdresse.find(pByAdresse =>
+      pByAdresse.location.coordinates[0] === pBylocation.location.coordinates[0] &&
+      pByAdresse.location.coordinates[1] === pBylocation.location.coordinates[1])) {
+      permByAdresse.push(pBylocation);
+    }
+  });
+  return permByAdresse;
+};
+
+const createCsvPermanences = async permanencesDoublons => {
+  let csvFile = path.join(__dirname, '../../../data/exports', 'permanences-doublons.csv');
+  let file = fs.createWriteStream(csvFile, {
+    flags: 'w'
+  });
+  file.write(
+    'Id de permanence;' +
+    'Est structure;' +
+    'Nom enseigne;' +
+    'Numero de telephone;' +
+    'Email;' +
+    'Site Web;' +
+    'Siret;' +
+    'Adresse;' +
+    'Géolocalisation;' +
+    'Horaires;' +
+    'Type acces;' +
+    'Conseillers;' +
+    'Lieu Principal Pour;' +
+    'Conseillers Itinerants;' +
+    'Structure;' +
+    'Date de mise à jour;' +
+    'Mise à jour par;' +
+    'Doublons trouvés;\n');
+
+  permanencesDoublons.forEach(doublon => {
+    let writePermanence = '';
+    doublon.permanences.forEach((permanence, i) => {
+      if (i === 0) {
+        // eslint-disable-next-line max-len
+        writePermanence = `${permanence._id};${permanence.estStructure};${permanence.nomEnseigne};${permanence.numeroTelephone};${permanence.email};${permanence.siteWeb};${permanence.siret};${JSON.stringify(permanence.adresse)};${JSON.stringify(permanence.location)};${JSON.stringify(permanence.horaires)};${JSON.stringify(permanence.typeAcces)};${JSON.stringify(permanence.conseillers)};${JSON.stringify(permanence.lieuPrincipalPour)};${JSON.stringify(permanence.conseillersItinerants)};${permanence.structure.oid};${permanence.updatedAt};${permanence.updatedBy};'`;
+      } else {
+        writePermanence += permanence._id;
+        writePermanence += doublon.permanences.length > i + 1 ? ',' : '';
+      }
+    });
+    file.write(`${writePermanence}\n`);
+  });
+  file.close();
+};
+
 //ajout des conseillers à la première permanence de la liste
 const traitementDoublons = async doublons => {
   const idDoublonSuppression = [];
@@ -28,10 +102,7 @@ const traitementDoublons = async doublons => {
   doublons.shift();
   doublons.forEach(doublon => {
     //on filtre les doublons selon les champs
-    if (fusionPermanence.structure.$id === doublon.structure.$id &&
-        fusionPermanence.adresse === doublon.adresse &&
-        fusionPermanence.nomEnseigne === doublon.nomEnseigne
-    ) {
+    if (fusionPermanence.structure.$id === doublon.structure.$id) {
       idDoublonSuppression.push(doublon._id);
       fusionPermanence.email = fusionPermanence.email ?? doublon.email;
       fusionPermanence.numeroTelephone = fusionPermanence.numeroTelephone ?? doublon.numeroTelephone;
@@ -101,24 +172,38 @@ const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection
   { 'permanence.$id': newId }
 );
 
+cli.description('Détecter et corriger les doublons de permanence')
+.option('-f, --fix', 'Fusion des permanences et suppression des doublons')
+.parse(process.argv);
+
 execute(__filename, async ({ db, logger, exit }) => {
   logger.info('Correction des permanences en doublon');
   const promises = [];
-  const permanencesDoubons = await getPermanencesDoublons(db);
-  promises.push(new Promise(async resolve => {
-    await permanencesDoubons.forEach(async permanencesDoublon => {
-      await traitementDoublons(permanencesDoublon.permanences).then(async result => {
-        await updatePermanence(db)(result[0]).then(async () => {
-          logger.info(`Permanences mise à jour ` + result[0]._id);
-          logger.info(`Suppression des permanences avec les ids :` + result[1].toString());
-          await deletePermanences(db)(result[1]);
-          await changePermanenceIdCra(db)(result[1], result[0]._id);
+
+  logger.info(`Obtention des doublons de permanences...`);
+  const permByLocation = await getPermanencesDoublonsByLocation(db);
+  const permByAdresse = await getPermanencesDoublonsByAdresse(db);
+  const permanencesDoublons = await getPermanencesDoublons(permByLocation, permByAdresse);
+
+  logger.info(`Génération du fichier CSV ...`);
+  await createCsvPermanences(permanencesDoublons);
+  logger.info(`Fichier CSV déposé dans data/exports/permanences-doublons.csv`);
+
+  if (program.fix) {
+    promises.push(new Promise(async resolve => {
+      await permanencesDoublons.forEach(async permanencesDoublon => {
+        await traitementDoublons(permanencesDoublon.permanences).then(async result => {
+          await updatePermanence(db)(result[0]).then(async () => {
+            logger.info(`Permanences mise à jour ` + result[0]._id);
+            logger.info(`Suppression des permanences avec les ids :` + result[1].toString());
+            await deletePermanences(db)(result[1]);
+            await changePermanenceIdCra(db)(result[1], result[0]._id);
+          });
         });
       });
-    });
-    resolve();
-  }));
-
+      resolve();
+    }));
+  }
   await Promise.all(promises);
   exit();
 });
