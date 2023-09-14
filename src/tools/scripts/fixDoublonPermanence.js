@@ -84,7 +84,7 @@ const createCsvPermanences = async permanencesDoublons => {
     doublon.permanences.forEach((permanence, i) => {
       if (i === 0) {
         // eslint-disable-next-line max-len
-        writePermanence = `${permanence._id};${permanence.estStructure};${permanence.nomEnseigne};${permanence.numeroTelephone};${permanence.email};${permanence.siteWeb};${permanence.siret};${JSON.stringify(permanence.adresse)};${JSON.stringify(permanence.location)};${JSON.stringify(permanence.horaires)};${JSON.stringify(permanence.typeAcces)};${JSON.stringify(permanence.conseillers)};${JSON.stringify(permanence.lieuPrincipalPour)};${JSON.stringify(permanence.conseillersItinerants)};${permanence.structure.oid};${permanence.updatedAt};${permanence.updatedBy};'`;
+        writePermanence = `${permanence._id};${permanence.estStructure};${permanence.nomEnseigne};${permanence.numeroTelephone};${permanence.email};${permanence.siteWeb};${permanence.siret};${permanence.adresse};${permanence.location};${permanence.horaires};${permanence.typeAcces};${permanence.conseillers};${permanence.lieuPrincipalPour};${permanence.conseillersItinerants};${permanence.structure.oid};${permanence.updatedAt};${permanence.updatedBy};'`;
       } else {
         writePermanence += permanence._id;
         writePermanence += doublon.permanences.length > i + 1 ? ',' : '';
