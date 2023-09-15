@@ -30,7 +30,7 @@ execute(__filename, async ({ logger, db }) => {
       },
       {
         $project: {
-          '_id': 1,
+          '_id': '$conseillerObj._id',
           'nom': '$conseillerObj.nom',
           'prenom': '$conseillerObj.prenom',
           'telephonePro': '$conseillerObj.telephonePro',
