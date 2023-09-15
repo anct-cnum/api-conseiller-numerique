@@ -993,7 +993,7 @@ exports.Conseillers = class Conseillers extends Service {
       try {
         await pool.query(`UPDATE djapp_coach
         SET (start_date, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, dateDisponibilite, updatedAt]);
+        [conseiller.idPG, dayjs(dateDisponibilite).format('YYYY-MM-DD'), updatedAt]);
 
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
 
