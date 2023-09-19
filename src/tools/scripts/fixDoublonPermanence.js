@@ -27,18 +27,18 @@ const getPermanencesDoublonsByLocation = async db => await db.collection('perman
 
 const getPermanencesDoublonsByAdresse = async db => await db.collection('permanences').aggregate([
   { '$unwind': '$adresse' },
-  { '$unwind': '$location' },
   { '$group': {
-    '_id': { 'adresse': '$adresse', 'location': '$location' },
+    '_id': { 'adresse': '$adresse' },
     'permanences': { '$push': '$$ROOT' },
     'count': { '$sum': 1 }
   } },
   { '$match': {
     'count': { '$gt': 1 }
   } },
+  { '$unwind': '$location' },
   { '$project': {
     '_id': 0,
-    'location': '$_id.location',
+    'location': '$location',
     'permanences': '$permanences'
   } }
 ]).toArray();
@@ -184,7 +184,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   const permByLocation = await getPermanencesDoublonsByLocation(db);
   const permByAdresse = await getPermanencesDoublonsByAdresse(db);
   const permanencesDoublons = await getPermanencesDoublons(permByLocation, permByAdresse);
-
+console.log(permByAdresse.length);
   logger.info(`Génération du fichier CSV ...`);
   await createCsvPermanences(permanencesDoublons);
   logger.info(`Fichier CSV déposé dans data/exports/permanences-doublons.csv`);
