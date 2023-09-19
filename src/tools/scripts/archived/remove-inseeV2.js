@@ -8,7 +8,7 @@ const { execute } = require('../../utils');
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   try {
     await db.collection('structures').updateMany({
-      inseeV2: { $exists: true },
+        inseeV2: { $exists: true },
      }, {
       $unset: {
         inseeV2: '',

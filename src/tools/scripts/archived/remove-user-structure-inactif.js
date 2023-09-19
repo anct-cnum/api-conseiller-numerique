@@ -36,15 +36,15 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           'statut': { $nin: ['finalisee', 'finalisee_rupture', 'nouvelle_rupture', 'terminee', 'reconventionnement_initiee'] }
         }).toArray();
         // Nous supprimons les mises en relation à supprimer.
-      if (misesEnRelationASupprimer.length > 0) {
-        if (fix) {
-          await db.collection('misesEnRelation').deleteMany({
-            'structure.$id': structure._id,
-            'statut': { $nin: ['finalisee', 'finalisee_rupture', 'nouvelle_rupture', 'terminee', 'reconventionnement_initiee'] }
-          });
+        if (misesEnRelationASupprimer.length > 0) {
+          if (fix) {
+            await db.collection('misesEnRelation').deleteMany({
+              'structure.$id': structure._id,
+              'statut': { $nin: ['finalisee', 'finalisee_rupture', 'nouvelle_rupture', 'terminee', 'reconventionnement_initiee'] }
+            });
+          }
+          logger.info(`Id structure ${structure.idPG} - Nombre de mises en relation à supprimer: ${misesEnRelationASupprimer.length}`);
         }
-        logger.info(`Id structure ${structure.idPG} - Nombre de mises en relation à supprimer: ${misesEnRelationASupprimer.length}`);
-      }
       }
       // Nous supprimons les utilisateurs associés à la structure.
       const nbUsers = await db.collection('users').countDocuments({ 'entity.$id': structure._id });
