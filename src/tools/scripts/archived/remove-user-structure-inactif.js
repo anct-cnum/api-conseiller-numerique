@@ -26,23 +26,25 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       // Si la structure a une mise en relation dont le statut est 'finalisee' , nous ne declarons pas la structure comme inactive.
       const misesEnRelationFinalisee = await db.collection('misesEnRelation').findOne({
         'structure.$id': structure._id,
-        'statut': { $in: ['finalisee', 'finalisee_rupture', 'terminee', 'reconventionnement_initiee'] }
+        'statut': { $in: ['finalisee', 'finalisee_rupture', 'nouvelle_rupture', 'terminee', 'reconventionnement_initiee'] }
       });
       if (misesEnRelationFinalisee) {
-        logger.info(`La structure ${structure._id} a une mise en relation finalisée ou en rupture, nous ne déclarons pas la structure comme inactive`);
-        continue;
-      }
-      // Nous récupérons les mises en relation de la structure dont le statut n'est pas 'finalisee_rupture' ou 'terminee'.
-      const misesEnRelationASupprimer = await db.collection('misesEnRelation').find({
-        'structure.$id': structure._id,
-      }).toArray();
-      
-      // Nous supprimons les mises en relation à supprimer.
+        logger.warn(`La structure ${structure.idPG} a une mise en relation finalisée ou en rupture, nous ne déclarons pas la structure comme inactive`);
+        // Nous récupérons les mises en relation de la structure dont le statut n'est pas 'finalisee_rupture' ou 'terminee'.
+        const misesEnRelationASupprimer = await db.collection('misesEnRelation').find({
+          'structure.$id': structure._id,
+          'statut': { $nin: ['finalisee', 'finalisee_rupture', 'nouvelle_rupture', 'terminee', 'reconventionnement_initiee'] }
+        }).toArray();
+        // Nous supprimons les mises en relation à supprimer.
       if (misesEnRelationASupprimer.length > 0) {
         if (fix) {
-          await db.collection('misesEnRelation').deleteMany({ _id: 'structure.$id' });
+          await db.collection('misesEnRelation').deleteMany({
+            'structure.$id': structure._id,
+            'statut': { $nin: ['finalisee', 'finalisee_rupture', 'nouvelle_rupture', 'terminee', 'reconventionnement_initiee'] }
+          });
         }
         logger.info(`Id structure ${structure.idPG} - Nombre de mises en relation à supprimer: ${misesEnRelationASupprimer.length}`);
+      }
       }
       // Nous supprimons les utilisateurs associés à la structure.
       const nbUsers = await db.collection('users').countDocuments({ 'entity.$id': structure._id });
