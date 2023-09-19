@@ -28,7 +28,7 @@
   "resolved" "https://registry.npmjs.org/@babel/compat-data/-/compat-data-7.16.0.tgz"
   "version" "7.16.0"
 
-"@babel/core@^7.0.0", "@babel/core@^7.0.0-0", "@babel/core@^7.1.0", "@babel/core@^7.12.3", "@babel/core@^7.7.2", "@babel/core@^7.7.5", "@babel/core@^7.8.0":
+"@babel/core@^7.1.0", "@babel/core@^7.12.3", "@babel/core@^7.7.2", "@babel/core@^7.7.5":
   "integrity" "sha512-mYZEvshBRHGsIAiyH5PzCFTCfbWfoYbO/jcSdXQSUQu1/pW0xDZAUP7KEc32heqWTAfAHhV9j1vH8Sav7l+JNQ=="
   "resolved" "https://registry.npmjs.org/@babel/core/-/core-7.16.0.tgz"
   "version" "7.16.0"
@@ -1044,7 +1044,7 @@
   "resolved" "https://registry.npmjs.org/acorn-walk/-/acorn-walk-7.2.0.tgz"
   "version" "7.2.0"
 
-"acorn@^6.0.0 || ^7.0.0 || ^8.0.0", "acorn@^7.1.1", "acorn@^7.4.0":
+"acorn@^7.1.1", "acorn@^7.4.0":
   "integrity" "sha512-nQyp0o1/mNdbTO1PO6kHkwSrmgZ0MT/jCCpNiwbUjGoRN4dlBhqJtoQuCnEOKzgTVwg0ZWiCoQy6SxMebQVh8A=="
   "resolved" "https://registry.npmjs.org/acorn/-/acorn-7.4.1.tgz"
   "version" "7.4.1"
@@ -2966,7 +2966,7 @@
     "request-compose" "^1.2.1"
     "request-oauth" "0.0.3"
 
-"grant@^4.7.0", "grant@>=4.6.3":
+"grant@^4.7.0":
   "integrity" "sha512-QGPjCYDrBnb/OIiTRxbK3TnNOE6Ycgfc/GcgPzI4vyNIr+b7yisEexYp7VM74zj6bxr+mDTzfGONRLzzsVPJIA=="
   "resolved" "https://registry.npmjs.org/grant/-/grant-4.7.0.tgz"
   "version" "4.7.0"
@@ -3663,7 +3663,7 @@
     "jest-regex-util" "^27.0.6"
     "jest-snapshot" "^27.3.1"
 
-"jest-resolve@*", "jest-resolve@^27.3.1":
+"jest-resolve@^27.3.1":
   "integrity" "sha512-Dfzt25CFSPo3Y3GCbxynRBZzxq9AdyNN+x/v2IqYx6KVT5Z6me2Z/PsSGFSv3cOSUZqJ9pHxilao/I/m9FouLw=="
   "resolved" "https://registry.npmjs.org/jest-resolve/-/jest-resolve-27.3.1.tgz"
   "version" "27.3.1"
@@ -5168,7 +5168,7 @@
     "postgres-date" "~1.0.4"
     "postgres-interval" "^1.1.0"
 
-"pg@>=8.0", "pg@8.5.1":
+"pg@8.5.1":
   "integrity" "sha512-9wm3yX9lCfjvA98ybCyw2pADUivyNWT/yIP4ZcDVpMN0og70BUWYEGXPCTAQdGTAqnytfRADb7NERrY1qxhIqw=="
   "resolved" "https://registry.npmjs.org/pg/-/pg-8.5.1.tgz"
   "version" "8.5.1"
@@ -6590,7 +6590,7 @@
     "readable-stream" "^2.3.7"
     "triple-beam" "^1.2.0"
 
-"winston@>=0.7.3", "winston@3.3.3":
+"winston@3.3.3":
   "integrity" "sha512-oEXTISQnC8VlSAKf1KYSSd7J6IWuRPQqDdo8eoRNaYKLvwSb5+79Z3Yi1lrl6KDpU6/VWaxpakDAtb1oQ4n9aw=="
   "resolved" "https://registry.npmjs.org/winston/-/winston-3.3.3.tgz"
   "version" "3.3.3"
