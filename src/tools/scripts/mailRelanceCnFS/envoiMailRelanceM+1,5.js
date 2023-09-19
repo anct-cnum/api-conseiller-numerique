@@ -17,7 +17,8 @@ cli.description('Send emails for conseiller without deposit CRA after 1,5 month'
 const datePlus1MoisEtDemi = new Date(dayjs(Date.now()).subtract(45, 'day'));
 const datePlus15jours = new Date(dayjs(Date.now()).subtract(15, 'day'));
 execute(__filename, async ({ db, logger, Sentry, emails }) => {
-  const { limit = 1, delai = 1000 } = cli;
+  let { limit = 1, delai = 1000 } = cli;
+  limit = process.env.NODE_ENV !== 'production' ? 1 : limit;
 
   const conseillers = await db.collection('conseillers').find({
     'statut': { $eq: 'RECRUTE' },
