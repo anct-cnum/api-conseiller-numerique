@@ -3,6 +3,8 @@
 
 const { execute } = require('../../utils');
 
+
+// Passer le script src\tools\admin\conseillers\fix-mises-en-relation.js après coup
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   try {
     await db.collection('structures').updateMany({ }, {
