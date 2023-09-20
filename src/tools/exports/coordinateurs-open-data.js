@@ -46,7 +46,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           [
             coordinateur.nom,
             coordinateur.prenom,
-            coordinateur?.perimetre ?? 'Non renseigné',
+            coordinateur.perimetre,
             formatNomStructure(coordinateur),
             coordinateur.adresse,
             coordinateur.codePostal,
