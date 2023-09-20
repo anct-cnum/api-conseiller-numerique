@@ -17,9 +17,10 @@ cli.description('Send emails for conseillers without deposit CRA after 1 month')
 const datePlus1Mois = new Date(dayjs(Date.now()).subtract(1, 'month'));
 const datePlus1MoisEtDemi = new Date(dayjs(Date.now()).subtract(45, 'day'));
 
-execute(__filename, async ({ db, logger, Sentry, emails }) => {
+execute(__filename, async ({ db, logger, Sentry, emails, app }) => {
   let { limit = 1, delai = 1000 } = cli;
-  limit = process.env.NODE_ENV !== 'production' ? 1 : limit;
+
+  limit = app.get('limit_relance_cra') ?? limit;
 
   const conseillers = await db.collection('conseillers').find({
     'statut': { $eq: 'RECRUTE' },
