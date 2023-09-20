@@ -64,7 +64,6 @@ exports.Users = class Users extends Service {
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
           return;
         }
-
         if (nouveauEmail !== userConnected.data[0].name) {
 
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });

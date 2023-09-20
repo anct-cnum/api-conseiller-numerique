@@ -61,7 +61,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: miseAJour });
     await db.collection('misesEnRelation').deleteMany({
       'conseiller.$id': conseiller._id,
-      'statut': { '$in': ['finalisee_non_disponible', 'non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] }
+      'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
     });
     await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: miseAJourMiseEnRelation });
 

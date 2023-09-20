@@ -939,21 +939,7 @@ exports.Conseillers = class Conseillers extends Service {
           //Si disponible suppression des mises en relation autres que celles finalisées et reconventionnement, pour régénération par le CRON
           await db.collection('misesEnRelation').deleteMany({
             'conseiller.$id': conseiller._id,
-            'statut': { '$in': ['finalisee_non_disponible', 'non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
-        } else {
-          await db.collection('misesEnRelation').updateMany(
-            {
-              'conseiller.$id': conseiller._id,
-              'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
-            },
-            {
-              $set:
-                {
-                  'statut': user?.roles.includes('conseiller') ? 'finalisee_non_disponible' : 'non_disponible',
-                  'conseillerObj.disponible': disponible,
-                  'conseillerObj.updatedAt': updatedAt
-                }
-            });
+            'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] } });
         }
       } catch (err) {
         app.get('sentry').captureException(err);
@@ -1251,7 +1237,7 @@ exports.Conseillers = class Conseillers extends Service {
 
           await db.collection('misesEnRelation').deleteMany({
             'conseiller.$id': conseiller._id,
-            'statut': { '$in': ['finalisee_non_disponible', 'nouvelle', 'nonInteressee', 'interessee'] } });
+            'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] } });
 
           await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: {
             'conseillerObj': conseiller,
