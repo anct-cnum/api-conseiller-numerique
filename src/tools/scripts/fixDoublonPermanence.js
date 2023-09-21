@@ -27,18 +27,18 @@ const getPermanencesDoublonsByLocation = async db => await db.collection('perman
 
 const getPermanencesDoublonsByAdresse = async db => await db.collection('permanences').aggregate([
   { '$unwind': '$adresse' },
+  { '$unwind': '$location' },
   { '$group': {
-    '_id': { 'adresse': '$adresse' },
+    '_id': { 'adresse': '$adresse', 'location': '$location' },
     'permanences': { '$push': '$$ROOT' },
     'count': { '$sum': 1 }
   } },
   { '$match': {
     'count': { '$gt': 1 }
   } },
-  { '$unwind': '$location' },
   { '$project': {
     '_id': 0,
-    'location': '$location',
+    'location': '$_id.location',
     'permanences': '$permanences'
   } }
 ]).toArray();
@@ -84,7 +84,7 @@ const createCsvPermanences = async permanencesDoublons => {
     doublon.permanences.forEach((permanence, i) => {
       if (i === 0) {
         // eslint-disable-next-line max-len
-        writePermanence = `${permanence._id};${permanence.estStructure};${permanence.nomEnseigne};${permanence.numeroTelephone};${permanence.email};${permanence.siteWeb};${permanence.siret};${permanence.adresse};${permanence.location};${permanence.horaires};${permanence.typeAcces};${permanence.conseillers};${permanence.lieuPrincipalPour};${permanence.conseillersItinerants};${permanence.structure.oid};${permanence.updatedAt};${permanence.updatedBy};'`;
+        writePermanence = `${permanence._id};${permanence.estStructure};${permanence.nomEnseigne};${permanence.numeroTelephone};${permanence.email};${permanence.siteWeb};${permanence.siret};${permanence.adresse};${permanence.location};${permanence.horaires};${permanence.typeAcces};${permanence.conseillers};${permanence.lieuPrincipalPour};${permanence.conseillersItinerants};${permanence.structure.oid};${permanence.updatedAt};${permanence.updatedBy};`;
       } else {
         writePermanence += permanence._id;
         writePermanence += doublon.permanences.length > i + 1 ? ',' : '';
@@ -184,7 +184,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   const permByLocation = await getPermanencesDoublonsByLocation(db);
   const permByAdresse = await getPermanencesDoublonsByAdresse(db);
   const permanencesDoublons = await getPermanencesDoublons(permByLocation, permByAdresse);
-console.log(permByAdresse.length);
+
   logger.info(`Génération du fichier CSV ...`);
   await createCsvPermanences(permanencesDoublons);
   logger.info(`Fichier CSV déposé dans data/exports/permanences-doublons.csv`);
