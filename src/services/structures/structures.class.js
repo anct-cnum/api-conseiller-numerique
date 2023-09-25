@@ -176,7 +176,7 @@ exports.Structures = class Structures extends Service {
           if (filter !== 'toutes') {
             queryFilter = { statut: filter };
           } else {
-            queryFilter = { statut: { '$nin': ['non_disponible', 'renouvellement_initiee', 'terminee', 'finalisee_non_disponible'] } };
+            queryFilter = { statut: { '$nin': ['renouvellement_initiee', 'terminee'] } };
           }
         } else {
           res.status(400).send(new BadRequest('Invalid filter', {
