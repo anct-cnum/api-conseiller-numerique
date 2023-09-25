@@ -1,0 +1,283 @@
+#!/usr/bin/env node
+'use strict';
+const path = require('path');
+const cli = require('commander');
+const fs = require('fs');
+const CSVToJSON = require('csvtojson');
+const { ObjectId } = require('mongodb');
+const { formatOpeningHours } = require('../../services/conseillers/common');
+const { execute } = require('../utils');
+
+const readCSV = async filePath => {
+  try {
+    // eslint-disable-next-line new-cap
+    const structuresIds = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
+    return structuresIds;
+  } catch (err) {
+    throw err;
+  }
+};
+
+cli.description('Export liste CNFS pour carto txt')
+.option('-c, --csv <path>', 'Chemin fichier CSV')
+.helpOption('-e', 'HELP command')
+.parse(process.argv);
+
+const uniformiseAdresse = a =>
+  a?.replace(/avenue/gi, 'av.')
+  .replace(/av /gi, 'av. ')
+  .replace(/pl /gi, 'pl. ')
+  .replace(/allée/gi, 'all.')
+  .replace(/all /gi, 'all. ')
+  .replace(/boulevard/gi, 'blvd')
+  .replace(/bd /gi, 'blvd. ')
+  .replace(/grd/gi, 'grand')
+  .replace(/Rue /gi, 'rue ')
+;
+
+Object.assign(String.prototype, {
+  removeSpacesParentheses() {
+    return this?.replace(/\(\s+/gi, '(')
+    .replace(/\s+\)/gi, ')');
+  },
+  fixSpaces() {
+    return this?.replace(/\(\s+/gi, ' ')
+    .replace(/\s+\)/gi, ')');
+  }
+});
+
+const addressGroupSeparator = ' ';
+const addressPartSeparator = ', ';
+
+execute(__filename, async ({ logger, db }) => {
+  const getPermanencesByConseiller = async conseillerId => {
+    return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
+  };
+
+  const getPermanencePrincipaleByConseiller = async conseillerId => {
+    return await db.collection('permanences').findOne({ 'lieuPrincipalPour': { '$in': [new ObjectId(conseillerId)] } });
+  };
+
+  const removeNull = addressPart => addressPart.replace(/null/g, '');
+
+  const isValidAddressPart = addressPart => addressPart !== undefined && addressPart !== null && addressPart.trim() !== '';
+
+  const addressGroup = addressParts => addressParts.filter(isValidAddressPart).map(removeNull).join(addressGroupSeparator);
+
+  const formatAddressFromPermanence = adresse => [
+    addressGroup([
+      adresse.numeroRue,
+      uniformiseAdresse(adresse.rue)
+    ])
+  ].filter(isValidAddressPart).join(addressPartSeparator);
+
+  // c : conseiller
+  // p : permanence
+  const toGeoJsonFromPermanence = (c, p) => ({
+    type: 'Feature',
+    geometry: p.location,
+    properties: {
+      id: p._id.toString(),
+      nom: c.nom,
+      prenom: c.prenom,
+      //telephone: permanence.telephone ?? conseiller.telephonePro ?? conseiller.structure.contact.telephone,
+      telephone: p.numeroTelephone ?? '', //conseiller.structure.contact.telephone,
+      address: formatAddressFromPermanence(p.adresse),
+      addressParts: {
+        numeroRue: p.adresse.numeroRue,
+        rue: p.adresse.rue,
+        codePostal: p.adresse.codePostal,
+        ville: p.adresse.ville,
+      },
+      name: p.nomEnseigne,
+      openingHours: formatOpeningHours(p.horaires)
+    }
+  });
+
+  const toGeoJsonFromStructure = s => ({
+    type: 'Feature',
+    geometry: s?.location,
+    properties: {
+      id: s._id.toString(),
+      nom: '',
+      prenom: '',
+      telephone: s?.contact?.telephone,
+      //address: formatAddressFromPermanence(s.adresseInsee2Ban),
+      address: uniformiseAdresse(s?.adresseInsee2Ban?.name),
+      addressParts: {
+        numeroRue: s?.adresseInsee2Ban?.housenumber,
+        rue: s?.adresseInsee2Ban?.street,
+        codePostal: s?.adresseInsee2Ban?.postcode,
+        ville: s?.adresseInsee2Ban?.city,
+      },
+      name: s.nom,
+    }
+  });
+
+  let pinsParDepartement = {};
+  let pinsParDepartementElargi = {};
+
+  function addPinToDepartment(departmentId, pin) {
+    if (!pinsParDepartement[departmentId]) {
+      pinsParDepartement[departmentId] = [];
+    }
+    pinsParDepartement[departmentId].push(pin);
+  }
+
+  function addPinToDepartmentElargi(departmentId, pin) {
+    if (!pinsParDepartementElargi[departmentId]) {
+      pinsParDepartementElargi[departmentId] = [];
+    }
+    pinsParDepartementElargi[departmentId].push(pin);
+  }
+
+  // On commence ici
+  const structuresIds = await readCSV(cli.csv);
+  for (const structureId of structuresIds) {
+    let structure = await db.collection('structures').findOne({ idPG: Number(structureId['ID SA']) });
+
+    // Détection des erreurs
+    if (!structure?.adresseInsee2Ban?.name) {
+      console.log('NO BAN FOR SA ' + structureId['ID SA']);
+    }
+    if (!structure?.location) {
+      console.log('NO SA LOCATION FOR SA ' + structureId['ID SA']);
+    }
+
+    // Si la Structure a des CNFS actifs
+    const conseillers = await db.collection('misesEnRelation').aggregate([
+      {
+        $match: {
+          'structure.$id': structure._id,
+          'statut': 'finalisee',
+          'conseillerObj.nonAffichageCarto': { $ne: true },
+          '$or': [
+            { typeDeContrat: 'CDI' },
+            { reconventionnement: true },
+            { typeDeContrat: { $exists: false } },
+            {
+              $and: [
+                { typeDeContrat: { $ne: 'CDI' } },
+                { dateFinDeContrat: { $gte: new Date('2023-11-30') } }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        $project: {
+          '_id': '$conseillerObj._id',
+          'idPG': '$conseillerObj.idPG',
+          'nom': '$conseillerObj.nom',
+          'prenom': '$conseillerObj.prenom',
+          'telephonePro': '$conseillerObj.telephonePro',
+          'structure.coordonneesInsee': '$structureObj.coordonneesInsee',
+          'structure.location': '$structureObj.location',
+          'structure.codeDepartement': '$structureObj.codeDepartement',
+          'structure.codeCommune': '$structureObj.codeCommune',
+          'structure.nom': '$structureObj.nom',
+          'structure.contact.telephone': '$structureObj.contact.telephone',
+          'structure.estLabelliseAidantsConnect': '$structureObj.estLabelliseAidantsConnect',
+          'structure.estLabelliseFranceServices': '$structureObj.estLabelliseFranceServices',
+          'structure.insee.adresse': '$structureObj.insee.adresse',
+          'structure.adresseInsee2Ban': '$structureObj.adresseInsee2Ban'
+        }
+      }
+    ]).toArray();
+
+    if (conseillers.length > 0) {
+      for (const c of conseillers) {
+        const permanencePrincipaleConseiller = await getPermanencePrincipaleByConseiller(c._id);
+        const permanencesConseiller = await getPermanencesByConseiller(c._id);
+
+        if (permanencesConseiller.length > 0 && !permanencePrincipaleConseiller) {
+          console.log('Pas de principale pour conseiller : ' + c.idPG);
+        }
+
+        if (permanencesConseiller.length > 0 && permanencePrincipaleConseiller) {
+          try {
+            // on prend le lien de la permanence principale
+            addPinToDepartment(structure.codeDepartement, toGeoJsonFromPermanence(c, permanencePrincipaleConseiller));
+            // et les autres
+            for (const p of permanencesConseiller) {
+              addPinToDepartmentElargi(structure.codeDepartement, toGeoJsonFromPermanence(c, p));
+            }
+          } catch (error) {
+            logger.error('Stack trace:', error.stack);
+          }
+        } else {
+          addPinToDepartment(structure.codeDepartement, toGeoJsonFromStructure(structure));
+          addPinToDepartmentElargi(structure.codeDepartement, toGeoJsonFromStructure(structure));
+        }
+      }
+    } else {
+      // Si la Structure n'a PAS de CNFS actif
+      // On prend l'adresse de la structure
+      addPinToDepartment(structure.codeDepartement, toGeoJsonFromStructure(structure));
+      addPinToDepartmentElargi(structure.codeDepartement, toGeoJsonFromStructure(structure));
+    }
+  }
+
+  logger.info('Results');
+  // Classement par ordre numérique des départements
+  const sortedKeys = Object.keys(pinsParDepartement).sort((a, b) => parseInt(a) - parseInt(b));
+
+  const sortedKeysElargi = Object.keys(pinsParDepartementElargi).sort((a, b) => parseInt(a) - parseInt(b));
+
+  let csvFileCount = path.join(__dirname, '../../../data/exports', 'liste_cnfs_pour_carto_v2_count.csv');
+
+  let fileCount = fs.createWriteStream(csvFileCount, {
+    flags: 'w'
+  });
+
+  sortedKeys.forEach(departmentId => {
+    console.log(`Department ${departmentId} has ${pinsParDepartement[departmentId].length} pins.`);
+    fileCount.write(`${departmentId},${pinsParDepartement[departmentId].length}\n`);
+  });
+
+  fileCount.close();
+
+  let csvFileCountElargi = path.join(__dirname, '../../../data/exports', 'liste_cnfs_pour_carto_v2_elargi_count.csv');
+
+  let fileCountElargi = fs.createWriteStream(csvFileCountElargi, {
+    flags: 'w'
+  });
+
+  logger.info('Results élargi');
+
+  sortedKeysElargi.forEach(departmentId => {
+    console.log(`Department ${departmentId} has ${pinsParDepartementElargi[departmentId].length} pins.`);
+    fileCountElargi.write(`${departmentId},${pinsParDepartementElargi[departmentId].length}\n`);
+  });
+
+  fileCountElargi.close();
+
+  let csvFile = path.join(__dirname, '../../../data/exports', 'liste_cnfs_pour_carto_v2.json');
+
+  let file = fs.createWriteStream(csvFile, {
+    flags: 'w'
+  });
+
+  // Applatit l'array des pins, en gardant l'ordre des départements
+  const allPinsOrdered = sortedKeys.reduce((acc, key) => {
+    return acc.concat(pinsParDepartement[key]);
+  }, []);
+
+  file.write(JSON.stringify(allPinsOrdered, null, 2));
+  file.close();
+
+  let csvFileElargi = path.join(__dirname, '../../../data/exports', 'liste_cnfs_pour_carto_v2_elargi.json');
+
+  // Toutes les permanences
+  let fileElargi = fs.createWriteStream(csvFileElargi, {
+    flags: 'w'
+  });
+
+  const allPinsOrderedElargi = sortedKeysElargi.reduce((acc, key) => {
+    return acc.concat(pinsParDepartementElargi[key]);
+  }, []);
+
+  fileElargi.write(JSON.stringify(allPinsOrderedElargi, null, 2));
+  fileElargi.close();
+});
+
