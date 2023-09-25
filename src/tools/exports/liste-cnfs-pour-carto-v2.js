@@ -138,10 +138,10 @@ execute(__filename, async ({ logger, db }) => {
 
     // Détection des erreurs
     if (!structure?.adresseInsee2Ban?.name) {
-      console.log('NO BAN FOR SA ' + structureId['ID SA']);
+      logger.info('NO BAN FOR SA ' + structureId['ID SA']);
     }
     if (!structure?.location) {
-      console.log('NO SA LOCATION FOR SA ' + structureId['ID SA']);
+      logger.info('NO SA LOCATION FOR SA ' + structureId['ID SA']);
     }
 
     // Si la Structure a des CNFS actifs
@@ -191,7 +191,7 @@ execute(__filename, async ({ logger, db }) => {
         const permanencesConseiller = await getPermanencesByConseiller(c._id);
 
         if (permanencesConseiller.length > 0 && !permanencePrincipaleConseiller) {
-          console.log('Pas de principale pour conseiller : ' + c.idPG);
+          logger.info('Pas de principale pour conseiller : ' + c.idPG);
         }
 
         if (permanencesConseiller.length > 0 && permanencePrincipaleConseiller) {
@@ -231,7 +231,7 @@ execute(__filename, async ({ logger, db }) => {
   });
 
   sortedKeys.forEach(departmentId => {
-    console.log(`Department ${departmentId} has ${pinsParDepartement[departmentId].length} pins.`);
+    logger.info(`Department ${departmentId} has ${pinsParDepartement[departmentId].length} pins.`);
     fileCount.write(`${departmentId},${pinsParDepartement[departmentId].length}\n`);
   });
 
@@ -246,7 +246,7 @@ execute(__filename, async ({ logger, db }) => {
   logger.info('Results élargi');
 
   sortedKeysElargi.forEach(departmentId => {
-    console.log(`Department ${departmentId} has ${pinsParDepartementElargi[departmentId].length} pins.`);
+    logger.info(`Department ${departmentId} has ${pinsParDepartementElargi[departmentId].length} pins.`);
     fileCountElargi.write(`${departmentId},${pinsParDepartementElargi[departmentId].length}\n`);
   });
 
