@@ -49,6 +49,18 @@ const codePostal2departementRegion = cp => {
   return null;
 };
 
+function cleanPhoneNumber(number) {
+  let cleaned = number.replace(/\D/g, '');
+
+  if (cleaned.startsWith('33') && cleaned.length === 11) {
+    cleaned = '0' + cleaned.substring(2);
+  } else if (cleaned.length === 12) { // Pour les DOM comme +590590478535
+    cleaned = '0' + cleaned.substring(3);
+  }
+
+  return `${cleaned.substring(0, 2)}${cleaned.substring(2, 4)}${cleaned.substring(4, 6)}${cleaned.substring(6, 8)}${cleaned.substring(8, 10)}`;
+}
+
 cli.description('Export liste CNFS pour carto txt')
 .option('-c, --csv <path>', 'Chemin fichier CSV')
 .helpOption('-e', 'HELP command')
@@ -116,6 +128,11 @@ execute(__filename, async ({ logger, db }) => {
     ])
   ].filter(isValidAddressPart).join(addressPartSeparator);
 
+  const getGeometry = structure =>
+    structure.coordonneesInsee ?
+      { ...structure.coordonneesInsee } :
+      { ...structure.location };
+
   // c : conseiller
   // p : permanence
   const toGeoJsonFromPermanence = (c, p) => ({
@@ -125,8 +142,7 @@ execute(__filename, async ({ logger, db }) => {
       id: p._id.toString(),
       nom: c.nom,
       prenom: c.prenom,
-      //telephone: permanence.telephone ?? conseiller.telephonePro ?? conseiller.structure.contact.telephone,
-      telephone: p.numeroTelephone ?? '', //conseiller.structure.contact.telephone,
+      telephone: p.numeroTelephone ? cleanPhoneNumber(p.numeroTelephone) : '',
       address: formatAddressFromPermanence(p.adresse),
       addressParts: {
         numeroRue: p.adresse.numeroRue,
@@ -141,13 +157,13 @@ execute(__filename, async ({ logger, db }) => {
 
   const toGeoJsonFromStructure = s => ({
     type: 'Feature',
-    geometry: s?.location,
+    geometry: getGeometry(s),
     properties: {
       id: s._id.toString(),
       nom: '',
       prenom: '',
-      telephone: s?.contact?.telephone,
-      //address: formatAddressFromPermanence(s.adresseInsee2Ban),
+      //telephone: s?.contact?.telephone ? cleanPhoneNumber(s?.contact?.telephone) : '',
+      telephone: '',
       address: uniformiseAdresse(s?.adresseInsee2Ban?.name),
       addressParts: {
         numeroRue: s?.adresseInsee2Ban?.housenumber,
@@ -366,7 +382,7 @@ execute(__filename, async ({ logger, db }) => {
               ''
             }${pin?.properties.name !== saPrecedente ?
             // eslint-disable-next-line max-len
-              ' • ' + pin?.properties?.name.fixSpaces().removeSpacesParentheses().toUpperCase() + ', ' + pin?.properties?.address.fixSpaces().removeSpacesParentheses() + (pin?.properties?.telephone ? ' – ' : '') + pin?.properties?.telephone.replace(/\+33/, '0') :
+              ' • ' + pin?.properties?.name.fixSpaces().removeSpacesParentheses().toUpperCase() + ', ' + pin?.properties?.address.fixSpaces().removeSpacesParentheses() + (pin?.properties?.telephone && pin?.properties?.telephone !== '' ? ' – ' : '') + pin?.properties?.telephone :
               ''
             }`);
         } else {
