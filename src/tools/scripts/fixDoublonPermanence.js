@@ -169,7 +169,7 @@ const deletePermanences = db => async idPermanences => await db.collection('perm
 
 const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection('cras').updateMany(
   { 'permanence.$id': { '$in': oldIds } },
-  { 'permanence.$id': newId }
+  { '$set': { 'permanence.$id': newId } }
 );
 
 cli.description('Détecter et corriger les doublons de permanence')
@@ -190,19 +190,20 @@ execute(__filename, async ({ db, logger, exit }) => {
   logger.info(`Fichier CSV déposé dans data/exports/permanences-doublons.csv`);
 
   if (program.fix) {
-    promises.push(new Promise(async resolve => {
-      await permanencesDoublons.forEach(async permanencesDoublon => {
+    permanencesDoublons.forEach(async permanencesDoublon => {
+      promises.push(new Promise(async resolve => {
         await traitementDoublons(permanencesDoublon.permanences).then(async result => {
           await updatePermanence(db)(result[0]).then(async () => {
             logger.info(`Permanences mise à jour ` + result[0]._id);
             logger.info(`Suppression des permanences avec les ids :` + result[1].toString());
             await deletePermanences(db)(result[1]);
+            logger.info(`Changement des ids de permanences dans les cras correspondant :` + result[1].toString() + ' -> ' + result[0]._id.toString());
             await changePermanenceIdCra(db)(result[1], result[0]._id);
           });
         });
-      });
-      resolve();
-    }));
+        resolve();
+      }));
+    });
   }
   await Promise.all(promises);
   exit();
