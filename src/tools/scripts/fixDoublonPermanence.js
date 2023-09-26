@@ -190,8 +190,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   logger.info(`Fichier CSV déposé dans data/exports/permanences-doublons.csv`);
 
   if (program.fix) {
-    promises.push(new Promise(async resolve => {
-      await permanencesDoublons.forEach(async permanencesDoublon => {
+    permanencesDoublons.forEach(async permanencesDoublon => {
+      promises.push(new Promise(async resolve => {
         await traitementDoublons(permanencesDoublon.permanences).then(async result => {
           await updatePermanence(db)(result[0]).then(async () => {
             logger.info(`Permanences mise à jour ` + result[0]._id);
@@ -201,9 +201,9 @@ execute(__filename, async ({ db, logger, exit }) => {
             await changePermanenceIdCra(db)(result[1], result[0]._id);
           });
         });
-      });
-      resolve();
-    }));
+        resolve();
+      }));
+    });
   }
   await Promise.all(promises);
   exit();
