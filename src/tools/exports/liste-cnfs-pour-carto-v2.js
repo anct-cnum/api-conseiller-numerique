@@ -8,6 +8,13 @@ const { ObjectId } = require('mongodb');
 const { formatOpeningHours } = require('../../services/conseillers/common');
 const { execute } = require('../utils');
 
+const departements = require('./departements-region.json');
+const deps = new Map();
+
+for (const value of departements) {
+  deps.set(String(value.num_dep), value);
+}
+
 const readCSV = async filePath => {
   try {
     // eslint-disable-next-line new-cap
@@ -16,6 +23,30 @@ const readCSV = async filePath => {
   } catch (err) {
     throw err;
   }
+};
+
+const codePostal2departementRegion = cp => {
+  if (!/^.{5}$/.test(cp)) {
+    return null;
+  }
+  let dep;
+  if ((dep = cp.match(/^9[78]\d/))) {
+    // DOM
+    return deps.get(dep[0]);
+  } else if ((dep = cp.match(/^20\d/))) {
+    if (['200', '201'].includes(dep[0])) {
+      // Corse du sud
+      return deps.get('2A');
+    }
+    if (['202', '206'].includes(dep[0])) {
+      // Haute Corse
+      return deps.get('2B');
+    }
+  } else if ((dep = cp.match(/^\d\d/))) {
+    // Le reste
+    return deps.get(String(dep[0]));
+  }
+  return null;
 };
 
 cli.description('Export liste CNFS pour carto txt')
@@ -45,6 +76,20 @@ Object.assign(String.prototype, {
     .replace(/\s+\)/gi, ')');
   }
 });
+
+const sortByNomSA = (a, b) => {
+  if (!a.properties.name || !b.properties.name) {
+    return;
+  }
+  return a.properties.name.localeCompare(b.properties.name, 'fr', { sensitivity: 'base' });
+};
+
+const sortByVille = (a, b) => {
+  if (!a.properties.addressParts.ville || !b.properties.addressParts.ville) {
+    return;
+  }
+  return a.properties.addressParts.ville.localeCompare(b.properties.addressParts.ville, 'fr', { sensitivity: 'base' });
+};
 
 const addressGroupSeparator = ' ';
 const addressPartSeparator = ', ';
@@ -138,10 +183,10 @@ execute(__filename, async ({ logger, db }) => {
 
     // Détection des erreurs
     if (!structure?.adresseInsee2Ban?.name) {
-      logger.info('NO BAN FOR SA ' + structureId['ID SA']);
+      logger.info('Pas d\'infos BAN pour la SA ' + structureId['ID SA']);
     }
     if (!structure?.location) {
-      logger.info('NO SA LOCATION FOR SA ' + structureId['ID SA']);
+      logger.info('Pas de location pour la SA ' + structureId['ID SA']);
     }
 
     // Si la Structure a des CNFS actifs
@@ -196,11 +241,14 @@ execute(__filename, async ({ logger, db }) => {
 
         if (permanencesConseiller.length > 0 && permanencePrincipaleConseiller) {
           try {
+            const depReg = codePostal2departementRegion(String(permanencePrincipaleConseiller.adresse.codePostal));
+
             // on prend le lien de la permanence principale
-            addPinToDepartment(structure.codeDepartement, toGeoJsonFromPermanence(c, permanencePrincipaleConseiller));
+            addPinToDepartment(depReg.num_dep, toGeoJsonFromPermanence(c, permanencePrincipaleConseiller));
             // et les autres
             for (const p of permanencesConseiller) {
-              addPinToDepartmentElargi(structure.codeDepartement, toGeoJsonFromPermanence(c, p));
+              const depReg = codePostal2departementRegion(String(p.adresse.codePostal));
+              addPinToDepartmentElargi(depReg.num_dep, toGeoJsonFromPermanence(c, p));
             }
           } catch (error) {
             logger.error('Stack trace:', error.stack);
@@ -218,7 +266,8 @@ execute(__filename, async ({ logger, db }) => {
     }
   }
 
-  logger.info('Results');
+  logger.info('Resultats');
+
   // Classement par ordre numérique des départements
   const sortedKeys = Object.keys(pinsParDepartement).sort((a, b) => parseInt(a) - parseInt(b));
 
@@ -243,7 +292,7 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  logger.info('Results élargi');
+  logger.info('Resultats élargis');
 
   sortedKeysElargi.forEach(departmentId => {
     logger.info(`Department ${departmentId} has ${pinsParDepartementElargi[departmentId].length} pins.`);
@@ -258,12 +307,22 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  // Applatit l'array des pins, en gardant l'ordre des départements
-  const allPinsOrdered = sortedKeys.reduce((acc, key) => {
-    return acc.concat(pinsParDepartement[key]);
-  }, []);
+  const finalPins = [];
 
-  file.write(JSON.stringify(allPinsOrdered, null, 2));
+  for (const departmentId of sortedKeys) {
+    if (pinsParDepartement[departmentId].length > 15) {
+      finalPins.push(...pinsParDepartement[departmentId]);
+    } else {
+      finalPins.push(...pinsParDepartementElargi[departmentId]);
+    }
+  }
+
+  const featureCollection = {
+    'type': 'FeatureCollection',
+    'features': finalPins
+  };
+
+  file.write(JSON.stringify(featureCollection, null, 2));
   file.close();
 
   let csvFileElargi = path.join(__dirname, '../../../data/exports', 'liste_cnfs_pour_carto_v2_elargi.json');
@@ -279,5 +338,49 @@ execute(__filename, async ({ logger, db }) => {
 
   fileElargi.write(JSON.stringify(allPinsOrderedElargi, null, 2));
   fileElargi.close();
+
+  // Fichiers TXT
+
+  sortedKeys.forEach(departementId => {
+    let villePrecedente = '';
+    let saPrecedente = '';
+
+    let csvFileTxt = path.join(__dirname, '../../../data/exports', `liste_cnfs_pour_carto_v2-${departementId}.txt`);
+
+    let fileTxt = fs.createWriteStream(csvFileTxt, {
+      flags: 'w'
+    });
+
+    // Si moins de 15 pins dans le département
+    // on prend la liste complète des permanences
+    let pins = (pinsParDepartement[departementId].length > 15) ? [...pinsParDepartement[departementId]] : [...pinsParDepartementElargi[departementId]];
+    pins.sort(sortByNomSA);
+    pins.sort(sortByVille);
+
+    pins.forEach(pin => {
+      try {
+        if (pin?.properties?.address && pin?.properties?.addressParts) {
+          fileTxt.write(
+            `${pin?.properties?.addressParts?.ville && pin?.properties?.addressParts?.ville.toUpperCase() !== villePrecedente ?
+              '.\n\n' + pin?.properties?.addressParts?.ville.toUpperCase() :
+              ''
+            }${pin?.properties.name !== saPrecedente ?
+            // eslint-disable-next-line max-len
+              ' • ' + pin?.properties?.name.fixSpaces().removeSpacesParentheses().toUpperCase() + ', ' + pin?.properties?.address.fixSpaces().removeSpacesParentheses() + (pin?.properties?.telephone ? ' – ' : '') + pin?.properties?.telephone.replace(/\+33/, '0') :
+              ''
+            }`);
+        } else {
+          logger.error(`Addresse manquante pour :`);
+          logger.error(JSON.stringify(pin, null, 2));
+        }
+        villePrecedente = pin.properties.addressParts.ville?.toUpperCase();
+        saPrecedente = pin.properties.name;
+      } catch (e) {
+        logger.info(JSON.stringify(pin, null, 2));
+        logger.error('Stack trace:', e.stack);
+      }
+    });
+    fileTxt.close();
+  });
 });
 
