@@ -4,10 +4,13 @@
 const { execute } = require('../utils');
 const { DBRef, ObjectId } = require('mongodb');
 
+// node src/tools/scripts/fix-stat-conseiller-cra.js
+
 execute(__filename, async ({ logger, db, app }) => {
 
   const connection = app.get('mongodb');
   const database = connection.substr(connection.lastIndexOf('/') + 1);
+  const listMois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
   // prendre unqiuement les cras d'hier,
   // Le cron actuelle passera pour les cras créée aujourd'hui
@@ -36,18 +39,24 @@ execute(__filename, async ({ logger, db, app }) => {
               'countCras': { $sum: 1 },
             }
           },
-          { $project: { mois: '$_id.mois', annee: '$_id.annee', totalCras: '$countCras', _id: 0 } },
+          { $project: { _id: 0, mois: '$_id.mois', annee: '$_id.annee', totalCras: '$countCras', indication: '' } },
           { $sort: { annee: 1, mois: 1 } },
-          { $group: { '_id': '$annee', 'annee': { $push: { mois: '$mois', totalCras: '$totalCras' } } } },
+          { $group: { '_id': '$annee', 'annee': { $push: { mois: '$mois', totalCras: '$totalCras', indication: '$indication' } } } },
           { $group: { '_id': null, 'data': { '$push': { 'k': { $toString: '$_id' }, 'v': '$annee' } } } },
           { $replaceRoot: { newRoot: { '$arrayToObject': '$data' } } },
         ]).toArray();
 
+      const addIndication = Object.keys(stat[0]).map(i => {
+        return {
+          [i]: stat[0][i].map(s => ({ ...s, mois: s.mois - 1, indication: listMois[s.mois - 1] }))
+        };
+      });
+
       let objectConseillerStat = {
         conseiller: new DBRef('conseillers', new ObjectId(conseillerId), database),
-        ...stat[0]
+        ...addIndication.reduce((obj, value) => Object.assign(obj, value), { conseiller: new DBRef('conseillers', new ObjectId(conseillerId), database) })
       };
-      await db.collection('rectif_stats_conseillers_cras').insertOne(objectConseillerStat);
+      await db.collection('rectif_stats_cn_cras').insertOne(objectConseillerStat);
       count++;
       resolve();
     }));
