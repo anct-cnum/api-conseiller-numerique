@@ -57,18 +57,19 @@ const countCraByPermanenceId = db => async permanenceId => {
   return await db.collection('cras').countDocuments({ 'permanence.$id': new ObjectId(permanenceId) });
 };
 
-const insertDeleteCra = db => async craId => {
+const insertDeleteCra = db => async (craId, userId) => {
   await db.collection('cras_deleted').insertOne({
     '_id': new ObjectId(craId),
-    'deletedAt': new Date()
+    'deletedAt': new Date(),
+    'conseillerId': userId
   });
 };
 
-const deleteCra = db => async craId => {
+const deleteCra = db => async (craId, userId) => {
   await db.collection('cras').deleteOne({
     _id: new ObjectId(craId)
   });
-  await insertDeleteCra(db)(craId);
+  await insertDeleteCra(db)(craId, userId);
 };
 
 const deleteStatistiquesCra = db => async cra => {
