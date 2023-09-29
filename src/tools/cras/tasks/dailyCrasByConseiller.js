@@ -12,6 +12,7 @@ const getStatsConseillerCras = db => async idConseiller => {
 const insertDailyCrasStatsByConseiller = async (db, query, logger) => {
 
   let detailsCras = await db.collection('cras').find(query).toArray();
+  const listMois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
   let promises = [];
   let list = [];
 
@@ -51,7 +52,8 @@ const insertDailyCrasStatsByConseiller = async (db, query, logger) => {
       await db.collection('stats_conseillers_cras').updateOne(queryUpd, remove, options);
 
       //Ajout ou mise à jour de la nouvelle stat correspondante au mois et à l'annee
-      const update = { $push: { [String(statsToUpdate.annee)]: { 'mois': statsToUpdate.mois, 'totalCras': totalCras } } };
+      // eslint-disable-next-line max-len
+      const update = { $push: { [String(statsToUpdate.annee)]: { 'mois': statsToUpdate.mois, 'totalCras': totalCras, 'indication': listMois[statsToUpdate.mois] } } };
       const result = await db.collection('stats_conseillers_cras').updateOne(queryUpd, update, options);
 
       logger.info(`Statistiques CRAs du conseiller (id=${statsToUpdate.conseillerId} totalCras=${totalCras}) mis à jour`);
