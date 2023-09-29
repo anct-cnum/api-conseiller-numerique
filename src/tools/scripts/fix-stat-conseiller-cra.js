@@ -6,7 +6,7 @@ const { DBRef, ObjectId } = require('mongodb');
 
 // node src/tools/scripts/fix-stat-conseiller-cra.js
 
-execute(__filename, async ({ logger, db, app }) => {
+execute(__filename, async ({ logger, db, app, exit }) => {
 
   const connection = app.get('mongodb');
   const database = connection.substr(connection.lastIndexOf('/') + 1);
@@ -18,10 +18,17 @@ execute(__filename, async ({ logger, db, app }) => {
   dateFinCra.setDate(dateFinCra.getDate() - 1);
   dateFinCra.setUTCHours(23, 59, 59, 59);
 
-  const conseillersId = await db.collection('cras').distinct('conseiller.$id', { 'createdAt': { '$lte': dateFinCra } });
+  const conseillersId = await db.collection('cras').distinct('conseiller.$id',
+    { 'createdAt': { '$lte': dateFinCra } });
 
   let promises = [];
   let count = 0;
+  const countDoc = await db.collection('rectif_stats_cn_cras').countDocuments();
+
+  if (countDoc >= 1) {
+    exit(`Veuillez supprimer la collection 'rectif_stats_cn_cras' qui contient ${countDoc} docs puis relancer le script..`);
+    return;
+  }
 
   logger.info(`Recalcul stat cras des ${conseillersId.length} conseillers...`);
   conseillersId.forEach(conseillerId => {
@@ -38,9 +45,9 @@ execute(__filename, async ({ logger, db, app }) => {
               'countCras': { $sum: 1 },
             }
           },
-          { $project: { _id: 0, mois: '$_id.mois', annee: '$_id.annee', totalCras: '$countCras', indication: '' } },
+          { $project: { _id: 0, mois: '$_id.mois', annee: '$_id.annee', totalCras: '$countCras' } },
           { $sort: { annee: 1, mois: 1 } },
-          { $group: { '_id': '$annee', 'annee': { $push: { mois: '$mois', totalCras: '$totalCras', indication: '$indication' } } } },
+          { $group: { '_id': '$annee', 'annee': { $push: { mois: '$mois', totalCras: '$totalCras' } } } },
           { $group: { '_id': null, 'data': { '$push': { 'k': { $toString: '$_id' }, 'v': '$annee' } } } },
           { $replaceRoot: { newRoot: { '$arrayToObject': '$data' } } },
         ]).toArray();
@@ -53,7 +60,7 @@ execute(__filename, async ({ logger, db, app }) => {
 
       let objectConseillerStat = {
         conseiller: new DBRef('conseillers', new ObjectId(conseillerId), database),
-        ...addIndication.reduce((obj, value) => Object.assign(obj, value), { conseiller: new DBRef('conseillers', new ObjectId(conseillerId), database) })
+        ...addIndication.reduce((obj, value) => Object.assign(obj, value))
       };
       await db.collection('rectif_stats_cn_cras').insertOne(objectConseillerStat);
       count++;
