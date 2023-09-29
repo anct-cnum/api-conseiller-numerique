@@ -18,8 +18,7 @@ execute(__filename, async ({ logger, db, app }) => {
   dateFinCra.setDate(dateFinCra.getDate() - 1);
   dateFinCra.setUTCHours(23, 59, 59, 59);
 
-  const conseillersId = await db.collection('cras').distinct('conseiller.$id',
-    { 'createdAt': { '$lte': dateFinCra } });
+  const conseillersId = await db.collection('cras').distinct('conseiller.$id', { 'createdAt': { '$lte': dateFinCra } });
 
   let promises = [];
   let count = 0;
@@ -29,7 +28,7 @@ execute(__filename, async ({ logger, db, app }) => {
     promises.push(new Promise(async resolve => {
       let stat = await db.collection('cras').aggregate(
         [
-          { $match: { 'createdAt': { '$lte': dateFinCra } } },
+          { $match: { 'createdAt': { '$lte': dateFinCra }, 'conseiller.$id': conseillerId } },
           {
             $group: {
               '_id': {

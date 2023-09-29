@@ -33,7 +33,7 @@ const updateLigneCra = db => async (year, month, total, id, options) => {
 const updateStatistiquesCra = db => async (cra, oldDateAccompagnement, conseillerId, createdAt) => {
   const dateCreateCra = createdAt;
   dateCreateCra.setUTCHours(0, 0, 0, 0);
-  let dateNow = new Date();
+  const dateNow = new Date();
   dateNow.setUTCHours(0, 0, 0, 0);
   const newYear = cra.cra.dateAccompagnement.getUTCFullYear();
   const newMonth = cra.cra.dateAccompagnement.getMonth();
