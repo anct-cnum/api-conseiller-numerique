@@ -102,7 +102,7 @@ const traitementDoublons = async doublons => {
   doublons.shift();
   doublons.forEach(doublon => {
     //on filtre les doublons selon les champs
-    if (fusionPermanence.structure.$id === doublon.structure.$id) {
+    if (String(fusionPermanence.structure.$id) === String(doublon.structure.$id)) {
       idDoublonSuppression.push(doublon._id);
       fusionPermanence.email = fusionPermanence.email ?? doublon.email;
       fusionPermanence.numeroTelephone = fusionPermanence.numeroTelephone ?? doublon.numeroTelephone;
