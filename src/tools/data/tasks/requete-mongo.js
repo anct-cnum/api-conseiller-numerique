@@ -140,8 +140,6 @@ const conseillerPG = pool => async dataAnonyme => {
 // ...............................................
 // Concernant des requetes spécifiques
 // ...............................................
-const deleteStatutNonDispoMisesEnRelation = async db =>
-  await db.collection(`misesEnRelation${suffix}`).deleteMany({ statut: { $in: ['non_disponible', 'finalisee_non_disponible'] } });
 
 const deleteUsersSolo = async db =>
   await db.collection(`users${suffix}`).deleteMany({ roles: { $in: ['prefet', 'hub_coop', 'admin', 'coordinateur_coop'] } });
@@ -192,7 +190,6 @@ module.exports = {
   updateIdMongoPermanencesItinerant,
   conseillerPG,
   // requetes spécifiques
-  deleteStatutNonDispoMisesEnRelation,
   deleteUsersSolo,
   createUser,
   indexMongoConseillers

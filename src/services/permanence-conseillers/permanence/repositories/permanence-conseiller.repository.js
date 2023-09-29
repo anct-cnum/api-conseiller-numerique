@@ -168,6 +168,15 @@ const deleteCraPermanence = db => async permanenceId => {
   });
 };
 
+const deleteCraConseillerPermanence = db => async (permanenceId, idConseiller) => {
+  await db.collection('cras').updateMany({
+    'permanence.$id': new ObjectId(permanenceId),
+    'conseiller.$id': new ObjectId(idConseiller)
+  }, {
+    $unset: { permanence: '' }
+  });
+};
+
 const setReporterInsertion = db => async userId => {
   await db.collection('users').updateOne({
     _id: userId
@@ -184,6 +193,61 @@ const updateConseillerStatut = db => async conseillerId => {
   });
 };
 
+const checkPermanenceExistsBySiret = db => async siret => {
+  const result = await db.collection('permanences').countDocuments({ 'siret': siret });
+  return result > 0;
+};
+
+const checkPermanenceExistsByLocation = db => async (location, adresse, structureId) => {
+  const result = await db.collection('permanences').countDocuments({
+    '$or': [
+      {
+        'location': location
+      },
+      {
+        'adresse.numeroRue': adresse.numeroRue,
+        'adresse.rue': adresse.rue,
+        'adresse.codeCommune': adresse.codeCommune,
+        'adresse.ville': adresse.ville
+      }
+    ],
+    'structure.$id': new ObjectId(structureId) });
+  return result > 0;
+};
+
+const getAdressesCheckedByLocation = db => async (adresses, structureId) => {
+  let foundExistedPermanence = false;
+  const adressesChecked = [];
+  const promises = [];
+  adresses.forEach(adresse => {
+    promises.push(new Promise(async resolve => {
+      const existsPermanence = await db.collection('permanences').countDocuments({
+        '$or': [
+          {
+            'location': adresse.geometry
+          },
+          {
+            'adresse.numeroRue': adresse.properties.housenumber,
+            'adresse.rue': adresse.properties.street,
+            'adresse.codeCommune': adresse.properties.citycode,
+            'adresse.ville': adresse.properties.city
+          }
+        ],
+        'structure.$id': new ObjectId(structureId) }
+      );
+
+      if (existsPermanence === 0) {
+        adressesChecked.push(adresse);
+      } else {
+        foundExistedPermanence = true;
+      }
+      resolve();
+    }));
+  });
+  await Promise.all(promises);
+  return { adresseApi: adressesChecked, foundExistedPermanence };
+};
+
 module.exports = {
   getPermanences,
   getPermanenceById,
@@ -195,6 +259,10 @@ module.exports = {
   deletePermanence,
   deleteConseillerPermanence,
   deleteCraPermanence,
+  deleteCraConseillerPermanence,
   setReporterInsertion,
   updateConseillerStatut,
+  checkPermanenceExistsBySiret,
+  checkPermanenceExistsByLocation,
+  getAdressesCheckedByLocation,
 };

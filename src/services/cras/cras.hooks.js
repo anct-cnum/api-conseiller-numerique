@@ -41,6 +41,10 @@ module.exports = {
         if (!context.params?.user?.roles.includes('conseiller')) {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
+        // vérification du tag idStructure si elle est bien présente
+        if (!context.data?.idStructure) {
+          throw new BadRequest('Une erreur est survenue, veuillez rafraîchir la page et réessayer');
+        }
 
         //Creation DBRef conseillers et suppression de l'idConseiller plus utile
         context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.idConseiller), database);

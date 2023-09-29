@@ -6,6 +6,7 @@ const fs = require('fs');
 const { execute } = require('../utils');
 const axios = require('axios');
 const codePostauxFichier = require('../../../data/imports/code-commune.json');
+const codePostauxFichierCrasRestant = require('../../../data/imports/correction-cras-restante.json');
 const { program } = require('commander');
 
 const statCras = async db => {
@@ -96,7 +97,8 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
     { label: 'permNotOK', colonne: 'nombre CN;id permanence;Adresse permanence;nombre résultat Api adresse (query lat/lon); Resultat Api Adresse (query lat/lon)\n' },
     { label: 'diffCityAndCodePostal', colonne: 'nombre CN;total de diff;id permanence;Adresse permanence;Resultat Api Adresse;STATUT;TRIE\n' },
     { label: 'permError', colonne: 'id permanence;message;detail\n' },
-    { label: 'adressesContact', colonne: 'id permanence;CN total in Permanence;Un Email CN;Raison\n' }
+    { label: 'adressesContact', colonne: 'id permanence;CN total in Permanence;Un Email CN;Raison\n' },
+    { label: 'doublon', colonne: 'Adresse & id permanence\n' }
   ];
   const objectCsv = obj => `${obj?.numeroRue} ${obj?.rue} ${obj?.codePostal} ${obj?.ville}`;
   Object.keys(exportsCSv).forEach(function(key) {
@@ -121,6 +123,10 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
         file.write(`${i._id};${i.cnfsCount};${i.emailCN};${i.raison}\n`);
         return;
       }
+      if (key === 'doublon') {
+        file.write(`${i}\n`);
+        return;
+      }
       file.write(`${i._id};${i.message};${i.detail}\n`);
     });
     logger.info(`${[key]}: ${exportsCSv[key].length}`);
@@ -130,13 +136,14 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
 execute(__filename, async ({ logger, db, exit }) => {
   program.option('-l, --limit <limit>', 'limit: limit');
   program.option('-p, --partie <partie>', 'partie: cras ou permanences');
+  program.option('-f, --fichier <fichier>', 'fichier: choix 1 : tous les codes postaux ou 2: fichier personnalisé');
   program.option('-a, --acte <acte>', 'acte: correction');
   program.option('-lt, --lot <lot>', 'lot: numero lot');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
   const limit = ~~program.limit === 0 ? 1 : ~~program.limit;
-  const { partie, lot, acte } = program;
+  const { partie, lot, acte, fichier } = program;
 
   if (!['cras', 'permanences'].includes(partie)) {
     exit(`Partie incorrecte, veuillez choisir parmi la liste ['cras', 'permanences']`);
@@ -146,12 +153,17 @@ execute(__filename, async ({ logger, db, exit }) => {
     exit(`Préciser numéro de lot pour la partie ${partie} ?`);
     return;
   }
+  if (!fichier && partie === 'cras' || !['1', '2'].includes(fichier)) {
+    exit(`Veuillez choisir 1 (code postaux à jour) ou 2 (code postaux restant) ?`);
+    return;
+  }
 
   if (partie === 'cras') {
     const statAvant = await statCras(db);
     let count = 0;
     logger.info(`${statAvant.crasRestantAvecPerm} CRAS avec une permanence & ${statAvant.crasRestantSansPerm} CRAS sans permanence (AVANT la correction) `);
-    for (let obj of codePostauxFichier) {
+    const fichierCodePostaux = fichier === '1' ? codePostauxFichier : codePostauxFichierCrasRestant;
+    for (let obj of fichierCodePostaux) {
       const correctionCras = await db.collection('cras').updateMany(
         { 'cra.codePostal': obj.Code_postal, 'cra.nomCommune': obj.Nom_commune, 'cra.codeCommune': { '$exists': false } },
         { '$set': { 'cra.codeCommune': obj.Code_Commune } });
@@ -166,17 +178,18 @@ execute(__filename, async ({ logger, db, exit }) => {
     // eslint-disable-next-line max-len
     const permanences = await db.collection('permanences').find({
       'adresse.codeCommune': { '$exists': false }
-    }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1 }).toArray();
+    }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1, structure: 1 }).toArray();
     const exportsCSv = {
       permMatchOK: [],
       permNotOK: [],
       permError: [],
       diffCityAndCodePostal: [],
-      adressesContact: []
+      adressesContact: [],
+      doublon: []
     };
     logger.info(`Permanences au total: ${permanences.length}`);
     const countApiNotHouseNumber = [];
-    for (const { adresse, location, conseillers, _id } of permanences) {
+    for (const { adresse, location, conseillers, _id, structure } of permanences) {
       const adresseComplete = `${adresse?.numeroRue ?? ''} ${adresse?.rue} ${adresse?.codePostal} ${adresse?.ville}`;
       const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${encodeURI(adresseComplete)}`;
       await axios.get(urlAPI, { params: {} }).then(async result => {
@@ -201,7 +214,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           matchLocation = resultQueryLatLong?.data?.features?.find(e => api(e) === permanence);
         }
         if (!matchLocation) {
-          const emailConseillers = conseillers[0] ? await db.collection('users').findOne({ 'entity.$id': conseillers[0] }) : '';
+          const emailConseillersPerso = conseillers[0] ? await db.collection('conseillers').findOne({ '_id': conseillers[0] }) : '';
           exportsCSv.permNotOK.push({ _id,
             adresse: { ...adresse, coordinates: location?.coordinates },
             resultApi: {
@@ -215,7 +228,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             _id,
             cnfsCount: conseillers?.length,
             raison: 'MULTIPLE RESULTAT',
-            emailCN: emailConseillers?.name ?? ''
+            emailCN: emailConseillersPerso?.email ?? ''
           });
           return;
         }
@@ -248,7 +261,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           }
         }
         if (Object.values(adresseControleDiff).includes(true)) {
-          const emailConseillers = conseillers[0] ? await db.collection('users').findOne({ 'entity.$id': conseillers[0] }) : '';
+          const emailConseillersPerso = conseillers[0] ? await db.collection('conseillers').findOne({ '_id': conseillers[0] }) : '';
           const raisonLabel = {
             0: 'NUMERORUEDIFF',
             1: 'RUEDIFF',
@@ -269,7 +282,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             _id,
             cnfsCount: conseillers?.length,
             raison: conseillers?.length === 1 ? raisonIndexOf : 'MULTIPLEDIFF',
-            emailCN: emailConseillers?.name ?? ''
+            emailCN: emailConseillersPerso?.email ?? ''
           });
         } else {
           exportsCSv.permMatchOK.push({ _id, adresse, matchOK: resultApi(matchLocation?.properties) });
@@ -277,10 +290,29 @@ execute(__filename, async ({ logger, db, exit }) => {
             await updatePermanenceAndCRAS(db)(logger, resultApi(matchLocation?.properties), matchLocation?.geometry?.coordinates, _id);
           }
         }
+        exportsCSv.doublon.push({
+          _id,
+          matchOK: resultApi(matchLocation?.properties),
+          structureId: String(structure.oid)
+        });
       }).catch(error =>
         exportsCSv.permError.push({ _id, message: error.message, detail: adresseComplete }));
     }
     logger.info(`Permanence avec un numeroRue contrairement au résultat Api adresse: ${countApiNotHouseNumber.length}`);
+    const verificationDoublonFichier = permanence => {
+      const objectAdresse = obj => `${obj?.numeroRue} ${obj?.rue} ${obj?.codePostal} ${obj?.ville}`;
+      const arrayIds = permanence.map(perm => `${objectAdresse(perm.matchOK)} - ${perm.structureId}`);
+      const arrFichierAvecDoublon = [...new Set(arrayIds)];
+      let idDoublon = [...arrayIds];
+      arrFichierAvecDoublon.forEach(item => {
+        const i = idDoublon.indexOf(item);
+        idDoublon = idDoublon
+        .slice(0, i)
+        .concat(idDoublon.slice(i + 1, idDoublon.length));
+      });
+      return idDoublon;
+    };
+    exportsCSv.doublon = await verificationDoublonFichier(exportsCSv.doublon);
     await exportCsvPermanences(exportsCSv, lot, logger);
   }
   logger.info(`Fin du lot ${lot} pour la partie ${partie}`);

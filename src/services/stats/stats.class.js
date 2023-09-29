@@ -69,11 +69,11 @@ exports.Stats = class Stats extends Service {
       const cards = [
         {
           name: 'nbStructures',
-          path: '/card/142'
+          path: '/dashcard/209/card/142'
         },
         {
           name: 'nbAccompagnements',
-          path: '/card/116'
+          path: '/dashcard/186/card/116'
         },
       ];
 
@@ -93,7 +93,7 @@ exports.Stats = class Stats extends Service {
         }
       }
 
-      stats['nbStructures'] = stats['nbStructures'][0][0] + stats['nbStructures'][1][0];
+      stats['nbStructures'] = stats['nbStructures'][0][1] + stats['nbStructures'][1][1];
       stats['nbAccompagnements'] = stats['nbAccompagnements'][0][0];
 
       res.send(stats);
@@ -177,15 +177,15 @@ exports.Stats = class Stats extends Service {
           'conseiller.$id': new ObjectID(conseiller._id),
           'cra.dateAccompagnement': {
             $gte: dateDebut,
-            $lt: dateFin,
+            $lte: dateFin,
           }
         };
 
         if (req.query?.codePostal !== '' && req.query?.codePostal !== 'null') {
           query['cra.codePostal'] = req.query?.codePostal;
         }
-        if (req.query?.ville !== '' && req.query?.ville !== 'null') {
-          query['cra.nomCommune'] = req.query?.ville;
+        if (req.query?.codeCommune !== '' && req.query?.codeCommune !== 'null') {
+          query['cra.codeCommune'] = req.query?.codeCommune;
         }
 
         //Construction des statistiques

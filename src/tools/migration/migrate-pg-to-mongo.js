@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable quote-props */
 'use strict';
 
 const { execute } = require('../utils');
@@ -23,13 +24,11 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         siret: s.siret === null ? null : `${s.siret}`,
         aIdentifieCandidat: s.has_candidate,
         dateDebutMission: s.start_date,
-        contact: {
-          prenom: s.contact_first_name,
-          nom: s.contact_last_name,
-          fonction: s.contact_job,
-          email: s.contact_email,
-          telephone: s.contact_phone
-        },
+        'contact.prenom': s.contact_first_name,
+        'contact.nom': s.contact_last_name,
+        'contact.fonction': s.contact_job,
+        'contact.email': s.contact_email,
+        'contact.telephone': s.contact_phone,
         codePostal: s.zip_code,
         location: s.location,
         nomCommune: s.geo_name,
@@ -42,6 +41,8 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         unsubscribedAt: s.unsubscribed, // "cliquez ici pour ne plus recevoir de propositions"
         unsubscribeExtras: s.unsubscribe_extras, // JSON, pas utilisé
         nombreConseillersSouhaites: s.coaches_requested,
+        coordinateurCandidature: s.wants_coordinators,
+        coordinateurTypeContrat: s.coordinator_type,
         createdAt: s.created,
         updatedAt: s.updated,
         validatedAt: s.validated, // pas utilisé ?
@@ -140,7 +141,9 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           unsubscribe_extras,
           unsubscribed,
           siret,
-          coaches_requested
+          coaches_requested,
+          coordinator_type,
+          wants_coordinators
         FROM djapp_hostorganization ORDER BY id ASC LIMIT $1`,
       [program.limit]);
       return rows;

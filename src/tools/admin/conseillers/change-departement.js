@@ -3,6 +3,7 @@ const { execute } = require('../../utils');
 const { Pool } = require('pg');
 const pool = new Pool();
 const axios = require('axios');
+const dayjs = require('dayjs');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
@@ -35,6 +36,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
   const cp = codePostal === undefined ? data.properties.codesPostaux[0] : codePostal;
+  const updatedAt = new Date();
+  const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
 
   const miseAJour = {
     location: data.geometry,
@@ -42,26 +45,26 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     nomCommune: data.properties.nom,
     codeCommune: data.properties.code,
     codeDepartement: data.properties.codeDepartement,
-    codeRegion: data.properties.codeRegion
+    codeRegion: data.properties.codeRegion,
+    updatedAt: updatedAt
   };
   const miseAJourMiseEnRelation = {
     'conseillerObj.location': data.geometry,
-    'conseillerObj.codePostal': codePostal,
+    'conseillerObj.codePostal': cp,
     'conseillerObj.nomCommune': data.properties.nom,
     'conseillerObj.codeCommune': data.properties.code,
     'conseillerObj.codeDepartement': data.properties.codeDepartement,
-    'conseillerObj.codeRegion': data.properties.codeRegion
+    'conseillerObj.codeRegion': data.properties.codeRegion,
+    'conseillerObj.updatedAt': updatedAt
   };
-
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: miseAJour });
+    await db.collection('misesEnRelation').deleteMany({
+      'conseiller.$id': conseiller._id,
+      'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
+    });
     await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: miseAJourMiseEnRelation });
-  } catch (error) {
-    logger.error(error);
-    Sentry.captureException(error);
-    return;
-  }
-  try {
+
     await pool.query(`UPDATE djapp_coach
       SET (
       location,
@@ -69,8 +72,9 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       geo_name,
       commune_code,
       departement_code,
-      region_code
-      ) = (ST_GeomFromGeoJSON ($2),$3,$4,$5,$6,$7)
+      region_code,
+      updated
+      ) = (ST_GeomFromGeoJSON ($2),$3,$4,$5,$6,$7,$8)
        WHERE id = $1`,
     [
       id,
@@ -79,7 +83,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       data.properties.nom,
       data.properties.code,
       data.properties.codeDepartement,
-      data.properties.codeRegion
+      data.properties.codeRegion,
+      datePG
     ]);
   } catch (error) {
     logger.error(error);

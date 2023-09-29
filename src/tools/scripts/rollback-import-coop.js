@@ -6,6 +6,7 @@ require('dotenv').config();
 const { execute } = require('../utils');
 const { program } = require('commander');
 const { v4: uuidv4 } = require('uuid');
+const dayjs = require('dayjs');
 const { deleteMailbox } = require('../../utils/mailbox');
 const { deleteAccount } = require('../../utils/mattermost');
 const { Pool } = require('pg');
@@ -24,13 +25,18 @@ const configPG = {
   host: process.env.PGHOST
 };
 
-const updateConseillersPG = async (email, disponible, logger, Sentry) => {
+const updateConseillersPG = async (email, disponible, datePG, logger, Sentry) => {
   try {
     await pool.query(`
   UPDATE djapp_coach
-  SET disponible = $2
+  SET (
+    disponible,
+    updated
+  )
+  =
+  ($2,$3)
   WHERE LOWER(email) = LOWER($1)`,
-    [email, disponible]);
+    [email, disponible, datePG]);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error.message);
@@ -67,24 +73,22 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
       reject();
       return;
     }
+    const updatedAt = new Date();
+    const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
     //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
-    await updateConseillersPG(conseiller.email, true, logger, Sentry);
+    await updateConseillersPG(conseiller.email, true, datePG, logger, Sentry);
     // Modification de la mise en relation
     await db.collection('misesEnRelation').updateOne(
       { _id: miseEnRelation._id },
       {
         $set: {
-          statut: 'nouvelle'
+          'statut': 'nouvelle',
+          'conseillerObj.updatedAt': updatedAt,
         },
         $unset: {
           dateRecrutement: '',
         }
       });
-    // MAJ des autres mise en relation
-    await db.collection('misesEnRelation').updateMany(
-      { 'conseiller.$id': conseiller._id, 'statut': 'finalisee_non_disponible' },
-      { $set: { 'statut': 'nouvelle' } }
-    );
     //Modification des doublons potentiels
     await db.collection('conseillers').updateMany(
       {
@@ -94,18 +98,7 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
       {
         $set: {
           disponible: true,
-        }
-      }
-    );
-    await db.collection('misesEnRelation').updateMany(
-      { 'conseiller.$id': { $ne: conseiller._id },
-        'statut': 'finalisee_non_disponible',
-        'conseillerObj.email': conseiller.email
-      },
-      {
-        $set: {
-          'statut': 'nouvelle',
-          'conseillerObj.disponible': true
+          updatedAt
         }
       }
     );
@@ -123,13 +116,15 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
       await db.collection('users').deleteOne({ _id: userCoop._id });
       await db.collection('conseillers').updateOne({ _id: conseiller._id }, {
         $set: {
-          userCreated: false
+          userCreated: false,
+          updatedAt
         }
       });
       await db.collection('misesEnRelation').updateMany(
         { 'conseiller.$id': conseiller._id },
         { $set: {
-          'conseillerObj.userCreated': false
+          'conseillerObj.userCreated': false,
+          'conseillerObj.updatedAt': updatedAt
         } }
       );
     }
@@ -182,7 +177,8 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
           resetPasswordCNError: '',
           codeRegionStructure: '',
           codeDepartementStructure: '',
-          hasPermanence: ''
+          hasPermanence: '',
+          coordinateurs: ''
         }
       });
     // partie mise à jour des conseillerObj dans les misesEnRelation

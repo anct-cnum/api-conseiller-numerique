@@ -1,9 +1,11 @@
+#!/usr/bin/env node
+'use strict';
+require('dotenv').config();
 const { program } = require('commander');
 const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
 const dayjs = require('dayjs');
-require('dotenv').config();
 
 execute(__filename, async ({ db, logger, exit, app }) => {
   const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
@@ -12,6 +14,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: structure de destination');
   program.option('-d, --date <date>', 'date: date de recrutement');
+  program.option('-q, --quota', 'quota: pour désactiver le bridage du nombre de poste validé en Coselec');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
@@ -19,6 +22,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   let ancienneSA = program.ancienne;
   let nouvelleSA = program.nouvelle;
   let dateEmbauche = program.date;
+  const quota = program.quota;
 
   if (!idCNFS || !ancienneSA || !nouvelleSA || !dateEmbauche) {
     exit('Paramètres invalides. Veuillez préciser un id du conseiller ainsi qu\'un id de la structure actuelle; un id de la structure destinataire et la date');
@@ -28,7 +32,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   idCNFS = new ObjectID(program.id);
   ancienneSA = new ObjectID(program.ancienne);
   nouvelleSA = new ObjectID(program.nouvelle);
-  dateEmbauche = formatDate(program.dateEmbauche);
+  dateEmbauche = formatDate(dateEmbauche);
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA, 'statut': 'finalisee' });
   if (!cnfsRecrute) {
@@ -37,7 +41,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   }
   const structureDestination = await db.collection('structures').findOne({ '_id': nouvelleSA });
 
-  if (structureDestination?.statut !== 'VALIDATION_COSELEC') {
+  if (structureDestination?.statut !== 'VALIDATION_COSELEC' && !quota) {
     exit(`La structure destinataire n'est pas 'VALIDATION_COSELEC' mais ${structureDestination.statut}`);
     return;
   }
@@ -58,7 +62,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   await db.collection('misesEnRelation').updateOne(
     { 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA },
     { $set: {
-      statut: 'finalisee_non_disponible',
+      statut: cnfsRecrute?.conseillerObj?.disponible === false ? 'finalisee_non_disponible' : 'nouvelle',
       transfert: {
         'destinationStructureId': nouvelleSA,
         'date': new Date()
@@ -85,6 +89,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       createdAt: new Date(),
       conseillerObj: conseiller,
       structureObj: structure,
+      dateRecrutement: dateEmbauche,
       transfert
     });
   } else {

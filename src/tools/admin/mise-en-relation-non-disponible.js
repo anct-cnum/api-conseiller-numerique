@@ -8,12 +8,12 @@ program.parse(process.argv);
 
 execute(__filename, async ({ db, logger }) => {
   const cacher = async c => {
-    const result = await db.collection('misesEnRelation').updateMany(
-      { 'conseiller.$id': c._id,
-        'statut': 'nouvelle' },
-      { $set:
-        { 'statut': 'non_disponible' }
-      });
+    const result = await db.collection('misesEnRelation').deleteMany(
+      {
+        'conseiller.$id': c._id,
+        'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee'] }
+      }
+    );
 
     logger.info(`${c._id} ${result.modifiedCount} modified documents.`);
   };
