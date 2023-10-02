@@ -35,6 +35,9 @@ execute(__filename, async ({ logger, db, app, exit }) => {
   logger.info(`Recalcul stat cras des ${conseillersId.length} conseillers...`);
   conseillersId.forEach(conseillerId => {
     promises.push(new Promise(async resolve => {
+      await db.collection('rectif_stats_cn_cras').insertOne({
+        conseiller: new DBRef('conseillers', new ObjectId(conseillerId), database)
+      });
       let stat = await db.collection('cras').aggregate(
         [
           { $match: { 'createdAt': { '$lte': dateFinCra }, 'conseiller.$id': conseillerId } },
@@ -60,11 +63,10 @@ execute(__filename, async ({ logger, db, app, exit }) => {
         };
       });
 
-      let objectConseillerStat = {
-        conseiller: new DBRef('conseillers', new ObjectId(conseillerId), database),
-        ...addIndication.reduce((obj, value) => Object.assign(obj, value))
-      };
-      await db.collection('rectif_stats_cn_cras').insertOne(objectConseillerStat);
+      await db.collection('rectif_stats_cn_cras').updateOne(
+        { 'conseiller.$id': new ObjectId(conseillerId) },
+        { $set: addIndication.reduce((obj, value) => Object.assign(obj, value))
+        });
       count++;
       resolve();
     }));
