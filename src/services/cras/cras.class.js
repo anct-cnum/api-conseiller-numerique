@@ -80,7 +80,7 @@ exports.Cras = class Cras extends Service {
         }
         if (!validationCra(cra.cra)) {
           await updateCra(db)(cra).then(async () => {
-            await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId, getCra.createdAt).then(() => {
+            await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId).then(() => {
               return res.send({ cra });
             }).catch(error => {
               app.get('sentry').captureException(error);

@@ -25,7 +25,9 @@ const deleteLigneCra = db => async (year, month, id, options) => {
 
 //On met à jour la nouvelle stat correspondante au mois et à l'annee
 const updateLigneCra = db => async (year, month, total, id, options) => {
-  const listMois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  const listMois = Array.from({ length: 12 }, (e, i) => {
+    return new Date(null, i + 1, null).toLocaleDateString('fr', { month: 'long' });
+  });
   const update = { $push: { [String(year)]: { 'mois': month, 'totalCras': total, 'indication': listMois[month] } } };
   await db.collection('stats_conseillers_cras').updateOne({ '_id': id }, update, options);
 };

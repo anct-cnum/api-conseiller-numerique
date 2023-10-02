@@ -10,7 +10,9 @@ execute(__filename, async ({ logger, db, app, exit }) => {
 
   const connection = app.get('mongodb');
   const database = connection.substr(connection.lastIndexOf('/') + 1);
-  const listMois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  const listMois = Array.from({ length: 12 }, (e, i) => {
+    return new Date(null, i + 1, null).toLocaleDateString('fr', { month: 'long' });
+  });
 
   // prendre unqiuement les cras d'hier,
   // Le cron actuelle passera pour les cras créée aujourd'hui
@@ -23,10 +25,10 @@ execute(__filename, async ({ logger, db, app, exit }) => {
 
   let promises = [];
   let count = 0;
-  const countDoc = await db.collection('rectif_stats_cn_cras').countDocuments();
+  const existsRectifCras = await db.collection('rectif_stats_cn_cras').countDocuments();
 
-  if (countDoc >= 1) {
-    exit(`Veuillez supprimer la collection 'rectif_stats_cn_cras' qui contient ${countDoc} docs puis relancer le script..`);
+  if (existsRectifCras >= 1) {
+    exit(`Veuillez supprimer la collection 'rectif_stats_cn_cras' qui contient ${existsRectifCras} docs puis relancer le script..`);
     return;
   }
 

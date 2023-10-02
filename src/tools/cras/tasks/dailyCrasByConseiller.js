@@ -12,7 +12,9 @@ const getStatsConseillerCras = db => async idConseiller => {
 const insertDailyCrasStatsByConseiller = async (db, query, logger) => {
 
   let detailsCras = await db.collection('cras').find(query).toArray();
-  const listMois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  const listMois = Array.from({ length: 12 }, (e, i) => {
+    return new Date(null, i + 1, null).toLocaleDateString('fr', { month: 'long' });
+  });
   let promises = [];
   let list = [];
 
