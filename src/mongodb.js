@@ -16,9 +16,9 @@ async function logExplain(client, event, requestId) {
     const cursor = collection.aggregate(pipeline, { explain: true });
     const explainOutput = await cursor.next();
 
-    console.log(`Explain output for requestId ${requestId}:`, util.inspect(explainOutput, { depth: null }));
+    console.log(`Résultat commande Explain pour requestId ${requestId} :`, util.inspect(explainOutput, { depth: null }));
   } catch (err) {
-    console.error('Error while explaining query:', err);
+    console.error('Erreur pendant la requête explain :', err);
   } finally {
     explaining = false;
   }
@@ -34,7 +34,7 @@ module.exports = function(app) {
     client.on('commandStarted', event => {
       if (event.commandName === 'aggregate' && !explaining) {
         commandTimings.set(event.requestId, Date.now());
-        console.log(`Aggregate command started: ${util.inspect(event, { depth: null })}`);
+        console.log(`Commande Aggregate started: ${util.inspect(event, { depth: null })}`);
         logExplain(client, event, event.requestId);
       }
     });
@@ -45,7 +45,7 @@ module.exports = function(app) {
         const elapsedTime = Date.now() - startTime;
         commandTimings.delete(event.requestId);
 
-        console.log(`Aggregate command succeeded: ${util.inspect(event, { depth: null })}, Time elapsed: ${elapsedTime} ms`);
+        console.log(`Commande Aggregate finie : ${util.inspect(event, { depth: null })}, Time elapsed: ${elapsedTime} ms`);
       }
     });
 
