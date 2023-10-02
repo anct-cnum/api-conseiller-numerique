@@ -79,8 +79,6 @@ function formatDate(coselec) {
   if ('numero' in coselec) {
     return coselecs[coselec?.numero];
   }
-  console.log(coselec.insertedAt);
-  console.dir(coselec);
   const date = new Date(coselec.insertedAt);
   const jour = String(date.getDate()).padStart(2, '0');
   const mois = String(date.getMonth() + 1).padStart(2, '0');
