@@ -173,7 +173,10 @@ execute(__filename, async ({ db, logger }) => {
         'near': s.location,
         'distanceField': 'dist.calculated',
         'maxDistance': 500000,
-        'query': { disponible: true, statut: 'RECRUTE' },
+        'query': {
+          disponible: true,
+          statut: { $in: ['RECRUTE', 'RUPTURE'] }
+        },
         'num': 10000, // xxx use $limit
         'spherical': false
       }
