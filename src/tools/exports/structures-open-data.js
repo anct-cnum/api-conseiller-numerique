@@ -101,7 +101,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     toms.set(String(value.num_tom), value);
   }
 
-  let query = { statut: 'VALIDATION_COSELEC' };
+  let query = { statut: 'VALIDATION_COSELEC', idPG: { $ne: 5017 } }; // BDT
   let count = 0;
 
   const structures = await db.collection('structures').find(query).toArray();
