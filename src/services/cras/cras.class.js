@@ -80,7 +80,7 @@ exports.Cras = class Cras extends Service {
         }
         if (!validationCra(cra.cra)) {
           await updateCra(db)(cra).then(async () => {
-            await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId, getCra.createdAt).then(() => {
+            await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId).then(() => {
               return res.send({ cra });
             }).catch(error => {
               app.get('sentry').captureException(error);
@@ -115,7 +115,7 @@ exports.Cras = class Cras extends Service {
               logger.error(error);
               return res.status(500).send(new GeneralError('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
             });
-            await deleteCra(db)(craId).then(() => {
+            await deleteCra(db)(craId, user.entity.oid, cra).then(() => {
               return res.send({ isDeleted: true });
             }).catch(error => {
               error.message = `${error.message} (conseillerId: ${user.entity.oid})`;
