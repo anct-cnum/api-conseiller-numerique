@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { Conflict, GeneralError, BadRequest } = require('@feathersjs/errors');
+const { Conflict, GeneralError, BadRequest, NotFound } = require('@feathersjs/errors');
 const logger = require('../../logger');
 
 const {
@@ -49,6 +49,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).then(lieux => res.send(lieux)).catch(error => {
         app.get('sentry').captureException(error);
         logger.error(error);
+        return res.status(404).send(new NotFound('La recherche des permanences a échoué, veuillez réessayer.').toJSON());
       });
     });
 

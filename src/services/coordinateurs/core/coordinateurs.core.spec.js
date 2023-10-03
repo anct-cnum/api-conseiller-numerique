@@ -28,6 +28,8 @@ describe('liste des coordinateurs', () => {
       structure: {
         nomCommune: 'Joinville-le-Pont',
         codePostal: '94042',
+        nom: '#PARISESTMARNE&BOIS',
+        codeCommune: '94042',
         location: {
           type: 'Point',
           coordinates: [2.1681, 48.8173]
@@ -40,10 +42,10 @@ describe('liste des coordinateurs', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -96,6 +98,8 @@ describe('liste des coordinateurs', () => {
       },
       structure: {
         nomCommune: 'Joinville-le-Pont',
+        nom: '#PARISESTMARNE&BOIS',
+        codeCommune: '94042',
         codePostal: '94042',
         location: {
           type: 'Point',
@@ -105,10 +109,10 @@ describe('liste des coordinateurs', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -161,6 +165,8 @@ describe('liste des coordinateurs', () => {
       structure: {
         nomCommune: 'Joinville-le-Pont',
         codePostal: '94042',
+        nom: '#PARISESTMARNE&BOIS',
+        codeCommune: '94042',
         location: {
           type: 'Point',
           coordinates: [2.1681, 48.8173]
@@ -173,10 +179,10 @@ describe('liste des coordinateurs', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -227,6 +233,8 @@ describe('liste des coordinateurs', () => {
       structure: {
         nomCommune: 'Joinville-le-Pont',
         codePostal: '94042',
+        nom: '#PARISESTMARNE&BOIS',
+        codeCommune: '94042',
         location: {
           type: 'Point',
           coordinates: [2.1681, 48.8173]
@@ -239,10 +247,10 @@ describe('liste des coordinateurs', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -291,6 +299,8 @@ describe('liste des coordinateurs', () => {
       structure: {
         nomCommune: 'Joinville-le-Pont',
         codePostal: '94042',
+        nom: '#PARISESTMARNE&BOIS',
+        codeCommune: '94042',
         location: {
           type: 'Point',
           coordinates: [2.1681, 48.8173]
@@ -303,10 +313,10 @@ describe('liste des coordinateurs', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -355,6 +365,8 @@ describe('liste des coordinateurs', () => {
       structure: {
         nomCommune: 'Joinville-le-Pont',
         codePostal: '94042',
+        nom: '#PARISESTMARNE&BOIS',
+        codeCommune: '94042',
         location: {
           type: 'Point',
           coordinates: [2.1681, 48.8173]
@@ -367,10 +379,10 @@ describe('liste des coordinateurs', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -434,10 +446,10 @@ describe('liste des conseillers', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -489,10 +501,10 @@ describe('liste des conseillers', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -546,10 +558,10 @@ describe('liste des conseillers', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -622,10 +634,10 @@ describe('liste des conseillers', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -736,10 +748,10 @@ describe('liste des conseillers', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },
@@ -869,10 +881,10 @@ describe('liste des conseillers', () => {
           adresse: {
             numero_voie: '14',
             type_voie: 'RUE',
-            nom_voie: 'LOUIS TALAMONI',
+            libelle_voie: 'LOUIS TALAMONI',
             complement_adresse: null,
             code_postal: '94500',
-            localite: 'CHAMPIGNY-SUR-MARNE',
+            libelle_commune: 'CHAMPIGNY-SUR-MARNE',
           }
         },
       },

@@ -20,7 +20,6 @@ const {
   createCompteFixCHub
 } = require('./tasks/compte-fix');
 const {
-  deleteStatutNonDispoMisesEnRelation,
   deleteUsersSolo,
   indexMongoConseillers
 } = require('./tasks/requete-mongo');
@@ -79,7 +78,6 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     }
     try {
       if (deleteDataNonDispoAndUsersExterne) {
-        await deleteStatutNonDispoMisesEnRelation(db);
         await deleteUsersSolo(db);
       }
       if (compteFix) {
