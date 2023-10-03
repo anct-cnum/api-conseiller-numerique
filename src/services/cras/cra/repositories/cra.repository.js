@@ -25,20 +25,27 @@ const deleteLigneCra = db => async (year, month, id, options) => {
 
 //On met à jour la nouvelle stat correspondante au mois et à l'annee
 const updateLigneCra = db => async (year, month, total, id, options) => {
-  const update = { $push: { [String(year)]: { 'mois': month, 'totalCras': total } } };
+  const listMois = Array.from({ length: 12 }, (e, i) => {
+    return new Date(null, i + 1, null).toLocaleDateString('fr', { month: 'long' });
+  });
+  const update = { $push: { [String(year)]: { 'mois': month, 'totalCras': total, 'indication': listMois[month] } } };
   await db.collection('stats_conseillers_cras').updateOne({ '_id': id }, update, options);
 };
 
-const updateStatistiquesCra = db => async (cra, oldDateAccompagnement, conseillerId) => {
+const updateStatistiquesCra = db => async (cra, oldDateAccompagnement, conseillerId, createdAt) => {
+  const dateCreateCra = createdAt;
+  dateCreateCra.setUTCHours(0, 0, 0, 0);
+  const dateNow = new Date();
+  dateNow.setUTCHours(0, 0, 0, 0);
   const newYear = cra.cra.dateAccompagnement.getUTCFullYear();
   const newMonth = cra.cra.dateAccompagnement.getMonth();
   const oldYear = oldDateAccompagnement.getUTCFullYear();
   const oldMonth = oldDateAccompagnement.getMonth();
+  const testCraCreate = dateCreateCra.toString() !== dateNow.toString();
   const testYear = newYear === oldYear;
   const testMonth = newMonth === oldMonth;
   const stats = await getStatsConseillerCras(db)(new ObjectId(conseillerId));
-
-  if (stats && (testYear && !testMonth || !testYear)) {
+  if (stats && (testYear && !testMonth || !testYear) && testCraCreate) {
     const options = { upsert: true };
 
     let oldTotal = stats[String(oldYear)]?.find(stat => stat.mois === oldMonth)?.totalCras;
