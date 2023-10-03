@@ -13,7 +13,7 @@ const getPerms = db => async idConseiller => await db.collection('permanences_te
   }
 }).toArray();
 
-execute(__filename, async ({ logger, db }) => {
+execute(__filename, async ({ db }) => {
 
   const permanences = [];
   const promises = [];
