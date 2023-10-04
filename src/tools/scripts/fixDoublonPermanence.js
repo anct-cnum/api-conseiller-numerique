@@ -8,28 +8,11 @@ const cli = require('commander');
 const { program } = require('commander');
 const { execute } = require('../utils');
 
-const getPermanencesDoublonsByLocation = async db => await db.collection('permanences').aggregate([
+const getPermanencesDoublons = async db => await db.collection('permanences_temp').aggregate([
   { '$unwind': '$location' },
+  { '$unwind': '$structure' },
   { '$group': {
-    '_id': '$location',
-    'permanences': { '$push': '$$ROOT' },
-    'count': { '$sum': 1 }
-  } },
-  { '$match': {
-    'count': { '$gt': 1 }
-  } },
-  { '$project': {
-    '_id': 0,
-    'location': '$_id',
-    'permanences': '$permanences'
-  } }
-]).toArray();
-
-const getPermanencesDoublonsByAdresse = async db => await db.collection('permanences').aggregate([
-  { '$unwind': '$adresse' },
-  { '$unwind': '$location' },
-  { '$group': {
-    '_id': { 'adresse': '$adresse', 'location': '$location' },
+    '_id': { 'location': '$location', 'structure': '$structure' },
     'permanences': { '$push': '$$ROOT' },
     'count': { '$sum': 1 }
   } },
@@ -43,19 +26,8 @@ const getPermanencesDoublonsByAdresse = async db => await db.collection('permane
   } }
 ]).toArray();
 
-const getPermanencesDoublons = async (permByLocation, permByAdresse) => {
-  await permByLocation.forEach(pBylocation => {
-    if (!permByAdresse.find(pByAdresse =>
-      pByAdresse.location.coordinates[0] === pBylocation.location.coordinates[0] &&
-      pByAdresse.location.coordinates[1] === pBylocation.location.coordinates[1])) {
-      permByAdresse.push(pBylocation);
-    }
-  });
-  return permByAdresse;
-};
-
 const createCsvPermanences = async permanencesDoublons => {
-  let csvFile = path.join(__dirname, '../../../data/exports', 'permanences-doublons.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'permanences-doublons-temp.csv');
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
@@ -102,7 +74,10 @@ const traitementDoublons = async doublons => {
   doublons.shift();
   doublons.forEach(doublon => {
     //on filtre les doublons selon les champs
-    if (String(fusionPermanence.structure.$id) === String(doublon.structure.$id)) {
+    if (String(fusionPermanence.structure.oid) === String(doublon.structure.oid &&
+      fusionPermanence.conseillers.length > 0 &&
+      doublon.conseillers.length > 0
+    )) {
       idDoublonSuppression.push(doublon._id);
       fusionPermanence.email = fusionPermanence.email ?? doublon.email;
       fusionPermanence.numeroTelephone = fusionPermanence.numeroTelephone ?? doublon.numeroTelephone;
@@ -181,10 +156,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   const promises = [];
 
   logger.info(`Obtention des doublons de permanences...`);
-  const permByLocation = await getPermanencesDoublonsByLocation(db);
-  const permByAdresse = await getPermanencesDoublonsByAdresse(db);
-  const permanencesDoublons = await getPermanencesDoublons(permByLocation, permByAdresse);
-
+  const permanencesDoublons = await getPermanencesDoublons(db);
   logger.info(`Génération du fichier CSV ...`);
   await createCsvPermanences(permanencesDoublons);
   logger.info(`Fichier CSV déposé dans data/exports/permanences-doublons.csv`);
