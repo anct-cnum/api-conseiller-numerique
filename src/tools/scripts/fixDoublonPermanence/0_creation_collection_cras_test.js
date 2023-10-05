@@ -4,7 +4,6 @@
 const { execute } = require('../../utils');
 const { ObjectId } = require('mongodb');
 
-
 const getPermanencesDoublonsByLocation = async db => await db.collection('permanences_temp').aggregate([
   { '$unwind': '$location' },
   { '$group': {
@@ -60,11 +59,7 @@ const getCrasConseillerPermanence = db => async (idConseillers, idPermanence) =>
 
 const insertCras = db => async cras => {
   cras.forEach(async cra => {
-    console.log(cra);
-    await db.collection('cras_test').updateOne(
-      { '_id': cra._id },
-      { '$setOnInsert': cra },
-      { upsert: true });
+    await db.collection('cra_test').replaceOne({ '_id': cra._id }, cra, { upsert: true });
   });
 };
 
