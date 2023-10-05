@@ -14,7 +14,7 @@ const updateCra = db => async (newIdPermanence, oldIdPermanence, conseillers) =>
   });
   await db.collection('cra_test').updateMany(
     { 'permanence.$id': new ObjectId(newIdPermanence), 'conseiller.$id': { '$in': tab } },
-    { '$set': { 'permanence.$id': oldIdPermanence } }
+    { '$set': { 'permanence.$id': new ObjectId(oldIdPermanence) } }
   );
 };
 
@@ -42,7 +42,6 @@ execute(__filename, async ({ logger, db, exit }) => {
   .pipe(csv({ separator: ';' }))
   .on('data', data => permanences.push(data))
   .on('end', () => {
-
     for (let i = debutlimit; i < finlimit; i++) {
       if (permanences[i].conseillers.length > 0) {
         promises.push(new Promise(async resolve => {
@@ -56,20 +55,6 @@ execute(__filename, async ({ logger, db, exit }) => {
         }));
       }
     }
-  /*
-    permanences.forEach(permanence, i => {
-      if (permanence.conseillers.length > 0) {
-        promises.push(new Promise(async resolve => {
-          await updateCra(db)(permanence.newIdPermanence, permanence.idPermanence, permanence.conseillers);
-          console.log(
-            'Les cras du/des conseiller(s) ' + String(permanence.conseillers) +
-            ' mis sur la permanence ' + permanence.idPermanence +
-            'ont été réaffectés à la permanence' + permanence.newIdPermanence
-          );
-          resolve();
-        }));
-      }
-    });*/
   });
 
   await Promise.all(promises).then(() => {
