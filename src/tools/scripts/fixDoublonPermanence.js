@@ -132,16 +132,16 @@ const traitementDoublons = async doublons => {
   return [fusionPermanence, idDoublonSuppression];
 };
 
-const updatePermanence = db => async permanence => await db.collection('permanences_test').replaceOne(
+const updatePermanence = db => async permanence => await db.collection('permanences').replaceOne(
   { '_id': permanence._id },
   permanence,
   { upsert: true });
 
-const deletePermanences = db => async idPermanences => await db.collection('permanences_test').deleteMany({
+const deletePermanences = db => async idPermanences => await db.collection('permanences').deleteMany({
   '_id': { '$in': idPermanences }
 });
 
-const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection('cras_test').updateMany(
+const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection('cras').updateMany(
   { 'permanence.$id': { '$in': oldIds } },
   { '$set': { 'permanence.$id': newId } }
 );

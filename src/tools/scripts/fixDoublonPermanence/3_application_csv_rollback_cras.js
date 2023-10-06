@@ -12,7 +12,7 @@ const updateCra = db => async (newIdPermanence, oldIdPermanence, conseillers) =>
   conseillers.split(',').forEach(conseiller => {
     tab.push(new ObjectId(conseiller));
   });
-  await db.collection('cras_test').updateMany(
+  await db.collection('cras').updateMany(
     { 'permanence.$id': new ObjectId(newIdPermanence), 'conseiller.$id': { '$in': tab } },
     { '$set': { 'permanence.$id': new ObjectId(oldIdPermanence), 'updatedAt': new Date('Y-m-d') } }
   );

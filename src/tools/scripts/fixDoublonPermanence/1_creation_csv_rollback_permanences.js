@@ -10,7 +10,7 @@ const createCsv = permanencesDoublons => {
   createCsvFile('permanences-structure-correction', csvHeader, 'permanences', permanencesDoublons);
 };
 
-const updatePermanence = db => async permanence => await db.collection('permanences_test')
+const updatePermanence = db => async permanence => await db.collection('permanences')
 .replaceOne({ '_id': permanence._id }, permanence, { upsert: true });
 
 program.option('-f, --fix <fix>', 'lot du fichier');

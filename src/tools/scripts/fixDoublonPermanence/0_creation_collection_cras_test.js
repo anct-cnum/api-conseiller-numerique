@@ -12,7 +12,7 @@ const getCrasConseillerPermanence = db => async (idConseillers, idPermanence) =>
 
 const insertCras = db => async cras => {
   cras.forEach(async cra => {
-    await db.collection('cras_test').replaceOne({ '_id': cra._id }, cra, { upsert: true });
+    await db.collection('cras').replaceOne({ '_id': cra._id }, cra, { upsert: true });
   });
 };
 

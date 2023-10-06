@@ -6,7 +6,7 @@ const { getPermanencesDoublons, createCsvFile } = require('./fix_doublons_functi
 
 const permanenceExists = db => async idPermanence => {
   const permTemp = await db.collection('permanences_temp').findOne({ '_id': idPermanence });
-  const perm = await db.collection('permanences_test').findOne({ '_id': idPermanence });
+  const perm = await db.collection('permanences').findOne({ '_id': idPermanence });
 
   return (
     String(permTemp?.adresse) === String(perm?.adresse) &&
