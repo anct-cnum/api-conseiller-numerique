@@ -27,7 +27,7 @@ const getPermanencesDoublons = async db => await db.collection('permanences_temp
 ]).toArray();
 
 const createCsvPermanences = async permanencesDoublons => {
-  let csvFile = path.join(__dirname, '../../../data/exports', 'permanences-doublons-temp.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'permanences-doublons-test.csv');
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
@@ -74,10 +74,10 @@ const traitementDoublons = async doublons => {
   doublons.shift();
   doublons.forEach(doublon => {
     //on filtre les doublons selon les champs
-    if (String(fusionPermanence.structure.oid) === String(doublon.structure.oid &&
+    if (String(fusionPermanence.structure.oid) === String(doublon.structure.oid) &&
       fusionPermanence.conseillers.length > 0 &&
       doublon.conseillers.length > 0
-    )) {
+    ) {
       idDoublonSuppression.push(doublon._id);
       fusionPermanence.email = fusionPermanence.email ?? doublon.email;
       fusionPermanence.numeroTelephone = fusionPermanence.numeroTelephone ?? doublon.numeroTelephone;
@@ -129,20 +129,19 @@ const traitementDoublons = async doublons => {
     }
   });
   fusionPermanence.updatedAt = new Date();
-
   return [fusionPermanence, idDoublonSuppression];
 };
 
-const updatePermanence = db => async permanence => await db.collection('permanences').replaceOne(
+const updatePermanence = db => async permanence => await db.collection('permanences_test').replaceOne(
   { '_id': permanence._id },
   permanence,
   { upsert: true });
 
-const deletePermanences = db => async idPermanences => await db.collection('permanences').deleteMany({
+const deletePermanences = db => async idPermanences => await db.collection('permanences_test').deleteMany({
   '_id': { '$in': idPermanences }
 });
 
-const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection('cras').updateMany(
+const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection('cras_test').updateMany(
   { 'permanence.$id': { '$in': oldIds } },
   { '$set': { 'permanence.$id': newId } }
 );

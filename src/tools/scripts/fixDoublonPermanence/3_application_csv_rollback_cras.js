@@ -12,9 +12,9 @@ const updateCra = db => async (newIdPermanence, oldIdPermanence, conseillers) =>
   conseillers.split(',').forEach(conseiller => {
     tab.push(new ObjectId(conseiller));
   });
-  await db.collection('cra_test').updateMany(
+  await db.collection('cras_test').updateMany(
     { 'permanence.$id': new ObjectId(newIdPermanence), 'conseiller.$id': { '$in': tab } },
-    { '$set': { 'permanence.$id': new ObjectId(oldIdPermanence) } }
+    { '$set': { 'permanence.$id': new ObjectId(oldIdPermanence), 'updatedAt': new Date('Y-m-d') } }
   );
 };
 
@@ -23,10 +23,10 @@ program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
 execute(__filename, async ({ logger, db, exit }) => {
-  logger.info('Etape 3 :');
+  logger.info('Etape 4 :');
   logger.info('Application des corrections de cras à partir du csv');
 
-  const { lot = 1 } = program;
+  const lot = Number(program.lot ?? 1);
   const limit = 100;
   const debutlimit = limit * (lot - 1);
   const finlimit = limit * lot;
@@ -43,13 +43,13 @@ execute(__filename, async ({ logger, db, exit }) => {
   .on('data', data => permanences.push(data))
   .on('end', () => {
     for (let i = debutlimit; i < finlimit; i++) {
-      if (permanences[i].conseillers.length > 0) {
+      if (permanences[i]?.conseillers?.length > 0) {
         promises.push(new Promise(async resolve => {
           await updateCra(db)(permanences[i].newIdPermanence, permanences[i].idPermanence, permanences[i].conseillers);
-          console.log(
+          logger.info(
             'Les cras du/des conseiller(s) ' + String(permanences[i].conseillers) +
             ' mis sur la permanence ' + permanences[i].idPermanence +
-            'ont été réaffectés à la permanence ' + permanences[i].newIdPermanence
+            ' ont été réaffectés à la permanence ' + permanences[i].newIdPermanence
           );
           resolve();
         }));
@@ -57,7 +57,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     }
   });
 
-  await Promise.all(promises).then(() => {
-    logger.info('Application des corrections de cras à partir du csv réalisé avec succès');
-  });
+  await Promise.all(promises);
+
+  logger.info('Application des corrections de cras à partir du csv réalisé avec succès (lot ' + lot + ')');
 });
