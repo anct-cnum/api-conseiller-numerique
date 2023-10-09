@@ -14,7 +14,7 @@ const updateCra = db => async (newIdPermanence, oldIdPermanence, conseillers) =>
   });
   await db.collection('cras').updateMany(
     { 'permanence.$id': new ObjectId(newIdPermanence), 'conseiller.$id': { '$in': tab } },
-    { '$set': { 'permanence.$id': new ObjectId(oldIdPermanence), 'updatedAt': new Date('Y-m-d') } }
+    { '$set': { 'permanence.$id': new ObjectId(oldIdPermanence), 'fixUpdatedAt': new Date('Y-m-d') } }
   );
 };
 
