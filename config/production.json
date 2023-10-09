@@ -108,5 +108,6 @@
   "user_accounts": {
     "expiration_default_months": "USER_ACCOUNTS_EXPIRATION_DEFAULT",
     "expiration_admin_months": "USER_ACCOUNTS_EXPIRATION_ADMIN"
-  }
+  },
+  "limit_relance_cra": "LIMIT_RELANCE_CRA"
 }
