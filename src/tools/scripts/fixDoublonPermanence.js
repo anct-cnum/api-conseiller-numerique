@@ -8,7 +8,7 @@ const cli = require('commander');
 const { program } = require('commander');
 const { execute } = require('../utils');
 
-const getPermanencesDoublons = async db => await db.collection('permanences_temp').aggregate([
+const getPermanencesDoublons = async db => await db.collection('permanences').aggregate([
   { '$unwind': '$location' },
   { '$unwind': '$structure' },
   { '$group': {
@@ -27,7 +27,7 @@ const getPermanencesDoublons = async db => await db.collection('permanences_temp
 ]).toArray();
 
 const createCsvPermanences = async permanencesDoublons => {
-  let csvFile = path.join(__dirname, '../../../data/exports', 'permanences-doublons-test.csv');
+  let csvFile = path.join(__dirname, '../../../data/exports', 'permanences-doublons.csv');
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
