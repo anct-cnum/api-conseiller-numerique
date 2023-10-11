@@ -30,7 +30,7 @@ execute(__filename, async ({ logger, db }) => {
           });
         correctifLieuPrincipal++;
       } else {
-        logger.info(`Il y a ${conseiller.countPerm} permanences principaux  pour le conseiller ${conseiller._id}`);
+        logger.info(`Il y a ${conseiller.countPerm} permanences principales  pour le conseiller ${conseiller._id}`);
       }
       resolve();
     }));
