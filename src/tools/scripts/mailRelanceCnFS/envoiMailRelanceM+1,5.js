@@ -20,7 +20,7 @@ execute(__filename, async ({ db, logger, Sentry, emails, app }) => {
   let { limit = 1, delai = 1000 } = cli;
 
   limit = app.get('limit_relance_cra') ?? limit;
-  console.log(typeof limit);
+  
   const conseillers = await db.collection('conseillers').find({
     'statut': { $eq: 'RECRUTE' },
     'estCoordinateur': { $ne: true },
