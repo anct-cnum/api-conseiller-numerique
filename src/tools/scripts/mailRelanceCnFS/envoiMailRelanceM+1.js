@@ -50,7 +50,7 @@ execute(__filename, async ({ db, logger, Sentry, emails, app }) => {
         ]
       },
     ]
-  }).limit(limit).toArray();
+  }).limit(Number(limit)).toArray();
 
   for (const conseiller of conseillers) {
     try {
