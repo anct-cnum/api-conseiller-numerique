@@ -667,10 +667,9 @@ exports.Conseillers = class Conseillers extends Service {
       let user;
       let conseiller = await db.collection('conseillers').findOne({ _id: conseillerId });
       if (conseiller === null) {
-        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+        return res.status(404).send(new NotFound('Conseiller n\'existe pas', {
           conseillerId,
         }).toJSON());
-        return;
       }
 
       try {
@@ -678,14 +677,12 @@ exports.Conseillers = class Conseillers extends Service {
         user = conseillerUser;
         if (conseillerUser === null) {
           // Cas où le cron n'est pas encore passé, doublon ou user inactif
-          res.status(404).send(new NotFound('Utilisateur inexistant (doublon ou inactivité)', {
+          return res.status(404).send(new NotFound('Utilisateur inexistant (doublon ou inactivité)', {
             conseillerId,
           }).toJSON());
-          return;
         }
         if (conseillerUser.passwordCreated === true) {
-          res.status(409).send(new Conflict(`Le compte de ${conseiller.prenom} ${conseiller.nom} est déjà activé`));
-          return;
+          return res.status(409).send(new Conflict(`Le compte de ${conseiller.prenom} ${conseiller.nom} est déjà activé`));
         }
         await db.collection('users').updateOne({ _id: conseillerUser._id }, { $set: { token: uuidv4(), tokenCreatedAt: new Date() } });
         let mailer = createMailer(app);
@@ -979,7 +976,7 @@ exports.Conseillers = class Conseillers extends Service {
       try {
         await pool.query(`UPDATE djapp_coach
         SET (start_date, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, dateDisponibilite, updatedAt]);
+        [conseiller.idPG, dayjs(dateDisponibilite).format('YYYY-MM-DD'), dayjs(updatedAt).format('YYYY-MM-DD')]);
 
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
 
