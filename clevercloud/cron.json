@@ -1,7 +1,6 @@
 [
   "0 * * * * $ROOT/src/tools/jobs/migrate-pg-to-mongo.sh",
   "30 0 * * * $ROOT/src/tools/jobs/mises-en-relation.sh",
-  "*/1 * * * * $ROOT/src/tools/jobs/send-email-prefets.sh",
   "*/15 * * * * $ROOT/src/tools/jobs/create-account-structures.sh",
   "0 8 * * * $ROOT/src/tools/jobs/mail-relance-cra.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh",
