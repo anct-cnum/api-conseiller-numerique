@@ -25,7 +25,7 @@ execute(__filename, async ({ logger, db }) => {
     promises.push(new Promise(async resolve => {
       if (conseiller.countPerm === 2) {
         await db.collection('permanences').updateOne(
-          { lieuPrincipalPour: conseiller._id },
+          { lieuPrincipalPour: { $in: [conseiller._id] } },
           { $pull: { 'lieuPrincipalPour': conseiller._id }
           });
         correctifLieuPrincipal++;
@@ -37,5 +37,5 @@ execute(__filename, async ({ logger, db }) => {
   });
   await Promise.all(promises);
 
-  logger.info(`Il y a ${correctifLieuPrincipal} conseiller(s) qui ont été corrigé / ${conseillers.length}`);
+  logger.info(`Il y a ${correctifLieuPrincipal} conseiller(s) qui a(ont) été corrigé(s) / ${conseillers.length}`);
 });
