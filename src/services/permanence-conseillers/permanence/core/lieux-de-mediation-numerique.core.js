@@ -49,6 +49,8 @@ const courrielIfAny = courriel => courriel && COURRIEL_REGEXP.test(courriel) ? {
 
 const siteWebIfAny = siteWeb => siteWeb && URL_REGEXP.test(siteWeb) ? { site_web: [siteWeb] } : {};
 
+const isPrivate = acces => acces && acces.includes('prive') ? { prive: true } : {};
+
 const toTimeTable = horaires => (horaires ?? []).map(horaire => [horaire.matin, horaire.apresMidi]
 .flat()
 .filter(horaire => horaire !== 'Fermé'))
@@ -174,6 +176,7 @@ const lieuxDeMediationNumerique = async ({ getPermanences }) =>
         structureId: permanence.structure?._id,
         structureNom: permanence.structure?.nom,
         ...aidantsIfAny(permanence.aidants),
+        ...isPrivate(permanence.typeAcces),
       };
     } catch (error) {
       if (REQUIRED_FIELDS_ERRORS.some(requiredFieldError => error instanceof requiredFieldError)) {
