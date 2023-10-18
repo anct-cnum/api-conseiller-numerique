@@ -160,4 +160,9 @@ module.exports = {
       db.collection('qpv').createIndex({ 'geometry': '2dsphere' }),
     ]);
   },
+  conseillersSupprimes: db => {
+    return Promise.all([
+      db.collection('conseillersSupprimes').createIndex({ 'conseiller.idPG': 1 }),
+    ]);
+  },
 };

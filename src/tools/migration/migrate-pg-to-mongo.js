@@ -107,7 +107,11 @@ execute(__filename, async ({ db, logger, Sentry }) => {
     };
 
     const options = { upsert: true };
-    await db.collection('conseillers').updateOne(filter, updateDoc, options);
+
+    const inDeletion = await db.collection('conseillersSupprimes').countDocuments({ 'conseiller.idPG': c.id });
+    if (inDeletion === 0) {
+      await db.collection('conseillers').updateOne(filter, updateDoc, options);
+    }
   };
 
   // Récupère toutes les structures dans PG
