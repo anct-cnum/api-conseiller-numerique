@@ -40,7 +40,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   const writeLine = [];
   const structures = await getStructures(db);
 
-  logger.info(structures.length + ' structures en cours d\'observation...');
+  logger.info(`${structures.length} structures en cours d'observation...`);
   structures.forEach(structure => {
     let erreursDetectees = 0;
     promises.push(new Promise(async resolve => {
