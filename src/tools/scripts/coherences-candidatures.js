@@ -83,7 +83,7 @@ const getCandidatsWithoutUser = async db =>
   await db.collection('conseillers').find({ statut: { $ne: 'RECRUTE' }, userCreated: false }).project({ _id: 1 }).sort({ _id: 1 }).toArray();
 
 const getMisesEnRelation = db => async oids =>
-  await db.collection('misesEnRelation').find({ 'conseiller.$id': { $in: oids } }).project({ 'conseiller.oid': 1 }).toArray();
+  await db.collection('misesEnRelation').find({ 'conseiller.$id': { $in: oids } }).project({ 'conseiller.$id': 1 }).toArray();
 
 execute(__filename, async ({ app, db, logger, exit }) => {
   // On prend le début de journée pour comparer avec PG à cause de la synchro qui peut différer
@@ -195,11 +195,13 @@ execute(__filename, async ({ app, db, logger, exit }) => {
 
   // 9. Cohérence candidatures supprimées VS mises en relation
   let misesEnRelation = await getMisesEnRelation(db)(candidatsSupprimees.map(oid => new ObjectId(oid)));
+  misesEnRelation = misesEnRelation.map(miseEnRelation => String(miseEnRelation.conseiller.oid));
+  misesEnRelation = [...new Set(misesEnRelation)];
 
   if (misesEnRelation.length === 0) {
     logger.info(`9. Mises en relation des candidatures supprimées OK`);
   } else {
-    logger.warn(`9. Incohérences de mises en relation de candidatures supprimées : ${JSON.stringify(misesEnRelation)}`);
+    logger.warn(`9. Incohérences de mises en relation pour les candidatures supprimées : ${JSON.stringify(misesEnRelation)}`);
   }
 
   exit();
