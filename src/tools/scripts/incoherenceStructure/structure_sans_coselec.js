@@ -34,6 +34,10 @@ const getMisesEnRelation = db => async idStructure => await db.collection('mises
   'statut': { '$in': ['finalisee_rupture', 'terminee'] }
 }).toArray();
 
+const getStructure = db => async idStructure => await db.collection('structures').findOne({
+  '_id': idStructure
+});
+
 execute(__filename, async ({ logger, db, exit }) => {
   logger.info(`Début de la recherche d'incohérence lorsqu'une structure a un statut autre que VALIDATION_COSELEC`);
   const promises = [];
@@ -49,7 +53,9 @@ execute(__filename, async ({ logger, db, exit }) => {
       if (resultats.length > 0) {
         line += '- ';
         for (const resultat of resultats) {
-          erreursDetectees++;
+          if (String(resultat._id) !== 'finalisee_rupture') {
+            erreursDetectees++;
+          }
           line += resultat.countStatut + ' statut de valeur ' + String(resultat._id);
           if (resultats.length > 1) {
             line += ' | ';
@@ -57,14 +63,14 @@ execute(__filename, async ({ logger, db, exit }) => {
         }
         line += '\n';
       }
+      if (structure.userCreated === true) {
+        erreursDetectees++;
+        line += '- La structure id ' + String(structure._id) + ' a encore un userCreated à true\n';
+      }
       const misesEnRelation = await getMisesEnRelation(db)(structure._id);
       if (misesEnRelation.length > 0) {
         for (const miseEnRelation of misesEnRelation) {
-          if (miseEnRelation.conseillerObj.userCreated === true) {
-            erreursDetectees++;
-            line += '- Une mise en relation avec userCreated à true pour le conseiller id ' +
-            String(miseEnRelation.conseillerObj._id) + '\n';
-          } else if (miseEnRelation.structureObj.userCreated === true) {
+          if (miseEnRelation.structureObj.userCreated === true) {
             erreursDetectees++;
             line += '- Une mise en relation avec userCreated à true pour la structure id ' +
             String(miseEnRelation.structureObj._id) + '\n';
