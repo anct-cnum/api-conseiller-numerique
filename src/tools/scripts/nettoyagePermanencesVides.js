@@ -16,7 +16,7 @@ const checkConseillerOK = db => async idConseiller => {
   const result = await db.collection('conseillers').findOne({
     '_id': idConseiller
   });
-  return result.status === 'RECRUTE';
+  return result?.status === 'RECRUTE';
 };
 
 const updateCras = db => async idPermanence => await db.collection('cras').updateMany(
