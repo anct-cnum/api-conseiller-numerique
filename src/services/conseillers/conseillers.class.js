@@ -27,6 +27,7 @@ const {
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
+  echangeUserCreation,
   suppressionTotalCandidat,
   suppressionCv,
   suppressionCVConseiller,
@@ -618,6 +619,8 @@ exports.Conseillers = class Conseillers extends Service {
         email
       };
       const instructionSuppression = motif === 'doublon' ? { '_id': new ObjectId(id), 'email': email } : { 'email': email };
+      const nbDoublonsReel = await db.collection('conseillers').countDocuments({ 'email': email });
+      const estDoublon = motif === 'doublon' && nbDoublonsReel > 1;
       const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
       await verificationRoleUser(db, decode, req, res)(roles).then(userIdentifier => {
         user = userIdentifier;
@@ -636,7 +639,12 @@ exports.Conseillers = class Conseillers extends Service {
       }).then(() => {
         return suppressionTotalCandidat(app)(tableauCandidat);
       }).then(() => {
-        if (cv?.file && (motif !== 'doublon')) {
+        if (estDoublon) {
+          return echangeUserCreation(app)(email);
+        }
+        return;
+      }).then(() => {
+        if (cv?.file && !estDoublon) {
           return suppressionCv(cv, app).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
@@ -645,8 +653,8 @@ exports.Conseillers = class Conseillers extends Service {
         }
         return;
       }).then(async () => {
-        if (motif !== 'doublon') {
-          candidatSupprimeEmailPix(db, app)(candidat);
+        if (!estDoublon) {
+          await candidatSupprimeEmailPix(db, app)(candidat);
           await deleteMailSib(app)(candidat.email);
         }
         return;
