@@ -25,7 +25,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     promises.push(new Promise(async resolve => {
       await countMisesEnRelation(db)(structure._id).then(countNbConseiller => {
         const coselec = getLastCoselec(structure);
-        if (countNbConseiller !== coselec?.nombreConseillersCoselec) {
+        if (countNbConseiller > coselec?.nombreConseillersCoselec) {
           writeLine.push('La structure avec l\'id ' + String(structure._id) +
           ' a un nombreConseillersCoselec de ' + coselec.nombreConseillersCoselec +
           ' mais comporte ' + countNbConseiller + ' mise(s) en relation\n'

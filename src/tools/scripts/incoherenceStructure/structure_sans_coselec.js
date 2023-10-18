@@ -34,10 +34,6 @@ const getMisesEnRelation = db => async idStructure => await db.collection('mises
   'statut': { '$in': ['finalisee_rupture', 'terminee'] }
 }).toArray();
 
-const getStructure = db => async idStructure => await db.collection('structures').findOne({
-  '_id': idStructure
-});
-
 execute(__filename, async ({ logger, db, exit }) => {
   logger.info(`Début de la recherche d'incohérence lorsqu'une structure a un statut autre que VALIDATION_COSELEC`);
   const promises = [];
