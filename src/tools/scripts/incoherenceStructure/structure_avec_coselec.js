@@ -4,7 +4,7 @@
 const { execute } = require('../../utils');
 const path = require('path');
 const fs = require('fs');
-const { getLastCoselec } = require('../../../utils');
+const { getCoselec } = require('../../../utils');
 
 const getStructure = async db => await db.collection('structures').find({
   'statut': 'VALIDATION_COSELEC'
@@ -24,7 +24,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   structures.forEach(structure => {
     promises.push(new Promise(async resolve => {
       await countMisesEnRelation(db)(structure._id).then(countNbConseiller => {
-        const coselec = getLastCoselec(structure);
+        const coselec = getCoselec(structure);
         if (countNbConseiller > coselec?.nombreConseillersCoselec) {
           writeLine.push('La structure avec l\'id ' + String(structure._id) +
           ' a un nombreConseillersCoselec de ' + coselec.nombreConseillersCoselec +
