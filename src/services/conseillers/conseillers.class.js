@@ -967,7 +967,8 @@ exports.Conseillers = class Conseillers extends Service {
       const userId = decode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
-      const dateDisponibilite = new Date(req.body.dateDisponibilite);
+      const { dateDisponibilite } = req.body.dateDisponibilite;
+      const mongoDateDisponibilite = new Date(dateDisponibilite);
       const updatedAt = new Date();
 
       const dateDisponibleValidation =
@@ -994,11 +995,11 @@ exports.Conseillers = class Conseillers extends Service {
         SET (start_date, updated) = ($2, $3) WHERE id = $1`,
         [conseiller.idPG, dayjs(dateDisponibilite).format('YYYY-MM-DD'), dayjs(updatedAt).format('YYYY-MM-DD')]);
 
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { mongoDateDisponibilite, updatedAt } });
 
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: {
-            'conseillerObj.dateDisponibilite': dateDisponibilite,
+            'conseillerObj.dateDisponibilite': mongoDateDisponibilite,
             'conseillerObj.updatedAt': updatedAt
           }
         });
