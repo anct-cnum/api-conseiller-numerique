@@ -124,20 +124,37 @@ const majConseillerTransfert = db => async (idCNFS, idNouvelleSA) =>
   await db.collection('conseillers').updateOne({ _id: idCNFS }, { $set: { structureId: idNouvelleSA } });
 const majMiseEnRelationAncienneSA = db => async (idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute) => {
   if (cnfsRecrute?.conseillerObj?.disponible === true) {
-    await db.collection('misesEnRelation').updateMany(
+    await db.collection('misesEnRelation').updateOne(
       {
         'conseiller.$id': idCNFS,
         'structure.$id': idAncienneSA,
+        'statut': 'finalisee'
       },
       {
         $set: {
           statut: 'nouvelle',
-          dateRecrutement: null,
           fusion: {
             'destinationStructureId': idNouvelleSA,
             'date': new Date()
           }
+        },
+        $unset: {
+          dateRecrutement: '',
+          reconventionnement: '',
+          phaseConventionnement: '',
+          miseEnRelationConventionnement: '',
+          miseEnRelationReconventionnement: '',
+          dateDebutDeContrat: '',
+          dateFinDeContrat: '',
+          typeDeContrat: '',
+          salaire: ''
         }
+      });
+    await db.collection('misesEnRelation').deleteOne(
+      {
+        'conseiller.$id': idCNFS,
+        'structure.$id': idAncienneSA,
+        'statut': { $in: ['terminee', 'renouvellement_initiee'] }
       });
   } else {
     await db.collection('misesEnRelation').deleteMany(
