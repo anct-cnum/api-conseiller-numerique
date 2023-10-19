@@ -790,7 +790,7 @@ exports.Conseillers = class Conseillers extends Service {
       app.get('mongoClient').then(async db => {
         let initModifMailPersoConseiller = false;
         let initModifMailProConseiller = false;
-        const { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
+        let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
         const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
         const idConseiller = req.params.id;
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
@@ -825,6 +825,7 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
+        telephone = telephone !== null ? telephone : ''; // contrainte not null côté PG => string vide
         const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
 
         try {
