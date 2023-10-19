@@ -6,10 +6,9 @@ const fs = require('fs');
 const { execute } = require('../utils');
 const dayjs = require('dayjs');
 
-const formatDate = date => {
-  return dayjs(date, 'YYYY-MM-DD').toDate();
-};
 // node src/tools/exports/info-contrat-manquante.js
+
+const formatDate = date => dayjs(date).format('DD/MM/YYYY');
 
 const dureeEffectiveContratError = [
   '0 mois',
@@ -54,7 +53,7 @@ execute(__filename, async ({ logger, db }) => {
       const dureeEffectiveContrat = dureeEffectiveContratError.includes(e.dureeEffectiveContrat) ? '' : e.dureeEffectiveContrat;
       const typeDeContrat = !typeContratOfficial.includes(e.typeDeContrat) ? '' : e.typeDeContrat;
       // eslint-disable-next-line max-len
-      file.write(`${e.conseillerObj.nom};${e.conseillerObj.prenom};${e.conseillerObj.idPG};${e.structureObj.idPG};${dayjs(e.dateDebutDeContrat).format('DD/MM/YYYY')};${dayjs(e.dateFinDeContrat).format('DD/MM/YYYY')};${dureeEffectiveContrat ?? ''};${typeDeContrat};\n`);
+      file.write(`${e.conseillerObj.nom};${e.conseillerObj.prenom};${e.conseillerObj.idPG};${e.structureObj.idPG};${formatDate(e.dateDebutDeContrat)};${formatDate(e.dateFinDeContrat)};${dureeEffectiveContrat ?? ''};${typeDeContrat};\n`);
       resolve();
     }));
   });
