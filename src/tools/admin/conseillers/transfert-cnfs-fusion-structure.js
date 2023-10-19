@@ -47,7 +47,7 @@ const createMiseEnRelationReconventionnement = db => async (
       'structure.$id': idNouvelleSA,
       'statut': 'renouvellement_initiee'
     });
-    return { reconventionnement: true, miseEnRelationReconventionnement: miseEnRelationInserted._id };
+    return { miseEnRelationReconventionnement: miseEnRelationInserted._id };
   }
   if (misesEnRelationReconventionnement?.statut === 'terminee') {
     await db.collection('misesEnRelation').insertOne({
@@ -123,21 +123,29 @@ const getStructure = db => async idStructure => await db.collection('structures'
 const majConseillerTransfert = db => async (idCNFS, idNouvelleSA) =>
   await db.collection('conseillers').updateOne({ _id: idCNFS }, { $set: { structureId: idNouvelleSA } });
 const majMiseEnRelationAncienneSA = db => async (idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute) => {
-  await db.collection('misesEnRelation').updateOne(
-    {
-      'conseiller.$id': idCNFS,
-      'structure.$id': idAncienneSA,
-    },
-    {
-      $set: {
-        statut: cnfsRecrute?.conseillerObj?.disponible === false ? 'finalisee_non_disponible' : 'nouvelle',
-        dateRecrutement: null,
-        fusion: {
-          'destinationStructureId': idNouvelleSA,
-          'date': new Date()
+  if (cnfsRecrute?.conseillerObj?.disponible === true) {
+    await db.collection('misesEnRelation').updateMany(
+      {
+        'conseiller.$id': idCNFS,
+        'structure.$id': idAncienneSA,
+      },
+      {
+        $set: {
+          statut: 'nouvelle',
+          dateRecrutement: null,
+          fusion: {
+            'destinationStructureId': idNouvelleSA,
+            'date': new Date()
+          }
         }
-      }
-    });
+      });
+  } else {
+    await db.collection('misesEnRelation').deleteMany(
+      {
+        'conseiller.$id': idCNFS,
+        'structure.$id': idAncienneSA,
+      });
+  }
 };
 const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute, misesEnrelationNouvelleSA) => {
   const fusion = {
@@ -173,6 +181,9 @@ const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA,
     }),
     ...(cnfsRecrute?.salaire && {
       salaire: cnfsRecrute.salaire
+    }),
+    ...(cnfsRecrute?.reconventionnement && {
+      reconventionnement: true
     }),
     fusion,
     ...attributReconventionnement
@@ -210,7 +221,9 @@ const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA,
         'statut': 'renouvellement_initiee'
       },
       {
-        miseEnRelationConventionnement: miseEnRelationFinalisee._id
+        $set: {
+          miseEnRelationConventionnement: miseEnRelationFinalisee._id
+        }
       });
   }
   if (misesEnRelationReconventionnement?.statut === 'terminee') {
@@ -221,7 +234,9 @@ const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA,
         'statut': 'terminee'
       },
       {
-        miseEnRelationReconventionnement: miseEnRelationFinalisee._id
+        $set: {
+          miseEnRelationReconventionnement: miseEnRelationFinalisee._id
+        }
       });
   }
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj': conseiller } });
