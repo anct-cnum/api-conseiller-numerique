@@ -105,15 +105,15 @@ const verificationCandidaturesRecrutee = (app, res) => async (tableauCandidat, i
           const misesEnRelations = await db.collection('misesEnRelation').find(
             {
               'conseiller.$id': profil._id,
-              'statut': { $in: ['finalisee', 'recrutee'] }
+              'statut': { $in: ['finalisee', 'recrutee', 'nouvelle_rupture'] }
             }).toArray();
           if (misesEnRelations.length !== 0) {
             const misesEnRelationsFinalisees = await db.collection('misesEnRelation').findOne(
               {
                 'conseiller.$id': profil._id,
-                'statut': { $in: ['finalisee', 'recrutee'] }
+                'statut': { $in: ['finalisee', 'recrutee', 'nouvelle_rupture'] }
               });
-            const statut = misesEnRelationsFinalisees.statut === 'finalisee' ? 'recrutée' : 'validée';
+            const statut = misesEnRelationsFinalisees.statut === 'recrutee' ? 'validée' : 'recrutée';
             const structure = await db.collection('structures').findOne({ _id: misesEnRelationsFinalisees.structure.oid });
             const idConvertString = JSON.stringify(profil._id);
             const messageDoublon = idConvertString === `"${id}"` ? `est ${statut} par` : `a un doublon qui est ${statut}`;
@@ -131,7 +131,7 @@ const verificationCandidaturesRecrutee = (app, res) => async (tableauCandidat, i
           if (usersCount >= 1) {
             const idConvertString = JSON.stringify(profil._id);
             const messageDoublonCoop = idConvertString === `"${id}"` ? `` : `a un doublon qui`;
-            res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activer`, {
+            res.status(409).send(new Conflict(`Le conseiller ${messageDoublonCoop} a un compte COOP d'activé`, {
               id
             }).toJSON());
             return;
@@ -184,6 +184,11 @@ const archiverLaSuppression = app => async (tableauCandidat, user, motif, action
     logger.error(error);
     app.get('sentry').captureException(error);
   }
+};
+
+const echangeUserCreation = app => async email => {
+  const db = await app.get('mongoClient');
+  await db.collection('conseillers').updateOne({ email, userCreated: false, userCreationError: true }, { $unset: { userCreationError: '' } });
 };
 
 const deleteMailSib = app => async emailPerso => {
@@ -400,6 +405,7 @@ module.exports = {
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
+  echangeUserCreation,
   suppressionTotalCandidat,
   suppressionCv,
   checkFormulaire,
