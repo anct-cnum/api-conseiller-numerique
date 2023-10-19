@@ -262,12 +262,12 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     exit(`Le type de contrat ${typeDeContrat} n'est pas valide`);
     return;
   }
-  if (salaireContrat && !salaireContrat.test(regexFloatNumber)) {
+  if (salaireContrat && !regexFloatNumber.test(salaireContrat)) {
     exit(`Le salaire ${salaireContrat} n'est pas valide`);
     return;
   }
   if (salaireContrat && Number(salaireContrat.replace(',', '.') < salaireMinimum)) {
-    exit(`Le salaire ${salaireContrat} est inférieur au SMIC`);
+    exit(`Le salaire de ${salaireContrat}€ est inférieur au SMIC`);
     return;
   }
   const structureDestination = await db.collection('structures').findOne({ '_id': nouvelleSA });
