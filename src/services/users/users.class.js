@@ -32,6 +32,7 @@ exports.Users = class Users extends Service {
         const nouveauEmail = req.body.email.toLowerCase();
         let { nom, prenom, telephone, dateDisponibilite, email } = req.body;
         telephone = telephone.trim();
+        dateDisponibilite = new Date(dateDisponibilite);
         const body = { nom, prenom, telephone, dateDisponibilite, email };
         const schema = Joi.object({
           prenom: Joi.string().error(new Error('Le nom est invalide')),
