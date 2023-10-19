@@ -58,9 +58,15 @@ const createMiseEnRelationReconventionnement = db => async (
       createdAt: new Date(),
       conseillerObj: conseiller,
       structureObj: structure,
-      dateDebutDeContrat: misesEnRelationReconventionnement?.dateDebutDeContrat,
-      dateFinDeContrat: misesEnRelationReconventionnement?.dateFinDeContrat,
-      typeDeContrat: misesEnRelationReconventionnement?.typeDeContrat,
+      ...(misesEnRelationReconventionnement?.dateDebutDeContrat && {
+        dateDebutDeContrat: misesEnRelationReconventionnement?.dateDebutDeContrat
+      }),
+      ...(misesEnRelationReconventionnement?.dateFinDeContrat && {
+        dateFinDeContrat: misesEnRelationReconventionnement?.dateFinDeContrat
+      }),
+      ...(misesEnRelationReconventionnement?.typeDeContrat && {
+        typeDeContrat: misesEnRelationReconventionnement?.typeDeContrat
+      }),
       ...(misesEnRelationReconventionnement?.salaire && {
         salaire: misesEnRelationReconventionnement?.salaire
       }),
@@ -156,9 +162,15 @@ const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA,
   );
   const objectContrat = {
     statut: 'finalisee',
-    dateDebutDeContrat: cnfsRecrute?.dateDebutDeContrat,
-    dateFinDeContrat: cnfsRecrute?.dateFinDeContrat,
-    typeDeContrat: cnfsRecrute?.typeDeContrat,
+    ...(cnfsRecrute?.dateDebutDeContrat && {
+      dateDebutDeContrat: cnfsRecrute?.dateDebutDeContrat
+    }),
+    ...(cnfsRecrute?.dateFinDeContrat && {
+      dateFinDeContrat: cnfsRecrute?.dateFinDeContrat
+    }),
+    ...(cnfsRecrute?.typeDeContrat && {
+      typeDeContrat: cnfsRecrute?.typeDeContrat
+    }),
     ...(cnfsRecrute?.salaire && {
       salaire: cnfsRecrute?.salaire
     }),
