@@ -32,6 +32,7 @@ exports.Users = class Users extends Service {
         const nouveauEmail = req.body.email.toLowerCase();
         let { nom, prenom, telephone, dateDisponibilite, email } = req.body;
         telephone = telephone.trim();
+        const mongoDateDisponibilite = new Date(dateDisponibilite);
         const body = { nom, prenom, telephone, dateDisponibilite, email };
         const schema = Joi.object({
           prenom: Joi.string().error(new Error('Le nom est invalide')),
@@ -49,12 +50,12 @@ exports.Users = class Users extends Service {
         const idUser = req.params.id;
         const userConnected = await this.find({ query: { _id: idUser } });
         const id = userConnected?.data[0].entity?.oid;
-        const changeInfos = { nom, prenom, telephone, dateDisponibilite };
+        const changeInfos = { nom, prenom, telephone, mongoDateDisponibilite };
         const changeInfosMisesEnRelation = {
           'conseillerObj.nom': nom,
           'conseillerObj.prenom': prenom,
           'conseillerObj.telephone': telephone,
-          'conseillerObj.dateDisponibilite': dateDisponibilite
+          'conseillerObj.dateDisponibilite': mongoDateDisponibilite
         };
         try {
           await app.service('conseillers').patch(id, changeInfos);
