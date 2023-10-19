@@ -334,10 +334,6 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       exit(`Le quota de la structure autorisé est atteint: ${misesEnRelationRecrutees} / ${dernierCoselec.nombreConseillersCoselec}  validé(s)/recrutée(s)`);
       return;
     }
-    if (!cnfsRecrute?.dateDebutDeContrat || !cnfsRecrute?.dateFinDeContrat || !cnfsRecrute?.typeDeContrat) {
-      exit(`Le contrat du conseiller n'est pas complet`);
-      return;
-    }
 
     // eslint-disable-next-line max-len
     if (!ignored && (cnfsRecrute?.conseillerObj?.codeRegionStructure !== structureDestination?.codeRegion || cnfsRecrute?.conseillerObj?.codeDepartementStructure !== structureDestination?.codeDepartement)) {
