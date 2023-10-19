@@ -18,7 +18,7 @@ const doCreateUser = async (db, feathers, dbName, _id, logger) => {
       await feathers.service('users').create({
         name: structure?.contact?.email.toLowerCase(),
         password: uuidv4(), // mandatory param
-        roles: ['structure', 'structure_coop'],
+        roles: ['structure'],
         entity: {
           '$ref': `structures`,
           '$id': _id,
@@ -34,11 +34,17 @@ const doCreateUser = async (db, feathers, dbName, _id, logger) => {
       await db.collection('structures').updateOne({ _id }, { $set: {
         userCreated: true
       } });
+      await db.collection('misesEnRelation').updateMany({ 'structure.$id': _id }, { $set: {
+        'structureObj.userCreated': true
+      } });
       resolve();
     } catch (e) {
       logger.warn(`Une erreur est survenue pour la structure id: ${structure._id} SIRET: ${structure?.siret}`);
       await db.collection('structures').updateOne({ _id }, { $set: {
         userCreationError: true
+      } });
+      await db.collection('misesEnRelation').updateMany({ 'structure.$id': _id }, { $set: {
+        'structureObj.userCreationError': true
       } });
       reject();
     }
