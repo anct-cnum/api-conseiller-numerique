@@ -27,6 +27,7 @@ const {
   verificationRoleUser,
   verificationCandidaturesRecrutee,
   archiverLaSuppression,
+  echangeUserCreation,
   suppressionTotalCandidat,
   suppressionCv,
   suppressionCVConseiller,
@@ -618,7 +619,16 @@ exports.Conseillers = class Conseillers extends Service {
         email
       };
       const instructionSuppression = motif === 'doublon' ? { '_id': new ObjectId(id), 'email': email } : { 'email': email };
+      const nbDoublonsReel = await db.collection('conseillers').countDocuments({ 'email': email });
+      const estDoublon = motif === 'doublon' && nbDoublonsReel > 1;
+      const aDoublonRecrute = await db.collection('conseillers').countDocuments({ 'email': email, 'statut': 'RECRUTE' });
       const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
+
+      if (estDoublon && tableauCandidat[0]?.ruptures?.length > 0) {
+        res.status(409).send(new Conflict('Ce doublon possède un historique de ruptures, veuillez supprimer le bon doublon', {
+        }).toJSON());
+        return;
+      }
       await verificationRoleUser(db, decode, req, res)(roles).then(userIdentifier => {
         user = userIdentifier;
         if (user.roles.includes('candidat')) {
@@ -636,7 +646,12 @@ exports.Conseillers = class Conseillers extends Service {
       }).then(() => {
         return suppressionTotalCandidat(app)(tableauCandidat);
       }).then(() => {
-        if (cv?.file && (motif !== 'doublon')) {
+        if (estDoublon && aDoublonRecrute === 0) {
+          return echangeUserCreation(app)(email);
+        }
+        return;
+      }).then(() => {
+        if (cv?.file && !estDoublon) {
           return suppressionCv(cv, app).catch(error => {
             logger.error(error);
             app.get('sentry').captureException(error);
@@ -645,8 +660,8 @@ exports.Conseillers = class Conseillers extends Service {
         }
         return;
       }).then(async () => {
-        if (motif !== 'doublon') {
-          candidatSupprimeEmailPix(db, app)(candidat);
+        if (!estDoublon) {
+          await candidatSupprimeEmailPix(db, app)(candidat);
           await deleteMailSib(app)(candidat.email);
         }
         return;
@@ -775,7 +790,7 @@ exports.Conseillers = class Conseillers extends Service {
       app.get('mongoClient').then(async db => {
         let initModifMailPersoConseiller = false;
         let initModifMailProConseiller = false;
-        const { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
+        let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
         const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
         const idConseiller = req.params.id;
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
@@ -810,6 +825,7 @@ exports.Conseillers = class Conseillers extends Service {
           return;
         }
 
+        telephone = telephone !== null ? telephone : ''; // contrainte not null côté PG => string vide
         const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
 
         try {

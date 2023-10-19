@@ -30,12 +30,13 @@ exports.Users = class Users extends Service {
     app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
       app.get('mongoClient').then(async db => {
         const nouveauEmail = req.body.email.toLowerCase();
-        const { nom, prenom, telephone, dateDisponibilite, email } = req.body;
+        let { nom, prenom, telephone, dateDisponibilite, email } = req.body;
+        telephone = telephone.trim();
         const body = { nom, prenom, telephone, dateDisponibilite, email };
         const schema = Joi.object({
           prenom: Joi.string().error(new Error('Le nom est invalide')),
           nom: Joi.string().error(new Error('Le nom est invalide')),
-          telephone: Joi.string().required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
+          telephone: Joi.string().allow('').required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
           // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
           email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
