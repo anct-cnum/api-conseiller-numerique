@@ -967,7 +967,7 @@ exports.Conseillers = class Conseillers extends Service {
       const userId = decode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
-      const { dateDisponibilite } = req.body.dateDisponibilite;
+      const { dateDisponibilite } = req.body;
       const mongoDateDisponibilite = new Date(dateDisponibilite);
       const updatedAt = new Date();
 
