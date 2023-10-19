@@ -621,7 +621,14 @@ exports.Conseillers = class Conseillers extends Service {
       const instructionSuppression = motif === 'doublon' ? { '_id': new ObjectId(id), 'email': email } : { 'email': email };
       const nbDoublonsReel = await db.collection('conseillers').countDocuments({ 'email': email });
       const estDoublon = motif === 'doublon' && nbDoublonsReel > 1;
+      const aDoublonRecrute = await db.collection('conseillers').countDocuments({ 'email': email, 'statut': 'RECRUTE' });
       const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
+
+      if (estDoublon && tableauCandidat[0]?.ruptures?.length > 0) {
+        res.status(409).send(new Conflict('Ce doublon possède un historique de ruptures, veuillez supprimer le bon doublon', {
+        }).toJSON());
+        return;
+      }
       await verificationRoleUser(db, decode, req, res)(roles).then(userIdentifier => {
         user = userIdentifier;
         if (user.roles.includes('candidat')) {
@@ -639,7 +646,7 @@ exports.Conseillers = class Conseillers extends Service {
       }).then(() => {
         return suppressionTotalCandidat(app)(tableauCandidat);
       }).then(() => {
-        if (estDoublon) {
+        if (estDoublon && aDoublonRecrute === 0) {
           return echangeUserCreation(app)(email);
         }
         return;
