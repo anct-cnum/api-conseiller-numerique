@@ -111,7 +111,7 @@ const majConseillerObj = db => async idCNFS => {
   const conseillerAjour = await db.collection('conseillers').findOne({ _id: idCNFS });
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj': conseillerAjour } });
 };
-const craCoherenceDateEmbauche = db => async (idCNFS, nouvelleSA, dateDebutDeContrat) => await db.collection('cras').updateMany(
+const craCoherenceDateDebutDeContrat = db => async (idCNFS, nouvelleSA, dateDebutDeContrat) => await db.collection('cras').updateMany(
   {
     'conseiller.$id': idCNFS,
     'cra.dateAccompagnement': { '$gte': dateDebutDeContrat }
@@ -306,7 +306,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
       structureDestination
     );
     await majConseillerObj(db)(idCNFS);
-    await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateDebutDeContrat);
+    await craCoherenceDateDebutDeContrat(db)(idCNFS, nouvelleSA, dateDebutDeContrat);
     await updatePermanences(db)(idCNFS);
     await miseAjourMattermostCanaux(db)(idCNFS, structureDestination, ancienneSA, mattermost);
     await emailsStructureAncienne(db)(emails, cnfsRecrute, ancienneSA);
