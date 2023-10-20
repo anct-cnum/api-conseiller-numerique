@@ -19,7 +19,7 @@ const dureeEffectiveContratError = [
 const typeContratOfficial = ['CDD', 'CDI', 'PEC', 'contrat_de_projet_public'];
 execute(__filename, async ({ logger, db }) => {
   const conseillers = await db.collection('misesEnRelation').find({
-    statut: { $in: ['finalisee', 'terminee', 'finalisee_rupture'] },
+    statut: { $in: ['finalisee', 'terminee', 'finalisee_rupture', 'nouvelle_rupture'] },
     $or: [
       { dateDebutDeContrat: null },
       { dateFinDeContrat: null },
