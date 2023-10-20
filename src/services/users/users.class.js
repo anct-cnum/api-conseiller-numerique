@@ -50,7 +50,7 @@ exports.Users = class Users extends Service {
         const idUser = req.params.id;
         const userConnected = await this.find({ query: { _id: idUser } });
         const id = userConnected?.data[0].entity?.oid;
-        const changeInfos = { nom, prenom, telephone, mongoDateDisponibilite };
+        const changeInfos = { nom, prenom, telephone, 'dateDisponibilite': mongoDateDisponibilite };
         const changeInfosMisesEnRelation = {
           'conseillerObj.nom': nom,
           'conseillerObj.prenom': prenom,
