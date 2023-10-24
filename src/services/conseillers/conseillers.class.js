@@ -841,7 +841,13 @@ exports.Conseillers = class Conseillers extends Service {
         }
 
         if (email !== conseiller.email) {
-
+          const gandi = app.get('gandi');
+          if (email.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+              email
+            }).toJSON());
+            return;
+          }
           const verificationEmail = await db.collection('conseillers').countDocuments({ email: email });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email ${email} est déjà utilisé par un autre utilisateur`);
