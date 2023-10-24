@@ -67,7 +67,13 @@ exports.Users = class Users extends Service {
           return;
         }
         if (nouveauEmail !== userConnected.data[0].name) {
-
+          const gandi = app.get('gandi');
+          if (nouveauEmail.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé.`);
