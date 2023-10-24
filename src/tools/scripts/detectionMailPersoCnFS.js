@@ -12,6 +12,9 @@ const getContratsByConseiller = db => async id => await db.collection('misesEnRe
   'statut': { $in: ['finalisee', 'nouvelle_rupture', 'terminee', 'finalisee_rupture', 'recrutee'] }
 }).toArray();
 
+const getConseillersMailAModifierCnFS = db => async domain =>
+  await db.collection('conseillers').find({ mailAModifier: { $regex: domain } }).toArray();
+
 execute(__filename, async ({ app, db, logger, exit }) => {
 
   const gandi = app.get('gandi');
@@ -26,7 +29,8 @@ execute(__filename, async ({ app, db, logger, exit }) => {
       !['RECRUTE', 'RUPTURE'].includes(conseiller.statut) &&
       !conseiller.ruptures &&
       !conseiller.mattermost &&
-      !conseiller.emailCN
+      !conseiller.emailCN &&
+      !conseiller.groupeCRA
     ) {
       // Vérification des mises en relation
       const contrats = await getContratsByConseiller(db)(conseiller._id);
@@ -40,5 +44,24 @@ execute(__filename, async ({ app, db, logger, exit }) => {
       logger.error(`Le candidat ${conseiller.idPG} ne peut pas être supprimé`);
     }
   }
+
+  // Autofix demandes de changement en cours de mail perso en CnFS
+  const conseillersMailAModifierCnFS = await getConseillersMailAModifierCnFS(db)(gandi.domain);
+  for (const conseiller of conseillersMailAModifierCnFS) {
+    await db.collection('conseillers').updateOne(
+      {
+        _id: conseiller._id
+      },
+      {
+        $unset: {
+          mailAModifier: '',
+          tokenChangementMail: '',
+          tokenChangementMailCreatedAt: ''
+        }
+      }
+    );
+    logger.info(`Autofix conseiller ${conseiller.idPG} - suppression de la demande en cours de chg de mail perso en mail CnFS`);
+  }
+
   exit();
 });
