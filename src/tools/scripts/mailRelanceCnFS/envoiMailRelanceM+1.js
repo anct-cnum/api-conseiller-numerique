@@ -60,8 +60,10 @@ execute(__filename, async ({ db, logger, Sentry, emails, app }) => {
       const messageSupHierarchique = emails.getEmailMessageByTemplateName('mailRelanceM+1SupHierarchique');
 
       await messageConseiller.send(conseiller);
-      await messageStructure.send(conseiller, structure.contact.email);
-      if (conseiller?.supHierarchique?.email && conseiller?.supHierarchique?.email !== structure.contact.email) {
+      if (structure?.contact?.email) {
+        await messageStructure.send(conseiller, structure.contact.email);
+      }
+      if (conseiller?.supHierarchique?.email && conseiller?.supHierarchique?.email !== structure?.contact?.email) {
         await messageSupHierarchique.send(conseiller);
       }
       if (delai) {

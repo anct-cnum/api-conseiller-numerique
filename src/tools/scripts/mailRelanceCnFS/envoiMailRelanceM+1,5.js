@@ -20,7 +20,7 @@ execute(__filename, async ({ db, logger, Sentry, emails, app }) => {
   let { limit = 1, delai = 1000 } = cli;
 
   limit = app.get('limit_relance_cra') ?? limit;
-  
+
   const conseillers = await db.collection('conseillers').find({
     'statut': { $eq: 'RECRUTE' },
     'estCoordinateur': { $ne: true },
@@ -57,8 +57,10 @@ execute(__filename, async ({ db, logger, Sentry, emails, app }) => {
       const messageStructure = emails.getEmailMessageByTemplateName('mailRelanceM+1,5Structure');
       const messageSupHierarchique = emails.getEmailMessageByTemplateName('mailRelanceM+1,5SupHierarchique');
       await messageConseiller.send(conseiller);
-      await messageStructure.send(conseiller, structure.contact.email);
-      if (conseiller?.supHierarchique?.email && conseiller?.supHierarchique?.email !== structure.contact.email) {
+      if (structure?.contact?.email) {
+        await messageStructure.send(conseiller, structure.contact.email);
+      }
+      if (conseiller?.supHierarchique?.email && conseiller?.supHierarchique?.email !== structure?.contact?.email) {
         await messageSupHierarchique.send(conseiller);
       }
       if (delai) {

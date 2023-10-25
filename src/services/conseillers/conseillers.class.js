@@ -841,7 +841,13 @@ exports.Conseillers = class Conseillers extends Service {
         }
 
         if (email !== conseiller.email) {
-
+          const gandi = app.get('gandi');
+          if (email.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+              email
+            }).toJSON());
+            return;
+          }
           const verificationEmail = await db.collection('conseillers').countDocuments({ email: email });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email ${email} est déjà utilisé par un autre utilisateur`);
@@ -914,7 +920,6 @@ exports.Conseillers = class Conseillers extends Service {
       const idConseiller = req.params.id;
       const { disponible } = req.body;
       const updatedAt = new Date();
-
       const disponibleValidation = Joi.boolean().required().error(new Error('Le format de la disponibilité est invalide')).validate(disponible);
       if (disponibleValidation.error) {
         res.status(400).json(new BadRequest(disponibleValidation.error));
@@ -968,8 +973,8 @@ exports.Conseillers = class Conseillers extends Service {
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { dateDisponibilite } = req.body;
+      const mongoDateDisponibilite = new Date(dateDisponibilite);
       const updatedAt = new Date();
-
       const dateDisponibleValidation =
         Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieure ou égale à la date du jour')).validate(dateDisponibilite);
       if (dateDisponibleValidation.error) {
@@ -994,11 +999,11 @@ exports.Conseillers = class Conseillers extends Service {
         SET (start_date, updated) = ($2, $3) WHERE id = $1`,
         [conseiller.idPG, dayjs(dateDisponibilite).format('YYYY-MM-DD'), dayjs(updatedAt).format('YYYY-MM-DD')]);
 
-        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { dateDisponibilite, updatedAt } });
+        await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'dateDisponibilite': mongoDateDisponibilite, updatedAt } });
 
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
           $set: {
-            'conseillerObj.dateDisponibilite': dateDisponibilite,
+            'conseillerObj.dateDisponibilite': mongoDateDisponibilite,
             'conseillerObj.updatedAt': updatedAt
           }
         });
@@ -1155,7 +1160,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user?._id, [Role.Conseiller], () => user)
+        rolesGuard(user?._id, [Role.Conseiller, Role.Coordinateur], () => user)
       ).then(async () => {
         const urlAPI = `https://api-adresse.data.gouv.fr/search/?q=${adresse}&type=municipality`;
         try {
@@ -1213,7 +1218,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userId, [Role.Conseiller], getUserById)
+        rolesGuard(userId, [Role.Conseiller, Role.Coordinateur], getUserById)
       ).then(async () => {
         try {
           await pool.query(`UPDATE djapp_coach
