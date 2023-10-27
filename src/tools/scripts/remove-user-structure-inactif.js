@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../../utils');
+const { execute } = require('../utils');
 const { program } = require('commander');
 const whiteList = ['EXAMEN_COMPLEMENTAIRE_COSELEC', 'REFUS_COSELEC', 'ABANDON', 'ANNULEE', 'DOUBLON', 'NEGATIF'];
 
-// node src/tools/scripts/archived/remove-user-structure-inactif.js
+// node src/tools/scripts/remove-user-structure-inactif.js
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   try {
