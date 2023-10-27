@@ -1,20 +1,34 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execute } = require('../../utils');
+const { execute } = require('../utils');
 const { program } = require('commander');
 const whiteList = ['EXAMEN_COMPLEMENTAIRE_COSELEC', 'REFUS_COSELEC', 'ABANDON', 'ANNULEE', 'DOUBLON', 'NEGATIF'];
+
+// node src/tools/scripts/remove-user-structure-inactif.js
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   try {
     program.option('-f, --fix', 'fix: correction en base)');
+    program.option('-g, --generale', 'generale: cela englobe toute les structures avec un statut parmi la whiteList');
+    program.option('-s, --structureId <structureId>', 'structureId: idPG de la structure)');
     program.parse(process.argv);
     const fix = program.fix;
+    const generale = program.generale;
+    const structureId = ~~program.structureId;
+    const structureIdQuery = structureId !== 0 ? { idPG: structureId } : {};
+    // Verification si on cible toute les structures ou une seule.
+    if (!generale && structureId === 0) {
+      logger.error('Veuillez saisir un id structure ou la commande "--generale"');
+      return;
+    }
     // Recupération des structures dont le statut est en 'ABANDON' ou 'ANNULEE'.
     const structures = await db.collection('structures').find({
+      ...structureIdQuery,
       'statut': { $in: whiteList }
     }).toArray();
-    logger.info(`Nombre de structures à traiter: ${structures.length}`);
+
+    logger.info(`${structureId === 0 ? `Nombre de structures à traiter: ${structures.length}` : `Traitement de la structure ${structureId}`}`);
 
     // Si il n'y a pas de structures à traiter, nous sortons du script.
     if (structures.length === 0) {
@@ -56,7 +70,9 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         }
         logger.info(`Id structure ${structure.idPG} - Nombre d'utilisateurs supprimés: ${nbUsers}`);
       }
-      await db.collection('structures').updateOne({ _id: structure._id }, { $set: { userCreated: false } });
+      if (fix) {
+        await db.collection('structures').updateOne({ _id: structure._id }, { $set: { userCreated: false } });
+      }
     }
     logger.info('Fin de suppression des structures inactives');
     exit();
