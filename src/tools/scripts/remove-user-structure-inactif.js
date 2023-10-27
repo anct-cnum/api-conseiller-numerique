@@ -70,7 +70,9 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         }
         logger.info(`Id structure ${structure.idPG} - Nombre d'utilisateurs supprimés: ${nbUsers}`);
       }
-      await db.collection('structures').updateOne({ _id: structure._id }, { $set: { userCreated: false } });
+      if (fix) {
+        await db.collection('structures').updateOne({ _id: structure._id }, { $set: { userCreated: false } });
+      }
     }
     logger.info('Fin de suppression des structures inactives');
     exit();

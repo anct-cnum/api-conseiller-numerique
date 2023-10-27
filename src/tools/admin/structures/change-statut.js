@@ -37,7 +37,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
   });
   if (contUsers > 0 || countMisesEnRelation > 0) {
-    logger.warn(`Veuillez lancez le script "src/tools/scripts/archived/remove-user-structure-inactif.js"`);
+    logger.warn(`Veuillez lancez le script "src/tools/scripts/remove-user-structure-inactif.js"`);
     logger.info(`Car la structure ${id} contient ${countMisesEnRelation} mises en relation & ${contUsers} users`);
   }
   exit();
