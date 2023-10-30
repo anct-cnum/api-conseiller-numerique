@@ -187,7 +187,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         }
 
         // eslint-disable-next-line max-len
-        file.write(`${structure?.idPG};${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ?? ''};${structure?.insee?.adresse?.libelle_commune ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${formatDate(coselec)};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.adresse?.code_commune};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
+        file.write(`${structure?.idPG};${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale?.replace(/[,]/g, '') ?? structure.nom};${structure?.insee?.adresse?.libelle_commune ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${formatDate(coselec)};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.adresse?.code_commune};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
       } catch (e) {
         Sentry.captureException(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
         logger.error(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);
