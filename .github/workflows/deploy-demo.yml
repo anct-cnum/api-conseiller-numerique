@@ -10,7 +10,7 @@ jobs:
   preparation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       # Deploy requires an unshallow working copy
       - run: git fetch --prune --unshallow
       - name: New branch demo
@@ -63,6 +63,6 @@ jobs:
     needs: preparation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Delete branch demo
         run: git push origin --delete demo
