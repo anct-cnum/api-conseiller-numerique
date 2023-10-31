@@ -38,6 +38,7 @@ const doCreateUser = async (db, feathers, dbName, _id, logger) => {
     } catch (e) {
       logger.warn(`Une erreur est survenue pour la structure id: ${structure._id} SIRET: ${structure?.siret}`);
       await db.collection('structures').updateOne({ _id }, { $set: {
+        userCreated: false,
         userCreationError: true
       } });
       reject();
