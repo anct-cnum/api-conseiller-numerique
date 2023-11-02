@@ -12,16 +12,6 @@ const departements = require('../../../../data/imports/departements-region.json'
 slugify.extend({ '-': ' ' });
 slugify.extend({ '\'': ' ' });
 
-const checkStructurePhase2 = statut => {
-  if (statut === 'RECONVENTIONNEMENT_VALIDÉ') {
-    return true;
-  }
-  if (statut === 'CONVENTIONNEMENT_VALIDÉ_PHASE_2') {
-    return true;
-  }
-  return false;
-};
-
 const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1'), 'YYYY-MM-DD').toDate();
 
 const majMiseEnRelationStructureRupture = db => async (idCNFS, nouvelleSA, ancienneSA) => {
@@ -55,13 +45,13 @@ const majMiseEnRelationStructureNouvelle = (db, app) => async (idCNFS, nouvelleS
   const misesEnrelationNouvelleSA = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': nouvelleSA });
   const objectContrat = {
     statut: 'finalisee',
-    dateDebutDeContrat: dateDebutDeContrat,
-    dateFinDeContrat: dateFinDeContrat,
-    typeDeContrat: typeDeContrat,
+    dateDebutDeContrat,
+    dateFinDeContrat,
+    typeDeContrat,
     ...(salaireContrat && {
       salaire: Number(salaireContrat.replace(',', '.'))
     }),
-    ...(checkStructurePhase2(structureDestination.conventionnement.statut) && {
+    ...(utils.checkStructurePhase2(structureDestination?.conventionnement?.statut) && {
       phaseConventionnement: '2'
     })
   };
@@ -251,7 +241,8 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne(
     {
-      'conseiller.$id': idCNFS, 'structure.$id': ancienneSA,
+      'conseiller.$id': idCNFS,
+      'structure.$id': ancienneSA,
       'statut': { $in: ['finalisee', 'nouvelle_rupture'] }
     });
   if (!cnfsRecrute) {

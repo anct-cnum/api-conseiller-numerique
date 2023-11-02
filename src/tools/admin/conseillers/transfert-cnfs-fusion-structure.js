@@ -6,16 +6,6 @@ const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
 
-const checkStructurePhase2 = statut => {
-  if (statut === 'RECONVENTIONNEMENT_VALIDÉ') {
-    return true;
-  }
-  if (statut === 'CONVENTIONNEMENT_VALIDÉ_PHASE_2') {
-    return true;
-  }
-  return false;
-};
-
 const createMiseEnRelationReconventionnement = db => async (
   misesEnRelationReconventionnement,
   idCNFS,
@@ -205,7 +195,7 @@ const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA,
     fusion,
     ...attributReconventionnement
   };
-  if (!misesEnRelationReconventionnement && checkStructurePhase2(structure?.conventionnement?.statut)) {
+  if (!misesEnRelationReconventionnement && utils.checkStructurePhase2(structure?.conventionnement?.statut)) {
     Object.assign(objectContrat, { phaseConventionnement: '2' });
   }
   if (!misesEnrelationNouvelleSA) {
@@ -345,13 +335,14 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     return;
   }
   const structureDestination = await getStructure(db)(idNouvelleSA);
-  const structureOrigin = await getStructure(db)(idAncienneSA);
+  const structureOriginelle = await getStructure(db)(idAncienneSA);
   if (structureDestination?.statut !== 'VALIDATION_COSELEC') {
     exit(`La structure destinataire n'est pas 'VALIDATION_COSELEC' mais ${structureDestination.statut}`);
     return;
   }
-  if (structureDestination.conventionnement.statut !== 'RECONVENTIONNEMENT_VALIDÉ' && structureOrigin.conventionnement.statut === 'RECONVENTIONNEMENT_VALIDÉ') {
-    exit(`La structure destinataire n'est pas en 'RECONVENTIONNEMENT_VALIDÉ' mais ${structureDestination.conventionnement.statut}`);
+  // eslint-disable-next-line max-len
+  if (structureDestination?.conventionnement?.statut !== 'RECONVENTIONNEMENT_VALIDÉ' && structureOriginelle?.conventionnement?.statut === 'RECONVENTIONNEMENT_VALIDÉ') {
+    exit(`La structure destinataire n'est pas en 'RECONVENTIONNEMENT_VALIDÉ' mais ${structureDestination?.conventionnement?.statut}`);
     return;
   }
   if (cnfsRecrute?.statut === 'finalisee_rupture') {
