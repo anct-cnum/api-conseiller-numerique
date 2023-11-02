@@ -236,7 +236,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   const typeDeContrat = typeContrat;
   const motifRupture = motif;
   const typeDeContratValid = ['CDD', 'CDI', 'PEC', 'contrat_de_projet_public'];
-  const regexFloatNumber = /^(\d+(?:[\\.\\,]\d*)?)$/;
+  const regexFloatNumber = /^(\d+(?:[.]\d*)?)$/;
   const salaireMinimum = 1709.28;
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne(
@@ -257,7 +257,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     exit(`Le salaire ${salaireContrat} n'est pas valide`);
     return;
   }
-  if (salaireContrat && Number(salaireContrat.replace(',', '.') < salaireMinimum)) {
+  if (salaireContrat && Number(salaireContrat) < salaireMinimum) {
     exit(`Le salaire de ${salaireContrat}€ est inférieur au SMIC`);
     return;
   }
