@@ -109,7 +109,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
       if (alreadySeen[conseiller.email]) {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: {
           userCreated: false,
-          userCreationError: true
+        }, $unset: {
+          userCreationError: ''
         } });
       } else {
         alreadySeen[conseiller.email] = true;
