@@ -101,7 +101,18 @@ const updatePermanences = db => async idCNFS => await db.collection('permanences
   },
   { $pull: { conseillers: idCNFS, conseillersItinerants: idCNFS, lieuPrincipalPour: idCNFS } }
 );
-
+const deletePermanences = db => async idCNFS => {
+  const permanences = await db.collection('permanences').find({
+    'conseillers': { '$in': [idCNFS] }
+  });
+  for (let permanence of permanences) {
+    if (permanence?.conseillers?.length === 1) {
+      await db.collection('permanences').deleteOne({
+        '_id': permanence._id
+      });
+    }
+  }
+};
 const miseAjourMattermostCanaux = db => async (idCNFS, structureDestination, ancienneSA, mattermost) => {
   const CNFS = await db.collection('conseillers').findOne({ _id: idCNFS });
   const ancienneStructure = await db.collection('structures').findOne({ '_id': ancienneSA });
@@ -244,6 +255,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     await majDataCnfsStructureNouvelle(db)(idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination);
     await majConseillerObj(db)(idCNFS);
     await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateEmbauche);
+    await deletePermanences(db)(idCNFS);
     await updatePermanences(db)(idCNFS);
     await miseAjourMattermostCanaux(db)(idCNFS, structureDestination, ancienneSA, mattermost);
     await emailsStructureAncienne(db)(emails, cnfsRecrute, ancienneSA);

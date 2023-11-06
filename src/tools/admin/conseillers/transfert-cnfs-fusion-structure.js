@@ -134,6 +134,9 @@ const createPermNouvelleSA = db => async (permanence, idCNFS, idNouvelleSA) => {
   insertPermanence.structure.oid = idNouvelleSA;
   return await db.collection('permanences').insertOne(insertPermanence);
 };
+const deletePermAncienne = db => async idPermanence => await db.collection('permanences').deleteOne({
+  '_id': idPermanence
+});
 
 execute(__filename, async ({ db, logger, exit, app }) => {
 
@@ -223,6 +226,9 @@ execute(__filename, async ({ db, logger, exit, app }) => {
           await pushConseillerPerm(db)(permanence, idCNFS, verifDoublon[0]?._id);
         }
         await updateCrasPermanenceId(db)(permanence, idCNFS, verifDoublon[0]?._id);
+      }
+      if (permanence?.conseillers?.length === 1) {
+        await deletePermAncienne(db)(permanence._id);
       }
     }
   }
