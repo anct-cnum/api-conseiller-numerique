@@ -39,6 +39,9 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
         });
         await db.collection('conseillers').updateOne({ _id }, { $set: {
           userCreated: true
+        },
+        $unset: {
+          userCreationError: ''
         } });
       } else {
         await db.collection('conseillers').updateOne({ _id }, { $set: {
@@ -108,9 +111,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     for (const conseiller of conseillers) {
       if (alreadySeen[conseiller.email]) {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: {
+          userCreationError: true,
           userCreated: false,
-        }, $unset: {
-          userCreationError: ''
         } });
       } else {
         alreadySeen[conseiller.email] = true;

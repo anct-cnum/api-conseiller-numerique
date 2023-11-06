@@ -31,6 +31,11 @@ execute(__filename, async ({ exit, logger, db }) => {
   logger.info('Début du script de nettoyage des incohérences sur userCreationError');
   const { fix, collection } = program;
 
+  if (collection !== 'structures' || collection !== 'conseillers') {
+    logger.error('Merci de renseigner une collection valide (structures ou conseillers).');
+    exit();
+  }
+
   const elements = await getElements(db, collection);
 
   if (collection === 'structures') {
