@@ -47,7 +47,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         conseiller.supHierarchique.email,
         {
-          subject: '[IMPORTANT] Aucun Compte-Rendu d\'Activité complété depuis 45 jours',
+          subject: '[IMPORTANT] Aucun compte-rendu d\'activité complété depuis 45 jours',
           body: await render(conseiller),
         },
       )
