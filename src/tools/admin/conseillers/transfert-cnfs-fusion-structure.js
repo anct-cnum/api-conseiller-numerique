@@ -112,48 +112,12 @@ const initPermAncienneSA = db => async (idCNFS, idAncienneSA, idNouvelleSA) => a
 const getStructure = db => async idStructure => await db.collection('structures').findOne({ '_id': idStructure });
 const majConseillerTransfert = db => async (idCNFS, idNouvelleSA) =>
   await db.collection('conseillers').updateOne({ _id: idCNFS }, { $set: { structureId: idNouvelleSA } });
-const majMiseEnRelationAncienneSA = db => async (idCNFS, idAncienneSA, idNouvelleSA) => {
-  const conseiller = await db.collection('conseillers').findOne({ _id: idCNFS }, { _id: 0, disponible: 1 });
-  if (conseiller?.disponible === true) {
-    await db.collection('misesEnRelation').updateOne(
-      {
-        'conseiller.$id': idCNFS,
-        'structure.$id': idAncienneSA,
-        'statut': 'finalisee'
-      },
-      {
-        $set: {
-          statut: 'nouvelle',
-          fusion: {
-            'destinationStructureId': idNouvelleSA,
-            'date': new Date()
-          }
-        },
-        $unset: {
-          dateRecrutement: '',
-          reconventionnement: '',
-          phaseConventionnement: '',
-          miseEnRelationConventionnement: '',
-          miseEnRelationReconventionnement: '',
-          dateDebutDeContrat: '',
-          dateFinDeContrat: '',
-          typeDeContrat: '',
-          salaire: ''
-        }
-      });
-    await db.collection('misesEnRelation').deleteOne(
-      {
-        'conseiller.$id': idCNFS,
-        'structure.$id': idAncienneSA,
-        'statut': { $in: ['terminee', 'renouvellement_initiee'] }
-      });
-  } else {
-    await db.collection('misesEnRelation').deleteMany(
-      {
-        'conseiller.$id': idCNFS,
-        'structure.$id': idAncienneSA,
-      });
-  }
+const suppressionMiseEnRelationAncienneSA = db => async (idCNFS, idAncienneSA) => {
+  await db.collection('misesEnRelation').deleteMany(
+    {
+      'conseiller.$id': idCNFS,
+      'structure.$id': idAncienneSA,
+    });
 };
 const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute, misesEnrelationNouvelleSA) => {
   const fusion = {
@@ -373,7 +337,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     await majConseillerTransfert(db)(idCNFS, idNouvelleSA);
     const misesEnrelationNouvelleSA = await getMiseEnRelationNouvelleSA(db)(idCNFS, idNouvelleSA);
     await majMiseEnRelationNouvelleSA(db)(database, idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute, misesEnrelationNouvelleSA);
-    await majMiseEnRelationAncienneSA(db)(idCNFS, idAncienneSA, idNouvelleSA);
+    await suppressionMiseEnRelationAncienneSA(db)(idCNFS, idAncienneSA);
     await majCraConseiller(db)(idCNFS, idAncienneSA, idNouvelleSA);
     const permAncienneSA = await getPermsAncienneSA(db)(idCNFS, idAncienneSA);
     const permNouvelleSA = await getPermsNouvelleSA(db)(idNouvelleSA);
