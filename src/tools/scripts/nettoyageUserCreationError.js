@@ -34,6 +34,7 @@ execute(__filename, async ({ exit, logger, db }) => {
   if (collection !== 'structures' || collection !== 'conseillers') {
     logger.error('Merci de renseigner une collection valide (structures ou conseillers).');
     exit();
+    return;
   }
 
   const elements = await getElements(db, collection);
