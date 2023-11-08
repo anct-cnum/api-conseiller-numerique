@@ -214,7 +214,12 @@ const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA,
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj': conseiller } });
 };
 const getMiseEnRelationNouvelleSA = db => async (idCNFS, idNouvelleSA) =>
-  await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': idNouvelleSA });
+  await db.collection('misesEnRelation').findOne(
+    {
+      'conseiller.$id': idCNFS,
+      'structure.$id': idNouvelleSA,
+      'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee'] }
+    });
 const majCraConseiller = db => async (idCNFS, idAncienneSA, idNouvelleSA) =>
   await db.collection('cras').updateMany(
     {
