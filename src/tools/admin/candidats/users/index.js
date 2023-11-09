@@ -39,9 +39,13 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
         });
         await db.collection('conseillers').updateOne({ _id }, { $set: {
           userCreated: true
+        },
+        $unset: {
+          userCreationError: ''
         } });
       } else {
         await db.collection('conseillers').updateOne({ _id }, { $set: {
+          userCreated: false,
           userCreationError: true
         } });
       }
@@ -50,6 +54,7 @@ const doCreateUser = async (db, feathers, dbName, _id, logger, Sentry) => {
       Sentry.captureException(e);
       logger.error(`Une erreur est survenue pour la création de l'utilisateur du conseiller id: ${conseillerDoc._id}`);
       await db.collection('conseillers').updateOne({ _id }, { $set: {
+        userCreated: false,
         userCreationError: true
       } });
       reject();
@@ -106,7 +111,8 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     for (const conseiller of conseillers) {
       if (alreadySeen[conseiller.email]) {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: {
-          userCreationError: true
+          userCreationError: true,
+          userCreated: false,
         } });
       } else {
         alreadySeen[conseiller.email] = true;

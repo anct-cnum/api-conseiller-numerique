@@ -16,7 +16,8 @@ const formatDate = date => dayjs(date.replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/
 
 const majMiseEnRelationStructureRupture = db => async (idCNFS, nouvelleSA, ancienneSA) => {
   await db.collection('misesEnRelation').updateOne(
-    { 'conseiller.$id': idCNFS,
+    {
+      'conseiller.$id': idCNFS,
       'structure.$id': ancienneSA,
       'statut': { $in: ['finalisee', 'nouvelle_rupture'] }
     },
@@ -39,28 +40,41 @@ const historiseCollectionRupture = db => async (idCNFS, ancienneSA, dateRupture,
     motifRupture
   });
 };
-const majMiseEnRelationStructureNouvelle = (db, app) => async (idCNFS, nouvelleSA, dateEmbauche, structureDestination) => {
+// eslint-disable-next-line max-len
+const majMiseEnRelationStructureNouvelle = (db, app) => async (idCNFS, nouvelleSA, structureDestination, dateDebutDeContrat, dateFinDeContrat, typeDeContrat, salaireContrat) => {
   const misesEnrelationNouvelleSA = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': nouvelleSA });
+  const objectContrat = {
+    statut: 'finalisee',
+    dateDebutDeContrat,
+    dateFinDeContrat,
+    typeDeContrat,
+    ...(salaireContrat && {
+      salaire: Number(salaireContrat.replace(',', '.'))
+    }),
+    ...(utils.checkStructurePhase2(structureDestination?.conventionnement?.statut) && {
+      phaseConventionnement: '2'
+    })
+  };
   if (!misesEnrelationNouvelleSA) {
     const connection = app.get('mongodb');
     const database = connection.substr(connection.lastIndexOf('/') + 1);
     await db.collection('misesEnRelation').insertOne({
       conseiller: new DBRef('conseillers', idCNFS, database),
       structure: new DBRef('structures', nouvelleSA, database),
-      statut: 'finalisee',
       createdAt: new Date(),
       conseillerObj: {},
       structureObj: structureDestination,
-      dateRecrutement: dateEmbauche
+      ...objectContrat
     });
   } else {
     await db.collection('misesEnRelation').updateOne(
       { 'conseiller.$id': idCNFS, 'structure.$id': nouvelleSA },
-      { $set: { statut: 'finalisee', dateRecrutement: dateEmbauche }
+      {
+        $set: objectContrat
       });
   }
 };
-const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination) => {
+const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, ancienneSA, dateRupture, motifRupture, structureDestination) => {
   await db.collection('conseillers').updateOne({ _id: idCNFS }, {
     $set: {
       structureId: nouvelleSA,
@@ -68,11 +82,13 @@ const majDataCnfsStructureNouvelle = db => async (idCNFS, nouvelleSA, dateEmbauc
       codeDepartementStructure: structureDestination.codeDepartement,
       hasPermanence: false,
     },
-    $push: { ruptures: {
-      structureId: ancienneSA,
-      dateRupture,
-      motifRupture
-    } },
+    $push: {
+      ruptures: {
+        structureId: ancienneSA,
+        dateRupture,
+        motifRupture
+      }
+    },
     $unset: {
       supHierarchique: '',
       telephonePro: '',
@@ -85,9 +101,10 @@ const majConseillerObj = db => async idCNFS => {
   const conseillerAjour = await db.collection('conseillers').findOne({ _id: idCNFS });
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj': conseillerAjour } });
 };
-const craCoherenceDateEmbauche = db => async (idCNFS, nouvelleSA, dateEmbauche) => await db.collection('cras').updateMany(
-  { 'conseiller.$id': idCNFS,
-    'cra.dateAccompagnement': { '$gte': dateEmbauche }
+const craCoherenceDateDebutDeContrat = db => async (idCNFS, nouvelleSA, dateDebutDeContrat) => await db.collection('cras').updateMany(
+  {
+    'conseiller.$id': idCNFS,
+    'cra.dateAccompagnement': { '$gte': dateDebutDeContrat }
   }, {
     $set: { 'structure.$id': nouvelleSA }
   });
@@ -196,14 +213,17 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   program.option('-r, --rupture <rupture>', 'rupture: date de rupture DD/MM/AAAA');
   program.option('-m, --motif <motif>', 'motif: motif de la rupture');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: id mongo structure de destination');
-  program.option('-e, --embauche <embauche>', 'embauche: date d\'embauche DD/MM/AAAA');
+  program.option('-ddc, --dateDebutContrat <dateDebutContrat>', 'dateDebutContrat: la date de début de contrat DD/MM/AAAA');
+  program.option('-dfc, --dateFinContrat <dateFinContrat>', 'dateFinContrat: la date de fin de contrat DD/MM/AAAA');
+  program.option('-tc, --typeContrat <typeContrat>', 'typeContrat: le type de contrat');
+  program.option('-sc, --salaireContrat <salaireContrat>', 'salaireContrat: le salaire du contrat');
   program.option('-q, --quota', 'quota: pour désactiver le bridage du nombre de poste validé en Coselec');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { id, ancienne, nouvelle, rupture, embauche, motif, quota } = program;
-  if (!id || !ancienne || !nouvelle || !rupture || !embauche || !motif) {
-    exit('Paramètres invalides. Veuillez entrer les 6 paramètres requis');
+  const { id, ancienne, nouvelle, rupture, dateDebutContrat, dateFinContrat, typeContrat, salaireContrat, motif, quota } = program;
+  if (!id || !ancienne || !nouvelle || !rupture || !dateDebutContrat || !typeContrat || !dateFinContrat || !motif) {
+    exit('Paramètres invalides. Veuillez entrer les 8 paramètres requis');
     return;
   }
   const mattermost = app.get('mattermost');
@@ -211,15 +231,34 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   const ancienneSA = new ObjectID(ancienne);
   const nouvelleSA = new ObjectID(nouvelle);
   const dateRupture = formatDate(rupture);
-  const dateEmbauche = formatDate(embauche);
+  const dateDebutDeContrat = formatDate(dateDebutContrat);
+  const dateFinDeContrat = formatDate(dateFinContrat);
+  const typeDeContrat = typeContrat;
   const motifRupture = motif;
+  const typeDeContratValid = ['CDD', 'CDI', 'PEC', 'contrat_de_projet_public'];
+  const regexFloatNumber = /^(\d+(?:[.]\d*)?)$/;
+  const salaireMinimum = 1709.28;
 
   const cnfsRecrute = await db.collection('misesEnRelation').findOne(
-    { 'conseiller.$id': idCNFS, 'structure.$id': ancienneSA,
+    {
+      'conseiller.$id': idCNFS,
+      'structure.$id': ancienneSA,
       'statut': { $in: ['finalisee', 'nouvelle_rupture'] }
     });
   if (!cnfsRecrute) {
     exit(`Le Cnfs avec l'id ${idCNFS} n'est pas recruté.`);
+    return;
+  }
+  if (!typeDeContratValid.includes(typeDeContrat)) {
+    exit(`Le type de contrat ${typeDeContrat} n'est pas valide`);
+    return;
+  }
+  if (salaireContrat && !regexFloatNumber.test(salaireContrat)) {
+    exit(`Le salaire ${salaireContrat} n'est pas valide`);
+    return;
+  }
+  if (salaireContrat && Number(salaireContrat) < salaireMinimum) {
+    exit(`Le salaire de ${salaireContrat}€ est inférieur au SMIC`);
     return;
   }
   const structureDestination = await db.collection('structures').findOne({ '_id': nouvelleSA });
@@ -240,10 +279,25 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   try {
     await majMiseEnRelationStructureRupture(db)(idCNFS, nouvelleSA, ancienneSA);
     await historiseCollectionRupture(db)(idCNFS, ancienneSA, dateRupture, motifRupture);
-    await majMiseEnRelationStructureNouvelle(db, app)(idCNFS, nouvelleSA, dateEmbauche, structureDestination);
-    await majDataCnfsStructureNouvelle(db)(idCNFS, nouvelleSA, dateEmbauche, ancienneSA, dateRupture, motifRupture, structureDestination);
+    await majMiseEnRelationStructureNouvelle(db, app)(
+      idCNFS,
+      nouvelleSA,
+      structureDestination,
+      dateDebutDeContrat,
+      dateFinDeContrat,
+      typeDeContrat,
+      salaireContrat
+    );
+    await majDataCnfsStructureNouvelle(db)(
+      idCNFS,
+      nouvelleSA,
+      ancienneSA,
+      dateRupture,
+      motifRupture,
+      structureDestination
+    );
     await majConseillerObj(db)(idCNFS);
-    await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateEmbauche);
+    await craCoherenceDateDebutDeContrat(db)(idCNFS, nouvelleSA, dateDebutDeContrat);
     await updatePermanences(db)(idCNFS);
     await miseAjourMattermostCanaux(db)(idCNFS, structureDestination, ancienneSA, mattermost);
     await emailsStructureAncienne(db)(emails, cnfsRecrute, ancienneSA);

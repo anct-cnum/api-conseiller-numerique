@@ -47,7 +47,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         emailContactStructure,
         {
-          subject: 'Rencontrez-vous des difficultés avec le Compte-Rendu d\'Activités ?',
+          subject: 'Rencontrez-vous des difficultés avec le compte-rendu d\'activité ?',
           body: await render(),
         },
       )

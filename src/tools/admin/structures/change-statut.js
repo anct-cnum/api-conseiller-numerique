@@ -1,6 +1,8 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
 
+// node src/tools/admin/structures/change-statut.js
+
 execute(__filename, async ({ db, logger, exit }) => {
 
   program.option('-s, --statut <statut>', 'statut: ANNULEE ou DOUBLON ou ABANDON');
@@ -27,12 +29,16 @@ execute(__filename, async ({ db, logger, exit }) => {
   }
 
   await db.collection('structures').updateOne({ idPG: id }, { $set: { statut: statut } }, {});
-  await db.collection('misesEnRelation').updateMany({ 'structure.$id': structure._id }, { $set: { 'structureObj.statut': statut } });
-
-  if (structure.userCreated === true) {
-    await db.collection('users').updateOne({ 'entity.$id': structure._id }, { $set: { password: null } }, {});
-  }
-
   logger.info('Statut mis à jour');
+
+  const contUsers = await db.collection('users').countDocuments({ 'entity.$id': structure._id });
+  const countMisesEnRelation = await db.collection('misesEnRelation').countDocuments({
+    'structure.$id': structure._id,
+    'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee', 'recrutee'] }
+  });
+  if (contUsers > 0 || countMisesEnRelation > 0) {
+    logger.warn(`Veuillez lancez le script "src/tools/scripts/remove-user-structure-inactif.js"`);
+    logger.info(`Car la structure ${id} contient ${countMisesEnRelation} mises en relation & ${contUsers} users`);
+  }
   exit();
 });

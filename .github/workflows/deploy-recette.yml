@@ -14,11 +14,11 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [19.7.0]
+        node-version: [20.9.0]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: git fetch --prune --unshallow
 
     - uses: 47ng/actions-clever-cloud@v1.2.0
@@ -28,7 +28,7 @@ jobs:
       env:
         CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
         CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Create Sentry release
       uses: getsentry/action-release@v1
       env:

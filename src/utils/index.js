@@ -39,4 +39,15 @@ const getCoselec = structure => {
   return getLastCoselec(structure);
 };
 
-module.exports = { getCoselecPositif, getLastCoselec, getCoselec };
+const checkStructurePhase2 = statut => {
+  if (statut === 'RECONVENTIONNEMENT_VALIDÉ') {
+    return true;
+  }
+  if (statut === 'CONVENTIONNEMENT_VALIDÉ_PHASE_2') {
+    return true;
+  }
+  return false;
+};
+
+
+module.exports = { getCoselecPositif, getLastCoselec, getCoselec, checkStructurePhase2 };
