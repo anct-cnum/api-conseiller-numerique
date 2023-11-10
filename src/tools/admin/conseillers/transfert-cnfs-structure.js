@@ -308,7 +308,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
       structureDestination
     );
     await majConseillerObj(db)(idCNFS);
-    await craCoherenceDateEmbauche(db)(idCNFS, nouvelleSA, dateEmbauche);
+    await craCoherenceDateDebutDeContrat(db)(idCNFS, nouvelleSA, dateDebutDeContrat);
     await deletePermanences(db)(idCNFS);
     await updatePermanences(db)(idCNFS);
     await miseAjourMattermostCanaux(db)(idCNFS, structureDestination, ancienneSA, mattermost);
