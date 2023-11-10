@@ -202,6 +202,11 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
                 }
               );
 
+              //Suppression des permanences ne comportant que le conseillerCoop en rupture
+              await db.collection('permanences').deleteMany(
+                { 'conseillers': { '$eq': [conseillerCoop._id] } }
+              );
+
               await db.collection('permanences').updateMany(
                 {
                   $or: [
