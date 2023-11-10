@@ -6,6 +6,73 @@ const { execute } = require('../../utils');
 const { DBRef, ObjectID } = require('mongodb');
 const utils = require('../../../utils/index');
 
+const createMiseEnRelationReconventionnement = db => async (
+  misesEnRelationReconventionnement,
+  idCNFS,
+  idNouvelleSA,
+  database,
+  conseiller,
+  structure,
+  fusion) => {
+  if (misesEnRelationReconventionnement?.statut === 'renouvellement_initiee') {
+    await db.collection('misesEnRelation').insertOne({
+      conseiller: new DBRef('conseillers', idCNFS, database),
+      structure: new DBRef('structures', idNouvelleSA, database),
+      statut: 'renouvellement_initiee',
+      distance: misesEnRelationReconventionnement?.distance,
+      createdAt: new Date(),
+      conseillerObj: conseiller,
+      structureObj: structure,
+      dateDebutDeContrat: misesEnRelationReconventionnement?.dateDebutDeContrat,
+      dateFinDeContrat: misesEnRelationReconventionnement?.dateFinDeContrat,
+      typeDeContrat: misesEnRelationReconventionnement?.typeDeContrat,
+      ...(misesEnRelationReconventionnement?.salaire && {
+        salaire: misesEnRelationReconventionnement?.salaire
+      }),
+      phaseConventionnement: '2',
+      fusion
+    });
+    const miseEnRelationInserted = await db.collection('misesEnRelation').findOne({
+      'conseiller.$id': idCNFS,
+      'structure.$id': idNouvelleSA,
+      'statut': 'renouvellement_initiee'
+    });
+    return { miseEnRelationReconventionnement: miseEnRelationInserted._id };
+  }
+  if (misesEnRelationReconventionnement?.statut === 'terminee') {
+    await db.collection('misesEnRelation').insertOne({
+      conseiller: new DBRef('conseillers', idCNFS, database),
+      structure: new DBRef('structures', idNouvelleSA, database),
+      statut: 'terminee',
+      distance: misesEnRelationReconventionnement?.distance,
+      createdAt: new Date(),
+      conseillerObj: conseiller,
+      structureObj: structure,
+      ...(misesEnRelationReconventionnement?.dateDebutDeContrat && {
+        dateDebutDeContrat: misesEnRelationReconventionnement.dateDebutDeContrat
+      }),
+      ...(misesEnRelationReconventionnement?.dateFinDeContrat && {
+        dateFinDeContrat: misesEnRelationReconventionnement.dateFinDeContrat
+      }),
+      ...(misesEnRelationReconventionnement?.typeDeContrat && {
+        typeDeContrat: misesEnRelationReconventionnement.typeDeContrat
+      }),
+      ...(misesEnRelationReconventionnement?.salaire && {
+        salaire: misesEnRelationReconventionnement.salaire
+      }),
+      reconventionnement: true,
+      fusion
+    });
+    const miseEnRelationInserted = await db.collection('misesEnRelation').findOne({
+      'conseiller.$id': idCNFS,
+      'structure.$id': idNouvelleSA,
+      'statut': 'terminee'
+    });
+    return { phaseConventionnement: '2', miseEnRelationConventionnement: miseEnRelationInserted._id };
+  }
+  return {};
+};
+
 const miseEnRelationCnfs = db => async (idCNFS, idAncienneSA) => await db.collection('misesEnRelation').findOne({
   'conseiller.$id': idCNFS, 'structure.$id': idAncienneSA,
   'statut': { '$in': ['finalisee', 'nouvelle_rupture', 'finalisee_rupture'] }
@@ -13,20 +80,24 @@ const miseEnRelationCnfs = db => async (idCNFS, idAncienneSA) => await db.collec
 const updateIdStructureRupture = db => async (cnfsRecrute, idCNFS, idAncienneSA, idNouvelleSA, structureDestination) => {
   await db.collection('conseillers').updateOne(
     { '_id': idCNFS, 'ruptures': { '$elemMatch': { 'structureId': idAncienneSA } } },
-    { $set: { 'ruptures.$.structureId': idNouvelleSA }
+    {
+      $set: { 'ruptures.$.structureId': idNouvelleSA }
     });
   await db.collection('conseillersRuptures').updateOne(
     { conseillerId: idCNFS, structureId: idAncienneSA },
-    { $set: { structureId: idNouvelleSA }
+    {
+      $set: { structureId: idNouvelleSA }
     });
   await db.collection('misesEnRelation').deleteOne({ '_id': { '$ne': cnfsRecrute?._id }, 'conseiller.$id': idCNFS, 'structure.$id': idNouvelleSA });
   await db.collection('misesEnRelation').updateOne(
     { _id: cnfsRecrute?._id },
-    { $set: { 'structure.$id': idNouvelleSA, 'structureObj': structureDestination }
+    {
+      $set: { 'structure.$id': idNouvelleSA, 'structureObj': structureDestination }
     });
   await db.collection('cras').updateMany(
     { 'structure.$id': idAncienneSA, 'conseiller.$id': idCNFS },
-    { $set: { 'structure.$id': idNouvelleSA }
+    {
+      $set: { 'structure.$id': idNouvelleSA }
     });
 };
 const countCnfsNouvelleSA = db => async idNouvelleSA => await db.collection('misesEnRelation').countDocuments({
@@ -34,23 +105,18 @@ const countCnfsNouvelleSA = db => async idNouvelleSA => await db.collection('mis
   'structure.$id': idNouvelleSA
 });
 const initPermAncienneSA = db => async (idCNFS, idAncienneSA, idNouvelleSA) => await db.collection('permanences').find(
-  { 'adresse.codeCommune': { '$exists': false },
+  {
+    'adresse.codeCommune': { '$exists': false },
     '$or': [{ 'structure.$id': idAncienneSA, 'conseillers': { $in: [idCNFS] } }, { 'structure.$id': idNouvelleSA }]
   }).toArray();
-const getStructurenouvelle = db => async idNouvelleSA => await db.collection('structures').findOne({ '_id': idNouvelleSA });
+const getStructure = db => async idStructure => await db.collection('structures').findOne({ '_id': idStructure });
 const majConseillerTransfert = db => async (idCNFS, idNouvelleSA) =>
   await db.collection('conseillers').updateOne({ _id: idCNFS }, { $set: { structureId: idNouvelleSA } });
-const majMiseEnRelationAncienneSA = db => async (idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute) => {
-  await db.collection('misesEnRelation').updateOne(
-    { 'conseiller.$id': idCNFS, 'structure.$id': idAncienneSA },
-    { $set: {
-      statut: cnfsRecrute?.conseillerObj?.disponible === false ? 'finalisee_non_disponible' : 'nouvelle',
-      dateRecrutement: null,
-      fusion: {
-        'destinationStructureId': idNouvelleSA,
-        'date': new Date()
-      }
-    }
+const suppressionMiseEnRelationAncienneSA = db => async (idCNFS, idAncienneSA) => {
+  await db.collection('misesEnRelation').deleteMany(
+    {
+      'conseiller.$id': idCNFS,
+      'structure.$id': idAncienneSA,
     });
 };
 const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute, misesEnrelationNouvelleSA) => {
@@ -59,36 +125,105 @@ const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA,
     'date': new Date()
   };
   const conseiller = await db.collection('conseillers').findOne({ _id: idCNFS });
+  const structure = await db.collection('structures').findOne({ _id: idNouvelleSA });
+  const misesEnRelationReconventionnement = await db.collection('misesEnRelation').findOne({
+    'conseiller.$id': idCNFS,
+    'structure.$id': idAncienneSA,
+    'statut': { $in: ['renouvellement_initiee', 'terminee'] }
+  });
+  const attributReconventionnement = await createMiseEnRelationReconventionnement(db)(
+    misesEnRelationReconventionnement,
+    idCNFS,
+    idNouvelleSA,
+    database,
+    conseiller,
+    structure,
+    fusion
+  );
+  const objectContrat = {
+    statut: 'finalisee',
+    ...(cnfsRecrute?.dateDebutDeContrat && {
+      dateDebutDeContrat: cnfsRecrute.dateDebutDeContrat
+    }),
+    ...(cnfsRecrute?.dateFinDeContrat && {
+      dateFinDeContrat: cnfsRecrute.dateFinDeContrat
+    }),
+    ...(cnfsRecrute?.typeDeContrat && {
+      typeDeContrat: cnfsRecrute.typeDeContrat
+    }),
+    ...(cnfsRecrute?.salaire && {
+      salaire: cnfsRecrute.salaire
+    }),
+    ...(cnfsRecrute?.reconventionnement && {
+      reconventionnement: true
+    }),
+    fusion,
+    ...attributReconventionnement
+  };
+  if (!misesEnRelationReconventionnement && utils.checkStructurePhase2(structure?.conventionnement?.statut)) {
+    Object.assign(objectContrat, { phaseConventionnement: '2' });
+  }
   if (!misesEnrelationNouvelleSA) {
-    const structure = await db.collection('structures').findOne({ _id: idNouvelleSA });
     await db.collection('misesEnRelation').insertOne({
       conseiller: new DBRef('conseillers', idCNFS, database),
       structure: new DBRef('structures', idNouvelleSA, database),
-      statut: 'finalisee',
       distance: cnfsRecrute?.distance,
       createdAt: new Date(),
       conseillerObj: conseiller,
       structureObj: structure,
-      dateRecrutement: cnfsRecrute?.dateRecrutement,
-      fusion
+      ...objectContrat
     });
   } else {
     await db.collection('misesEnRelation').updateOne(
       { 'conseiller.$id': idCNFS, 'structure.$id': idNouvelleSA },
-      { $set: {
-        statut: 'finalisee',
-        dateRecrutement: cnfsRecrute?.dateRecrutement,
-        fusion
-      }
+      {
+        $set: objectContrat
+      });
+  }
+  const miseEnRelationFinalisee = await db.collection('misesEnRelation').findOne({
+    'conseiller.$id': idCNFS,
+    'structure.$id': idNouvelleSA,
+    'statut': 'finalisee'
+  });
+  if (misesEnRelationReconventionnement?.statut === 'renouvellement_initiee') {
+    await db.collection('misesEnRelation').updateOne(
+      {
+        'conseiller.$id': idCNFS,
+        'structure.$id': idNouvelleSA,
+        'statut': 'renouvellement_initiee'
+      },
+      {
+        $set: {
+          miseEnRelationConventionnement: miseEnRelationFinalisee._id
+        }
+      });
+  }
+  if (misesEnRelationReconventionnement?.statut === 'terminee') {
+    await db.collection('misesEnRelation').updateOne(
+      {
+        'conseiller.$id': idCNFS,
+        'structure.$id': idNouvelleSA,
+        'statut': 'terminee'
+      },
+      {
+        $set: {
+          miseEnRelationReconventionnement: miseEnRelationFinalisee._id
+        }
       });
   }
   await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': idCNFS }, { $set: { 'conseillerObj': conseiller } });
 };
 const getMiseEnRelationNouvelleSA = db => async (idCNFS, idNouvelleSA) =>
-  await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': idNouvelleSA });
+  await db.collection('misesEnRelation').findOne(
+    {
+      'conseiller.$id': idCNFS,
+      'structure.$id': idNouvelleSA,
+      'statut': { $in: ['nouvelle', 'interessee', 'nonInteressee'] }
+    });
 const majCraConseiller = db => async (idCNFS, idAncienneSA, idNouvelleSA) =>
   await db.collection('cras').updateMany(
-    { 'conseiller.$id': idCNFS,
+    {
+      'conseiller.$id': idCNFS,
       'structure.$id': idAncienneSA
     }, {
       $set: { 'structure.$id': idNouvelleSA }
@@ -172,9 +307,15 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     exit(`Rupture non validée par un Admin`);
     return;
   }
-  const structureDestination = await getStructurenouvelle(db)(idNouvelleSA);
+  const structureDestination = await getStructure(db)(idNouvelleSA);
+  const structureOriginelle = await getStructure(db)(idAncienneSA);
   if (structureDestination?.statut !== 'VALIDATION_COSELEC') {
     exit(`La structure destinataire n'est pas 'VALIDATION_COSELEC' mais ${structureDestination.statut}`);
+    return;
+  }
+  // eslint-disable-next-line max-len
+  if (structureDestination?.conventionnement?.statut !== 'RECONVENTIONNEMENT_VALIDÉ' && structureOriginelle?.conventionnement?.statut === 'RECONVENTIONNEMENT_VALIDÉ') {
+    exit(`La structure destinataire n'est pas en 'RECONVENTIONNEMENT_VALIDÉ' mais ${structureDestination?.conventionnement?.statut}`);
     return;
   }
   if (cnfsRecrute?.statut === 'finalisee_rupture') {
@@ -202,15 +343,15 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       return;
     }
     await majConseillerTransfert(db)(idCNFS, idNouvelleSA);
-    await majMiseEnRelationAncienneSA(db)(idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute);
     const misesEnrelationNouvelleSA = await getMiseEnRelationNouvelleSA(db)(idCNFS, idNouvelleSA);
     await majMiseEnRelationNouvelleSA(db)(database, idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute, misesEnrelationNouvelleSA);
+    await suppressionMiseEnRelationAncienneSA(db)(idCNFS, idAncienneSA);
     await majCraConseiller(db)(idCNFS, idAncienneSA, idNouvelleSA);
     const permAncienneSA = await getPermsAncienneSA(db)(idCNFS, idAncienneSA);
     const permNouvelleSA = await getPermsNouvelleSA(db)(idNouvelleSA);
 
     for (let permanence of permAncienneSA) {
-    // eslint-disable-next-line max-len
+      // eslint-disable-next-line max-len
       const verifDoublon = permNouvelleSA.filter(i => String(Object.values(i.location?.coordinates)) === String(Object.values(permanence.location?.coordinates)) && String(Object.values(i.adresse)) === String(Object.values(permanence.adresse)));
       if (verifDoublon.length === 0 && permanence.conseillers.length === 1) {
         await updateIdStructurePerm(db)(permanence, idNouvelleSA);

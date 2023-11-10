@@ -14,7 +14,7 @@ jobs:
       # Deploy requires an unshallow working copy
       - run: git fetch --prune --unshallow
       - name: New branch demo
-        uses: peterjgrainger/action-create-branch@v2.0.1
+        uses: peterjgrainger/action-create-branch@v2.3.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
