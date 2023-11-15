@@ -117,6 +117,7 @@ const suppressionMiseEnRelationAncienneSA = db => async (idCNFS, idAncienneSA) =
     {
       'conseiller.$id': idCNFS,
       'structure.$id': idAncienneSA,
+      'statut': { $in: ['renouvellement_initiee', 'terminee', 'finalisee'] }
     });
 };
 const majMiseEnRelationNouvelleSA = db => async (database, idCNFS, idAncienneSA, idNouvelleSA, cnfsRecrute, misesEnrelationNouvelleSA) => {
