@@ -86,7 +86,7 @@ const getPermanencesByStructure = db => async structureId => {
   return await db.collection('permanences').find({ 'structure.$id': new ObjectId(structureId) }).toArray();
 };
 
-const createPermanence = db => async (permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur) => {
+const createPermanence = db => async (permanence, conseillerId, hasPermanence, telephonePro, emailPro) => {
   const { ops } = await db.collection('permanences').insertOne(
     permanence
   );
@@ -98,7 +98,6 @@ const createPermanence = db => async (permanence, conseillerId, hasPermanence, t
       hasPermanence,
       telephonePro,
       emailPro,
-      estCoordinateur,
     }
   });
 
@@ -106,7 +105,7 @@ const createPermanence = db => async (permanence, conseillerId, hasPermanence, t
 };
 
 const setPermanence = db => async (permanenceId, permanence, conseillerId, hasPermanence,
-  telephonePro, emailPro, estCoordinateur) => {
+  telephonePro, emailPro) => {
   await db.collection('permanences').replaceOne({ _id: new ObjectId(permanenceId) }, permanence, { upsert: true });
 
   await db.collection('conseillers').updateOne({
@@ -116,7 +115,6 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, hasPe
       hasPermanence,
       telephonePro,
       emailPro,
-      estCoordinateur,
     }
   });
 };
