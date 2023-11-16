@@ -20,17 +20,39 @@ const isUserCoordinateur = db => async id => {
 
 const updateEstCoordinateurConseiller = db => async id => await db.collection('conseillers').updateOne(
   { '_id': id },
-  { $set: { 'estCoordinateur': false } },
+  { $unset: { 'estCoordinateur': '' } },
 );
 
 const updateEstCoordinateurMisesEnRelation = db => async id => await db.collection('misesEnRelation').updateMany(
   { 'conseiller.$id': id },
-  { $set: { 'conseillerObj.estCoordinateur': false } },
+  { $unset: { 'conseillerObj.estCoordinateur': '' } },
+);
+
+const suppressionEstCoordinateurConseiller = async db => await db.collection('conseillers').updateMany(
+  { 'estCoordinateur': false },
+  { $unset: { 'estCoordinateur': '' } },
+);
+
+const suppressionEstCoordinateurMisesEnRelation = async db => await db.collection('misesEnRelation').updateMany(
+  { 'conseillerObj.estCoordinateur': false },
+  { $unset: { 'conseillerObj.estCoordinateur': '' } },
 );
 
 execute(__filename, async ({ db, logger, exit }) => {
   logger.info('Reset des coordinateurs autoproclamés depuis le formulaire de permanence...');
   const promises = [];
+  
+  try {
+    logger.info('Début de suppression des estCoordinateur à false...');
+    await suppressionEstCoordinateurConseiller(db).then(async () => {
+      await suppressionEstCoordinateurMisesEnRelation(db);
+    });
+    logger.info('Fin de suppression des estCoordinateur à false...');
+  } catch (error) {
+    logger.error(error);
+  }
+
+
   const conseillers = await getConseillers(db);
 
   conseillers.forEach(conseiller => {
