@@ -10,7 +10,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   // estCoordinateur
   await db.collection('conseillers').updateMany(
     { 'estCoordinateur': true },
-    { $unset: { 'estCoordinateur': false } },
+    { $unset: { 'estCoordinateur': '' } },
   );
   await db.collection('misesEnRelation').updateMany(
     { 'conseillerObj.estCoordinateur': true },
