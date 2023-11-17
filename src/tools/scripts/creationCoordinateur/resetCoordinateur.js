@@ -14,7 +14,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   );
   await db.collection('misesEnRelation').updateMany(
     { 'conseillerObj.estCoordinateur': true },
-    { $unset: { 'conseillerObj.estCoordinateur': false } },
+    { $unset: { 'conseillerObj.estCoordinateur': '' } },
   );
   // listeSubordonnes
   await db.collection('conseillers').updateMany(
