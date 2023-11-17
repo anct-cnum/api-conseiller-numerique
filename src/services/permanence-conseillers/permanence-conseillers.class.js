@@ -129,12 +129,12 @@ exports.PermanenceConseillers = class Sondages extends Service {
         ...query
       };
       const conseillerId = req.params.id;
-      const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
+      const { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
+        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro });
         if (error) {
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
@@ -144,7 +144,7 @@ exports.PermanenceConseillers = class Sondages extends Service {
           return res.status(500).send(new GeneralError('La création de permanence est impossible : l\'adresse est déjà enregistrer en base.').toJSON());
         }
         await locationDefault(permanence);
-        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro, estCoordinateur).then(async idPermanence => {
+        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro).then(async idPermanence => {
           if (idOldPermanence) {
             return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
               return res.send({ isCreated: true, idPermanence, existsPermanence });
@@ -175,20 +175,20 @@ exports.PermanenceConseillers = class Sondages extends Service {
       };
       const conseillerId = req.params.id;
       const permanenceId = req.params.idPermanence;
-      const { hasPermanence, telephonePro, emailPro, estCoordinateur, idOldPermanence } = req.body.permanence;
+      const { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
       ).then(async () => {
-        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro, estCoordinateur });
+        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro });
         if (error) {
           logger.error(error);
           return res.status(400).send(new BadRequest(error).toJSON());
         }
         await locationDefault(permanence);
         await setPermanence(db)(permanenceId, permanence, conseillerId, hasPermanence,
-          telephonePro, emailPro, estCoordinateur).then(() => {
+          telephonePro, emailPro).then(() => {
           if (idOldPermanence) {
             deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
               return res.send({ isUpdated: true });
