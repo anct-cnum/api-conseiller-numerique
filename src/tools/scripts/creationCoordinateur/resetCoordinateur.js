@@ -10,11 +10,11 @@ execute(__filename, async ({ db, logger, exit }) => {
   // estCoordinateur
   await db.collection('conseillers').updateMany(
     { 'estCoordinateur': true },
-    { $set: { 'estCoordinateur': false } },
+    { $unset: { 'estCoordinateur': '' } },
   );
   await db.collection('misesEnRelation').updateMany(
     { 'conseillerObj.estCoordinateur': true },
-    { $set: { 'conseillerObj.estCoordinateur': false } },
+    { $unset: { 'conseillerObj.estCoordinateur': '' } },
   );
   // listeSubordonnes
   await db.collection('conseillers').updateMany(

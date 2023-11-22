@@ -152,7 +152,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               const idSubordonnes = [];
               emailsSubordonnes.forEach(email => {
                 let p = new Promise(async (resolve, reject) => {
-                  const idSubordonne = await getIdSubordonneByMail(db)(email.trim());
+                  const idSubordonne = await getIdSubordonneByMail(db)(email.trim().toLowerCase());
                   if (idSubordonne) {
                     idSubordonnes.push(idSubordonne);
                     resolve();
