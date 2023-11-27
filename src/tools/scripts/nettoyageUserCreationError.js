@@ -8,9 +8,9 @@ const getElements = async (db, collection) => await db.collection(collection).fi
   userCreated: true, userCreationError: true
 });
 
-const getUserByEntity = db => async (id, role) => await db.collection('users').findOne({
+const getUserByEntity = db => async (id, roles) => await db.collection('users').findOne({
   'entity.$id': id,
-  'roles': { '$in': [role] }
+  'roles': { '$in': roles }
 });
 
 const updateUserCreated = (db, collection) => async id => await db.collection(collection).updateOne(
@@ -44,7 +44,11 @@ execute(__filename, async ({ exit, logger, db }) => {
   const promises = [];
   elements.forEach(element => {
     promises.push(new Promise(async resolve => {
-      const user = await getUserByEntity(db)(element._id, text);
+      let roles = [text];
+      if (text === 'conseiller') {
+        roles.push('candidat');
+      }
+      const user = await getUserByEntity(db)(element._id, roles);
       if (user) {
         logger.info('Le ' + text + ' _id ' + element._id + ' a un user, suppression du status userCreationError');
         if (fix) {
