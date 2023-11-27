@@ -45,7 +45,7 @@ execute(__filename, async ({ exit, logger, db }) => {
   elements.forEach(element => {
     promises.push(new Promise(async resolve => {
       let roles = [text];
-      if (text !== 'structures') {
+      if (text === 'conseiller') {
         roles.push('candidat');
       }
       const user = await getUserByEntity(db)(element._id, roles);
