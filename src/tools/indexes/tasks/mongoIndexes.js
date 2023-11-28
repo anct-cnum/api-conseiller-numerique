@@ -90,6 +90,7 @@ module.exports = {
       db.collection('conseillers').createIndex({ 'inactivite': 1 }),
       db.collection('conseillers').createIndex({ 'nonAffichageCarto': 1 }),
       db.collection('conseillers').createIndex({ 'datePrisePoste': 1 }),
+      db.collection('conseillers').createIndex({ 'coordinateurs': 1 }),
     ]);
   },
   cras: db => {
@@ -106,7 +107,11 @@ module.exports = {
       db.collection('cras').createIndex({ 'cra.activite': 1 }),
       db.collection('cras').createIndex({ 'cra.nomCommune': 1 }),
       db.collection('cras').createIndex({ 'cra.codeCommune': 1 }),
-      db.collection('cras').createIndex({ 'cra.organismes': 1 })
+      db.collection('cras').createIndex({ 'cra.organismes': 1 }),
+      db.collection('cras').createIndex({ 'cra.statut': 1 }),
+      db.collection('cras').createIndex({ 'cra.age': 1 }),
+      db.collection('cras').createIndex({ 'cra.canal': 1 }),
+
     ]);
   },
   stats_conseillers_cras: db => {
