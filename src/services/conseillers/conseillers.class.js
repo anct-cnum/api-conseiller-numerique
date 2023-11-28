@@ -956,11 +956,16 @@ exports.Conseillers = class Conseillers extends Service {
             }
           }
         );
-        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
-          $set: {
-            'conseillerObj.supHierarchique': supHierarchique
+        await db.collection('misesEnRelation').updateMany(
+          {
+            'conseiller.$id': conseiller._id
+          },
+          {
+            $set: {
+              'conseillerObj.supHierarchique': supHierarchique
+            }
           }
-        });
+        );
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
