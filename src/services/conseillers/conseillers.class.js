@@ -970,8 +970,8 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(err);
         logger.error(err);
       }
-      const conseillerAfterUpdated = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-      res.send(conseillerAfterUpdated);
+      const conseillerUpdated = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      res.send(conseillerUpdated);
     });
     app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
       checkAuth(req, res);
