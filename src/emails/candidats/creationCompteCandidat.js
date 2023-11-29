@@ -40,7 +40,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         conseiller.name,
         {
-          subject: 'Activer votre espace candidat Conseillers numériques France Services',
+          subject: 'Activer votre espace candidat conseillers numériques',
           body: await render(conseiller),
         },
       )
