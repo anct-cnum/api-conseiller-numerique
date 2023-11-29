@@ -940,13 +940,13 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       if (String(conseiller._id) !== String(user.entity.oid)) {
-        res.status(403).send(new Forbidden('User not authorized', {
+        res.status(403).send(new Forbidden(`Vous n'avez pas l'autorisation`, {
           userId
         }).toJSON());
         return;
       }
       try {
-        await db.collection('conseillers').updateOne(
+        const conseillerUpdated = await db.collection('conseillers').updateOne(
           {
             _id: conseiller._id
           },
@@ -956,6 +956,12 @@ exports.Conseillers = class Conseillers extends Service {
             }
           }
         );
+        if (conseillerUpdated.modifiedCount === 0) {
+          res.status(404).send(new NotFound(`Vos informations n'ont pas été mise à jour`, {
+            idConseiller,
+          }).toJSON());
+          return;
+        }
         await db.collection('misesEnRelation').updateMany(
           {
             'conseiller.$id': conseiller._id
@@ -970,8 +976,7 @@ exports.Conseillers = class Conseillers extends Service {
         app.get('sentry').captureException(err);
         logger.error(err);
       }
-      const conseillerUpdated = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-      res.send(conseillerUpdated);
+      res.send({ ...conseiller, supHierarchique });
     });
     app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
       checkAuth(req, res);
