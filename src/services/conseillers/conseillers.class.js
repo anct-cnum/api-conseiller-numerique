@@ -934,7 +934,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
       if (!conseiller) {
-        res.status(404).send(new NotFound('Conseiller n\'existe pas', {
+        res.status(404).send(new NotFound('Ce conseiller n\'existe pas', {
           idConseiller,
         }).toJSON());
         return;
