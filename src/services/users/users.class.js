@@ -428,6 +428,12 @@ exports.Users = class Users extends Service {
       const token = req.params.token;
       const password = req.body.password;
       const typeEmail = req.body.typeEmail;
+      // eslint-disable-next-line max-len
+      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
+      if (passwordValidation.error) {
+        res.status(400).json(new BadRequest(passwordValidation.error));
+        return;
+      }
       const users = await this.find({
         query: {
           token: token,
@@ -443,7 +449,27 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       const role = user.roles[0];
-      app.service('users').patch(user._id, { password: password, passwordCreated: true, passwordCreatedAt: new Date(), token: null, tokenCreatedAt: null });
+      const userUpdated = await app.service('users').updateOne(
+        {
+          _id: user._id
+        },
+        {
+          $set: {
+            password,
+            passwordCreated: true,
+            passwordCreatedAt: new Date(),
+            token: null,
+            tokenCreatedAt: null
+          },
+          $unset: {
+            resetPassword: ''
+          }
+        }
+      );
+      if (userUpdated.modifiedCount === 0) {
+        res.status(404).send(new BadRequest('Votre mot de passe n\'a pas pu être mis à jour').toJSON());
+        return;
+      }
 
       if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
@@ -652,7 +678,12 @@ exports.Users = class Users extends Service {
 
       try {
         this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date() } });
-        let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
+        let message;
+        if (user?.resetPassword) {
+          message = emails.getEmailMessageByTemplateName('resetMotDePasse');
+        } else {
+          message = emails.getEmailMessageByTemplateName('motDePasseOublie');
+        }
         await message.send(user);
         res.status(200).json({ successResetPassword: true });
         return;
@@ -686,7 +717,7 @@ exports.Users = class Users extends Service {
       }
       const password = req.body.password;
       // eslint-disable-next-line max-len
-      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
+      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
       if (passwordValidation.error) {
         res.status(400).json(new BadRequest(passwordValidation.error));
         return;
