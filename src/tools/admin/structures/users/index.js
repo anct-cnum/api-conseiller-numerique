@@ -103,7 +103,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
           '$ref': `structures`,
           '$id': structure._id,
           '$db': dbName
-        } });
+        }, 'statut': 'nouvelle' });
         if (count > 0) {
           doCreateUser(db, feathers, dbName, structure._id, logger, Sentry).then(() => {
             usersCreatedCount++;
