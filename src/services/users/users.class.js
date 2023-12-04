@@ -456,7 +456,8 @@ exports.Users = class Users extends Service {
           passwordCreatedAt: new Date(),
           token: null,
           tokenCreatedAt: null
-        });
+        }
+      );
 
       if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
