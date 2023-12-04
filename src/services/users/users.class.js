@@ -518,7 +518,7 @@ exports.Users = class Users extends Service {
               default:
                 break;
             }
-          } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
+          } else if (user?.roles.includes('conseiller') && typeEmail === 'renouvellement') {
             const conseiller = await app.service('conseillers').get(user.entity?.oid);
             // Mise à jour du password également dans Mattermost et Gandi
             const adressCN = conseiller.emailCN?.address;
@@ -645,7 +645,7 @@ exports.Users = class Users extends Service {
       user.token = uuidv4();
 
       //Si le user est un conseiller, envoyer le mail sur son email perso
-      if (user.roles[0] === 'conseiller') {
+      if (user?.roles.includes('conseiller')) {
         let conseiller = await app.service('conseillers').get(user.entity?.oid);
         user.persoEmail = conseiller.email;
       }
