@@ -46,9 +46,9 @@ module.exports = {
         try {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
-            const user = await db.collection('users').findOne({ name: context.data.name, resetPassword: true });
+            const user = await db.collection('users').findOne({ name: context.data.name, resetPasswordCnil: true });
             if (user) {
-              throw new Forbidden('Reset password');
+              context.error = new Forbidden('Reset password', { resetPasswordCnil: true });
             }
             await db.collection('accessLogs')
             .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip, connexionError: true });

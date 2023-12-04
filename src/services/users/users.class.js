@@ -532,7 +532,7 @@ exports.Users = class Users extends Service {
                 break;
             }
           } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
-            if (user?.resetPassword) {
+            if (user?.resetPasswordCnil) {
               app.get('mongoClient').then(async db => {
                 const userUpdated = await db.collection('users').updateOne(
                   {
@@ -540,7 +540,7 @@ exports.Users = class Users extends Service {
                   },
                   {
                     $unset: {
-                      resetPassword: ''
+                      resetPasswordCnil: ''
                     }
                   }
                 );
@@ -684,7 +684,7 @@ exports.Users = class Users extends Service {
       try {
         this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date() } });
         let message;
-        if (user?.resetPassword) {
+        if (user?.resetPasswordCnil) {
           message = emails.getEmailMessageByTemplateName('resetMotDePasse');
         } else {
           message = emails.getEmailMessageByTemplateName('motDePasseOublie');
