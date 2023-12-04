@@ -645,7 +645,7 @@ exports.Users = class Users extends Service {
       user.token = uuidv4();
 
       //Si le user est un conseiller, envoyer le mail sur son email perso
-      if (user?.roles.includes('conseiller')) {
+      if (user.roles.includes('conseiller')) {
         let conseiller = await app.service('conseillers').get(user.entity?.oid);
         user.persoEmail = conseiller.email;
       }
