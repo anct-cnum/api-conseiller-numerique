@@ -1,6 +1,6 @@
 module.exports = (db, mailer) => {
 
-  const templateName = 'resetMotDePasse';
+  const templateName = 'resetMotDePasseCnil';
   const { utils } = mailer;
 
   let render = async user => {

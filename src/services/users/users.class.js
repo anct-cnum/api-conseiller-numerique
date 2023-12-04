@@ -685,7 +685,7 @@ exports.Users = class Users extends Service {
         this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date() } });
         let message;
         if (user?.resetPasswordCnil) {
-          message = emails.getEmailMessageByTemplateName('resetMotDePasse');
+          message = emails.getEmailMessageByTemplateName('resetMotDePasseCnil');
         } else {
           message = emails.getEmailMessageByTemplateName('motDePasseOublie');
         }
