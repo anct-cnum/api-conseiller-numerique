@@ -449,27 +449,14 @@ exports.Users = class Users extends Service {
       }
       const user = users.data[0];
       const role = user.roles[0];
-      const userUpdated = await app.service('users').updateOne(
+      app.service('users').patch(user._id,
         {
-          _id: user._id
-        },
-        {
-          $set: {
-            password,
-            passwordCreated: true,
-            passwordCreatedAt: new Date(),
-            token: null,
-            tokenCreatedAt: null
-          },
-          $unset: {
-            resetPassword: ''
-          }
-        }
-      );
-      if (userUpdated.modifiedCount === 0) {
-        res.status(404).send(new BadRequest('Votre mot de passe n\'a pas pu être mis à jour').toJSON());
-        return;
-      }
+          password,
+          passwordCreated: true,
+          passwordCreatedAt: new Date(),
+          token: null,
+          tokenCreatedAt: null
+        });
 
       if (typeEmail === 'bienvenue' && role === 'conseiller') {
         app.get('mongoClient').then(async db => {
@@ -545,6 +532,24 @@ exports.Users = class Users extends Service {
                 break;
             }
           } else if (role === 'conseiller' && typeEmail === 'renouvellement') {
+            if (user?.resetPassword) {
+              app.get('mongoClient').then(async db => {
+                const userUpdated = await db.collection('users').updateOne(
+                  {
+                    _id: user._id
+                  },
+                  {
+                    $unset: {
+                      resetPassword: ''
+                    }
+                  }
+                );
+                if (userUpdated.modifiedCount === 0) {
+                  app.get('sentry').captureException(new Error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`));
+                  logger.error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`);
+                }
+              });
+            }
             const conseiller = await app.service('conseillers').get(user.entity?.oid);
             // Mise à jour du password également dans Mattermost et Gandi
             const adressCN = conseiller.emailCN?.address;
