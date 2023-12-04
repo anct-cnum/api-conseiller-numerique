@@ -912,6 +912,72 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
     });
+    app.patch('/conseillers/superieur_hierarchique/:id', async (req, res) => {
+      checkAuth(req, res);
+      const accessToken = req.feathers?.authentication?.accessToken;
+      const userId = decode(accessToken).sub;
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      const idConseiller = req.params.id;
+      const { supHierarchique } = req.body;
+      const superieurHierarchiqueValidation = Joi.object({
+        nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),
+        prenom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ prénom est obligatoire')),
+        fonction: Joi.string().trim().min(2).max(100).required().error(new Error('Le champ fonction est obligatoire')),
+        // eslint-disable-next-line max-len
+        email: Joi.string().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
+        // eslint-disable-next-line max-len
+        numeroTelephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone est invalide')),
+      }).validate(supHierarchique);
+      if (superieurHierarchiqueValidation.error) {
+        res.status(400).json(new BadRequest(superieurHierarchiqueValidation.error));
+        return;
+      }
+      const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+      if (!conseiller) {
+        res.status(404).send(new NotFound('Ce conseiller n\'existe pas', {
+          idConseiller,
+        }).toJSON());
+        return;
+      }
+      if (String(conseiller._id) !== String(user.entity.oid)) {
+        res.status(403).send(new Forbidden(`Vous n'avez pas l'autorisation`, {
+          userId
+        }).toJSON());
+        return;
+      }
+      try {
+        const conseillerUpdated = await db.collection('conseillers').updateOne(
+          {
+            _id: conseiller._id
+          },
+          {
+            $set: {
+              supHierarchique
+            }
+          }
+        );
+        if (conseillerUpdated.modifiedCount === 0) {
+          res.status(404).send(new NotFound(`Vos informations n'ont pas été mise à jour`, {
+            idConseiller,
+          }).toJSON());
+          return;
+        }
+        await db.collection('misesEnRelation').updateMany(
+          {
+            'conseiller.$id': conseiller._id
+          },
+          {
+            $set: {
+              'conseillerObj.supHierarchique': supHierarchique
+            }
+          }
+        );
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
+      }
+      res.send({ ...conseiller, supHierarchique });
+    });
     app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
