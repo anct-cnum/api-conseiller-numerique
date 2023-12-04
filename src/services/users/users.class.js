@@ -518,7 +518,7 @@ exports.Users = class Users extends Service {
               default:
                 break;
             }
-          } else if (user?.roles.includes('conseiller') && typeEmail === 'renouvellement') {
+          } else if (user.roles.includes('conseiller') && typeEmail === 'renouvellement') {
             const conseiller = await app.service('conseillers').get(user.entity?.oid);
             // Mise à jour du password également dans Mattermost et Gandi
             const adressCN = conseiller.emailCN?.address;
