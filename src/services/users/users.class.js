@@ -590,7 +590,7 @@ exports.Users = class Users extends Service {
       });
 
       if (users.total === 0) {
-        res.status(404).send(new NotFound('User not found', {
+        res.status(404).send(new NotFound('Cette adresse e-mail n\'existe pas', {
           username
         }).toJSON());
         return;
@@ -662,7 +662,7 @@ exports.Users = class Users extends Service {
       });
 
       if (users.total === 0) {
-        res.status(404).send(new NotFound('User not found', {
+        res.status(404).send(new NotFound('Cette adresse e-mail n\'existe pas', {
           username
         }).toJSON());
         return;
