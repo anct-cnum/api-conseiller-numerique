@@ -46,8 +46,8 @@ module.exports = {
         try {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
-            const user = await db.collection('users').findOne({ name: context.data.name, resetPasswordCnil: true });
-            if (user) {
+            const countUser = await db.collection('users').countDocuments({ name: context.data.name, resetPasswordCnil: true });
+            if (countUser > 0) {
               context.error = new Forbidden('RESET_PASSWORD_CNIL', { resetPasswordCnil: true });
             }
             await db.collection('accessLogs')

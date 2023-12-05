@@ -4,7 +4,7 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   let render = async user => {
-    if (user.roles[0] === 'conseiller') {
+    if (user.roles.includes('conseiller')) {
       return mailer.render(__dirname, templateName, {
         user,
         link: utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`)
@@ -29,7 +29,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         user.persoEmail ?? user.name,
         {
-          subject: 'Renouvellement de votre mot de passe Conseiller Numérique',
+          subject: 'Renouvellement de votre mot de passe Conseiller numérique',
           body: await render(user),
         },
       )
