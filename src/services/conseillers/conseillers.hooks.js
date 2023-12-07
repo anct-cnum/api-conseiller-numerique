@@ -1,9 +1,8 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const search = require('feathers-mongodb-fuzzy-search');
-const { Forbidden, BadRequest } = require('@feathersjs/errors');
+const { Forbidden } = require('@feathersjs/errors');
 const checkPermissions = require('feathers-permissions');
 const { ObjectID } = require('mongodb');
-const Joi = require('joi');
 
 module.exports = {
   before: {
@@ -125,23 +124,6 @@ module.exports = {
           if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
-        }
-
-        const schema = Joi.object({
-
-          nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),
-          prenom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ prénom est obligatoire')),
-          fonction: Joi.string().trim().min(2).max(100).required().error(new Error('Le champ fonction est obligatoire')),
-          // eslint-disable-next-line max-len
-          email: Joi.string().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
-          // eslint-disable-next-line max-len
-          numeroTelephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone est invalide')),
-        }).validate(context.data.supHierarchique);
-
-        if (schema.error) {
-          throw new BadRequest(schema.error);
-        } else {
-          return context;
         }
       }
     ],
