@@ -605,7 +605,7 @@ exports.Users = class Users extends Service {
         return;
       }
       //Si le user est un conseiller, on renvoie l'email obscurci
-      if (user.roles[0] === 'conseiller') {
+      if (user.roles.includes('conseiller')) {
         const hide = t => {
           if (t.length === 0) {
             return '';
