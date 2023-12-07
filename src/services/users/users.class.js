@@ -458,107 +458,107 @@ exports.Users = class Users extends Service {
         }
       );
 
-      if (typeEmail === 'bienvenue' && user.roles.includes('conseiller')) {
-        app.get('mongoClient').then(async db => {
-          const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-          const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
-          const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-          const email = conseiller.emailCN.address;
-          const login = email.substring(0, email.lastIndexOf('@'));
-          const gandi = app.get('gandi');
-          const mattermost = app.get('mattermost');
-          await db.collection('users').updateOne({ _id: user._id }, {
-            $set: {
-              name: email
-            }
-          });
-          user.name = email;
-          // La boite mail a été créée dans import-recrutes.js
-          await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
-          await createAccount({
-            mattermost,
-            conseiller,
-            email,
-            login,
-            nom,
-            prenom,
-            password,
-            db,
-            logger,
-            Sentry: app.get('sentry')
-          });
-
-          try {
-            let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-            await message.send(user, conseiller);
-
-            // Envoi d'un deuxième email pour l'inscription à Pix Orga
-            let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-            await messagePix.send(user, conseiller);
-
-            res.send(user);
-            return;
-          } catch (err) {
-            app.get('sentry').captureException(err);
-            logger.error(err);
-          }
-        });
-      } else {
-        try {
-          let message;
-          if (typeEmail === 'bienvenue') {
-            if (user.roles.includes('candidat')) {
-              message = emails.getEmailMessageByTemplateName('bienvenueCompteCandidat');
-            } else {
-              message = emails.getEmailMessageByTemplateName('bienvenueCompteHub');
-            }
-            await message.send(user);
-          }
-          if (typeEmail === 'renouvellement') {
-            if (user.roles.includes('conseiller')) {
-              const conseiller = await app.service('conseillers').get(user.entity?.oid);
-              // Mise à jour du password également dans Mattermost et Gandi
-              const adressCN = conseiller.emailCN?.address;
-              if (adressCN === undefined) {
-                logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
-                res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
-                return;
+      if (typeEmail === 'bienvenue') {
+        if (user.roles.includes('conseiller')) {
+          app.get('mongoClient').then(async db => {
+            const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+            const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+            const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+            const email = conseiller.emailCN.address;
+            const login = email.substring(0, email.lastIndexOf('@'));
+            const gandi = app.get('gandi');
+            const mattermost = app.get('mattermost');
+            await db.collection('users').updateOne({ _id: user._id }, {
+              $set: {
+                name: email
               }
-              const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
-              app.get('mongoClient').then(async db => {
-                await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
-                await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
-              });
-              //Renouvellement conseiller => envoi email perso
-              user.persoEmail = conseiller.email;
+            });
+            user.name = email;
+            // La boite mail a été créée dans import-recrutes.js
+            await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
+            await createAccount({
+              mattermost,
+              conseiller,
+              email,
+              login,
+              nom,
+              prenom,
+              password,
+              db,
+              logger,
+              Sentry: app.get('sentry')
+            });
+
+            try {
+              let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+              await message.send(user, conseiller);
+
+              // Envoi d'un deuxième email pour l'inscription à Pix Orga
+              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+              await messagePix.send(user, conseiller);
+
+              res.send(user);
+              return;
+            } catch (err) {
+              app.get('sentry').captureException(err);
+              logger.error(err);
             }
-            if (user?.resetPasswordCnil) {
-              app.get('mongoClient').then(async db => {
-                const userUpdated = await db.collection('users').updateOne(
-                  {
-                    _id: user._id
-                  },
-                  {
-                    $unset: {
-                      resetPasswordCnil: ''
-                    }
-                  }
-                );
-                if (userUpdated.modifiedCount === 0) {
-                  app.get('sentry').captureException(new Error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`));
-                  logger.error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`);
-                }
-              });
-            }
-            message = emails.getEmailMessageByTemplateName('renouvellementCompte');
-            await message.send(user);
-          }
+          });
+        }
+        try {
+          const nomTemplate = user.roles.includes('candidat') ? 'bienvenueCompteCandidat' : 'bienvenueCompteHub';
+          const message = emails.getEmailMessageByTemplateName(nomTemplate);
+          await message.send(user);
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send({ roles: user.roles });
       }
+      if (typeEmail === 'renouvellement') {
+        try {
+          if (user.roles.includes('conseiller')) {
+            const conseiller = await app.service('conseillers').get(user.entity?.oid);
+            // Mise à jour du password également dans Mattermost et Gandi
+            const adressCN = conseiller.emailCN?.address;
+            if (adressCN === undefined) {
+              logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
+              res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
+              return;
+            }
+            const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
+            app.get('mongoClient').then(async db => {
+              await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
+              await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
+            });
+            //Renouvellement conseiller => envoi email perso
+            user.persoEmail = conseiller.email;
+          }
+          if (user?.resetPasswordCnil) {
+            app.get('mongoClient').then(async db => {
+              const userUpdated = await db.collection('users').updateOne(
+                {
+                  _id: user._id
+                },
+                {
+                  $unset: {
+                    resetPasswordCnil: ''
+                  }
+                }
+              );
+              if (userUpdated.modifiedCount === 0) {
+                app.get('sentry').captureException(new Error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`));
+                logger.error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`);
+              }
+            });
+          }
+          const message = emails.getEmailMessageByTemplateName('renouvellementCompte');
+          await message.send(user);
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+      }
+      res.send({ roles: user.roles });
     });
 
     app.post('/users/checkForgottenPasswordEmail', async (req, res) => {
