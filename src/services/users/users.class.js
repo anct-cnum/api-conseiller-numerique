@@ -448,7 +448,6 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
-      const role = user.roles[0];
       app.service('users').patch(user._id,
         {
           password,
@@ -508,30 +507,12 @@ exports.Users = class Users extends Service {
         try {
           let message;
           if (typeEmail === 'bienvenue') {
-            switch (role) {
-              case 'admin':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
-                await message.send(user);
-                break;
-              case 'structure':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
-                await message.send(user);
-                break;
-              case 'prefet':
-                message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
-                await message.send(user);
-                break;
-              case 'candidat':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteCandidat');
-                await message.send(user);
-                break;
-              case 'hub_coop':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteHub');
-                await message.send(user);
-                break;
-              default:
-                break;
+            if (user.roles.includes('candidat')) {
+              message = emails.getEmailMessageByTemplateName('bienvenueCompteCandidat');
+            } else {
+              message = emails.getEmailMessageByTemplateName('bienvenueCompteHub');
             }
+            await message.send(user);
           }
           if (typeEmail === 'renouvellement') {
             if (user.roles.includes('conseiller')) {
