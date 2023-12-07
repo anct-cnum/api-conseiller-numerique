@@ -459,7 +459,7 @@ exports.Users = class Users extends Service {
         }
       );
 
-      if (typeEmail === 'bienvenue' && role === 'conseiller') {
+      if (typeEmail === 'bienvenue' && user.roles.includes('conseiller')) {
         app.get('mongoClient').then(async db => {
           const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
           const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
