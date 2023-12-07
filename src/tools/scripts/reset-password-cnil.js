@@ -10,12 +10,10 @@ const { program } = require('commander');
 const winston = require('winston');
 
 program.option('-l, --log', 'Création d\'un fichier de log pour les erreurs');
-program.option('-limit, --limit <limit>', 'Nombre d\'utilisateur traités', parseInt);
 program.parse(process.argv);
 
 execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry }) => {
-  const { limit = 1000, log } = program;
-  if (log) {
+  if (program.log) {
     logger.info('Création d\'un fichier de log pour les erreurs de réinitialisation de mot de passe...');
     logger.add(new winston.transports.File(
       {
@@ -29,7 +27,7 @@ execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry })
       roles: { $in: ['conseiller', 'candidat'] },
       passwordCreated: true
     }
-  ).limit(limit).toArray();
+  ).toArray();
   let promises = [];
   logger.info('Réinitialisation des mots de passe de tous les conseillers et candidats...');
   users.forEach(user => {
@@ -46,7 +44,7 @@ execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry })
           const login = conseiller?.emailCN?.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@'));
           await updateMailboxPassword(gandi, conseiller._id, login, password, db, logger, Sentry);
           await updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
-          await delay(1000);
+          await delay(2000);
         }
         resolve();
       } catch {
