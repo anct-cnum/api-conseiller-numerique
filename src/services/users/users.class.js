@@ -461,7 +461,7 @@ exports.Users = class Users extends Service {
       if (typeEmail === 'bienvenue') {
         try {
           if (user.roles.includes('conseiller')) {
-            app.get('mongoClient').then(async db => {
+            return app.get('mongoClient').then(async db => {
               const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
               const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
               const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
@@ -474,7 +474,6 @@ exports.Users = class Users extends Service {
                   name: email
                 }
               });
-              user.name = email;
               // La boite mail a été créée dans import-recrutes.js
               await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
               await createAccount({
@@ -496,9 +495,7 @@ exports.Users = class Users extends Service {
               // Envoi d'un deuxième email pour l'inscription à Pix Orga
               let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
               await messagePix.send(user, conseiller);
-
-              res.send(user);
-              return;
+              res.send({ ...user, name: email });
             });
           }
           const nomTemplate = user.roles.includes('candidat') ? 'bienvenueCompteCandidat' : 'bienvenueCompteHub';
