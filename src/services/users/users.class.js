@@ -543,7 +543,8 @@ exports.Users = class Users extends Service {
               }
             });
           }
-          const message = emails.getEmailMessageByTemplateName('renouvellementCompte');
+          const templateMail = ['conseiller', 'hub_coop'].includes(user.roles) ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
+          const message = emails.getEmailMessageByTemplateName(templateMail);
           await message.send(user);
         } catch (err) {
           app.get('sentry').captureException(err);

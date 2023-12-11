@@ -40,6 +40,7 @@ const mailRelanceM15Conseiller = require('./conseillers/mailRelanceM+1,5Conseill
 const mailRelanceM15Structure = require('./structures/mailRelanceM+1,5Structure');
 const mailRelanceM15SupHierarchique = require('./structures/mailRelanceM+1,5SupHierarchique');
 const conseillerTransfertStructure = require('./conseillers/conseillerTransfertStructure');
+const renouvellementCompteCandidat = require('./candidats/renouvellementCompteCandidat');
 
 module.exports = (db, mailer, app, logger) => {
 
@@ -54,6 +55,7 @@ module.exports = (db, mailer, app, logger) => {
     motDePasseOublie(db, mailer),
     resetMotDePasseCnil(db, mailer),
     renouvellementCompte(db, mailer),
+    renouvellementCompteCandidat(db, mailer),
     candidatPointRecrutement(db, mailer),
     bienvenueCompteConseiller(db, mailer),
     bienvenueCompteCoordinateur(db, mailer),
