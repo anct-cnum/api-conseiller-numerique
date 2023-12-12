@@ -24,7 +24,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         user.name,
         {
-          subject: 'Votre mot de passe de l\'espace candidat conseillers numériques a été renouvelé avec succès',
+          subject: 'Votre mot de passe sur l\'espace candidat conseiller numérique a été renouvelé avec succès',
           body: await render(user),
         },
       )

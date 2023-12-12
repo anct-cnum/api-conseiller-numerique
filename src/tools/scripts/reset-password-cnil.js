@@ -10,6 +10,7 @@ const { program } = require('commander');
 const winston = require('winston');
 
 program.option('-l, --log', 'Création d\'un fichier de log pour les erreurs');
+program.option('-r, --role', 'Rôle des utilisateurs à réinitialiser (conseiller ou candidat');
 program.parse(process.argv);
 
 execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry }) => {
@@ -22,9 +23,19 @@ execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry })
       }
     ));
   }
+  let roles = ['conseiller', 'candidat'];
+  if (program.role) {
+    if (!['conseiller', 'candidat'].includes(program.role)) {
+      logger.error('Le rôle doit être conseiller ou candidat');
+      exit();
+      return;
+    }
+    roles = [program.role];
+  }
+
   const users = await db.collection('users').find(
     {
-      roles: { $in: ['conseiller', 'candidat'] },
+      roles: { $in: roles },
       passwordCreated: true
     }
   ).toArray();
