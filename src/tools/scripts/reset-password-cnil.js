@@ -25,7 +25,7 @@ execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry })
   }
   let roles = ['conseiller', 'candidat'];
   if (program.role) {
-    if (!['conseiller', 'candidat'].includes(program.role)) {
+    if (!roles.includes(program.role)) {
       logger.error('Le rôle doit être conseiller ou candidat');
       exit();
       return;
