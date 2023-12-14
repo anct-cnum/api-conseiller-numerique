@@ -1,5 +1,7 @@
 // Application hooks that run for every service
 
+const { Forbidden } = require('@feathersjs/errors');
+
 module.exports = {
   before: {
     all: [],
@@ -10,7 +12,7 @@ module.exports = {
     patch: [],
     remove: []
   },
-  
+
   after: {
     all: [],
     find: [],
@@ -34,7 +36,7 @@ module.exports = {
     patch: [],
     remove: []
   },
-  
+
   error: {
     all: [],
     find: [],
@@ -44,6 +46,10 @@ module.exports = {
         try {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
+            const countUser = await db.collection('users').countDocuments({ name: context.data.name, resetPasswordCnil: true });
+            if (countUser > 0) {
+              context.error = new Forbidden('RESET_PASSWORD_CNIL', { resetPasswordCnil: true });
+            }
             await db.collection('accessLogs')
             .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip, connexionError: true });
           }
@@ -57,4 +63,4 @@ module.exports = {
     remove: []
   }
 };
-  
+

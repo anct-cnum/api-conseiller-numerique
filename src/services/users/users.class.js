@@ -428,6 +428,12 @@ exports.Users = class Users extends Service {
       const token = req.params.token;
       const password = req.body.password;
       const typeEmail = req.body.typeEmail;
+      // eslint-disable-next-line max-len
+      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
+      if (passwordValidation.error) {
+        res.status(400).json(new BadRequest(passwordValidation.error));
+        return;
+      }
       const users = await this.find({
         query: {
           token: token,
@@ -442,83 +448,67 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
-      const role = user.roles[0];
-      app.service('users').patch(user._id, { password: password, passwordCreated: true, passwordCreatedAt: new Date(), token: null, tokenCreatedAt: null });
+      app.service('users').patch(user._id,
+        {
+          password,
+          passwordCreated: true,
+          passwordCreatedAt: new Date(),
+          token: null,
+          tokenCreatedAt: null
+        }
+      );
 
-      if (typeEmail === 'bienvenue' && role === 'conseiller') {
-        app.get('mongoClient').then(async db => {
-          const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-          const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
-          const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-          const email = conseiller.emailCN.address;
-          const login = email.substring(0, email.lastIndexOf('@'));
-          const gandi = app.get('gandi');
-          const mattermost = app.get('mattermost');
-          await db.collection('users').updateOne({ _id: user._id }, {
-            $set: {
-              name: email
-            }
-          });
-          user.name = email;
-          // La boite mail a été créée dans import-recrutes.js
-          await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
-          await createAccount({
-            mattermost,
-            conseiller,
-            email,
-            login,
-            nom,
-            prenom,
-            password,
-            db,
-            logger,
-            Sentry: app.get('sentry')
-          });
-
-          try {
-            let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-            await message.send(user, conseiller);
-
-            // Envoi d'un deuxième email pour l'inscription à Pix Orga
-            let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-            await messagePix.send(user, conseiller);
-
-            res.send(user);
-            return;
-          } catch (err) {
-            app.get('sentry').captureException(err);
-            logger.error(err);
-          }
-        });
-      } else {
+      if (typeEmail === 'bienvenue') {
         try {
-          let message;
-          if (typeEmail === 'bienvenue') {
-            switch (role) {
-              case 'admin':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteAdmin');
-                await message.send(user);
-                break;
-              case 'structure':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteStructure');
-                await message.send(user);
-                break;
-              case 'prefet':
-                message = emails.getEmailMessageByTemplateName('bienvenueComptePrefet');
-                await message.send(user);
-                break;
-              case 'candidat':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteCandidat');
-                await message.send(user);
-                break;
-              case 'hub_coop':
-                message = emails.getEmailMessageByTemplateName('bienvenueCompteHub');
-                await message.send(user);
-                break;
-              default:
-                break;
-            }
-          } else if (user.roles.includes('conseiller') && typeEmail === 'renouvellement') {
+          if (user.roles.includes('conseiller')) {
+            return app.get('mongoClient').then(async db => {
+              const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+              const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+              const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+              const email = conseiller.emailCN.address;
+              const login = email.substring(0, email.lastIndexOf('@'));
+              const gandi = app.get('gandi');
+              const mattermost = app.get('mattermost');
+              await db.collection('users').updateOne({ _id: user._id }, {
+                $set: {
+                  name: email
+                }
+              });
+              // La boite mail a été créée dans import-recrutes.js
+              await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
+              await createAccount({
+                mattermost,
+                conseiller,
+                email,
+                login,
+                nom,
+                prenom,
+                password,
+                db,
+                logger,
+                Sentry: app.get('sentry')
+              });
+
+              let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+              await message.send(user, conseiller);
+
+              // Envoi d'un deuxième email pour l'inscription à Pix Orga
+              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+              await messagePix.send(user, conseiller);
+              res.send({ ...user, name: email });
+            });
+          }
+          const nomTemplate = user.roles.includes('candidat') ? 'bienvenueCompteCandidat' : 'bienvenueCompteHub';
+          const message = emails.getEmailMessageByTemplateName(nomTemplate);
+          await message.send(user);
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+      }
+      if (typeEmail === 'renouvellement') {
+        try {
+          if (user.roles.includes('conseiller')) {
             const conseiller = await app.service('conseillers').get(user.entity?.oid);
             // Mise à jour du password également dans Mattermost et Gandi
             const adressCN = conseiller.emailCN?.address;
@@ -534,18 +524,34 @@ exports.Users = class Users extends Service {
             });
             //Renouvellement conseiller => envoi email perso
             user.persoEmail = conseiller.email;
-            message = emails.getEmailMessageByTemplateName('renouvellementCompte');
-            await message.send(user);
-          } else {
-            message = emails.getEmailMessageByTemplateName('renouvellementCompte');
-            await message.send(user);
           }
+          if (user?.resetPasswordCnil) {
+            app.get('mongoClient').then(async db => {
+              const userUpdated = await db.collection('users').updateOne(
+                {
+                  _id: user._id
+                },
+                {
+                  $unset: {
+                    resetPasswordCnil: ''
+                  }
+                }
+              );
+              if (userUpdated.modifiedCount === 0) {
+                app.get('sentry').captureException(new Error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`));
+                logger.error(`Erreur lors de la mise à jour du user ${user._id} pour le renouvellement du mot de passe`);
+              }
+            });
+          }
+          const templateMail = ['conseiller', 'hub_coop'].includes(user.roles) ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
+          const message = emails.getEmailMessageByTemplateName(templateMail);
+          await message.send(user);
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send({ roles: user.roles });
       }
+      res.send({ roles: user.roles });
     });
 
     app.post('/users/checkForgottenPasswordEmail', async (req, res) => {
@@ -558,7 +564,7 @@ exports.Users = class Users extends Service {
       });
 
       if (users.total === 0) {
-        res.status(404).send(new NotFound('User not found', {
+        res.status(404).send(new NotFound('Cette adresse e-mail n\'existe pas', {
           username
         }).toJSON());
         return;
@@ -573,7 +579,7 @@ exports.Users = class Users extends Service {
         return;
       }
       //Si le user est un conseiller, on renvoie l'email obscurci
-      if (user.roles[0] === 'conseiller') {
+      if (user.roles.includes('conseiller')) {
         const hide = t => {
           if (t.length === 0) {
             return '';
@@ -630,7 +636,7 @@ exports.Users = class Users extends Service {
       });
 
       if (users.total === 0) {
-        res.status(404).send(new NotFound('User not found', {
+        res.status(404).send(new NotFound('Cette adresse e-mail n\'existe pas', {
           username
         }).toJSON());
         return;
@@ -652,7 +658,12 @@ exports.Users = class Users extends Service {
 
       try {
         this.Model.updateOne({ _id: user._id }, { $set: { token: user.token, tokenCreatedAt: new Date() } });
-        let message = emails.getEmailMessageByTemplateName('motDePasseOublie');
+        let message;
+        if (user?.resetPasswordCnil) {
+          message = emails.getEmailMessageByTemplateName('resetMotDePasseCnil');
+        } else {
+          message = emails.getEmailMessageByTemplateName('motDePasseOublie');
+        }
         await message.send(user);
         res.status(200).json({ successResetPassword: true });
         return;
@@ -686,7 +697,7 @@ exports.Users = class Users extends Service {
       }
       const password = req.body.password;
       // eslint-disable-next-line max-len
-      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
+      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
       if (passwordValidation.error) {
         res.status(400).json(new BadRequest(passwordValidation.error));
         return;

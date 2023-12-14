@@ -287,7 +287,7 @@ const updateAccountPassword = (mattermost, db, logger, Sentry) => async (conseil
     return true;
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e);
+    logger.error(`${conseiller.mattermost?.id} : ${e}`);
     await db.collection('conseillers').updateOne({ _id: conseiller._id },
       {
         $set:
