@@ -60,6 +60,7 @@ module.exports = {
         'conseillerObj.prenom': 'text',
         'conseillerObj.email': 'text',
       }, { name: 'bo-search-fulltext' }),
+      db.collection('misesEnRelation').createIndex({ 'banniereRefusRecrutement': 1 }),
     ]);
   },
   conseillers: db => {
