@@ -543,7 +543,7 @@ exports.Users = class Users extends Service {
               }
             });
           }
-          const templateMail = ['conseiller', 'hub_coop'].includes(user.roles) ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
+          const templateMail = user.roles.some(role => role === 'conseiller' || 'hub_coop') ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
           const message = emails.getEmailMessageByTemplateName(templateMail);
           await message.send(user);
         } catch (err) {
