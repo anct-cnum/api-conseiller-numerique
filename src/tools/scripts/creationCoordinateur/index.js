@@ -153,7 +153,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           }
           if (total === ok + error) {
             // eslint-disable-next-line max-len
-            logger.warn(`Liste des ${listCoordinateurs.filter(i => !coordoFichier.includes(i))?.length} coordos manquante dans le fichier => ${listCoordinateurs.filter(i => !coordoFichier.includes(i))}`);
+            logger.warn(`Liste des ${listCoordinateurs.filter(i => !coordoFichier.includes(i))?.length} coordos manquante dans le fichier => ${listCoordinateurs.filter(i => !coordoFichier.includes(i)).map(i => i + '\r\n')}`);
             logger.info(`Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d'import : ${ok} traité(s) & ${error} en erreur`);
             exit();
           }

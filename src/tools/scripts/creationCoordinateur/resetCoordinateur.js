@@ -18,6 +18,11 @@ execute(__filename, async ({ db, logger, exit }) => {
     logger.error(`Le conseiller ${~~id} n'existe pas`);
     return;
   }
+  const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
+  if (!user.roles.includes('coordinateur_coop')) {
+    logger.error(`Le conseiller ${~~id} n'est pas un coordinateur`);
+    return;
+  }
   // CONSTAT du coordo ciblé
   const coordoOfficiel = await db.collection('structures').distinct('demandesCoordinateur.miseEnRelationId');
   const contratFinalisee = await db.collection('misesEnRelation').findOne({ 'statut': 'finalisee', 'conseiller.$id': conseiller._id });
@@ -25,10 +30,10 @@ execute(__filename, async ({ db, logger, exit }) => {
   const maille = [
     { type: 'codeRegion', message: `à la maille Régionale ${conseiller?.listeSubordonnes?.liste}` },
     { type: 'codeDepartement', message: `à la maille Départementale ${conseiller?.listeSubordonnes?.liste}` },
-    { type: 'conseillers', message: `avec une liste custom => aux total ${conseiller?.listeSubordonnes?.liste.length} conseillers` },
+    { type: 'conseillers', message: `avec une liste custom => au total ${conseiller?.listeSubordonnes?.liste.length} conseillers` },
   ];
-  logger.info(`- Le conseiller ${conseiller.emailCN.address} est un coordo ${statut} rattaché à la SA ${contratFinalisee.structureObj.nom}`);
-  logger.info(`=> Qui coordonne : ${maille.find(i => i.type === conseiller?.listeSubordonnes?.type)?.message ?? 'personnes...'}`);
+  // eslint-disable-next-line max-len
+  logger.info(`- Le conseiller ${conseiller.emailCN.address} est un coordo ${statut} rattaché à la SA ${contratFinalisee.structureObj.nom} \r\n => Qui coordonne : ${maille.find(i => i.type === conseiller?.listeSubordonnes?.type)?.message ?? 'personnes...'}`);
 
 
   if (statut === 'demi-officiel' && reset) {
@@ -54,6 +59,15 @@ execute(__filename, async ({ db, logger, exit }) => {
     await db.collection('misesEnRelation').updateMany(
       { 'conseillerObj.coordinateurs': { $elemMatch: { id: conseiller._id } } },
       { $pull: { 'conseillerObj.coordinateurs': { id: conseiller._id } } }
+    );
+
+    await db.collection('conseillers').updateMany(
+      { 'coordinateurs': { '$size': 0 } },
+      { $unset: { 'coordinateurs': '' } },
+    );
+    await db.collection('misesEnRelation').updateMany(
+      { 'conseillerObj.coordinateurs': { '$size': 0 } },
+      { $unset: { 'conseillerObj.coordinateurs': '' } },
     );
   }
 
