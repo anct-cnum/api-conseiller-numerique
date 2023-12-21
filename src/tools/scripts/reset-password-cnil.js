@@ -41,31 +41,26 @@ execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry })
       resetPasswordCnil: { $exists: false },
     }
   ).toArray();
-  let promises = [];
   logger.info('Réinitialisation des mots de passe de tous les conseillers et candidats...');
-  users.forEach(user => {
-    promises.push(new Promise(async (resolve, reject) => {
-      try {
-        const password = uuidv4() + 'AZEdsf;+:';
-        if (user.roles.includes('conseiller')) {
-          const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-          const login = conseiller.emailCN.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@'));
-          await updateMailboxPassword(gandi, conseiller._id, login, password, db, logger, Sentry);
-          await updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
-          await delay(delayReset);
-        }
-        await app.service('users').patch(user._id,
-          {
-            password,
-            resetPasswordCnil: true,
-          });
-        resolve();
-      } catch {
-        logger.error(`Erreur lors de la réinitialisation du mot de passe de ${user._id}`);
-        reject();
+
+  for (const user of users) {
+    try {
+      const password = uuidv4() + 'AZEdsf;+:';
+      if (user.roles.includes('conseiller')) {
+        const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+        const login = conseiller.emailCN.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@'));
+        await updateMailboxPassword(gandi, conseiller._id, login, password, db, logger, Sentry);
+        await updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
+        await delay(delayReset);
       }
-    }));
-  });
-  await Promise.all(promises);
+      await app.service('users').patch(user._id,
+        {
+          password,
+          resetPasswordCnil: true,
+        });
+    } catch {
+      logger.error(`Erreur lors de la réinitialisation du mot de passe de ${user._id}`);
+    }
+  }
   exit();
 });
