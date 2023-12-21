@@ -1,25 +1,22 @@
 <mjml>
 
-  <%- include('../commun/head.mjml.ejs'); %>
+  <%- include('head.mjml.ejs'); %>
 
   <mj-body background-color="#f0f0f0">
 
-    <%- include('../commun/header.mjml.ejs', { utils }); %>
+    <%- include('header.mjml.ejs', { utils }); %>
 
       <mj-wrapper css-class="wrapper">
         <mj-section>
           <mj-column>
             <mj-text css-class="text-primary">
-              Félicitation !
+              Renouvellement de votre mot de passe Conseiller numérique
             </mj-text>
             <mj-text>
               Madame, Monsieur,
             </mj-text>
             <mj-text>
-              Votre mot de passe Conseiller Numérique a été renouvelé avec succès.
-            </mj-text>
-            <mj-text>
-              Nous vous conseillons de garder cet email afin de conserver le lien de connexion à votre espace.
+              Pour renouveler votre mot de passe, cliquez sur le lien ci-dessous
             </mj-text>
           </mj-column>
         </mj-section>
@@ -34,12 +31,12 @@
             </mj-text>
 
             <mj-text padding="0" css-class="text-secondary">
-              Suivez ce lien pour vous connecter
+              Suivez ce lien pour changer de mot de passe
             </mj-text>
 
             <mj-button href="<%= link %>" background-color="#24303A" color="#F4F4F5" font-size="16px" font-weight="bold"
               text-transform="uppercase">
-              Accéder à mon espace
+              Changer de mot de passe
             </mj-button>
 
             <mj-text css-class="text-secondary">

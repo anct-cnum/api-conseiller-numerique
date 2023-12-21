@@ -90,7 +90,7 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
     }
   } catch (e) {
     Sentry.captureException(e);
-    logger.error(e);
+    logger.error(`login ${login} : ${e}`);
     await db.collection('conseillers').updateOne({ _id: conseillerId },
       {
         $set:

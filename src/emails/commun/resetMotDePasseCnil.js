@@ -1,17 +1,16 @@
 module.exports = (db, mailer) => {
 
-  const templateName = 'renouvellementCompte';
+  const templateName = 'resetMotDePasseCnil';
   const { utils } = mailer;
 
   let render = async user => {
-    const rolesCoop = ['conseiller', 'hub_coop', 'coordinateur_coop'];
-    const link = !rolesCoop.includes(user.roles[0]) ? utils.getBackofficeUrl(`/login?role=${(user.roles[0])}`) : utils.getEspaceCoopUrl(`/login`);
+    // eslint-disable-next-line max-len
+    const link = user.roles.includes('conseiller') ? utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`) : utils.getEspaceCandidatUrl(`/renouveler-mot-de-passe/${(user.token)}`);
     return mailer.render(__dirname, templateName, {
       user,
-      link: link,
+      link
     });
   };
-
   return {
     templateName,
     render,
@@ -26,7 +25,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         user.persoEmail ?? user.name,
         {
-          subject: 'Votre mot de passe Conseiller Numérique a été renouvelé avec succès',
+          subject: 'Renouvellement de votre mot de passe Conseiller numérique',
           body: await render(user),
         },
       )
