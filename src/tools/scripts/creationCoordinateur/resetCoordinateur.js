@@ -19,7 +19,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     return;
   }
   const user = await db.collection('users').findOne({ 'entity.$id': conseiller._id });
-  if (!user.roles.includes('coordinateur_coop')) {
+  if (!user.roles.includes('coordinateur_coop') && !user.roles.includes('coordinateur')) {
     logger.error(`Le conseiller ${~~id} n'est pas un coordinateur`);
     return;
   }
@@ -40,7 +40,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     // Role
     await db.collection('users').updateOne(
       { name: conseiller.emailCN.address },
-      { $pull: { 'roles': 'coordinateur_coop' } }
+      { $pull: { 'roles': { '$in': ['coordinateur_coop', 'coordinateur'] } } }
     );
     // estCoordinateur
     await db.collection('conseillers').updateOne(

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 'use strict';
+// node src/tools/scripts/creationCoordinateur/index.js -c C:/Users/ornel/OneDrive/dossier_conseiller_numérique/api-conseiller-numerique/data/coordos/test.csv
 
 const { execute } = require('../../utils');
 const { program } = require('commander');
 const CSVToJSON = require('csvtojson');
 
-const getListCoordinateurs = async db => await db.collection('users').distinct('name', { roles: { '$in': ['coordinateur_coop'] } });
+const getListCoordinateurs = async db => await db.collection('users').distinct('name', { roles: { '$in': ['coordinateur_coop', 'coordinateur'] } });
 
 const isConum = db => async emailConseiller => await db.collection('users').findOne({
   'name': emailConseiller.replace(/\s/g, '')
@@ -80,7 +81,7 @@ program.parse(process.argv);
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
 
-  logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
+  logger.info('Début d\'import du fichier coordo');
   let coordoAnonyme = await anonymeCoordinateur(db);
   coordoAnonyme = coordoAnonyme.map(i => String(i));
   await new Promise(resolve => {
@@ -102,7 +103,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
           const conum = await isConum(db)(adresseCoordo.trim().toLowerCase());
 
-          if (conum?.roles.some(role => role === 'coordinateur_coop')) {
+          if (conum?.roles.some(role => role === 'coordinateur_coop' || role === 'coordinateur')) {
             let listMaille = [];
             coordoFichier.push(adresseCoordo);
             const idCoordinateur = conum?.entity?.oid;
@@ -148,13 +149,13 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             resolve();
           } else {
             error++;
-            logger.error(`Erreur : ${conum?.name} ${conum ? 'n\'a pas le role coordinateur_coop' : 'est inconnu'} `);
+            logger.error(`Erreur : ${conum?.name} ${conum ? 'n\'a pas le role coordinateur' : 'est inconnu'} `);
             reject();
           }
           if (total === ok + error) {
             // eslint-disable-next-line max-len
             logger.warn(`Liste des ${listCoordinateurs.filter(i => !coordoFichier.includes(i))?.length} coordos manquante dans le fichier => ${listCoordinateurs.filter(i => !coordoFichier.includes(i)).map(i => i + '\r\n')}`);
-            logger.info(`Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d'import : ${ok} traité(s) & ${error} en erreur`);
+            logger.info(`Fin de la création du rôle coordinateur_ pour les conseillers du fichier d'import : ${ok} traité(s) & ${error} en erreur`);
             exit();
           }
         });
