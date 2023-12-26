@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-// node src/tools/scripts/creationCoordinateur/index.js -c C:/Users/ornel/OneDrive/dossier_conseiller_numérique/api-conseiller-numerique/data/coordos/test.csv
+// node src/tools/scripts/creationCoordinateur/index.js -c FILE
 
 const { execute } = require('../../utils');
 const { program } = require('commander');

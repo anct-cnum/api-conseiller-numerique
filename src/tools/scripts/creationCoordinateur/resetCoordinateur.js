@@ -6,6 +6,8 @@ require('dotenv').config();
 const { execute } = require('../../utils');
 const { program } = require('commander');
 
+// node src/tools/scripts/creationCoordinateur/resetCoordinateur.js -i ID
+
 execute(__filename, async ({ db, logger, exit }) => {
   program.option('-i, --id <id>', 'id: idPG du conseiller');
   program.option('-r, --reset', 'reset du coordo');
@@ -24,9 +26,10 @@ execute(__filename, async ({ db, logger, exit }) => {
     return;
   }
   // CONSTAT du coordo ciblé
-  const coordoOfficiel = await db.collection('structures').distinct('demandesCoordinateur.miseEnRelationId');
   const contratFinalisee = await db.collection('misesEnRelation').findOne({ 'statut': 'finalisee', 'conseiller.$id': conseiller._id });
-  const statut = coordoOfficiel.map(i => String(i)).includes(String(contratFinalisee?._id)) ? 'officiel' : 'demi-officiel';
+  const coordoOfficiel = await db.collection('structures').countDocuments({ 'demandesCoordinateur.miseEnRelationId': contratFinalisee._id });
+  const statut = coordoOfficiel > 0 ? 'officiel' : 'demi-officiel';
+
   const maille = [
     { type: 'codeRegion', message: `à la maille Régionale ${conseiller?.listeSubordonnes?.liste}` },
     { type: 'codeDepartement', message: `à la maille Départementale ${conseiller?.listeSubordonnes?.liste}` },
