@@ -178,7 +178,13 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
           codeRegionStructure: '',
           codeDepartementStructure: '',
           hasPermanence: '',
-          coordinateurs: ''
+          coordinateurs: '',
+          mailProAModifier: '',
+          tokenChangementMailPro: '',
+          tokenChangementMailProCreatedAt: '',
+          mailAModifier: '',
+          tokenChangementMail: '',
+          tokenChangementMailCreatedAt: ''
         }
       });
     // partie mise à jour des conseillerObj dans les misesEnRelation
