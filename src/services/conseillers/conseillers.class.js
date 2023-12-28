@@ -1082,10 +1082,6 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
-      checkAuth(req, res);
-      const accessToken = req.feathers?.authentication?.accessToken;
-      let userId = decode(accessToken).sub;
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const tokenChangementMail = req.params.token;
       let conseiller = '';
       const existTokenMailPro = await db.collection('conseillers').findOne({ 'tokenChangementMailPro': tokenChangementMail });
@@ -1100,12 +1096,6 @@ exports.Conseillers = class Conseillers extends Service {
         logger.error(`Token inconnu: ${tokenChangementMail}`);
         res.status(404).send(new NotFound('Conseiller not found', {
           tokenChangementMail
-        }).toJSON());
-        return;
-      }
-      if (String(conseiller._id) !== String(user.entity.oid)) {
-        res.status(403).send(new Forbidden('User not authorized', {
-          userId: userId
         }).toJSON());
         return;
       }
