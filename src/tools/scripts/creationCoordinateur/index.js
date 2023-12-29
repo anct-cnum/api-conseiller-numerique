@@ -9,7 +9,8 @@ const CSVToJSON = require('csvtojson');
 const getListCoordinateurs = async db => await db.collection('users').distinct('name', { roles: { '$in': ['coordinateur_coop', 'coordinateur'] } });
 
 const isConum = db => async emailConseiller => await db.collection('users').findOne({
-  'name': emailConseiller.replace(/\s/g, '')
+  'name': emailConseiller.replace(/\s/g, ''),
+  'roles': { '$in': ['conseiller'] }
 });
 
 const anonymeCoordinateur = async db => await db.collection('conseillers').distinct('_id', { nonAffichageCarto: true });
