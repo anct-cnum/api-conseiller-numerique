@@ -754,6 +754,37 @@ exports.Users = class Users extends Service {
           });
         }
       });
+
+      app.patch('/users/verify-code', async (req, res) => {
+        console.log('début!');
+        const db = await app.get('mongoClient');
+        const { code, email } = req.body;
+        console.log(email);
+        console.log(code);
+
+        const schema = Joi.object({
+          code: Joi.string().number().required().error(new Error('Le format du code de vérification est invalide')),
+          email: Joi.string().email().required().error(new Error('Le format de l\'adresse email est invalide')),
+        }).validate(req.body);
+
+        if (schema.error) {
+          res.status(400).json(new BadRequest(schema.error));
+          return;
+        }
+
+        try {
+          const verificationEmail = await db.collection('users').countDocuments({ name: email });
+          if (verificationEmail === 0) {
+            res.status(409).send(new Conflict('Erreur: l\'email n\'existe pas.').toJSON());
+            return;
+          }
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+          res.status(500).send(new GeneralError('Une erreur s\'est produite, veuillez réessayer plus tard.'));
+          return;
+        }
+      });
     });
 
     // Monitoring clever

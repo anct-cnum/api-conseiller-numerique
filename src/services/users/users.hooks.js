@@ -68,6 +68,7 @@ module.exports = {
         field: 'roles',
       }),
       async context => {
+        console.log('ooofofof');
         //Restreindre les permissions : les users non admin ne peuvent mettre à jour que les informations les concernant
         if (context.params.authentication !== undefined) {
           const user = await getUserBytoken(context);
