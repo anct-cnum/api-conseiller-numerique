@@ -37,7 +37,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     { type: 'conseillers', message: `avec une liste custom => au total ${conseiller?.listeSubordonnes?.liste.length} conseillers` },
   ];
   // eslint-disable-next-line max-len
-  logger.info(`- Le conseiller ${conseiller.emailCN.address} est un coordo ${statut} rattaché à la SA ${contratFinalisee.structureObj.nom} \r\n => Qui coordonne : ${maille.find(i => i.type === conseiller?.listeSubordonnes?.type)?.message ?? 'personnes...'}`);
+  logger.info(`- Le conseiller ${conseiller.emailCN.address} est un coordo ${statut} rattaché à la SA ${contratFinalisee.structureObj.nom} \r\n => Qui coordonne : ${maille.find(i => i.type === conseiller?.listeSubordonnes?.type)?.message ?? 'personne...'}`);
 
 
   if (statut === 'demi-officiel' && reset) {
