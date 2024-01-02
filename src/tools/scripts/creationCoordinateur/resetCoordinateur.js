@@ -27,7 +27,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   }
   // CONSTAT du coordo ciblé
   const contratFinalisee = await db.collection('misesEnRelation').findOne({ 'statut': 'finalisee', 'conseiller.$id': conseiller._id });
-  const coordoOfficiel = await db.collection('structures').countDocuments({ 'demandesCoordinateur.miseEnRelationId': contratFinalisee._id });
+  // eslint-disable-next-line max-len
+  const coordoOfficiel = await db.collection('structures').countDocuments({ '_id': conseiller.structureId, 'demandesCoordinateur.miseEnRelationId': contratFinalisee._id });
   const statut = coordoOfficiel > 0 ? 'officiel' : 'demi-officiel';
 
   const maille = [
