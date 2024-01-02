@@ -1105,6 +1105,10 @@ exports.Conseillers = class Conseillers extends Service {
       }
       if (existTokenMail) {
         try {
+          await pool.query(`UPDATE djapp_coach
+          SET email = $2
+              WHERE id = $1`,
+          [conseiller.idPG, conseiller.mailAModifier]);
           await this.patch(conseiller._id, {
             $set: { email: conseiller.mailAModifier },
             $unset: {
