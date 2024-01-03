@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-// node src\tools\exports\pqr-one-departement.js --departement XX
+// node src\tools\exports\pqr-one-departement.js --departement XX -d
 
 const path = require('path');
 const cli = require('commander');
@@ -10,35 +10,13 @@ const { ObjectId } = require('mongodb');
 const { formatOpeningHours } = require('../../services/conseillers/common');
 const { execute } = require('../utils');
 const departements = require('../../../data/imports/departements-region.json');
+const dayjs = require('dayjs');
 const deps = new Map();
 
 for (const value of departements) {
   deps.set(String(value.num_dep), value);
 }
 
-const codePostal2departementRegion = cp => {
-  if (!/^.{5}$/.test(cp)) {
-    return null;
-  }
-  let dep;
-  if ((dep = cp.match(/^9[78]\d/))) {
-    // DOM
-    return deps.get(dep[0]);
-  } else if ((dep = cp.match(/^20\d/))) {
-    if (['200', '201'].includes(dep[0])) {
-      // Corse du sud
-      return deps.get('2A');
-    }
-    if (['202', '206'].includes(dep[0])) {
-      // Haute Corse
-      return deps.get('2B');
-    }
-  } else if ((dep = cp.match(/^\d\d/))) {
-    // Le reste
-    return deps.get(String(dep[0]));
-  }
-  return null;
-};
 
 function cleanPhoneNumber(number) {
   let cleaned = number.replace(/\D/g, '');
@@ -53,7 +31,8 @@ function cleanPhoneNumber(number) {
 }
 
 cli.description('Export liste CNFS pour carto txt')
-.option('-d, --departement <departement>', 'departement: code departement')
+.option('-dpt, --departement <departement>', 'departement: code departement')
+.option('-d, --date <date>', 'date : YYYY-MM-DD')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
@@ -153,7 +132,6 @@ execute(__filename, async ({ logger, db, exit }) => {
       id: s._id.toString(),
       nom: '',
       prenom: '',
-      //telephone: s?.contact?.telephone ? cleanPhoneNumber(s?.contact?.telephone) : '',
       telephone: '',
       address: uniformiseAdresse(s?.adresseInsee2Ban?.name),
       addressParts: {
@@ -166,41 +144,72 @@ execute(__filename, async ({ logger, db, exit }) => {
     }
   });
 
-  let pinsDepartement = {};
-  let pinsDepartementElargi = {};
-
-  function addPinToDepartment(departmentId, pin) {
-    if (!pinsDepartement[departmentId]) {
-      pinsDepartement[departmentId] = [];
+  const codePostal2departementRegion = cp => {
+    if (!/^.{5}$/.test(cp)) {
+      return null;
     }
-    pinsDepartement[departmentId].push(pin);
-  }
-
-  function addPinToDepartmentElargi(departmentId, pin) {
-    if (!pinsDepartementElargi[departmentId]) {
-      pinsDepartementElargi[departmentId] = [];
+    let dep;
+    // Gestion Parti St Martin
+    if (cp === '97150' && cli.departement === '00') {
+      return { num_dep: '00', dep_name: 'SAINT MARTIN', region_name: 'SAINT MARTIN' };
+    } else if ((dep = cp.match(/^9[78]\d/))) {
+      // DOM
+      return deps.get(dep[0]);
+    } else if ((dep = cp.match(/^20\d/))) {
+      if (['200', '201'].includes(dep[0])) {
+        // Corse du sud
+        return deps.get('2A');
+      }
+      if (['202', '206'].includes(dep[0])) {
+        // Haute Corse
+        return deps.get('2B');
+      }
+    } else if ((dep = cp.match(/^\d\d/))) {
+      // Le reste
+      return deps.get(String(dep[0]));
     }
-    pinsDepartementElargi[departmentId].push(pin);
-  }
+    return null;
+  };
+
+
+  let pinsDepartement = { };
+  let pinsDepartementElargi = { };
 
   // On commence ici
-  if (!deps.get(cli.departement)) {
+  if (!deps.get(cli.departement) && cli.departement !== '978') {
     exit(`Le code departement saisi ${cli.departement} est inconnu `);
     return;
   }
+  if (cli.departement === '978') {
+    cli.departement = '00';
+  }
+  // Ajouter en amont si aucune SA n'a pas de coordonnée insee et ni de CN
+  pinsDepartement[cli.departement] = [];
+  pinsDepartementElargi[cli.departement] = [];
+
+  const regexFormatDate = new RegExp(/^((202)[1-9])(-)(((0)[0-9])|((1)[0-2]))(-)([0-2][0-9]|(3)[0-1])$/);
+  if (!regexFormatDate.test(cli.date)) {
+    exit(`Le date saisi est invalide (${cli.date})`);
+    return;
+  }
+  const date = dayjs(cli.date, 'YYYY-MM-DD').toDate();
   const structuresIds = await db.collection('structures').find({
-    statut: 'VALIDATION_COSELEC', codeDepartement: cli.departement }).toArray(); // a voir si avec RECONVENTIONNEMENT_VALIDE
+    'statut': 'VALIDATION_COSELEC',
+    'codeDepartement': cli.departement,
+    'conventionnement.statut': { '$nin': ['RECONVENTIONNEMENT_REFUSÉ', 'NON_INTERESSÉ'] }
+  }).toArray();
+  logger.info(`Il y a ${structuresIds.length} structure(s) dans le département ${cli.departement}`);
 
   for (const sa of structuresIds) {
     let structure = await db.collection('structures').findOne({ idPG: sa.idPG });
-    const codeDepartementInsee2Ban = structure?.adresseInsee2Ban?.postcode?.substr(0, 2);
+    const codeDepartementInsee2Ban = structure?.adresseInsee2Ban?.postcode;
 
     // Détection des erreurs
     if (!structure?.adresseInsee2Ban?.name) {
       logger.info('Pas d\'infos BAN pour la SA ' + sa.idPG);
     }
-    if (!structure?.location) {
-      logger.info('Pas de location pour la SA ' + sa.idPG);
+    if (!structure?.coordonneesInsee) {
+      logger.info('Pas de coordonneesInsee pour la SA ' + sa.idPG);
     }
 
     // Si la Structure a des CNFS actifs
@@ -217,7 +226,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             {
               $and: [
                 { typeDeContrat: { $ne: 'CDI' } },
-                { dateFinDeContrat: { $gte: new Date('2024-02-01') } } // Date à Re définir
+                { dateFinDeContrat: { $gte: date } }
               ]
             }
           ]
@@ -235,7 +244,6 @@ execute(__filename, async ({ logger, db, exit }) => {
           'structure.codeDepartement': '$structureObj.codeDepartement',
           'structure.codeCommune': '$structureObj.codeCommune',
           'structure.nom': '$structureObj.nom',
-          'structure.contact.telephone': '$structureObj.contact.telephone',
           'structure.estLabelliseAidantsConnect': '$structureObj.estLabelliseAidantsConnect',
           'structure.estLabelliseFranceServices': '$structureObj.estLabelliseFranceServices',
           'structure.insee.adresse': '$structureObj.insee.adresse',
@@ -255,14 +263,14 @@ execute(__filename, async ({ logger, db, exit }) => {
 
         if (permanencesConseiller.length > 0 && permanencePrincipaleConseiller) {
           try {
-            const depReg = codePostal2departementRegion(String(permanencePrincipaleConseiller.adresse.codePostal));
+            let depReg = codePostal2departementRegion(String(permanencePrincipaleConseiller.adresse.codePostal));
             if (depReg?.num_dep === cli.departement) {
               // on prend le lien de la permanence principale
-              addPinToDepartment(depReg.num_dep, toGeoJsonFromPermanence(c, permanencePrincipaleConseiller));
+              pinsDepartement[depReg.num_dep].push(toGeoJsonFromPermanence(c, permanencePrincipaleConseiller));
               // et les autres
               for (const p of permanencesConseiller) {
                 const depReg = codePostal2departementRegion(String(p.adresse.codePostal));
-                addPinToDepartmentElargi(depReg.num_dep, toGeoJsonFromPermanence(c, p));
+                pinsDepartementElargi[depReg.num_dep].push(toGeoJsonFromPermanence(c, p));
               }
             } else {
               // eslint-disable-next-line max-len
@@ -272,19 +280,19 @@ execute(__filename, async ({ logger, db, exit }) => {
             logger.error('Stack trace:', error.stack);
           }
           // Pour éviter d'inclure une adresse (adresse du siret) non situé dans le meme département
-        } else if (codeDepartementInsee2Ban === structure.codeDepartement) {
-          addPinToDepartment(structure.codeDepartement, toGeoJsonFromStructure(structure));
-          addPinToDepartmentElargi(structure.codeDepartement, toGeoJsonFromStructure(structure));
+        } else if (codePostal2departementRegion(codeDepartementInsee2Ban) === structure.codeDepartement) {
+          pinsDepartement[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
+          pinsDepartementElargi[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
         } else {
           // eslint-disable-next-line max-len
           logger.warn(`Le code departement Insee ${codeDepartementInsee2Ban} !== à celle de la structure ${structure.codeDepartement} (idCN: ${c.idPG}/ idStructure: ${structure.idPG})`);
         }
       }
-    } else if (codeDepartementInsee2Ban === structure.codeDepartement) {
+    } else if (codePostal2departementRegion(codeDepartementInsee2Ban) === structure.codeDepartement) {
       // Si la Structure n'a PAS de CNFS actif
       // On prend l'adresse de la structure
-      addPinToDepartment(structure.codeDepartement, toGeoJsonFromStructure(structure));
-      addPinToDepartmentElargi(structure.codeDepartement, toGeoJsonFromStructure(structure));
+      pinsDepartement[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
+      pinsDepartementElargi[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
     } else {
 
       // eslint-disable-next-line max-len
@@ -295,7 +303,7 @@ execute(__filename, async ({ logger, db, exit }) => {
 
   logger.info('Resultats :');
 
-  let csvFileCount = path.join(__dirname, '../../../data/exports', `carto_count_departement_${cli.departement}.csv`);
+  let csvFileCount = path.join(__dirname, '../../../data/exports', `${cli.date}_departement_${cli.departement}_carto_count.csv`);
   let fileCount = fs.createWriteStream(csvFileCount, {
     flags: 'w'
   });
@@ -304,7 +312,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   fileCount.close();
 
   logger.info('Resultats élargis');
-  let csvFileCountElargi = path.join(__dirname, '../../../data/exports', `carto_elargi_count_departement_${cli.departement}.csv`);
+  let csvFileCountElargi = path.join(__dirname, '../../../data/exports', `${cli.date}_departement_${cli.departement}_carto_elargi_count.csv`);
   let fileCountElargi = fs.createWriteStream(csvFileCountElargi, {
     flags: 'w'
   });
@@ -312,7 +320,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   fileCountElargi.write(`${cli.departement},${pinsDepartementElargi[cli.departement].length}\n`);
   fileCountElargi.close();
 
-  let csvFile = path.join(__dirname, '../../../data/exports', `carto_departement_${cli.departement}.json`);
+  let csvFile = path.join(__dirname, '../../../data/exports', `${cli.date}_departement_${cli.departement}_carto.json`);
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
@@ -329,7 +337,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   file.write(JSON.stringify(featureCollection, null, 2));
   file.close();
 
-  let csvFileElargi = path.join(__dirname, '../../../data/exports', `carto_elargi_departement_${cli.departement}.json`);
+  let csvFileElargi = path.join(__dirname, '../../../data/exports', `${cli.date}_departement_${cli.departement}_carto_elargi.json`);
   // Toutes les permanences
   let fileElargi = fs.createWriteStream(csvFileElargi, {
     flags: 'w'
@@ -342,7 +350,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   let villePrecedente = '';
   let saPrecedente = '';
 
-  let csvFileTxt = path.join(__dirname, '../../../data/exports', `carto_departement_${cli.departement}.txt`);
+  let csvFileTxt = path.join(__dirname, '../../../data/exports', `${cli.date}_departement_${cli.departement}_carto.txt`);
 
   let fileTxt = fs.createWriteStream(csvFileTxt, {
     flags: 'w'
