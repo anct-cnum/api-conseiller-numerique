@@ -20,11 +20,7 @@ module.exports = {
             context.error = new Forbidden('ERROR_ATTEMPT_LOGIN_BLOCKED');
             throw new Error(context);
           } else if (user?.attemptFail === 3 && !difference) {
-            let numberLoginUnblock = '';
-            for (let i = 0; i < 6; i++) {
-              numberLoginUnblock += String(Math.floor(Math.random() * 10));
-            }
-            user.numberLoginUnblock = Number(numberLoginUnblock);
+            user.numberLoginUnblock = Math.floor(100000 + Math.random() * 900000);
             await db.collection('users')
             .updateOne(
               {
