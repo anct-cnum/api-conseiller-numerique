@@ -73,6 +73,7 @@ const coselecs = {
   'COSELEC 59': '30/05/2023',
   'COSELEC 60': '29/06/2023',
   'COSELEC 61': '26/07/2023',
+  'COSELEC 62': '16/11/2023',
 };
 
 function formatDate(coselec) {
