@@ -754,35 +754,35 @@ exports.Users = class Users extends Service {
           });
         }
       });
+    });
 
-      app.post('/users/verify-code', async (req, res) => {
-        const db = await app.get('mongoClient');
-        const { code, email } = req.body;
-
-        const schema = Joi.object({
-          code: Joi.string().number().required().error(new Error('Le format du code de vérification est invalide')),
-          email: Joi.string().email().required().error(new Error('Le format de l\'adresse email est invalide')),
-        }).validate(req.body);
-
-        if (schema.error) {
-          res.status(400).json(new BadRequest(schema.error));
+    app.patch('/users/verify-code', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const { code, email } = req.body;
+      const schema = Joi.object({
+        code: Joi.string().required().min(6).max(6).error(new Error('Le format du code de vérification est invalide')),
+        email: Joi.string().email().required().error(new Error('Le format de l\'adresse email est invalide')),
+      }).validate(req.body);
+      if (schema.error) {
+        res.status(400).json(new BadRequest(schema.error));
+        return;
+      }
+      try {
+        const verificationEmailEtCode = await db.collection('users').countDocuments({ name: email, numberLoginUnblock: Number(code) });
+        if (verificationEmailEtCode === 0) {
+          res.status(404).send(new Conflict('Erreur: l\'email ou le code n\'existe pas.').toJSON());
           return;
         }
-
-        try {
-          const verificationEmail = await db.collection('users').countDocuments({ name: email, numberLoginUnblock: code });
-          if (verificationEmail === 0) {
-            res.status(404).send(new Conflict('Erreur: l\'email ou le code n\'existe pas.').toJSON());
-            return;
-          }
-
-        } catch (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
-          res.status(500).send(new GeneralError('Une erreur s\'est produite, veuillez réessayer plus tard.'));
-          return;
-        }
-      });
+        await db.collection('users')
+        .updateOne({ name: email }, { $set: { attemptFail: 0 }, $unset: { numberLoginUnblock: '' } });
+        res.status(200).json({ messageVerificationCode: 'Vous pouvez maintenant vous connectez normalement !' });
+        return;
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        res.status(500).send(new GeneralError('Une erreur s\'est produite, veuillez réessayer plus tard.'));
+        return;
+      }
     });
 
     // Monitoring clever
