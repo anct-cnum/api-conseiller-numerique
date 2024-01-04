@@ -839,9 +839,8 @@ exports.Conseillers = class Conseillers extends Service {
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
           return;
         }
-
+        const gandi = app.get('gandi');
         if (email !== conseiller.email) {
-          const gandi = app.get('gandi');
           if (email.includes(gandi.domain)) {
             res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
               email
@@ -873,12 +872,17 @@ exports.Conseillers = class Conseillers extends Service {
           }
         }
         if (emailPro !== conseiller?.emailPro) {
-
+          if (emailPro.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email professionnelle saisi est invalide', {
+              emailPro
+            }).toJSON());
+            return;
+          }
           const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
             res.status(409).send(new Conflict('Erreur: l\'email professionnelle est déjà utilisé par un autre utilisateur', {
-              email
+              emailPro
             }).toJSON());
             return;
           }

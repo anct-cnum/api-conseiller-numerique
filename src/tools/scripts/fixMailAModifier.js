@@ -6,10 +6,11 @@ const dayjs = require('dayjs');
 
 // node src/tools/scripts/fixMailAModifier.js
 
-execute(__filename, async ({ logger, db, Sentry }) => {
+execute(__filename, async ({ logger, db, Sentry, app }) => {
   try {
     const date = dayjs(Date()).subtract(28, 'days').format('YYYY/MM/DD 23:59:59');
     const queryDate = new Date(date);
+    const gandi = app.get('gandi');
 
     const conseillers = await db.collection('conseillers').find(
       {
@@ -22,7 +23,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
     for (const conseiller of conseillers) {
       let listUnset = {};
       let listSet = {};
-      if (conseiller?.tokenChangementMail < queryDate) {
+      if (conseiller?.tokenChangementMail < queryDate && !conseiller.mailAModifier.includes(gandi.domain)) {
         listSet = {
           ...listSet,
           email: conseiller.mailAModifier.toLowerCase(),
@@ -34,7 +35,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           tokenChangementMailCreatedAt: ''
         };
       }
-      if (conseiller?.tokenChangementMailPro < queryDate) {
+      if (conseiller?.tokenChangementMailPro < queryDate && !conseiller.mailProAModifier.includes(gandi.domain)) {
         listSet = {
           ...listSet,
           emailPro: conseiller.mailProAModifier.toLowerCase()
