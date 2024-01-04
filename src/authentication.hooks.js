@@ -93,13 +93,14 @@ module.exports = {
             }
             let attemptFail = user?.attemptFail ?? 0;
             if (attemptFail < 3) {
+              attemptFail++;
               await db.collection('users')
               .updateOne(
                 {
                   _id: user._id
                 },
                 { $set: {
-                  attemptFail: attemptFail + 1,
+                  attemptFail: attemptFail,
                   lastAttemptFailDate: new Date(),
                 }
                 });
