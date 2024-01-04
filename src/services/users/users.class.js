@@ -770,7 +770,7 @@ exports.Users = class Users extends Service {
       try {
         const verificationEmailEtCode = await db.collection('users').countDocuments({ name: email, numberLoginUnblock: Number(code) });
         if (verificationEmailEtCode === 0) {
-          res.status(404).send(new Conflict('Erreur: l\'email ou le code n\'existe pas.').toJSON());
+          res.status(404).send(new Conflict('Erreur: l\'email et le code ne correspondent pas.').toJSON());
           return;
         }
         await db.collection('users')
