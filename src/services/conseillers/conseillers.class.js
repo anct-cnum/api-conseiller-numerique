@@ -887,7 +887,7 @@ exports.Conseillers = class Conseillers extends Service {
               $set: {
                 tokenChangementMailPro: uuidv4(),
                 tokenChangementMailProCreatedAt: new Date(),
-                mailProAModifier: emailPro
+                mailProAModifier: emailPro.toLowerCase()
               }
             });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
@@ -1107,36 +1107,36 @@ exports.Conseillers = class Conseillers extends Service {
         try {
           await pool.query(`UPDATE djapp_coach
           SET email = $2
-              WHERE id = $1`,
-          [conseiller.idPG, conseiller.mailAModifier]);
-          await this.patch(conseiller._id, {
-            $set: { email: conseiller.mailAModifier },
+              WHERE email = $1`,
+          [conseiller.email, conseiller.mailAModifier.toLowerCase()]);
+          await db.collection('conseillers').updateMany({ email: conseiller.email }, {
+            $set: { email: conseiller.mailAModifier.toLowerCase() },
             $unset: {
-              mailAModifier: conseiller.mailAModifier,
-              tokenChangementMail: conseiller.tokenChangementMail,
-              tokenChangementMailCreatedAt: conseiller.tokenChangementMailCreatedAt
+              mailAModifier: '',
+              tokenChangementMail: '',
+              tokenChangementMailCreatedAt: ''
             }
           });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send({ 'email': conseiller.mailAModifier, 'isEmailPro': false });
+        res.send({ 'email': conseiller.mailAModifier.toLowerCase(), 'isEmailPro': false });
       } else {
         try {
           await this.patch(conseiller._id, {
-            $set: { emailPro: conseiller.mailProAModifier },
+            $set: { emailPro: conseiller.mailProAModifier.toLowerCase() },
             $unset: {
-              mailProAModifier: conseiller.mailProAModifier,
-              tokenChangementMailPro: conseiller.tokenChangementMailPro,
-              tokenChangementMailProCreatedAt: conseiller.tokenChangementMailProCreatedAt
+              mailProAModifier: '',
+              tokenChangementMailPro: '',
+              tokenChangementMailProCreatedAt: ''
             }
           });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send({ 'emailPro': conseiller.mailProAModifier, 'isEmailPro': true });
+        res.send({ 'emailPro': conseiller.mailProAModifier.toLowerCase(), 'isEmailPro': true });
       }
     });
 

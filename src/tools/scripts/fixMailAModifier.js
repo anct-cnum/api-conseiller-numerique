@@ -2,26 +2,30 @@
 'use strict';
 
 const { execute } = require('../utils');
+const dayjs = require('dayjs');
 
 // node src/tools/scripts/fixMailAModifier.js
 
 execute(__filename, async ({ logger, db, Sentry }) => {
   try {
+    const date = dayjs(Date()).subtract(28, 'days').format('YYYY/MM/DD 23:59:59');
+    const queryDate = new Date(date);
+
     const conseillers = await db.collection('conseillers').find(
       {
         $or: [
-          { tokenChangementMailProCreatedAt: { $lte: new Date('2023-12-31') } },
-          { tokenChangementMailCreatedAt: { $lte: new Date('2023-12-31') } }
+          { tokenChangementMailProCreatedAt: { $lt: queryDate } },
+          { tokenChangementMailCreatedAt: { $lt: queryDate } }
         ]
       }
     );
     for (const conseiller of conseillers) {
       let listUnset = {};
       let listSet = {};
-      if (conseiller?.tokenChangementMail) {
+      if (conseiller?.tokenChangementMail < queryDate) {
         listSet = {
           ...listSet,
-          email: conseiller.mailAModifier,
+          email: conseiller.mailAModifier.toLowerCase(),
         };
         listUnset = {
           ...listUnset,
@@ -30,10 +34,10 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           tokenChangementMailCreatedAt: ''
         };
       }
-      if (conseiller?.tokenChangementMailPro) {
+      if (conseiller?.tokenChangementMailPro < queryDate) {
         listSet = {
           ...listSet,
-          emailPro: conseiller.mailProAModifier
+          emailPro: conseiller.mailProAModifier.toLowerCase()
         };
         listUnset = {
           ...listUnset,
@@ -45,7 +49,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
 
       await db.collection('conseillers').updateOne(
         { _id: conseiller._id },
-        { $set: { listUnset } },
+        { $set: { listSet } },
         { $unset: { listUnset } }
       );
     }

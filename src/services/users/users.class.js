@@ -141,8 +141,8 @@ exports.Users = class Users extends Service {
         return;
       }
       try {
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
-        await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase() } });
+        await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier.toLowerCase() });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -158,7 +158,7 @@ exports.Users = class Users extends Service {
         app.get('sentry').captureException(error);
       }
       try {
-        await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
+        await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: '' } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -172,7 +172,7 @@ exports.Users = class Users extends Service {
       res.send(apresEmailConfirmer.data[0]);
     });
 
-    app.patch('/confirmation-email/:token', async (req, res) => {
+    app.patch('/confirmation-email/:token', async (req, res) => { // Portail-backoffice
       const token = req.params.token;
       const user = await this.find({
         query: {
@@ -195,7 +195,7 @@ exports.Users = class Users extends Service {
         return;
       }
       try {
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier, token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase(), token: uuidv4() }, $unset: { mailAModifier: '' } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
