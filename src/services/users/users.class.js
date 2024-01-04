@@ -775,7 +775,7 @@ exports.Users = class Users extends Service {
         }
         await db.collection('users')
         .updateOne({ name: email }, { $unset: { lastAttemptFailDate: '', attemptFail: '', numberLoginUnblock: '' } });
-        res.status(200).json({ messageVerificationCode: 'Vous pouvez maintenant vous connectez normalement !' });
+        res.status(200).json({ messageVerificationCode: 'Vous pouvez désormais vous reconnecter' });
         return;
       } catch (error) {
         logger.error(error);
