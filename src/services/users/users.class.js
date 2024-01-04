@@ -774,7 +774,7 @@ exports.Users = class Users extends Service {
           return;
         }
         await db.collection('users')
-        .updateOne({ name: email }, { $set: { attemptFail: 0 }, $unset: { numberLoginUnblock: '' } });
+        .updateOne({ name: email }, { $unset: { lastAttemptFailDate: '', attemptFail: '', numberLoginUnblock: '' } });
         res.status(200).json({ messageVerificationCode: 'Vous pouvez maintenant vous connectez normalement !' });
         return;
       } catch (error) {

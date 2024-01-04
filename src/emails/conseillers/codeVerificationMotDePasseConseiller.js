@@ -23,7 +23,7 @@ module.exports = mailer => {
       return mailer.createMailer().sendEmail(
         user.name,
         {
-          subject: 'Vérification de vos accès',
+          subject: 'Code de vérification des accès Conseiller numérique',
           body: await render(user),
         },
       )

@@ -13,10 +13,12 @@ module.exports = {
       async context => {
         try {
           const db = await context.app.get('mongoClient');
-          const user = await db.collection('users').findOne({ name: context.data.name });
-          // 10 min de différence
-          const difference = (new Date().getTime() - user?.lastAttemptFailDate?.getTime()) < 600000;
-          if (user?.attemptFail === 3 && difference) {
+          const isBlocked = await db.collection('users').countDocuments({
+            name: context.data.name,
+            attempFail: 3,
+            lastAttemptFailDate: { $gt: new Date().getTime() - 600000
+            } });
+          if (isBlocked) {
             context.error = new Forbidden('ERROR_ATTEMPT_LOGIN_BLOCKED');
             throw new Error(context);
           }
@@ -58,12 +60,13 @@ module.exports = {
               let message = emails.getEmailMessageByTemplateName('codeVerificationMotDePasseConseiller');
               await message.send(user);
               throw new Error('PROCESS_LOGIN_UNBLOCKED');
-            } else {
-              await db.collection('accessLogs')
-              .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip });
-              await db.collection('users')
-              .updateOne({ name: context.data.name }, { $set: { lastLogin: new Date() } });
             }
+
+            await db.collection('accessLogs')
+            .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip });
+            await db.collection('users')
+            .updateOne({ name: context.data.name }, { $set: { lastLogin: new Date() } });
+
           }
         } catch (error) {
           throw new Error(error);
@@ -90,17 +93,13 @@ module.exports = {
             }
             let attemptFail = user?.attemptFail ?? 0;
             if (attemptFail < 3) {
-              // 3 min de différence pour RàZ des tentatives
-              const difference = (new Date().getTime() - user?.lastAttemptFailDate?.getTime()) < 180000;
-              attemptFail = difference ? attemptFail : 0;
-              attemptFail += 1;
               await db.collection('users')
               .updateOne(
                 {
                   _id: user._id
                 },
                 { $set: {
-                  attemptFail: attemptFail,
+                  attemptFail: attemptFail + 1,
                   lastAttemptFailDate: new Date(),
                 }
                 });
