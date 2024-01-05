@@ -871,9 +871,9 @@ exports.Conseillers = class Conseillers extends Service {
             await this.patch(idConseiller, { $set: setMailAConfirmer });
             await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
               { '$set': {
-                'conseillerObj.tokenChangementMailPro': setMailAConfirmer.tokenChangementMail,
-                'conseillerObj.tokenChangementMailProCreatedAt': setMailAConfirmer.tokenChangementMailCreatedAt,
-                'conseillerObj.mailProAModifier': setMailAConfirmer.mailAModifier
+                'conseillerObj.tokenChangementMail': setMailAConfirmer.tokenChangementMail,
+                'conseillerObj.tokenChangementMailCreatedAt': setMailAConfirmer.tokenChangementMailCreatedAt,
+                'conseillerObj.mailAModifier': setMailAConfirmer.mailAModifier
 
               } });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
@@ -1144,6 +1144,14 @@ exports.Conseillers = class Conseillers extends Service {
               tokenChangementMailCreatedAt: ''
             }
           });
+          await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email }, {
+            $set: { 'conseillerObj.email': conseiller.mailAModifier.toLowerCase() },
+            $unset: {
+              'conseillerObj.mailAModifier': '',
+              'conseillerObj.tokenChangementMail': '',
+              'conseillerObj.tokenChangementMailCreatedAt': ''
+            }
+          });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
@@ -1157,6 +1165,14 @@ exports.Conseillers = class Conseillers extends Service {
               mailProAModifier: '',
               tokenChangementMailPro: '',
               tokenChangementMailProCreatedAt: ''
+            }
+          });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+            $set: { 'conseillerObj.emailPro': conseiller.mailProAModifier.toLowerCase() },
+            $unset: {
+              'conseillerObj.mailProAModifier': '',
+              'conseillerObj.tokenChangementMailPro': '',
+              'conseillerObj.tokenChangementMailProCreatedAt': ''
             }
           });
         } catch (err) {
