@@ -12,7 +12,7 @@ module.exports = mailer => {
   return {
     templateName,
     render,
-    send: async user => {
+    send: async (user, email) => {
 
       const onSuccess = async () => {
       };
@@ -21,7 +21,7 @@ module.exports = mailer => {
         utils.setSentryError(err);
       };
       return mailer.createMailer().sendEmail(
-        user.name,
+        email,
         {
           subject: 'Code de vérification des accès Conseiller numérique',
           body: await render(user),

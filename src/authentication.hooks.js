@@ -19,7 +19,7 @@ module.exports = {
             lastAttemptFailDate: { $gt: new Date().getTime() - 600000
             } });
           if (isBlocked) {
-            context.error = new Forbidden('ERROR_ATTEMPT_LOGIN_BLOCKED');
+            context.error = new Forbidden('ERROR_ATTEMPT_LOGIN');
             throw new Error(context);
           }
           return context;
@@ -57,8 +57,9 @@ module.exports = {
                 });
               let mailer = createMailer(context.app);
               const emails = createEmails(db, mailer);
+              const conum = await db.collection('conseillers').findOne({ _id: user?.entity.oid });
               let message = emails.getEmailMessageByTemplateName('codeVerificationMotDePasseConseiller');
-              await message.send(user);
+              await message.send(user, conum.email);
               throw new Error('PROCESS_LOGIN_UNBLOCKED');
             }
 
@@ -90,6 +91,7 @@ module.exports = {
             const user = await db.collection('users').findOne({ name: context.data.name });
             if (user?.resetPasswordCnil === true) {
               context.error = new Forbidden('RESET_PASSWORD_CNIL', { resetPasswordCnil: true });
+              return;
             }
             let attemptFail = user?.attemptFail ?? 0;
             if (attemptFail < 3) {
@@ -115,7 +117,7 @@ module.exports = {
                   lastAttemptFailDate: new Date(),
                 }
                 });
-              context.error = new Forbidden('ERROR_ATTEMPT_LOGIN_BLOCKED', { attemptFail: attemptFail });
+              context.error = new Forbidden('ERROR_ATTEMPT_LOGIN', { attemptFail: attemptFail });
             } else if (context.error.message === 'Error: PROCESS_LOGIN_UNBLOCKED') {
               context.error = new Forbidden('PROCESS_LOGIN_UNBLOCKED', { openPopinVerifyCode: true });
             }
