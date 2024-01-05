@@ -37,7 +37,8 @@ exports.Users = class Users extends Service {
         const schema = Joi.object({
           prenom: Joi.string().error(new Error('Le nom est invalide')),
           nom: Joi.string().error(new Error('Le nom est invalide')),
-          telephone: Joi.string().allow('').required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
+          // eslint-disable-next-line max-len
+          telephone: Joi.string().allow('').required().pattern(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
           // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
           email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
@@ -83,7 +84,7 @@ exports.Users = class Users extends Service {
             return;
           }
           try {
-            await this.patch(idUser, { $set: { token: uuidv4(), mailAModifier: nouveauEmail } });
+            await this.patch(idUser, { $set: { token: uuidv4(), tokenCreatedAt: new Date(), mailAModifier: nouveauEmail } });
             const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
             user.nouveauEmail = nouveauEmail;
             let mailer = createMailer(app, nouveauEmail);
@@ -115,63 +116,65 @@ exports.Users = class Users extends Service {
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
           return;
         }
-        res.send({ success: true });
+        res.send({ success: true, sendmail: nouveauEmail !== userConnected.data[0].name });
       });
 
     });
 
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {
-      const token = req.params.token;
-      const user = await this.find({
-        query: {
-          token: token,
-          $limit: 1,
+      app.get('mongoClient').then(async db => {
+        const token = req.params.token;
+        const user = await this.find({
+          query: {
+            token: token,
+            $limit: 1,
+          }
+        });
+        if (user.total === 0) {
+          logger.error(`Token inconnu: ${token}`);
+          res.status(404).send(new NotFound('User not found', {
+            token
+          }).toJSON());
+          return;
         }
-      });
-      if (user.total === 0) {
-        logger.error(`Token inconnu: ${token}`);
-        res.status(404).send(new NotFound('User not found', {
-          token
-        }).toJSON());
-        return;
-      }
-      const userInfo = user?.data[0];
-      if (!userInfo?.mailAModifier) {
-        res.status(404).send(new NotFound('mailAModifier not found').toJSON());
-        return;
-      }
-      try {
-        await pool.query(`UPDATE djapp_coach
+        const userInfo = user?.data[0];
+        if (!userInfo?.mailAModifier) {
+          res.status(404).send(new NotFound('mailAModifier not found').toJSON());
+          return;
+        }
+        try {
+          await pool.query(`UPDATE djapp_coach
             SET email = $2
                 WHERE email = $1`,
-        [userInfo.name, userInfo.mailAModifier]);
-      } catch (error) {
-        logger.error(error);
-        app.get('sentry').captureException(error);
-      }
-      try {
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase() } });
-        await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier.toLowerCase() });
-        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userInfo?.entity?.oid },
-          { '$set': { 'conseillerObj.email': userInfo.mailAModifier.toLowerCase() } }
-        );
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      try {
-        await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: '' } });
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      const apresEmailConfirmer = await this.find({
-        query: {
-          token: token,
-          $limit: 1,
+          [userInfo.name, userInfo.mailAModifier]);
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
         }
+        try {
+          await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase() } });
+          await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier.toLowerCase() });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userInfo?.entity?.oid },
+            { '$set': { 'conseillerObj.email': userInfo.mailAModifier.toLowerCase() } }
+          );
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+        try {
+          await this.patch(userInfo._id, { $set: { token: null, tokenCreatedAt: null }, $unset: { mailAModifier: '' } });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+        const apresEmailConfirmer = await this.find({
+          query: {
+            token: token,
+            $limit: 1,
+          }
+        });
+        res.send(apresEmailConfirmer.data[0]);
       });
-      res.send(apresEmailConfirmer.data[0]);
     });
 
     app.patch('/confirmation-email/:token', async (req, res) => { // Portail-backoffice

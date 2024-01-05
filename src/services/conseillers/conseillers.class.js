@@ -911,7 +911,6 @@ exports.Conseillers = class Conseillers extends Service {
                 'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
                 'conseillerObj.tokenChangementMailProCreatedAt': setMailProAConfirmer.tokenChangementMailProCreatedAt,
                 'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
-
               } });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
             conseiller.nouveauEmailPro = emailPro;
@@ -1037,6 +1036,11 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+          { $set: {
+            'conseillerObj.disponible': disponible,
+            'conseillerObj.updatedAt': updatedAt
+          } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
