@@ -141,21 +141,23 @@ exports.Users = class Users extends Service {
         return;
       }
       try {
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase() } });
-        await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier.toLowerCase() });
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      try {
-        const { idPG } = await app.service('conseillers').get(userInfo?.entity?.oid);
         await pool.query(`UPDATE djapp_coach
             SET email = $2
-                WHERE id = $1`,
-        [idPG, userInfo.mailAModifier]);
+                WHERE email = $1`,
+        [userInfo.name, userInfo.mailAModifier]);
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
+      }
+      try {
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase() } });
+        await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier.toLowerCase() });
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userInfo?.entity?.oid },
+          { '$set': { 'conseillerObj.email': userInfo.mailAModifier.toLowerCase() } }
+        );
+      } catch (err) {
+        app.get('sentry').captureException(err);
+        logger.error(err);
       }
       try {
         await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: '' } });

@@ -35,7 +35,7 @@ execute(__filename, async ({ logger, db, Sentry, app }) => {
           tokenChangementMailCreatedAt: ''
         };
       }
-      if (conseiller?.tokenChangementMailPro < queryDate && !conseiller.mailProAModifier.includes(gandi.domain)) {
+      if (conseiller?.tokenChangementMailPro < queryDate) {
         listSet = {
           ...listSet,
           emailPro: conseiller.mailProAModifier.toLowerCase()
@@ -55,7 +55,7 @@ execute(__filename, async ({ logger, db, Sentry, app }) => {
       );
     }
     logger.info(
-      `Rattrapage des ${conseillers.length} conseillers qui n'ont pas confirmer leurs webmail avec succèss`
+      `Rattrapage des ${conseillers.length} conseillers qui n'ont pas confirmer le mail de chg avec succès`
     );
   } catch (error) {
     logger.info(error);
