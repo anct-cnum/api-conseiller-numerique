@@ -10,6 +10,7 @@ const { ObjectId } = require('mongodb');
 const { formatOpeningHours } = require('../../services/conseillers/common');
 const { execute } = require('../utils');
 const departements = require('../../../data/imports/departements-region.json');
+const toms = require('../../../data/imports/tom.json');
 const dayjs = require('dayjs');
 const deps = new Map();
 
@@ -144,14 +145,15 @@ execute(__filename, async ({ logger, db, exit }) => {
     }
   });
 
-  const codePostal2departementRegion = cp => {
+  const codePostal2departementRegion = (cp, codeCommune) => {
     if (!/^.{5}$/.test(cp)) {
       return null;
     }
     let dep;
-    // Gestion Parti St Martin
-    if (cp === '97150' && cli.departement === '00') {
-      return { num_dep: '00', dep_name: 'SAINT MARTIN', region_name: 'SAINT MARTIN' };
+    if (cli.departement === '00') {
+      // TOM
+      const resultTom = toms.find(i => i.tom_com === codeCommune.substring(0, 3));
+      return resultTom ? { num_dep: cli.departement, dep_name: resultTom.tom_name, region_name: resultTom.tom_name } : null;
     } else if ((dep = cp.match(/^9[78]\d/))) {
       // DOM
       return deps.get(dep[0]);
@@ -176,7 +178,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   let pinsDepartementElargi = { };
 
   // On commence ici
-  if (!deps.get(cli.departement) && cli.departement !== '978') {
+  if (!deps.get(cli.departement) && !toms.map(i => i.tom_com).includes(cli.departement)) {
     exit(`Le code departement saisi ${cli.departement} est inconnu `);
     return;
   }
@@ -196,13 +198,14 @@ execute(__filename, async ({ logger, db, exit }) => {
   const structuresIds = await db.collection('structures').find({
     'statut': 'VALIDATION_COSELEC',
     'codeDepartement': cli.departement,
-    'conventionnement.statut': { '$nin': ['RECONVENTIONNEMENT_REFUSÉ', 'NON_INTERESSÉ'] }
+    'conventionnement.statut': { '$nin': ['NON_INTERESSÉ'] }
   }).toArray();
   logger.info(`Il y a ${structuresIds.length} structure(s) dans le département ${cli.departement}`);
 
   for (const sa of structuresIds) {
     let structure = await db.collection('structures').findOne({ idPG: sa.idPG });
     const codeDepartementInsee2Ban = structure?.adresseInsee2Ban?.postcode;
+    const codeCommuneInsee2Ban = structure?.adresseInsee2Ban?.citycode;
 
     // Détection des erreurs
     if (!structure?.adresseInsee2Ban?.name) {
@@ -263,13 +266,14 @@ execute(__filename, async ({ logger, db, exit }) => {
 
         if (permanencesConseiller.length > 0 && permanencePrincipaleConseiller) {
           try {
-            let depReg = codePostal2departementRegion(String(permanencePrincipaleConseiller.adresse.codePostal));
+            // eslint-disable-next-line max-len
+            let depReg = codePostal2departementRegion(String(permanencePrincipaleConseiller.adresse.codePostal), String(permanencePrincipaleConseiller.adresse.codeCommune));
             if (depReg?.num_dep === cli.departement) {
               // on prend le lien de la permanence principale
               pinsDepartement[depReg.num_dep].push(toGeoJsonFromPermanence(c, permanencePrincipaleConseiller));
               // et les autres
               for (const p of permanencesConseiller) {
-                const depReg = codePostal2departementRegion(String(p.adresse.codePostal));
+                const depReg = codePostal2departementRegion(String(p.adresse.codePostal), String(p.adresse.codeCommune));
                 pinsDepartementElargi[depReg.num_dep].push(toGeoJsonFromPermanence(c, p));
               }
             } else {
@@ -280,7 +284,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             logger.error('Stack trace:', error.stack);
           }
           // Pour éviter d'inclure une adresse (adresse du siret) non situé dans le meme département
-        } else if (codePostal2departementRegion(codeDepartementInsee2Ban) === structure.codeDepartement) {
+        } else if (codePostal2departementRegion(codeDepartementInsee2Ban, codeCommuneInsee2Ban) === structure.codeDepartement) {
           pinsDepartement[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
           pinsDepartementElargi[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
         } else {
@@ -288,7 +292,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           logger.warn(`Le code departement Insee ${codeDepartementInsee2Ban} !== à celle de la structure ${structure.codeDepartement} (idCN: ${c.idPG}/ idStructure: ${structure.idPG})`);
         }
       }
-    } else if (codePostal2departementRegion(codeDepartementInsee2Ban) === structure.codeDepartement) {
+    } else if (codePostal2departementRegion(codeDepartementInsee2Ban, codeCommuneInsee2Ban) === structure.codeDepartement) {
       // Si la Structure n'a PAS de CNFS actif
       // On prend l'adresse de la structure
       pinsDepartement[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
