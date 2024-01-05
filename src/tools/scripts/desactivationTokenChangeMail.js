@@ -24,12 +24,19 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     promises.push(new Promise(async resolve => {
       try {
         let listUnset = {};
+        let listUnsetObj = {};
         if (cn.tokenChangementMailCreatedAt < queryDate) {
           listUnset = {
             ...listUnset,
             mailAModifier: '',
             tokenChangementMail: '',
             tokenChangementMailCreatedAt: ''
+          };
+          listUnsetObj = {
+            ...listUnsetObj,
+            'conseillerObj.mailAModifier': '',
+            'conseillerObj.tokenChangementMail': '',
+            'conseillerObj.tokenChangementMailCreatedAt': ''
           };
         }
         if (cn.tokenChangementMailProCreatedAt < queryDate) {
@@ -39,10 +46,20 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             tokenChangementMailPro: '',
             tokenChangementMailProCreatedAt: '',
           };
+          listUnsetObj = {
+            ...listUnsetObj,
+            'conseillerObj.mailProAModifier': '',
+            'conseillerObj.tokenChangementMailPro': '',
+            'conseillerObj.tokenChangementMailProCreatedAt': '',
+          };
         }
         await db.collection('conseillers').updateOne(
           { _id: cn._id },
           { $unset: listUnset }
+        );
+        await db.collection('misesEnRelation').updateMany(
+          { 'conseiller.$id': cn._id },
+          { $unset: listUnsetObj }
         );
       } catch (error) {
         logger.error(error);
