@@ -150,7 +150,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             resolve();
           } else {
             error++;
-            logger.error(`Erreur : ${conum?.name} ${conum ? 'n\'a pas le role coordinateur' : 'est inconnu'} `);
+            logger.error(`Erreur : ${conum?.name} n'a pas le role coordinateur ou est inconnu (file: ${conum?.name ?? adresseCoordo}) `);
             reject();
           }
           if (total === ok + error) {
