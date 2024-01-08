@@ -23,7 +23,10 @@
     "test:config": "mocha test/config --recursive --exit",
     "smtp:start": "docker rm cnum-smtp; docker run -d --name cnum-smtp -p 1025:1025 -p 8025:8025 mailhog/mailhog",
     "smtp:stop": "docker stop cnum-smtp",
-    "aggregate": "NODE_ENV=aggregate node src/ > output.log 2>&1"
+    "aggregate": "NODE_ENV=aggregate node src/ > output.log 2>&1",
+    "husky:install": "husky install",
+    "husky:init": "husky add .husky/pre-commit 'npx --no-install git-precommit-checks'",
+    "husky:uninstall": "git config --unset core.hooksPath"
   },
   "standard": {
     "env": [
@@ -88,6 +91,8 @@
   "devDependencies": {
     "@faker-js/faker": "6.1.2",
     "eslint": "7.24.0",
+    "git-precommit-checks": "3.1.0",
+    "husky": "8.0.3",
     "jest": "29.5.0",
     "mocha": "9.2.2",
     "nodemon": "1.19.4"
