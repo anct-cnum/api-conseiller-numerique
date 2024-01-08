@@ -51,6 +51,7 @@ module.exports = {
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.cv': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.estCoordinateur': 1 }),
       db.collection('misesEnRelation').createIndex({ 'conseillerObj.listeSubordonnes': 1 }),
+      db.collection('misesEnRelation').createIndex({ 'conseillerObj.coordinateurs': 1 }),
       db.collection('misesEnRelation').createIndex({ 'emetteurRenouvellement.date': 1 }),
       db.collection('misesEnRelation').createIndex({ 'emetteurRupture.date': 1 }),
       db.collection('misesEnRelation').createIndex({ 'emetteurRecrutement.date': 1 }),

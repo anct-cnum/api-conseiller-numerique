@@ -1,26 +1,19 @@
 #!/usr/bin/env node
 'use strict';
+// node src/tools/scripts/creationCoordinateur/index.js -c FILE
 
 const { execute } = require('../../utils');
 const { program } = require('commander');
 const CSVToJSON = require('csvtojson');
 
-const isAlreadyCoordinateur = db => async emailConseiller => {
-  const user = await db.collection('users').findOne({
-    'name': emailConseiller.replace(/\s/g, ''),
-    'roles': { '$in': ['coordinateur_coop'] }
-  });
-  return Boolean(user);
-};
-const anonymeCoordinateur = async db => await db.collection('conseillers').distinct('_id', { nonAffichageCarto: true });
+const getListCoordinateurs = async db => await db.collection('users').distinct('name', { roles: { '$in': ['coordinateur_coop', 'coordinateur'] } });
 
-const getConseillerByMail = db => async emailConseiller => {
-  const user = await db.collection('users').findOne({
-    'name': emailConseiller.replace(/\s/g, ''),
-    'roles': { '$in': ['conseiller'] }
-  });
-  return user?.entity?.oid ? { id: user?.entity?.oid, nom: user?.nom, prenom: user?.prenom } : null;
-};
+const isConum = db => async emailConseiller => await db.collection('users').findOne({
+  'name': emailConseiller.replace(/\s/g, ''),
+  'roles': { '$in': ['conseiller'] }
+});
+
+const anonymeCoordinateur = async db => await db.collection('conseillers').distinct('_id', { nonAffichageCarto: true });
 
 const getIdSubordonneByMail = db => async emailConseiller => {
   const conseiller = await db.collection('conseillers').findOne({
@@ -28,24 +21,6 @@ const getIdSubordonneByMail = db => async emailConseiller => {
     'statut': 'RECRUTE'
   });
   return conseiller?._id ?? null;
-};
-
-const updateUserRole = db => async idConseiller => {
-  await db.collection('users').updateOne(
-    { 'entity.$id': idConseiller },
-    { $set: { 'roles': ['coordinateur_coop', 'conseiller'] } }
-  );
-};
-
-const updateConseillerIsCoordinateur = db => async idConseiller => {
-  await db.collection('conseillers').updateOne(
-    { '_id': idConseiller },
-    { $set: { estCoordinateur: true } }
-  );
-  await db.collection('misesEnRelation').updateMany(
-    { 'conseiller.$id': idConseiller },
-    { $set: { 'conseillerObj.estCoordinateur': true } }
-  );
 };
 
 const addListSubordonnes = db => async (idConseiller, list, type) => {
@@ -107,7 +82,7 @@ program.parse(process.argv);
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
 
-  logger.info('Début de la création du rôle coordinateur_coop pour les conseillers du fichier d\'import.');
+  logger.info('Début d\'import du fichier coordo');
   let coordoAnonyme = await anonymeCoordinateur(db);
   coordoAnonyme = coordoAnonyme.map(i => String(i));
   await new Promise(resolve => {
@@ -116,6 +91,8 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
       let ok = 0;
       let error = 0;
       const total = ressources.length;
+      const listCoordinateurs = await getListCoordinateurs(db);
+      let coordoFichier = [];
 
       ressources.forEach(ressource => {
         let p = new Promise(async (resolve, reject) => {
@@ -125,19 +102,16 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           const mailleRegional = ressource['Code région'];
           const mailleDepartement = ressource['Code département'];
 
-          const estCoordinateur = await isAlreadyCoordinateur(db)(adresseCoordo);
-          let coordinateur = await getConseillerByMail(db)(adresseCoordo);
-          const idCoordinateur = coordinateur?.id;
-          if (idCoordinateur) {
-            if (!estCoordinateur) {
-              await updateUserRole(db)(idCoordinateur);
-            }
-            coordinateur = {
-              ...coordinateur,
+          const conum = await isConum(db)(adresseCoordo.trim().toLowerCase());
+
+          if (conum?.roles.some(role => role === 'coordinateur_coop' || role === 'coordinateur')) {
+            let listMaille = [];
+            coordoFichier.push(adresseCoordo);
+            const idCoordinateur = conum?.entity?.oid;
+            const coordinateur = {
+              id: conum?.entity?.oid, nom: conum?.nom, prenom: conum?.prenom,
               nonAffichageCarto: coordoAnonyme.includes(String(idCoordinateur))
             };
-            let listMaille = [];
-
             if (mailleRegional.length > 0) {
               listMaille = mailleRegional.split('/');
               await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeRegion');
@@ -168,18 +142,21 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               //Maj avec la nouvelle liste des subordonnés directement (au cas où rupture entre temps par exemple)
               await addListSubordonnes(db)(idCoordinateur, idSubordonnes, 'conseillers');
               await updateSubordonnes(db)(coordinateur, idSubordonnes, 'conseillers');
+
             } else {
-              await updateConseillerIsCoordinateur(db)(idCoordinateur);
+              logger.warn(`Erreur : ${conum?.name} coordonne 0 CN`);
             }
             ok++;
             resolve();
           } else {
             error++;
-            logger.error('Erreur : Le coordinateur avec l\'adresse email : ' + adresseCoordo + ' n\'existe pas !');
+            logger.error(`Erreur : ${conum?.name} n'a pas le role coordinateur ou est inconnu (file: ${conum?.name ?? adresseCoordo}) `);
             reject();
           }
           if (total === ok + error) {
-            logger.info(`Fin de la création du rôle coordinateur_coop pour les conseillers du fichier d'import : ${ok} traité(s) & ${error} en erreur`);
+            // eslint-disable-next-line max-len
+            logger.warn(`Liste des ${listCoordinateurs.filter(i => !coordoFichier.includes(i))?.length} coordos manquante dans le fichier => ${listCoordinateurs.filter(i => !coordoFichier.includes(i)).map(i => i + '\r\n')}`);
+            logger.info(`Fin de la création du rôle coordinateur_ pour les conseillers du fichier d'import : ${ok} traité(s) & ${error} en erreur`);
             exit();
           }
         });
