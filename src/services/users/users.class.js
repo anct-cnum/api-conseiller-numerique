@@ -38,14 +38,28 @@ exports.Users = class Users extends Service {
           prenom: Joi.string().error(new Error('Le nom est invalide')),
           nom: Joi.string().error(new Error('Le nom est invalide')),
           // eslint-disable-next-line max-len
-          telephone: Joi.string().allow('').required().pattern(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
+          telephone: Joi.string().required().regex(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
           // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
           email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
-        }).validate(body);
+        });
+        const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
+        let extended = '';
+        if (!regexOldTelephone.test(telephone)) {
+          extended = schema.keys({
+            // eslint-disable-next-line max-len
+            telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
+          }).validate(body);
+        } else {
+          extended = schema.keys({
+            telephone: Joi.string().required().regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
+          }).validate(body);
+        }
 
-        if (schema.error) {
-          res.status(400).json(new BadRequest(schema.error));
+        console.log('schema.error:', schema.error);
+        console.log('extended.error:', extended.error);
+        if (extended.error) {
+          res.status(400).json(new BadRequest(extended.error));
           return;
         }
         const idUser = req.params.id;
@@ -144,8 +158,8 @@ exports.Users = class Users extends Service {
         }
         try {
           await pool.query(`UPDATE djapp_coach
-            SET email = $2
-                WHERE email = $1`,
+            SET email = LOWER($2)
+                WHERE LOWER(email) = LOWER($1)`,
           [userInfo.name, userInfo.mailAModifier]);
         } catch (error) {
           logger.error(error);

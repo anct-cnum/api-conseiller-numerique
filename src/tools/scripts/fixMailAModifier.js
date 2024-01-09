@@ -28,9 +28,9 @@ execute(__filename, async ({ logger, db, Sentry, app }) => {
       if (conseiller?.tokenChangementMailCreatedAt < queryDate && !conseiller.mailAModifier.includes(gandi.domain)) {
         // Partie PG
         await pool.query(`UPDATE djapp_coach
-        SET email = $2
+        SET email = LOWER($2)
             WHERE id = $1`,
-        [conseiller.idPG, conseiller.mailAModifier.toLowerCase()]);
+        [conseiller.idPG, conseiller.mailAModifier]);
 
         listSet = {
           ...listSet,
