@@ -1133,7 +1133,7 @@ exports.Conseillers = class Conseillers extends Service {
       if (existTokenMail) {
         try {
           await pool.query(`UPDATE djapp_coach
-          SET email = LOWER($)
+          SET email = LOWER($2)
               WHERE LOWER(email) = LOWER($1)`,
           [conseiller.email, conseiller.mailAModifier]);
           await db.collection('conseillers').updateMany({ email: conseiller.email }, {
