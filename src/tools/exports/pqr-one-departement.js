@@ -173,6 +173,16 @@ execute(__filename, async ({ logger, db, exit }) => {
     return null;
   };
 
+  const checkDiffDepartement = (codeDepartementInsee2Ban, codeCommuneInsee2Ban, structure) => {
+    const value = structure?.codeCom ? 3 : 2; // 3 pour les Toms et 2 pour le reste
+    const codeDepInsee = codeDepartementInsee2Ban?.substring(0, value);
+    const codeCommuneInsee = codeCommuneInsee2Ban?.substring(0, value);
+    const codeDepartementSA = structure?.codeDepartement;
+    if ([codeDepInsee, codeCommuneInsee].includes(codeDepartementSA)) { // check de codeCommuneInsee est utile pour la corse par exemple (2A, 2B)
+      return true;
+    }
+    return false;
+  };
 
   let pinsDepartement = { };
   let pinsDepartementElargi = { };
@@ -182,7 +192,7 @@ execute(__filename, async ({ logger, db, exit }) => {
     exit(`Le code departement saisi ${cli.departement} est inconnu `);
     return;
   }
-  if (cli.departement === '978') {
+  if (toms.map(i => i.tom_com).includes(cli.departement)) {
     cli.departement = '00';
   }
   // Ajouter en amont si aucune SA n'a pas de coordonnée insee et ni de CN
@@ -284,7 +294,7 @@ execute(__filename, async ({ logger, db, exit }) => {
             logger.error('Stack trace:', error.stack);
           }
           // Pour éviter d'inclure une adresse (adresse du siret) non situé dans le meme département
-        } else if (codePostal2departementRegion(codeDepartementInsee2Ban, codeCommuneInsee2Ban) === structure.codeDepartement) {
+        } else if (checkDiffDepartement(codeDepartementInsee2Ban, codeCommuneInsee2Ban, structure)) {
           pinsDepartement[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
           pinsDepartementElargi[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
         } else {
@@ -292,7 +302,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           logger.warn(`Le code departement Insee ${codeDepartementInsee2Ban} !== à celle de la structure ${structure.codeDepartement} (idCN: ${c.idPG}/ idStructure: ${structure.idPG})`);
         }
       }
-    } else if (codePostal2departementRegion(codeDepartementInsee2Ban, codeCommuneInsee2Ban) === structure.codeDepartement) {
+    } else if (checkDiffDepartement(codeDepartementInsee2Ban, codeCommuneInsee2Ban, structure)) {
       // Si la Structure n'a PAS de CNFS actif
       // On prend l'adresse de la structure
       pinsDepartement[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
