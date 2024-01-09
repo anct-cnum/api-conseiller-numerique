@@ -768,13 +768,20 @@ exports.Users = class Users extends Service {
         return;
       }
       try {
-        const verificationEmailEtCode = await db.collection('users').countDocuments({ name: email, numberLoginUnblock: Number(code) });
+        const verificationEmailEtCode = await db.collection('users').countDocuments({ name: email.toLowerCase().trim(), numberLoginUnblock: Number(code) });
         if (verificationEmailEtCode === 0) {
           res.status(404).send(new Conflict('Erreur: l\'email et le code ne correspondent pas.').toJSON());
           return;
         }
         await db.collection('users')
-        .updateOne({ name: email }, { $unset: { lastAttemptFailDate: '', attemptFail: '', numberLoginUnblock: '' } });
+        .updateOne(
+          { name: email },
+          { $unset: {
+            lastAttemptFailDate: '',
+            attemptFail: '',
+            numberLoginUnblock: ''
+          } }
+        );
         res.status(200).json({ messageVerificationCode: 'Vous pouvez désormais vous reconnecter' });
         return;
       } catch (error) {

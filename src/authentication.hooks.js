@@ -14,7 +14,7 @@ module.exports = {
         try {
           const db = await context.app.get('mongoClient');
           const isBlocked = await db.collection('users').countDocuments({
-            name: context.data.name,
+            name: context.data.name.toLowerCase().trim(),
             attempFail: 3,
             lastAttemptFailDate: { $gt: new Date().getTime() - 600000
             } });
