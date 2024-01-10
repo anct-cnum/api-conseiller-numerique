@@ -47,6 +47,7 @@ const uniformiseAdresse = a =>
   .replace(/bd /gi, 'blvd. ')
   .replace(/grd/gi, 'grand')
   .replace(/Rue /gi, 'rue ')
+  .replace(/null /gi, '')
 ;
 
 Object.assign(String.prototype, {
@@ -134,12 +135,13 @@ execute(__filename, async ({ logger, db, exit }) => {
       nom: '',
       prenom: '',
       telephone: '',
-      address: uniformiseAdresse(s?.adresseInsee2Ban?.name),
+      // eslint-disable-next-line max-len
+      address: uniformiseAdresse(s?.adresseInsee2Ban?.name ?? `${s?.insee?.adresse?.numero_voie} ${s?.insee?.adresse?.type_voie} ${s?.insee?.adresse?.libelle_voie}`),
       addressParts: {
-        numeroRue: s?.adresseInsee2Ban?.housenumber,
-        rue: s?.adresseInsee2Ban?.street,
-        codePostal: s?.adresseInsee2Ban?.postcode,
-        ville: s?.adresseInsee2Ban?.city,
+        numeroRue: s?.adresseInsee2Ban?.housenumber ?? s?.insee?.adresse?.numero_voie,
+        rue: s?.adresseInsee2Ban?.street ?? `${s?.insee?.adresse?.type_voie} ${s?.insee?.adresse?.libelle_voie}`,
+        codePostal: s?.adresseInsee2Ban?.postcode ?? s?.insee?.adresse?.code_postal,
+        ville: s?.adresseInsee2Ban?.city ?? s?.insee?.adresse?.libelle_commune,
       },
       name: s.nom,
     }
@@ -214,8 +216,8 @@ execute(__filename, async ({ logger, db, exit }) => {
 
   for (const sa of structuresIds) {
     let structure = await db.collection('structures').findOne({ idPG: sa.idPG });
-    const codeDepartementInsee2Ban = structure?.adresseInsee2Ban?.postcode;
-    const codeCommuneInsee2Ban = structure?.adresseInsee2Ban?.citycode;
+    const codeDepartementInsee2Ban = structure?.adresseInsee2Ban?.postcode ?? structure?.insee?.adresse?.code_postal;
+    const codeCommuneInsee2Ban = structure?.adresseInsee2Ban?.citycode ?? structure?.insee?.adresse?.code_commune;
 
     // Détection des erreurs
     if (!structure?.adresseInsee2Ban?.name) {
@@ -259,7 +261,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           'structure.nom': '$structureObj.nom',
           'structure.estLabelliseAidantsConnect': '$structureObj.estLabelliseAidantsConnect',
           'structure.estLabelliseFranceServices': '$structureObj.estLabelliseFranceServices',
-          'structure.insee.adresse': '$structureObj.insee.adresse',
+          'structure.insee': '$structureObj.insee',
           'structure.adresseInsee2Ban': '$structureObj.adresseInsee2Ban'
         }
       }
