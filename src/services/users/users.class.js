@@ -760,7 +760,7 @@ exports.Users = class Users extends Service {
       const db = await app.get('mongoClient');
       const { code, email } = req.body;
       const schema = Joi.object({
-        code: Joi.string().required().min(6).max(6).error(new Error('Le format du code de vérification est invalide')),
+        code: Joi.string().required().error(new Error('Le format du code de vérification est invalide')),
         email: Joi.string().email().required().error(new Error('Le format de l\'adresse email est invalide')),
       }).validate(req.body);
       if (schema.error) {

@@ -61,6 +61,17 @@ module.exports = {
               let message = emails.getEmailMessageByTemplateName('codeVerificationMotDePasseConseiller');
               await message.send(user, conum.email);
               throw new Error('PROCESS_LOGIN_UNBLOCKED');
+            } else {
+              await db.collection('users')
+              .updateOne(
+                {
+                  _id: user._id
+                },
+                { $unset: {
+                  attemptFail: '',
+                  lastAttemptFailDate: ''
+                }
+                });
             }
 
             await db.collection('accessLogs')
@@ -93,33 +104,36 @@ module.exports = {
               context.error = new Forbidden('RESET_PASSWORD_CNIL', { resetPasswordCnil: true });
               return;
             }
-            let attemptFail = user?.attemptFail ?? 0;
-            if (attemptFail < 3) {
-              attemptFail++;
-              await db.collection('users')
-              .updateOne(
-                {
-                  _id: user._id
-                },
-                { $set: {
-                  attemptFail: attemptFail,
-                  lastAttemptFailDate: new Date(),
-                }
-                });
-              context.error = new Forbidden('ERROR_ATTEMPT_LOGIN', { attemptFail: attemptFail });
-            } else if (attemptFail === 3 && context.error.message !== 'Error: PROCESS_LOGIN_UNBLOCKED') {
-              await db.collection('users')
-              .updateOne(
-                {
-                  _id: user._id
-                },
-                { $set: {
-                  lastAttemptFailDate: new Date(),
-                }
-                });
-              context.error = new Forbidden('ERROR_ATTEMPT_LOGIN', { attemptFail: attemptFail });
-            } else if (context.error.message === 'Error: PROCESS_LOGIN_UNBLOCKED') {
-              context.error = new Forbidden('PROCESS_LOGIN_UNBLOCKED', { openPopinVerifyCode: true });
+
+            if (context.error.className === 'not-authenticated') {
+              let attemptFail = user?.attemptFail ?? 0;
+              if (attemptFail < 3) {
+                attemptFail++;
+                await db.collection('users')
+                .updateOne(
+                  {
+                    _id: user._id
+                  },
+                  { $set: {
+                    attemptFail: attemptFail,
+                    lastAttemptFailDate: new Date(),
+                  }
+                  });
+                context.error = new Forbidden('ERROR_ATTEMPT_LOGIN', { attemptFail: attemptFail });
+              } else if (attemptFail === 3 && context.error.message !== 'Error: PROCESS_LOGIN_UNBLOCKED') {
+                await db.collection('users')
+                .updateOne(
+                  {
+                    _id: user._id
+                  },
+                  { $set: {
+                    lastAttemptFailDate: new Date(),
+                  }
+                  });
+                context.error = new Forbidden('ERROR_ATTEMPT_LOGIN', { attemptFail: attemptFail });
+              } else if (context.error.message === 'Error: PROCESS_LOGIN_UNBLOCKED') {
+                context.error = new Forbidden('PROCESS_LOGIN_UNBLOCKED', { openPopinVerifyCode: true });
+              }
             }
             await db.collection('accessLogs')
             .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip, connexionError: true });
