@@ -58,7 +58,7 @@ module.exports = {
               let mailer = createMailer(context.app);
               const emails = createEmails(db, mailer);
               let emailUser = user.name;
-              if (!user.roles.includes('hub_coop')) {
+              if (user.roles.includes('conseiller')) {
                 const conum = await db.collection('conseillers').findOne({ _id: user?.entity.oid });
                 emailUser = conum.email;
               }
