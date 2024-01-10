@@ -57,9 +57,13 @@ module.exports = {
                 });
               let mailer = createMailer(context.app);
               const emails = createEmails(db, mailer);
-              const conum = await db.collection('conseillers').findOne({ _id: user?.entity.oid });
+              let emailUser = user.name;
+              if (!user.roles.includes('hub_coop')) {
+                const conum = await db.collection('conseillers').findOne({ _id: user?.entity.oid });
+                emailUser = conum.email;
+              }
               let message = emails.getEmailMessageByTemplateName('codeVerificationMotDePasseConseiller');
-              await message.send(user, conum.email);
+              await message.send(user, emailUser);
               throw new Error('PROCESS_LOGIN_UNBLOCKED');
             } else {
               await db.collection('users')
