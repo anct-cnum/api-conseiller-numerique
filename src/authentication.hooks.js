@@ -105,7 +105,7 @@ module.exports = {
               return;
             }
 
-            if (context.error.className === 'not-authenticated') {
+            if (context.error.className === 'not-authenticated' || context.error.message === 'Error: PROCESS_LOGIN_UNBLOCKED') {
               let attemptFail = user?.attemptFail ?? 0;
               if (attemptFail < 3) {
                 attemptFail++;
