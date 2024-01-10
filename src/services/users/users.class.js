@@ -56,8 +56,6 @@ exports.Users = class Users extends Service {
           }).validate(body);
         }
 
-        console.log('schema.error:', schema.error);
-        console.log('extended.error:', extended.error);
         if (extended.error) {
           res.status(400).json(new BadRequest(extended.error));
           return;
