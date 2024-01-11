@@ -1,0 +1,35 @@
+<mjml>
+  <%- include('../commun/head.mjml.ejs'); %>
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Code de s&eacute;curit&eacute;
+            </mj-text>
+            <mj-text align="left">
+              Bonjour,
+            </mj-text>
+            <mj-text align="left">
+              Nous avons remarqu&eacute; de multiple tentatives de connexion infructueuses sur votre compte.
+            </mj-text>
+            <mj-text align="left">
+              Afin d&rsquo;assurer la s&eacute;curit&eacute; de votre compte, merci de bien vouloir renseigner le code ci-dessous dans le formulaire de v&eacute;rification.
+            </mj-text>
+            <mj-text align="center" font-size="35px">
+              <b><%= code %></b>
+            </mj-text>
+             <mj-text align="left">
+              Bien cordialement,
+            </mj-text>
+            <mj-text align="left">
+              L&rsquo;&eacute;quipe Conseiller Num&eacute;rique
+            </mj-text>
+          </mj-column>
+      </mj-wrapper>
+  </mj-body>
+</mjml>
+

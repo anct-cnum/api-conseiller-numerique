@@ -41,6 +41,7 @@ const mailRelanceM15Structure = require('./structures/mailRelanceM+1,5Structure'
 const mailRelanceM15SupHierarchique = require('./structures/mailRelanceM+1,5SupHierarchique');
 const conseillerTransfertStructure = require('./conseillers/conseillerTransfertStructure');
 const renouvellementCompteCandidat = require('./candidats/renouvellementCompteCandidat');
+const codeVerificationMotDePasseConseiller = require('./conseillers/codeVerificationMotDePasseConseiller');
 
 module.exports = (db, mailer, app, logger) => {
 
@@ -88,6 +89,7 @@ module.exports = (db, mailer, app, logger) => {
     mailRelanceM15Structure(db, mailer),
     mailRelanceM15SupHierarchique(db, mailer),
     conseillerTransfertStructure(db, mailer),
+    codeVerificationMotDePasseConseiller(mailer),
   ];
 
   return {
