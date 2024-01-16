@@ -44,10 +44,12 @@ module.exports = app => {
 
   let getEspaceCandidatUrl = path => `${app.get('espace_candidat_hostname')}${path}`;
 
+
   let getPixUrl = path => `${app.get('pix').hostname}${path}`;
   const getPixContactMail = () => app.get('pix').contactMailing;
   const getPixSupportMail = () => app.get('pix').supportMailing;
   const getSupportMail = () => configuration.replyTo;
+  const getQuestionFinContratUrl = () => app.get('url_question_contrat');
 
   const setSentryError = err => {
     if (config().sentry.enabled === 'true') {
@@ -76,6 +78,7 @@ module.exports = app => {
     getPixContactMail,
     getPixSupportMail,
     getSupportMail,
+    getQuestionFinContratUrl,
     setSentryError,
   };
 
