@@ -44,7 +44,6 @@ module.exports = app => {
 
   let getEspaceCandidatUrl = path => `${app.get('espace_candidat_hostname')}${path}`;
 
-
   let getPixUrl = path => `${app.get('pix').hostname}${path}`;
   const getPixContactMail = () => app.get('pix').contactMailing;
   const getPixSupportMail = () => app.get('pix').supportMailing;
