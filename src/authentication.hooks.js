@@ -105,12 +105,12 @@ module.exports = {
             const db = await context.app.get('mongoClient');
             const user = await db.collection('users').findOne({ name: context.data.name });
             if (user) {
-              if (user?.resetPasswordCnil === true) {
+              if (user.resetPasswordCnil === true) {
                 context.error = new Forbidden('RESET_PASSWORD_CNIL', { resetPasswordCnil: true });
                 return;
               }
               if (context.error.className === 'not-authenticated' || context.error.message === 'Error: PROCESS_LOGIN_UNBLOCKED') {
-                let attemptFail = user?.attemptFail ?? 0;
+                let attemptFail = user.attemptFail ?? 0;
                 if (attemptFail < 3) {
                   attemptFail++;
                   await db.collection('users')
@@ -139,9 +139,9 @@ module.exports = {
                   context.error = new Forbidden('PROCESS_LOGIN_UNBLOCKED', { openPopinVerifyCode: true });
                 }
               }
-              await db.collection('accessLogs')
-              .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip, connexionError: true });
             }
+            await db.collection('accessLogs')
+            .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip, connexionError: true });
           }
         } catch (error) {
           throw new Error(error);
