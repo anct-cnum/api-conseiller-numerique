@@ -1,7 +1,6 @@
 const { ObjectId } = require('mongodb');
 
 const getPermanences = db => async () => await db.collection('permanences').aggregate([
-  { $match: { 'nomEnseigne': 'ASSOCIATION NUMERIQUE INNOVATION SOCIALE SAINT MARTIN' } },
   {
     $addFields: {
       'entity': {

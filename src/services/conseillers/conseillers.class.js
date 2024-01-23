@@ -877,7 +877,7 @@ exports.Conseillers = class Conseillers extends Service {
 
               } });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-            conseiller.nouveauEmail = email;
+            conseiller.nouveauEmail = email.toLowerCase();
             let mailer = createMailer(app, email);
             const emails = createEmails(db, mailer);
             let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmail');
@@ -913,7 +913,7 @@ exports.Conseillers = class Conseillers extends Service {
                 'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
               } });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-            conseiller.nouveauEmailPro = emailPro;
+            conseiller.nouveauEmailPro = emailPro.toLowerCase();
             let mailer = createMailer(app, emailPro);
             const emails = createEmails(db, mailer);
             let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmailPro');
