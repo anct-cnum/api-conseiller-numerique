@@ -60,7 +60,8 @@ const getPermanences = db => async () => await db.collection('permanences').aggr
     'aidants.prenom': 1,
     'aidants.emailPro': 1,
     'aidants.telephonePro': 1,
-    'aidants.nonAffichageCarto': 1
+    'aidants.nonAffichageCarto': 1,
+    'aidants.statut': 1
   } },
   { $addFields: {
     codePostalTri: { $trim: { input: '$adresse.codePostal' } },
