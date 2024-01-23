@@ -833,22 +833,28 @@ exports.Conseillers = class Conseillers extends Service {
           SET phone = $2 WHERE id = $1`,
           [conseiller.idPG, telephone]);
           await app.service('conseillers').patch(idConseiller, changeInfos);
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
+            { '$set': {
+              'conseillerObj.dateDeNaissance': dateDeNaissance,
+              'conseillerObj.telephonePro': telephonePro,
+              'conseillerObj.telephone': telephone,
+              'conseillerObj.sexe': sexe,
+            } });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
           return;
         }
-
-        if (email !== conseiller.email) {
-          const gandi = app.get('gandi');
+        const gandi = app.get('gandi');
+        if (email.toLowerCase() !== conseiller.email) {
           if (email.includes(gandi.domain)) {
             res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
               email
             }).toJSON());
             return;
           }
-          const verificationEmail = await db.collection('conseillers').countDocuments({ email: email });
+          const verificationEmail = await db.collection('conseillers').countDocuments({ email: email.toLowerCase() });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email ${email} est déjà utilisé par un autre utilisateur`);
             res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par un autre utilisateur', {
@@ -857,7 +863,19 @@ exports.Conseillers = class Conseillers extends Service {
             return;
           }
           try {
-            await this.patch(idConseiller, { $set: { tokenChangementMail: uuidv4(), tokenChangementMailCreatedAt: new Date(), mailAModifier: email } });
+            const setMailAConfirmer = {
+              tokenChangementMail: uuidv4(),
+              tokenChangementMailCreatedAt: new Date(),
+              mailAModifier: email.toLowerCase()
+            };
+            await this.patch(idConseiller, { $set: setMailAConfirmer });
+            await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
+              { '$set': {
+                'conseillerObj.tokenChangementMail': setMailAConfirmer.tokenChangementMail,
+                'conseillerObj.tokenChangementMailCreatedAt': setMailAConfirmer.tokenChangementMailCreatedAt,
+                'conseillerObj.mailAModifier': setMailAConfirmer.mailAModifier
+
+              } });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
             conseiller.nouveauEmail = email;
             let mailer = createMailer(app, email);
@@ -872,24 +890,28 @@ exports.Conseillers = class Conseillers extends Service {
             return;
           }
         }
-        if (emailPro !== conseiller?.emailPro) {
-
-          const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro });
+        if (emailPro.toLowerCase() !== conseiller?.emailPro) {
+          const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro.toLowerCase() });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
             res.status(409).send(new Conflict('Erreur: l\'email professionnelle est déjà utilisé par un autre utilisateur', {
-              email
+              emailPro
             }).toJSON());
             return;
           }
           try {
-            await this.patch(idConseiller, {
-              $set: {
-                tokenChangementMailPro: uuidv4(),
-                tokenChangementMailProCreatedAt: new Date(),
-                mailProAModifier: emailPro
-              }
-            });
+            const setMailProAConfirmer = {
+              tokenChangementMailPro: uuidv4(),
+              tokenChangementMailProCreatedAt: new Date(),
+              mailProAModifier: emailPro.toLowerCase()
+            };
+            await this.patch(idConseiller, { $set: setMailProAConfirmer });
+            await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
+              { '$set': {
+                'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
+                'conseillerObj.tokenChangementMailProCreatedAt': setMailProAConfirmer.tokenChangementMailProCreatedAt,
+                'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
+              } });
             const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
             conseiller.nouveauEmailPro = emailPro;
             let mailer = createMailer(app, emailPro);
@@ -1014,6 +1036,11 @@ exports.Conseillers = class Conseillers extends Service {
       }
       try {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
+        await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+          { $set: {
+            'conseillerObj.disponible': disponible,
+            'conseillerObj.updatedAt': updatedAt
+          } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -1082,10 +1109,6 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.patch('/conseillers/confirmation-email/:token', async (req, res) => {
-      checkAuth(req, res);
-      const accessToken = req.feathers?.authentication?.accessToken;
-      let userId = decode(accessToken).sub;
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const tokenChangementMail = req.params.token;
       let conseiller = '';
       const existTokenMailPro = await db.collection('conseillers').findOne({ 'tokenChangementMailPro': tokenChangementMail });
@@ -1103,46 +1126,60 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-      if (String(conseiller._id) !== String(user.entity.oid)) {
-        res.status(403).send(new Forbidden('User not authorized', {
-          userId: userId
-        }).toJSON());
-        return;
-      }
       if (!conseiller?.mailAModifier && !conseiller?.mailProAModifier) {
         res.status(404).send(new NotFound('mailAModifier not found').toJSON());
         return;
       }
       if (existTokenMail) {
         try {
-          await this.patch(conseiller._id, {
-            $set: { email: conseiller.mailAModifier },
+          await pool.query(`UPDATE djapp_coach
+          SET email = LOWER($2)
+              WHERE LOWER(email) = LOWER($1)`,
+          [conseiller.email, conseiller.mailAModifier]);
+          await db.collection('conseillers').updateMany({ email: conseiller.email }, {
+            $set: { email: conseiller.mailAModifier.toLowerCase() },
             $unset: {
-              mailAModifier: conseiller.mailAModifier,
-              tokenChangementMail: conseiller.tokenChangementMail,
-              tokenChangementMailCreatedAt: conseiller.tokenChangementMailCreatedAt
+              mailAModifier: '',
+              tokenChangementMail: '',
+              tokenChangementMailCreatedAt: ''
+            }
+          });
+          await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': conseiller.email }, {
+            $set: { 'conseillerObj.email': conseiller.mailAModifier.toLowerCase() },
+            $unset: {
+              'conseillerObj.mailAModifier': '',
+              'conseillerObj.tokenChangementMail': '',
+              'conseillerObj.tokenChangementMailCreatedAt': ''
             }
           });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send({ 'email': conseiller.mailAModifier, 'isEmailPro': false });
+        res.send({ 'email': conseiller.mailAModifier.toLowerCase(), 'isEmailPro': false });
       } else {
         try {
           await this.patch(conseiller._id, {
-            $set: { emailPro: conseiller.mailProAModifier },
+            $set: { emailPro: conseiller.mailProAModifier.toLowerCase() },
             $unset: {
-              mailProAModifier: conseiller.mailProAModifier,
-              tokenChangementMailPro: conseiller.tokenChangementMailPro,
-              tokenChangementMailProCreatedAt: conseiller.tokenChangementMailProCreatedAt
+              mailProAModifier: '',
+              tokenChangementMailPro: '',
+              tokenChangementMailProCreatedAt: ''
+            }
+          });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
+            $set: { 'conseillerObj.emailPro': conseiller.mailProAModifier.toLowerCase() },
+            $unset: {
+              'conseillerObj.mailProAModifier': '',
+              'conseillerObj.tokenChangementMailPro': '',
+              'conseillerObj.tokenChangementMailProCreatedAt': ''
             }
           });
         } catch (err) {
           app.get('sentry').captureException(err);
           logger.error(err);
         }
-        res.send({ 'emailPro': conseiller.mailProAModifier, 'isEmailPro': true });
+        res.send({ 'emailPro': conseiller.mailProAModifier.toLowerCase(), 'isEmailPro': true });
       }
     });
 

@@ -37,14 +37,27 @@ exports.Users = class Users extends Service {
         const schema = Joi.object({
           prenom: Joi.string().error(new Error('Le nom est invalide')),
           nom: Joi.string().error(new Error('Le nom est invalide')),
-          telephone: Joi.string().allow('').required().max(10).error(new Error('Le format du téléphone est invalide, il doit contenir 10 chiffres ')),
+          // eslint-disable-next-line max-len
+          telephone: Joi.string().required().regex(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
           // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
           email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
-        }).validate(body);
+        });
+        const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
+        let extended = '';
+        if (!regexOldTelephone.test(telephone)) {
+          extended = schema.keys({
+            // eslint-disable-next-line max-len
+            telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
+          }).validate(body);
+        } else {
+          extended = schema.keys({
+            telephone: Joi.string().required().regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
+          }).validate(body);
+        }
 
-        if (schema.error) {
-          res.status(400).json(new BadRequest(schema.error));
+        if (extended.error) {
+          res.status(400).json(new BadRequest(extended.error));
           return;
         }
         const idUser = req.params.id;
@@ -83,7 +96,7 @@ exports.Users = class Users extends Service {
             return;
           }
           try {
-            await this.patch(idUser, { $set: { token: uuidv4(), mailAModifier: nouveauEmail } });
+            await this.patch(idUser, { $set: { token: uuidv4(), tokenCreatedAt: new Date(), mailAModifier: nouveauEmail } });
             const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
             user.nouveauEmail = nouveauEmail;
             let mailer = createMailer(app, nouveauEmail);
@@ -115,64 +128,68 @@ exports.Users = class Users extends Service {
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
           return;
         }
-        res.send({ success: true });
+        res.send({ success: true, sendmail: nouveauEmail !== userConnected.data[0].name });
       });
 
     });
 
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {
-      const token = req.params.token;
-      const user = await this.find({
-        query: {
-          token: token,
-          $limit: 1,
+      app.get('mongoClient').then(async db => {
+        const token = req.params.token;
+        const user = await this.find({
+          query: {
+            token: token,
+            $limit: 1,
+          }
+        });
+        if (user.total === 0) {
+          logger.error(`Token inconnu: ${token}`);
+          res.status(404).send(new NotFound('User not found', {
+            token
+          }).toJSON());
+          return;
         }
-      });
-      if (user.total === 0) {
-        logger.error(`Token inconnu: ${token}`);
-        res.status(404).send(new NotFound('User not found', {
-          token
-        }).toJSON());
-        return;
-      }
-      const userInfo = user?.data[0];
-      if (!userInfo?.mailAModifier) {
-        res.status(404).send(new NotFound('mailAModifier not found').toJSON());
-        return;
-      }
-      try {
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier } });
-        await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier });
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      try {
-        const { idPG } = await app.service('conseillers').get(userInfo?.entity?.oid);
-        await pool.query(`UPDATE djapp_coach
-            SET email = $2
-                WHERE id = $1`,
-        [idPG, userInfo.mailAModifier]);
-      } catch (error) {
-        logger.error(error);
-        app.get('sentry').captureException(error);
-      }
-      try {
-        await this.patch(userInfo._id, { $set: { token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
-      } catch (err) {
-        app.get('sentry').captureException(err);
-        logger.error(err);
-      }
-      const apresEmailConfirmer = await this.find({
-        query: {
-          token: token,
-          $limit: 1,
+        const userInfo = user?.data[0];
+        if (!userInfo?.mailAModifier) {
+          res.status(404).send(new NotFound('mailAModifier not found').toJSON());
+          return;
         }
+        try {
+          await pool.query(`UPDATE djapp_coach
+            SET email = LOWER($2)
+                WHERE LOWER(email) = LOWER($1)`,
+          [userInfo.name, userInfo.mailAModifier]);
+        } catch (error) {
+          logger.error(error);
+          app.get('sentry').captureException(error);
+        }
+        try {
+          await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase() } });
+          await app.service('conseillers').patch(userInfo?.entity?.oid, { email: userInfo.mailAModifier.toLowerCase() });
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': userInfo?.entity?.oid },
+            { '$set': { 'conseillerObj.email': userInfo.mailAModifier.toLowerCase() } }
+          );
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+        try {
+          await this.patch(userInfo._id, { $set: { token: null, tokenCreatedAt: null }, $unset: { mailAModifier: '' } });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+        }
+        const apresEmailConfirmer = await this.find({
+          query: {
+            token: token,
+            $limit: 1,
+          }
+        });
+        res.send(apresEmailConfirmer.data[0]);
       });
-      res.send(apresEmailConfirmer.data[0]);
     });
 
-    app.patch('/confirmation-email/:token', async (req, res) => {
+    app.patch('/confirmation-email/:token', async (req, res) => { // Portail-backoffice
       const token = req.params.token;
       const user = await this.find({
         query: {
@@ -195,7 +212,7 @@ exports.Users = class Users extends Service {
         return;
       }
       try {
-        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier, token: uuidv4() }, $unset: { mailAModifier: userInfo.mailAModifier } });
+        await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase(), token: uuidv4() }, $unset: { mailAModifier: '' } });
       } catch (err) {
         app.get('sentry').captureException(err);
         logger.error(err);
@@ -642,6 +659,12 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
+      if (user.roles.some(role => !['candidat', 'conseiller', 'hub_coop'].includes(role))) {
+        res.status(403).send(new Forbidden('Error authorization user', {
+          username
+        }).toJSON());
+        return;
+      }
       if (user.passwordCreated === false) {
         res.status(400).send(new BadRequest('Error authorization forgottenPassword', {
           username
@@ -754,6 +777,42 @@ exports.Users = class Users extends Service {
           });
         }
       });
+    });
+
+    app.patch('/users/verify-code', async (req, res) => {
+      const db = await app.get('mongoClient');
+      const { code, email } = req.body;
+      const schema = Joi.object({
+        code: Joi.string().required().error(new Error('Le format du code de vérification est invalide')),
+        email: Joi.string().email().required().error(new Error('Le format de l\'adresse email est invalide')),
+      }).validate(req.body);
+      if (schema.error) {
+        res.status(400).json(new BadRequest(schema.error));
+        return;
+      }
+      try {
+        const verificationEmailEtCode = await db.collection('users').countDocuments({ name: email.toLowerCase().trim(), numberLoginUnblock: Number(code) });
+        if (verificationEmailEtCode === 0) {
+          res.status(404).send(new Conflict('Erreur: l\'email et le code ne correspondent pas.').toJSON());
+          return;
+        }
+        await db.collection('users')
+        .updateOne(
+          { name: email },
+          { $unset: {
+            lastAttemptFailDate: '',
+            attemptFail: '',
+            numberLoginUnblock: ''
+          } }
+        );
+        res.status(200).json({ messageVerificationCode: 'Vous pouvez désormais vous reconnecter' });
+        return;
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        res.status(500).send(new GeneralError('Une erreur s\'est produite, veuillez réessayer plus tard.'));
+        return;
+      }
     });
 
     // Monitoring clever

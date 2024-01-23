@@ -1,0 +1,35 @@
+<mjml>
+  <%- include('../commun/head.mjml.ejs'); %>
+  <mj-body background-color="#f0f0f0">
+
+    <%- include('../commun/header.mjml.ejs', { utils }); %>
+
+      <mj-wrapper css-class="wrapper">
+
+          <mj-column>
+            <mj-text css-class="text-primary">
+              Code de s&eacute;curit&eacute;
+            </mj-text>
+            <mj-text align="left">
+              Bonjour,
+            </mj-text>
+            <mj-text align="left">
+              Vous avez saisi un mot de passe incorrect &agrave; plusieurs reprise et nous avons verrouill&eacute; vos acc&egrave;s &agrave; votre espace.
+            </mj-text>
+            <mj-text align="left">
+              Afin d&rsquo;assurer la s&eacute;curit&eacute; de votre compte, veuillez entrer le code de s&eacute;curit&eacute; dans le formulaire de v&eacute;rification sur votre espace.
+            </mj-text>
+            <mj-text align="center" font-size="35px">
+              <b><%= code %></b>
+            </mj-text>
+             <mj-text align="left">
+              Bien cordialement,
+            </mj-text>
+            <mj-text align="left">
+              L&rsquo;&eacute;quipe Conseiller Num&eacute;rique
+            </mj-text>
+          </mj-column>
+      </mj-wrapper>
+  </mj-body>
+</mjml>
+
