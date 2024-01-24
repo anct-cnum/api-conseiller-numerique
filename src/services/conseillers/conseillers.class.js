@@ -632,7 +632,7 @@ exports.Conseillers = class Conseillers extends Service {
         'terminee_naturelle'
       ] };
       const misesEnRelations = await db.collection('misesEnRelation').find(
-        instructionSuppression,
+        instructionSuppressionMER,
         { 'statut': 1, 'conseiller.$id': 1, 'structure.$id': 1, 'dateRecrutement': 1, 'dateDebutDeContrat': 1, 'dateFinDeContrat': 1, 'typeDeContrat': 1,
           'reconventionnement': 1, 'conventionnement': 1, 'phaseConventionnement': 1, 'dateRupture': 1, 'motifRupture': 1
         }).toArray();
