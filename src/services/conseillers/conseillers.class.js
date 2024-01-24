@@ -624,8 +624,8 @@ exports.Conseillers = class Conseillers extends Service {
       const aDoublonRecrute = await db.collection('conseillers').countDocuments({ 'email': email, 'statut': 'RECRUTE' });
       const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
       let instructionSuppressionMER = motif === 'doublon' ?
-        { 'conseiller.$id': new ObjectId(id), 'conseillerObj.email': email } :
-        { 'conseillerObj.email': email };
+        { 'conseiller.$id': new ObjectId(id), 'conseillerObj.email': email, 'statut': {} } :
+        { 'conseillerObj.email': email, 'statut': {} };
       instructionSuppressionMER.statut = { $in: [
         'finalisee_rupture',
         'terminee',
