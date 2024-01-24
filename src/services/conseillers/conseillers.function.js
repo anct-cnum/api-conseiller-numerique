@@ -148,7 +148,7 @@ const verificationCandidaturesRecrutee = (app, res) => async (tableauCandidat, i
 
 };
 
-const archiverLaSuppression = app => async (tableauCandidat, user, motif, actionUser) => {
+const archiverLaSuppression = app => async (tableauCandidat, user, motif, actionUser, misesEnRelations) => {
   try {
     let promises = [];
     await app.get('mongoClient').then(async db => {
@@ -160,7 +160,8 @@ const archiverLaSuppression = app => async (tableauCandidat, user, motif, action
             const objAnonyme = {
               deletedAt: new Date(),
               motif: motif,
-              conseiller: conseiller
+              conseiller: conseiller,
+              historiqueContrat: misesEnRelations,
             };
             if (actionUser === 'admin') {
               objAnonyme.actionUser = {
