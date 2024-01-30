@@ -88,6 +88,7 @@ exports.Users = class Users extends Service {
             return;
           }
           const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
+          // vérification si le nouvelle email est déjà utilisé par un conseiller
           const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: { $exists: true }, email: nouveauEmail });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé.`);
