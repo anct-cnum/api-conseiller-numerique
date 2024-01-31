@@ -51,7 +51,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
       $setOnInsert: {
         idPG: s.id,
         statut: 'CREEE',
-        estLabelliseFranceServices: null,
+        estLabelliseFranceServices: 'NON',
         estZRR: null,
         prefet: [],
         coselec: [],
