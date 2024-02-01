@@ -638,7 +638,7 @@ exports.Conseillers = class Conseillers extends Service {
           'typeDeContrat': 1, 'reconventionnement': 1, 'miseEnRelationReconventionnement': 1, 'miseEnRelationConventionnement': 1,
           'phaseConventionnement': 1, 'dateRupture': 1, 'motifRupture': 1
         }).toArray();
-      console.log(misesEnRelations);
+        
       if (estDoublon && tableauCandidat[0]?.ruptures?.length > 0) {
         res.status(409).send(new Conflict('Ce doublon possède un historique de ruptures, veuillez supprimer le bon doublon', {
         }).toJSON());
