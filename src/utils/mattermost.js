@@ -168,6 +168,12 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
           { mattermost: mattermostSet }
       });
 
+    await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
+      {
+        $set:
+          { 'conseillerObj.mattermost': mattermostSet }
+      });
+
     slugify.extend({ '-': ' ' });
     slugify.extend({ '\'': ' ' });
     const departements = require('../../data/imports/departements-region.json');
