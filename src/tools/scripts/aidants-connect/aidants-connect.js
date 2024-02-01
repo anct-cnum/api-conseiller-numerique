@@ -38,6 +38,16 @@ const setAidantConnectLabel = db => async siret => {
       }
     }
   );
+  await db.collection('misesEnRelation').updateMany(
+    {
+      'structureObj.siret': siret
+    },
+    {
+      $set: {
+        'structureObj.estLabelliseAidantsConnect': 'OUI'
+      }
+    }
+  );
 };
 
 execute(__filename, async ({ db, exit }) => {
