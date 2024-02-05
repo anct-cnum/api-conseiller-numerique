@@ -659,7 +659,7 @@ exports.Users = class Users extends Service {
         return;
       }
       const user = users.data[0];
-      if (user.roles.some(role => !['candidat', 'conseiller', 'hub_coop'].includes(role))) {
+      if (!user.roles.some(role => ['candidat', 'conseiller', 'hub_coop'].includes(role))) {
         res.status(403).send(new Forbidden('Error authorization user', {
           username
         }).toJSON());
