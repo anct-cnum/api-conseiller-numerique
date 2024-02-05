@@ -15,12 +15,18 @@ execute(__filename, async ({ logger, db, exit }) => {
     conseillers.forEach(conseiller => {
       promises.push(new Promise(async resolve => {
         let query = { $unset: { dateDeNaissance: '' } };
+        let queryMER = { $unset: { 'conseillerObj.dateDeNaissance': '' } };
         if (dayjs(conseiller.dateDeNaissance).isValid()) {
           query = { $set: { dateDeNaissance: new Date(conseiller.dateDeNaissance) } };
+          queryMER = { $set: { 'conseillerObj.dateDeNaissance': new Date(conseiller.dateDeNaissance) } };
         }
         await db.collection('conseillers').updateOne(
           { _id: conseiller._id },
           query
+        );
+        await db.collection('misesEnRelation').updateMany(
+          { 'conseiller.$id': conseiller._id },
+          queryMER
         );
         countCorrection += 1;
         resolve();
