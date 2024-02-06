@@ -38,12 +38,23 @@ const setAidantConnectLabel = db => async siret => {
       }
     }
   );
+  await db.collection('misesEnRelation').updateMany(
+    {
+      'structureObj.siret': siret
+    },
+    {
+      $set: {
+        'structureObj.estLabelliseAidantsConnect': 'OUI'
+      }
+    }
+  );
 };
 
 execute(__filename, async ({ db, exit }) => {
+  const filtreZero = siret => new Set(siret.split('')).toString();
   const siretListFromCSV = (await readCSV(program.csv))
   .map(siretRow => Object.values(siretRow)[0])
-  .filter(siret => siret !== '');
+  .filter(siret => (siret !== '') && (filtreZero(siret) !== '0'));
 
   const siretListFromDB = (await getSiretList(db)())
   .map(siretRow => Object.values(siretRow)[0])
