@@ -60,8 +60,13 @@ execute(__filename, async ({ db, exit }) => {
   .map(siretRow => Object.values(siretRow)[0])
   .filter(siret => siret !== null);
 
-  await findCommonSiret(siretListFromCSV, siretListFromDB)
-  .map(siret => setAidantConnectLabel(db)(siret));
-
+  let promises = [];
+  await findCommonSiret(siretListFromCSV, siretListFromDB).forEach(siret => {
+    promises.push(new Promise(async resolve => {
+      await setAidantConnectLabel(db)(siret);
+      resolve();
+    }));
+  });
+  await Promise.all(promises);
   exit();
 });
