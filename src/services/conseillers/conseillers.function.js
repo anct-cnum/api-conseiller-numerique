@@ -161,7 +161,7 @@ const archiverLaSuppression = app => async (tableauCandidat, user, motif, action
               deletedAt: new Date(),
               motif: motif,
               conseiller: conseiller,
-              historiqueContrats: misesEnRelations.filter(mer => String(mer.conseiller.oid) === String(conseiller._id)),
+              historiqueContrats: misesEnRelations.filter(mer => String(mer.conseillerId) === String(conseiller._id)),
             };
             if (actionUser === 'admin') {
               objAnonyme.actionUser = {

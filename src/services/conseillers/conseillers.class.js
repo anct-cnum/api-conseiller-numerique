@@ -632,12 +632,14 @@ exports.Conseillers = class Conseillers extends Service {
         'terminee_naturelle'
       ] };
 
-      const misesEnRelations = await db.collection('misesEnRelation').find(
-        instructionSuppressionMER,
-      ).project({ 'statut': 1, 'conseiller.$id': 1, 'structure.$id': 1, 'dateRecrutement': 1, 'dateDebutDeContrat': 1, 'dateFinDeContrat': 1,
-        'typeDeContrat': 1, 'reconventionnement': 1, 'miseEnRelationReconventionnement': 1, 'miseEnRelationConventionnement': 1,
-        'phaseConventionnement': 1, 'dateRupture': 1, 'motifRupture': 1
-      }).toArray();
+      const misesEnRelations = await db.collection('misesEnRelation').aggregate([
+        { $match: instructionSuppressionMER },
+        { $project: {
+          statut: 1, conseillerId: '$conseiller.$id', structureId: '$structure.$id', dateRecrutement: 1, dateDebutDeContrat: 1, dateFinDeContrat: 1,
+          typeDeContrat: 1, reconventionnement: 1, miseEnRelationReconventionnement: 1, miseEnRelationConventionnement: 1,
+          phaseConventionnement: 1, dateRupture: 1, motifRupture: 1
+        } }
+      ]).toArray();
 
       if (estDoublon && tableauCandidat[0]?.ruptures?.length > 0) {
         res.status(409).send(new Conflict('Ce doublon possède un historique de ruptures, veuillez supprimer le bon doublon', {
