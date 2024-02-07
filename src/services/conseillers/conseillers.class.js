@@ -623,6 +623,23 @@ exports.Conseillers = class Conseillers extends Service {
       const estDoublon = motif === 'doublon' && nbDoublonsReel > 1;
       const aDoublonRecrute = await db.collection('conseillers').countDocuments({ 'email': email, 'statut': 'RECRUTE' });
       const tableauCandidat = await db.collection('conseillers').find(instructionSuppression).toArray();
+      let instructionSuppressionMER = motif === 'doublon' ?
+        { 'conseiller.$id': new ObjectId(id), 'conseillerObj.email': email, 'statut': {} } :
+        { 'conseillerObj.email': email, 'statut': {} };
+      instructionSuppressionMER.statut = { $in: [
+        'finalisee_rupture',
+        'terminee',
+        'terminee_naturelle'
+      ] };
+
+      const misesEnRelations = await db.collection('misesEnRelation').aggregate([
+        { $match: instructionSuppressionMER },
+        { $project: {
+          statut: 1, conseillerId: '$conseiller.$id', structureId: '$structure.$id', dateRecrutement: 1, dateDebutDeContrat: 1, dateFinDeContrat: 1,
+          typeDeContrat: 1, reconventionnement: 1, miseEnRelationReconventionnement: 1, miseEnRelationConventionnement: 1,
+          phaseConventionnement: 1, dateRupture: 1, motifRupture: 1
+        } }
+      ]).toArray();
 
       if (estDoublon && tableauCandidat[0]?.ruptures?.length > 0) {
         res.status(409).send(new Conflict('Ce doublon possède un historique de ruptures, veuillez supprimer le bon doublon', {
@@ -642,7 +659,7 @@ exports.Conseillers = class Conseillers extends Service {
       }).then(() => {
         return verificationCandidaturesRecrutee(app, res)(tableauCandidat, id);
       }).then(() => {
-        return archiverLaSuppression(app)(tableauCandidat, user, motif, actionUser);
+        return archiverLaSuppression(app)(tableauCandidat, user, motif, actionUser, misesEnRelations);
       }).then(() => {
         return suppressionTotalCandidat(app)(tableauCandidat);
       }).then(() => {
