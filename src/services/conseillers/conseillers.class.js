@@ -635,7 +635,7 @@ exports.Conseillers = class Conseillers extends Service {
       const misesEnRelations = await db.collection('misesEnRelation').aggregate([
         { $match: instructionSuppressionMER },
         { $project: {
-          statut: 1, conseillerId: '$conseiller.$id', structureId: '$structure.$id', dateRecrutement: 1, dateDebutDeContrat: 1, dateFinDeContrat: 1,
+          statut: 1, conseillerId: '$conseillerObj._id', structureId: '$structureObj._id', dateRecrutement: 1, dateDebutDeContrat: 1, dateFinDeContrat: 1,
           typeDeContrat: 1, reconventionnement: 1, miseEnRelationReconventionnement: 1, miseEnRelationConventionnement: 1,
           phaseConventionnement: 1, dateRupture: 1, motifRupture: 1
         } }
