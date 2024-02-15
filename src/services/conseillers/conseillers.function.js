@@ -116,7 +116,7 @@ const verificationCandidaturesRecrutee = (app, res) => async (tableauCandidat, i
             const statut = misesEnRelationsFinalisees.statut === 'recrutee' ? 'validée' : 'recrutée';
             const structure = await db.collection('structures').findOne({ _id: misesEnRelationsFinalisees.structure.oid });
             const idConvertString = JSON.stringify(profil._id);
-            const messageDoublon = idConvertString === `"${id}"` ? `est ${statut} par` : `a un doublon qui est ${statut}`;
+            const messageDoublon = idConvertString === `"${id}"` ? `est ${statut} ` : `a un doublon qui est ${statut}`;
             const messageSiret = structure?.siret ?? `non renseigné`;
             res.status(409).send(new Conflict(`Le conseiller ${messageDoublon} par la structure ${structure.nom}, SIRET: ${messageSiret}`).toJSON());
             return;
@@ -148,7 +148,7 @@ const verificationCandidaturesRecrutee = (app, res) => async (tableauCandidat, i
 
 };
 
-const archiverLaSuppression = app => async (tableauCandidat, user, motif, actionUser) => {
+const archiverLaSuppression = app => async (tableauCandidat, user, motif, actionUser, misesEnRelations) => {
   try {
     let promises = [];
     await app.get('mongoClient').then(async db => {
@@ -160,7 +160,8 @@ const archiverLaSuppression = app => async (tableauCandidat, user, motif, action
             const objAnonyme = {
               deletedAt: new Date(),
               motif: motif,
-              conseiller: conseiller
+              conseiller: conseiller,
+              historiqueContrats: misesEnRelations.filter(miseEnRelation => String(miseEnRelation.conseillerId) === String(conseiller._id)),
             };
             if (actionUser === 'admin') {
               objAnonyme.actionUser = {
