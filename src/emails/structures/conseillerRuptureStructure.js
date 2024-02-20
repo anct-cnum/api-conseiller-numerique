@@ -36,7 +36,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         emailContactStructure,
         {
-          subject: 'Demande de rupture de contrat avec votre CnFS',
+          subject: 'Demande de rupture de contrat avec votre Conum',
           body: await render(),
         },
       )

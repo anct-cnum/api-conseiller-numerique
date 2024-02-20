@@ -104,7 +104,7 @@ describe('export territoires utils', () => {
     const fileContent = buildExportTerritoiresCsvFileContent(statsTerritoires, territoire);
 
     expect(fileContent).toEqual(
-      'Code;Nom;Personnes accompagnées;Dotation de conseillers;CnFS activé sur l\'espace coop;CnFS en attente d\'activation;Taux d\'activation\n' +
+      'Code;Nom;Personnes accompagnées;Dotation de conseillers;Conum activé sur l\'espace coop;Conum en attente d\'activation;Taux d\'activation\n' +
       '84;Auvergne-Rhône-Alpes;0;12;0;12;0\n' +
       '32;Hauts-de-France;0;22;0;22;0');
   });
@@ -115,7 +115,7 @@ describe('export territoires utils', () => {
     const fileContent = buildExportTerritoiresCsvFileContent(statsTerritoires, territoire);
 
     expect(fileContent).toEqual(
-      'Code;Nom;Personnes accompagnées;Dotation de conseillers;CnFS activé sur l\'espace coop;CnFS en attente d\'activation;Taux d\'activation\n' +
+      'Code;Nom;Personnes accompagnées;Dotation de conseillers;Conum activé sur l\'espace coop;Conum en attente d\'activation;Taux d\'activation\n' +
       '01;Ain;0;12;0;12;0\n' +
       '02;Aisne;0;22;0;22;0');
   });

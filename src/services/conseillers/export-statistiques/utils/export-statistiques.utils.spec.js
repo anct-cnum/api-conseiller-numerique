@@ -77,7 +77,7 @@ describe('utilitaire pour l\'export des statistiques d\'accompagnement depuis l\
   });
 
   describe('nom du fichier CSV d\'export des statistiques', () => {
-    it('devrait contenir le nom complet du CNFS et les dates correspondant aux filtres', () => {
+    it('devrait contenir le nom complet du Conum et les dates correspondant aux filtres', () => {
       const dateDebut = new Date('2021-01-01T00:00:00.000Z');
       const dateFin = new Date('2021-11-18T00:00:00.000Z');
 
