@@ -9,7 +9,7 @@ const { createAccount, updateAccountPassword } = require('../../utils/mattermost
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 const { misesAJourPg, misesAJourMongo, historisationMongo,
   getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
@@ -295,7 +295,7 @@ exports.Users = class Users extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await this.find({
         query: {
           _id: new ObjectID(userId),

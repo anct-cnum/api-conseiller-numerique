@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 const { Forbidden, NotAuthenticated, BadRequest, GeneralError } = require('@feathersjs/errors');
 const { ObjectID } = require('mongodb');
 const statsCras = require('./cras');
@@ -49,7 +49,7 @@ exports.Stats = class Stats extends Service {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
         }
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!['structure'].includes(user?.roles[0])) {
           res.status(403).send(new Forbidden('User not authorized', {
@@ -106,7 +106,7 @@ exports.Stats = class Stats extends Service {
           return;
         }
         //verify user role admin
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!adminUser?.roles.includes('admin')) {
           res.status(403).send(new Forbidden('User not authorized', {
@@ -144,7 +144,7 @@ exports.Stats = class Stats extends Service {
         }
 
         //Verification role conseiller
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const conseillerUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => conseillerUser?.roles.includes(role)).length === 0) {
@@ -200,7 +200,7 @@ exports.Stats = class Stats extends Service {
         res.status(401).send(new NotAuthenticated('Utilisateur non autorisé'));
         return;
       }
-      const userId = decode(req.feathers.authentication.accessToken).sub;
+      const userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const idConseiller = new ObjectID(req.params.id);
 
       app.get('mongoClient').then(async db => {
@@ -230,7 +230,7 @@ exports.Stats = class Stats extends Service {
         res.status(401).send(new NotAuthenticated('Utilisateur non authentifié'));
         return;
       }
-      const userId = decode(req.feathers.authentication.accessToken).sub;
+      const userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const idStructureParams = new ObjectID(req.params.id);
 
       app.get('mongoClient').then(async db => {
@@ -268,7 +268,7 @@ exports.Stats = class Stats extends Service {
           return;
         }
         try {
-          let userId = decode(accessToken).sub;
+          let userId = jwtDecode(accessToken).sub;
           let userFinal = {};
           const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
           const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur];
@@ -428,7 +428,7 @@ exports.Stats = class Stats extends Service {
       }
       //verify user role admin_coop
       app.get('mongoClient').then(async db => {
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!adminUser?.roles.includes('admin_coop')) {
           res.status(403).send(new Forbidden('User not authorized', {
@@ -488,7 +488,7 @@ exports.Stats = class Stats extends Service {
       }
 
       app.get('mongoClient').then(async db => {
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => adminUser?.roles.includes(role)).length === 0) {
@@ -562,7 +562,7 @@ exports.Stats = class Stats extends Service {
         return;
       }
       app.get('mongoClient').then(async db => {
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!statsFct.checkRole(adminUser?.roles, 'prefet')) {
           res.status(403).send(new Forbidden('User not authorized', {
@@ -631,7 +631,7 @@ exports.Stats = class Stats extends Service {
       }
 
       app.get('mongoClient').then(async db => {
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!statsFct.checkRole(adminUser?.roles, 'prefet')) {
           res.status(403).send(new Forbidden('User not authorized', {
@@ -706,7 +706,7 @@ exports.Stats = class Stats extends Service {
           return;
         }
         //Verification role admin_coop
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
@@ -750,7 +750,7 @@ exports.Stats = class Stats extends Service {
           return;
         }
         //Verification role structure_coop
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!user?.roles.includes('prefet')) {
           const structureId = user.entity.oid;
@@ -799,7 +799,7 @@ exports.Stats = class Stats extends Service {
           return;
         }
         //Verification role admin_coop
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur, Role.Conseiller];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
@@ -834,7 +834,7 @@ exports.Stats = class Stats extends Service {
         return;
       }
       app.get('mongoClient').then(async db => {
-        let userId = decode(req.feathers.authentication.accessToken).sub;
+        let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         const rolesAllowed = [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => adminUser?.roles.includes(role)).length === 0) {

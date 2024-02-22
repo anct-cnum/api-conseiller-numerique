@@ -2,10 +2,9 @@ const { Service } = require('feathers-mongodb');
 const { NotFound, Conflict, GeneralError, NotAuthenticated, Forbidden, BadRequest } = require('@feathersjs/errors');
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 const { S3Client, DeleteObjectCommand, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
-const fileType = require('file-type');
 const { Pool } = require('pg');
 const pool = new Pool();
 const crypto = require('crypto');
@@ -171,7 +170,7 @@ exports.Conseillers = class Conseillers extends Service {
       checkAuth(req, res);
 
       //Verification role candidat
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
 
       if (!candidatUser?.roles.includes('candidat') && !candidatUser?.roles.includes('conseiller')) {
@@ -189,10 +188,10 @@ exports.Conseillers = class Conseillers extends Service {
       //verification type PDF (ne pas faire confiance qu'au mime/type envoyé)
       const allowedExt = ['pdf'];
       const allowedMime = ['application/pdf'];
-      let detectingFormat = await fileType.fromBuffer(cvFile.buffer);
-
+      const { fileTypeFromBuffer } = await import('file-type');
+      const detectingFormat = await fileTypeFromBuffer(cvFile.buffer);
       if (detectingFormat === undefined || !allowedExt.includes(detectingFormat.ext) ||
-          !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
+        !allowedMime.includes(cvFile.mimetype) || !allowedMime.includes(detectingFormat.mime)) {
         res.status(400).send(new BadRequest('Erreur : format de CV non autorisé').toJSON());
         return;
       }
@@ -291,7 +290,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
       checkAuth(req, res);
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req)) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -324,7 +323,7 @@ exports.Conseillers = class Conseillers extends Service {
       checkAuth(req, res);
 
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -406,7 +405,7 @@ exports.Conseillers = class Conseillers extends Service {
           res.status(401).send(new NotAuthenticated('User not authenticated'));
           return;
         }
-        let userId = decode(accessToken).sub;
+        let userId = jwtDecode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
         const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop, Role.Coordinateur];
         if (rolesAllowed.filter(role => user?.roles.includes(role)).length === 0) {
@@ -556,7 +555,7 @@ exports.Conseillers = class Conseillers extends Service {
 
       const accessToken = req.feathers?.authentication?.accessToken;
 
-      let userId = decode(accessToken).sub;
+      let userId = jwtDecode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!user?.roles.includes('admin') && !user?.roles.includes('prefet')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -646,7 +645,7 @@ exports.Conseillers = class Conseillers extends Service {
         }).toJSON());
         return;
       }
-      await verificationRoleUser(db, decode, req, res)(roles).then(userIdentifier => {
+      await verificationRoleUser(db, jwtDecode, req, res)(roles).then(userIdentifier => {
         user = userIdentifier;
         if (user.roles.includes('candidat')) {
           if (user.entity.oid.toString() !== conseiller.data[0]._id.toString()) {
@@ -954,7 +953,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.patch('/conseillers/superieur_hierarchique/:id', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
-      const userId = decode(accessToken).sub;
+      const userId = jwtDecode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { supHierarchique } = req.body;
@@ -1020,7 +1019,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
-      const userId = decode(accessToken).sub;
+      const userId = jwtDecode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { disponible } = req.body;
@@ -1079,7 +1078,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.patch('/conseillers/update_date_disponibilite/:id', async (req, res) => {
       checkAuth(req, res);
       const accessToken = req.feathers?.authentication?.accessToken;
-      const userId = decode(accessToken).sub;
+      const userId = jwtDecode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       const idConseiller = req.params.id;
       const { dateDisponibilite } = req.body;
