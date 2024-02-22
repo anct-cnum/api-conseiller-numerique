@@ -284,6 +284,7 @@ exports.Users = class Users extends Service {
         //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
         const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
         users.data[0].persoEmail = conseiller.email;
+        // eslint-disable-next-line camelcase
         res.send({ roles, name, persoEmail, nom, prenom, support_cnfs });
       } else {
         res.send({ roles, name });
