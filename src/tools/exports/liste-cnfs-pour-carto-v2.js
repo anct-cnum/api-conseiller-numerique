@@ -107,6 +107,7 @@ const addressGroupSeparator = ' ';
 const addressPartSeparator = ', ';
 
 execute(__filename, async ({ logger, db }) => {
+  const options = program.opts();
   const getPermanencesByConseiller = async conseillerId => {
     return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
   };
@@ -193,7 +194,7 @@ execute(__filename, async ({ logger, db }) => {
   }
 
   // On commence ici
-  const structuresIds = await readCSV(program.csv);
+  const structuresIds = await readCSV(options.csv);
   for (const structureId of structuresIds) {
     let structure = await db.collection('structures').findOne({ idPG: Number(structureId['ID SA']) });
 
