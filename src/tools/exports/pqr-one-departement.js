@@ -79,6 +79,7 @@ const addressGroupSeparator = ' ';
 const addressPartSeparator = ', ';
 
 execute(__filename, async ({ logger, db, exit }) => {
+  const options = program.opts();
   const getPermanencesByConseiller = async conseillerId => {
     return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
   };
@@ -152,10 +153,10 @@ execute(__filename, async ({ logger, db, exit }) => {
       return null;
     }
     let dep;
-    if (program.departement === '00') {
+    if (options.departement === '00') {
       // TOM
       const resultTom = toms.find(i => i.tom_com === codeCommune.substring(0, 3));
-      return resultTom ? { num_dep: program.departement, dep_name: resultTom.tom_name, region_name: resultTom.tom_name } : null;
+      return resultTom ? { num_dep: options.departement, dep_name: resultTom.tom_name, region_name: resultTom.tom_name } : null;
     } else if ((dep = cp.match(/^9[78]\d/))) {
       // DOM
       return deps.get(dep[0]);
@@ -190,29 +191,29 @@ execute(__filename, async ({ logger, db, exit }) => {
   let pinsDepartementElargi = { };
 
   // On commence ici
-  if (!deps.get(program.departement) && !toms.map(i => i.tom_com).includes(program.departement)) {
-    exit(`Le code departement saisi ${program.departement} est inconnu `);
+  if (!deps.get(options.departement) && !toms.map(i => i.tom_com).includes(options.departement)) {
+    exit(`Le code departement saisi ${options.departement} est inconnu `);
     return;
   }
-  if (toms.map(i => i.tom_com).includes(program.departement)) {
-    program.departement = '00';
+  if (toms.map(i => i.tom_com).includes(options.departement)) {
+    options.departement = '00';
   }
   // Ajouter en amont si aucune SA n'a pas de coordonnée insee et ni de CN
-  pinsDepartement[program.departement] = [];
-  pinsDepartementElargi[program.departement] = [];
+  pinsDepartement[options.departement] = [];
+  pinsDepartementElargi[options.departement] = [];
 
   const regexFormatDate = new RegExp(/^((202)[1-9])(-)(((0)[0-9])|((1)[0-2]))(-)([0-2][0-9]|(3)[0-1])$/);
-  if (!regexFormatDate.test(program.date)) {
-    exit(`Le date saisi est invalide (${program.date})`);
+  if (!regexFormatDate.test(options.date)) {
+    exit(`Le date saisi est invalide (${options.date})`);
     return;
   }
-  const date = dayjs(program.date, 'YYYY-MM-DD').toDate();
+  const date = dayjs(options.date, 'YYYY-MM-DD').toDate();
   const structuresIds = await db.collection('structures').find({
     'statut': 'VALIDATION_COSELEC',
-    'codeDepartement': program.departement,
+    'codeDepartement': options.departement,
     'conventionnement.statut': { '$nin': ['NON_INTERESSÉ'] }
   }).toArray();
-  logger.info(`Il y a ${structuresIds.length} structure(s) dans le département ${program.departement}`);
+  logger.info(`Il y a ${structuresIds.length} structure(s) dans le département ${options.departement}`);
 
   for (const sa of structuresIds) {
     let structure = await db.collection('structures').findOne({ idPG: sa.idPG });
@@ -280,7 +281,7 @@ execute(__filename, async ({ logger, db, exit }) => {
           try {
             // eslint-disable-next-line max-len
             let depReg = codePostal2departementRegion(String(permanencePrincipaleConseiller.adresse.codePostal), String(permanencePrincipaleConseiller.adresse.codeCommune));
-            if (depReg?.num_dep === program.departement) {
+            if (depReg?.num_dep === options.departement) {
               // on prend le lien de la permanence principale
               pinsDepartement[depReg.num_dep].push(toGeoJsonFromPermanence(c, permanencePrincipaleConseiller));
               // et les autres
@@ -319,32 +320,32 @@ execute(__filename, async ({ logger, db, exit }) => {
 
   logger.info('Resultats :');
 
-  let csvFileCount = path.join(__dirname, '../../../data/exports', `${program.date}_departement_${program.departement}_carto_count.csv`);
+  let csvFileCount = path.join(__dirname, '../../../data/exports', `${options.date}_departement_${options.departement}_carto_count.csv`);
   let fileCount = fs.createWriteStream(csvFileCount, {
     flags: 'w'
   });
-  logger.info(`Department ${program.departement} has ${pinsDepartement[program.departement].length} pins.`);
-  fileCount.write(`${program.departement},${pinsDepartement[program.departement].length}\n`);
+  logger.info(`Department ${options.departement} has ${pinsDepartement[options.departement].length} pins.`);
+  fileCount.write(`${options.departement},${pinsDepartement[options.departement].length}\n`);
   fileCount.close();
 
   logger.info('Resultats élargis');
-  let csvFileCountElargi = path.join(__dirname, '../../../data/exports', `${program.date}_departement_${program.departement}_carto_elargi_count.csv`);
+  let csvFileCountElargi = path.join(__dirname, '../../../data/exports', `${options.date}_departement_${options.departement}_carto_elargi_count.csv`);
   let fileCountElargi = fs.createWriteStream(csvFileCountElargi, {
     flags: 'w'
   });
-  logger.info(`Department ${program.departement} has ${pinsDepartementElargi[program.departement].length} pins.`);
-  fileCountElargi.write(`${program.departement},${pinsDepartementElargi[program.departement].length}\n`);
+  logger.info(`Department ${options.departement} has ${pinsDepartementElargi[options.departement].length} pins.`);
+  fileCountElargi.write(`${options.departement},${pinsDepartementElargi[options.departement].length}\n`);
   fileCountElargi.close();
 
-  let csvFile = path.join(__dirname, '../../../data/exports', `${program.date}_departement_${program.departement}_carto.json`);
+  let csvFile = path.join(__dirname, '../../../data/exports', `${options.date}_departement_${options.departement}_carto.json`);
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
   const finalPins = [];
-  if (pinsDepartement[program.departement].length > 15) {
-    finalPins.push(...pinsDepartement[program.departement]);
+  if (pinsDepartement[options.departement].length > 15) {
+    finalPins.push(...pinsDepartement[options.departement]);
   } else {
-    finalPins.push(...pinsDepartementElargi[program.departement]);
+    finalPins.push(...pinsDepartementElargi[options.departement]);
   }
   const featureCollection = {
     'type': 'FeatureCollection',
@@ -353,20 +354,20 @@ execute(__filename, async ({ logger, db, exit }) => {
   file.write(JSON.stringify(featureCollection, null, 2));
   file.close();
 
-  let csvFileElargi = path.join(__dirname, '../../../data/exports', `${program.date}_departement_${program.departement}_carto_elargi.json`);
+  let csvFileElargi = path.join(__dirname, '../../../data/exports', `${options.date}_departement_${options.departement}_carto_elargi.json`);
   // Toutes les permanences
   let fileElargi = fs.createWriteStream(csvFileElargi, {
     flags: 'w'
   });
 
-  fileElargi.write(JSON.stringify(pinsDepartementElargi[program.departement], null, 2));
+  fileElargi.write(JSON.stringify(pinsDepartementElargi[options.departement], null, 2));
   fileElargi.close();
 
   // Fichiers TXT
   let villePrecedente = '';
   let saPrecedente = '';
 
-  let csvFileTxt = path.join(__dirname, '../../../data/exports', `${program.date}_departement_${program.departement}_carto.txt`);
+  let csvFileTxt = path.join(__dirname, '../../../data/exports', `${options.date}_departement_${options.departement}_carto.txt`);
 
   let fileTxt = fs.createWriteStream(csvFileTxt, {
     flags: 'w'
@@ -374,7 +375,7 @@ execute(__filename, async ({ logger, db, exit }) => {
 
   // Si moins de 15 pins dans le département
   // on prend la liste complète des permanences
-  let pins = (pinsDepartement[program.departement].length > 15) ? [...pinsDepartement[program.departement]] : [...pinsDepartementElargi[program.departement]];
+  let pins = (pinsDepartement[options.departement].length > 15) ? [...pinsDepartement[options.departement]] : [...pinsDepartementElargi[options.departement]];
   pins.sort(sortByNomSA);
   pins.sort(sortByVille);
 
