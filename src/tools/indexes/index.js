@@ -14,12 +14,12 @@ program.description('Manage indexes')
 .parse(process.argv);
 
 execute(__filename, async ({ db, logger }) => {
-
-  if (program.find) {
+  const options = program.opts();
+  if (options.find) {
     return await findUnusedIndexes(db);
   }
 
-  if (program.drop) {
+  if (options.drop) {
     logger.info('Dropping indexes...');
     await dropIndexes(db);
   }
