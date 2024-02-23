@@ -20,16 +20,16 @@ const formatDate = date => {
 const regexDateRupture = new RegExp(/^((202)[1-9])(-)(((0)[0-9])|((1)[0-2]))(-)([0-2][0-9]|(3)[0-1])$/);
 
 execute(__filename, async ({ db, logger, exit }) => {
+  const { conseiller, structure, date } = program.opts();
+  const idConseiller = ~~conseiller;
+  const idStructure = ~~structure;
 
-  const idConseiller = ~~program.conseiller;
-  const idStructure = ~~program.structure;
-
-  if (idConseiller === 0 || idStructure === 0 || !regexDateRupture.test(program.date)) {
+  if (idConseiller === 0 || idStructure === 0 || !regexDateRupture.test(date)) {
     exit(`Paramètres invalides : préciser l'id du conseiller, l'id de la structure et une date de démission valide`);
     return;
   }
 
-  const dateRupture = formatDate(program.date);
+  const dateRupture = formatDate(date);
 
   await new Promise(async () => {
 
@@ -99,7 +99,7 @@ execute(__filename, async ({ db, logger, exit }) => {
       }
     );
 
-    logger.info(`Mise à jour de la date de rupture pour le conseiller id ${idConseiller} au ${program.date} avec la structure ${idStructure}`);
+    logger.info(`Mise à jour de la date de rupture pour le conseiller id ${idConseiller} au ${date} avec la structure ${idStructure}`);
     exit();
   });
 });

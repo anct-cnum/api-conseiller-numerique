@@ -10,8 +10,8 @@ program.description('Suppression de la clé userCreationError pour un conseiller
 .parse(process.argv);
 
 execute(__filename, async ({ db, logger, exit }) => {
-
-  const idConseiller = program.conseiller;
+  const options = program.opts();
+  const idConseiller = options.conseiller;
   await new Promise(async () => {
     if (idConseiller) {
       const conseiller = await db.collection('conseillers').findOne({
