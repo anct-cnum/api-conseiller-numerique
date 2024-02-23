@@ -115,7 +115,7 @@ const setPermanence = db => async (permanenceId, permanence, conseillerId, hasPe
     $set: {
       hasPermanence,
       telephonePro,
-      emailPro,
+      emailPro: emailPro.trim(),
     }
   });
 };
