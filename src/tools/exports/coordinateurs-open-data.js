@@ -2,7 +2,7 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
-const cli = require('commander');
+const { program } = require('commander');
 
 const { execute } = require('../utils');
 const { getCoordinateurs, getStatsCoordination } = require('../../services/coordinateurs/repository/coordinateurs.repository.js');
@@ -11,7 +11,7 @@ const { listeCoordinateurs } = require('../../services/coordinateurs/core/coordi
 const formatNomStructure = coordinateur => coordinateur.permanence?.nomEnseigne ?? coordinateur.structure.nom;
 const formatNomCommune = coordinateur => coordinateur.permanence?.adresse?.codeCommune ?? coordinateur.structure.codeCommune;
 
-cli.description('Export coordinateurs open data')
+program.description('Export coordinateurs open data')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 

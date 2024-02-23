@@ -66,7 +66,7 @@ execute(__filename, async ({ feathers, db, logger, exit, Sentry }) => {
     exit();
   };
 
-  let { all, limit = 1, id } = program;
+  let { all, limit = 1, id } = program.opts();
 
   let usersCreatedCount = 0;
   let usersCreationErrorCount = 0;

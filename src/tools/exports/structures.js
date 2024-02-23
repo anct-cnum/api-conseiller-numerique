@@ -3,12 +3,12 @@
 const { ObjectID } = require('mongodb');
 const path = require('path');
 const fs = require('fs');
-const cli = require('commander');
+const { program } = require('commander');
 const utils = require('../../utils/index.js');
 
 const { execute } = require('../utils');
 
-cli.description('Export structures')
+program.description('Export structures')
 .option('-a, --activated', 'Only activated structures')
 .option('-m, --matchingValidated', 'Only structures with activated matching')
 .helpOption('-e', 'HELP command')
@@ -18,10 +18,10 @@ execute(__filename, async ({ logger, db, exit }) => {
   let query = { };
   let count = 0;
 
-  if (cli.activated && cli.matchingValidated) {
+  if (program.activated && program.matchingValidated) {
     exit('Les paramètres activated et matchingValidated sont exclusifs');
   }
-  if (cli.activated) {
+  if (program.activated) {
     query = { statut: 'VALIDATION_COSELEC', userCreated: true };
   }
 
@@ -30,11 +30,11 @@ execute(__filename, async ({ logger, db, exit }) => {
   logger.info(`Generating CSV file...`);
 
   let type = 'toutes';
-  if (cli.activated) {
+  if (program.activated) {
     type = 'activees';
   }
 
-  if (cli.matchingValidated) {
+  if (program.matchingValidated) {
     type = 'recrutees';
   }
 
@@ -50,10 +50,10 @@ execute(__filename, async ({ logger, db, exit }) => {
     promises.push(new Promise(async resolve => {
       const matchings = await db.collection('misesEnRelation').countDocuments({ 'structure.$id': new ObjectID(structure._id) });
       let matchingsValidated = 0;
-      if (cli.matchingValidated) {
+      if (program.matchingValidated) {
         matchingsValidated = await db.collection('misesEnRelation').findOne({ 'structure.$id': new ObjectID(structure._id), 'statut': 'recrutee' });
       }
-      if (!cli.matchingValidated || matchingsValidated !== null) {
+      if (!program.matchingValidated || matchingsValidated !== null) {
         const user = await db.collection('users').findOne({ 'entity.$id': new ObjectID(structure._id) });
 
         try {

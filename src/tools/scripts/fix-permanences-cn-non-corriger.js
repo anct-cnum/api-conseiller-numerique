@@ -17,7 +17,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { correction, analyse, ignored } = program;
+  const { correction, analyse, ignored } = program.opts();
   logger.info(`Stat : ${dayjs(new Date(), 'YYYY-MM-DDTh:mm A').toDate()}`);
   // eslint-disable-next-line max-len
   const idPermsInCrasSansCodeCommune = await db.collection('cras').distinct('permanence.$id', { 'cra.codeCommune': { '$exists': false }, 'permanence.$id': { '$exists': true } });

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-const cli = require('commander');
+const { program } = require('commander');
 const { execute } = require('../utils');
 const dropIndexes = require('./tasks/dropIndexes');
 const createIndexes = require('./tasks/createIndexes');
 const findUnusedIndexes = require('./tasks/findUnusedIndexes');
 
-cli.description('Manage indexes')
+program.description('Manage indexes')
 .option('-f, --find', 'Find unused indexes')
 .option('-d, --drop', 'Drop all indexes')
 .helpOption('-e', 'HELP command')
@@ -15,11 +15,11 @@ cli.description('Manage indexes')
 
 execute(__filename, async ({ db, logger }) => {
 
-  if (cli.find) {
+  if (program.find) {
     return await findUnusedIndexes(db);
   }
 
-  if (cli.drop) {
+  if (program.drop) {
     logger.info('Dropping indexes...');
     await dropIndexes(db);
   }

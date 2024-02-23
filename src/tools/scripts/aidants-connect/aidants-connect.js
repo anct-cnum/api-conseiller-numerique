@@ -51,8 +51,9 @@ const setAidantConnectLabel = db => async siret => {
 };
 
 execute(__filename, async ({ db, exit }) => {
+  const options = program.opts();
   const filtreZero = siret => new Set(siret.split('')).toString();
-  const siretListFromCSV = (await readCSV(program.csv))
+  const siretListFromCSV = (await readCSV(options.csv))
   .map(siretRow => Object.values(siretRow)[0])
   .filter(siret => (siret !== '') && (filtreZero(siret) !== '0'));
 

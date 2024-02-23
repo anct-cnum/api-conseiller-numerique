@@ -2,12 +2,12 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
-const cli = require('commander');
 const utils = require('../../utils/index.js');
+const { program } = require('commander');
 
 const { execute } = require('../utils');
 
-cli.description('Export structures validées en Coselec')
+program.description('Export structures validées en Coselec')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
@@ -111,7 +111,7 @@ execute(__filename, async ({ logger, db, Sentry }) => {
 
   logger.info(`Generating CSV file...`);
 
-  let csvFile = path.join(__dirname, '../../../data/exports', `structures_open_data.csv`);
+  let csvFile = path.join(__dirname, '../../../data', `structures_open_data.csv`);
 
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'

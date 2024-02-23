@@ -22,6 +22,7 @@ const readCSV = async filePath => {
 };
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
+  const options = program.opts();
   const updateConseillerPG = async (email, disponible) => {
     try {
       const row = await pool.query(`
@@ -41,7 +42,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   let errors = 0;
 
   await new Promise(() => {
-    readCSV(program.csv).then(async candidats => {
+    readCSV(options.csv).then(async candidats => {
       await new Promise(async () => {
         for (const candidat of candidats) {
           try {

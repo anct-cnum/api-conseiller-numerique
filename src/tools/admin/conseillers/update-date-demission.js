@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 'use strict';
 require('dotenv').config();
-const cli = require('commander');
+const { program } = require('commander');
 const dayjs = require('dayjs');
 
 const { execute } = require('../../utils');
 
-cli.description('Modification date de démission pour un conseiller')
+program.description('Modification date de démission pour un conseiller')
 .option('-c, --conseiller <id>', 'id: id PG du conseiller')
 .option('-s, --structure <id>', 'id: id PG de la structure')
 .option('-d, --date <date>', 'date : entrer la date de démission du conseiller sous ce format AAAA-MM-DD')
@@ -21,15 +21,15 @@ const regexDateRupture = new RegExp(/^((202)[1-9])(-)(((0)[0-9])|((1)[0-2]))(-)(
 
 execute(__filename, async ({ db, logger, exit }) => {
 
-  const idConseiller = ~~cli.conseiller;
-  const idStructure = ~~cli.structure;
+  const idConseiller = ~~program.conseiller;
+  const idStructure = ~~program.structure;
 
-  if (idConseiller === 0 || idStructure === 0 || !regexDateRupture.test(cli.date)) {
+  if (idConseiller === 0 || idStructure === 0 || !regexDateRupture.test(program.date)) {
     exit(`Paramètres invalides : préciser l'id du conseiller, l'id de la structure et une date de démission valide`);
     return;
   }
 
-  const dateRupture = formatDate(cli.date);
+  const dateRupture = formatDate(program.date);
 
   await new Promise(async () => {
 
@@ -99,7 +99,7 @@ execute(__filename, async ({ db, logger, exit }) => {
       }
     );
 
-    logger.info(`Mise à jour de la date de rupture pour le conseiller id ${idConseiller} au ${cli.date} avec la structure ${idStructure}`);
+    logger.info(`Mise à jour de la date de rupture pour le conseiller id ${idConseiller} au ${program.date} avec la structure ${idStructure}`);
     exit();
   });
 });

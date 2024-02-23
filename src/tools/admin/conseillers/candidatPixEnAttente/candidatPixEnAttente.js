@@ -53,7 +53,7 @@ function diacriticSensitiveRegex(string = '') {
 
 execute(__filename, async ({ logger, db, emails, Sentry }) => {
 
-  let { delay = 1000 } = program;
+  let { delay = 1000 } = program.opts();
   let idCandidats = [];
   let j = 0;
   const pixUser = async pix => {
