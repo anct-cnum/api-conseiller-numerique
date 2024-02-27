@@ -251,6 +251,11 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
               return res.send({ adresseParSiret, existsPermanence });
             } catch (error) {
+              if (axios.isAxiosError(error)) {
+                const status = error.response.status;
+                const message = 'Une erreur est survenue lors de la recherche de l\'adresse par siret. Veuillez réessayer.';
+                return res.status(status).send({ message });
+              }
               logger.error(error);
               app.get('sentry').captureException(error);
               return res.send({ adresseParSiret });
