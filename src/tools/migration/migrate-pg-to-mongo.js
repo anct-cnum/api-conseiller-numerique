@@ -14,6 +14,7 @@ program.parse(process.argv);
 const pool = new Pool();
 
 execute(__filename, async ({ db, logger, Sentry }) => {
+  const optionsScript = program.opts();
   const moveStructure = async s => {
     const filter = { idPG: s.id };
 
@@ -149,7 +150,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           coordinator_type,
           wants_coordinators
         FROM djapp_hostorganization ORDER BY id ASC LIMIT $1`,
-      [program.limit]);
+      [optionsScript.limit]);
       return rows;
     } catch (error) {
       logger.error(`Erreur DB : ${error.message}`);
@@ -190,7 +191,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           unsubscribed,
           disponible
         FROM djapp_coach ORDER BY id ASC LIMIT $1`,
-      [program.limit]);
+      [optionsScript.limit]);
       return rows;
     } catch (error) {
       Sentry.captureException(error);

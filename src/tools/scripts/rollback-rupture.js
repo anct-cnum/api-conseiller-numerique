@@ -14,8 +14,7 @@ program.parse(process.argv);
 execute(__filename, async ({ db, logger }) => {
 
   await new Promise(async (resolve, reject) => {
-
-    const { idStructure, idConseiller, statut } = program;
+    const { idStructure, idConseiller, statut } = program.opts();
 
     if (~~idConseiller === 0) {
       logger.warn(`L'id conseiller n'est pas correct`);

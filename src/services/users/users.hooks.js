@@ -1,7 +1,7 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
 const checkPermissions = require('feathers-permissions');
 const { Forbidden } = require('@feathersjs/errors');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 
 const {
   hashPassword, protect
@@ -114,7 +114,7 @@ module.exports = {
 
 //Get User by Token
 function getUserBytoken(context) {
-  let userId = decode(context.params.authentication.accessToken).sub;
+  let userId = jwtDecode(context.params.authentication.accessToken).sub;
   const user = context.app.service('users').get(userId);
   return user;
 }

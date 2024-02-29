@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 
-const cli = require('commander');
 const { program } = require('commander');
 const { execute } = require('../../utils');
 
-cli.description('Correction des statistiques evolution des cras')
+program.description('Correction des statistiques evolution des cras')
 .option('-nbm, --nombremois <nombre de mois>', 'Nombre de mois max +1')
 .option('-a, --annee <année>', 'Année à selectionner')
 .helpOption('-e', 'HELP command')
@@ -20,7 +19,7 @@ const updateEvolutionCras = db => async (id, annee, data) => await db.collection
 
 execute(__filename, async ({ logger, db }) => {
 
-  const { annee, nombremois } = program;
+  const { annee, nombremois } = program.opts();
   const promises = [];
   let count = 0;
 

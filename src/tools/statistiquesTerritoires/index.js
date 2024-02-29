@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 'use strict';
 
-const cli = require('commander');
+const { program } = require('commander');
 const { execute } = require('../utils');
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 const utilsStructure = require('../../utils/index.js');
 const departements = require('../../../data/imports/departements-region.json');
 
-cli.description('Statistiques pour les territoires').parse(process.argv);
+program.description('Statistiques pour les territoires').parse(process.argv);
 
 execute(__filename, async ({ logger, db, Sentry }) => {
 

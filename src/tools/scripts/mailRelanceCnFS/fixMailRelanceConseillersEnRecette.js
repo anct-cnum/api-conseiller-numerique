@@ -5,9 +5,9 @@ require('dotenv').config();
 
 const { execute } = require('../../utils');
 const dayjs = require('dayjs');
-const cli = require('commander');
+const { program } = require('commander');
 
-cli.description('Fix conseillers en recette pour les relances M+1 et M+1,5')
+program.description('Fix conseillers en recette pour les relances M+1 et M+1,5')
 .option('--limit [limit]', 'limit le nombre de mise à jour réalisées (default: 1)', parseInt)
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
@@ -19,7 +19,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     exit('Vous devez être connecté à la base de données en recette ou en local pour lancer ce script');
     return;
   }
-  const { limit = 1 } = cli;
+  const { limit = 1 } = program.opts();
   await db.collection('conseillers').updateMany({
     'statut': { $eq: 'RECRUTE' },
     'estCoordinateur': { $ne: true },

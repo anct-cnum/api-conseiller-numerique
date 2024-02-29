@@ -6,7 +6,7 @@ const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs
 const { S3Client, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const dayjs = require('dayjs');
 const Joi = require('joi');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { Role } = require('../../common/utils/feathers.utils');
@@ -283,7 +283,7 @@ const checkFormulaire = body => {
 
 const checkRoleAdmin = async (db, req, res) => {
   return new Promise(async resolve => {
-    let userId = decode(req.feathers.authentication.accessToken).sub;
+    let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
     const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (user?.roles.filter(role => ['admin'].includes(role)).length < 1) {
       res.status(403).send(new Forbidden('User not authorized', {

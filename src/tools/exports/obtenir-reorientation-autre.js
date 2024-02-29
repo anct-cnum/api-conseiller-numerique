@@ -2,11 +2,11 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
-const cli = require('commander');
+const { program } = require('commander');
 const { lieuxReorientation } = require('../../../data/imports/LieuxRedirection.json');
 const { execute } = require('../utils');
 
-cli.description('Export reorientation autre')
+program.description('Export reorientation autre')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 

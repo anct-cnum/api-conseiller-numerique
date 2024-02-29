@@ -21,7 +21,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.option('-cm, --codeCommune <codeCommune>', 'codeCommune');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
-  const { correction, partie, analyse, permanence, ville, codePostal, codeCommune } = program;
+  const { correction, partie, analyse, permanence, ville, codePostal, codeCommune } = program.opts();
   if (!analyse && !['modif', 'sauvegarde'].includes(partie)) {
     exit(`Veuilez choisir la partie modif ou sauvegarde`);
     return;
@@ -39,7 +39,7 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   logger.info(`${idPermsInCrasSansCodeCommune.length} permanences qui sont associées à au moins 1 cras (qui n'ont pas de code Commune)`);
   logger.warn(`${idPermsInexistante} permanence(s) potentiellement supprimées !`);
-  
+
   if (partie) {
     const countCrasPermanence =
       await db.collection('cras').countDocuments({ 'permanence.$id': idPermanence, 'cra.nomCommune': ville, 'cra.codePostal': codePostal });

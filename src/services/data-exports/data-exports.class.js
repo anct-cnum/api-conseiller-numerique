@@ -4,7 +4,7 @@ const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 
 const utils = require('../../utils/index.js');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
 const {
   validateExportTerritoireSchema,
@@ -60,7 +60,7 @@ exports.DataExports = class DataExports {
         return;
       }
       //verify user role admin
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!adminUser?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -98,7 +98,7 @@ exports.DataExports = class DataExports {
         return;
       }
       //verify user role admin
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!adminUser?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -137,7 +137,7 @@ exports.DataExports = class DataExports {
         return;
       }
       //verify user role admin
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!adminUser?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -175,7 +175,7 @@ exports.DataExports = class DataExports {
         return;
       }
       //verify user role admin
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!adminUser?.roles.includes('admin') && !adminUser?.roles.includes('prefet')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -229,7 +229,7 @@ exports.DataExports = class DataExports {
         return;
       }
       //verify user role structure
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const structureUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!structureUser?.roles.includes('structure')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -274,7 +274,7 @@ exports.DataExports = class DataExports {
         return;
       }
       //verify user role admin
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!adminUser?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -331,7 +331,7 @@ exports.DataExports = class DataExports {
         return;
       }
       //verify user role prefet
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const prefetUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!prefetUser?.roles.includes('prefet')) {
         res.status(403).send(new Forbidden('User not authorized', {

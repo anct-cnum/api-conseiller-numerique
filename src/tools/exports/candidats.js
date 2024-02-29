@@ -5,12 +5,12 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
 const utils = require('../../utils/index.js');
-const cli = require('commander');
+const { program } = require('commander');
 const CSVToJSON = require('csvtojson');
 
 const { execute } = require('../utils');
 
-cli.description('Export candidats')
+program.description('Export candidats')
 .option('-n, --nom <NOM>', 'définir le nom')
 .option('-s, --siret <SIRET>', 'définir un SIRET')
 .option('-sl, --siretList <Nom de fichier>', 'Le nom du fichier qui contient la liste des SIRET')
@@ -19,9 +19,9 @@ cli.description('Export candidats')
 
 execute(__filename, async ({ logger, db, exit }) => {
   let parametre = { };
-  const siretList = cli.siretList;
-  const nom = cli.nom;
-  const siret = cli.siret;
+  const siretList = program.siretList;
+  const nom = program.nom;
+  const siret = program.siret;
   if ((siretList && nom) || (nom ^ siret)) {
     exit('Les paramètres nom, siret et siretList ne doivent pas être défini en même temps');
     return;

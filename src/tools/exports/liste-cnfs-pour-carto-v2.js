@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const path = require('path');
-const cli = require('commander');
+const { program } = require('commander');
 const fs = require('fs');
 const CSVToJSON = require('csvtojson');
 const { ObjectId } = require('mongodb');
@@ -61,7 +61,7 @@ function cleanPhoneNumber(number) {
   return `${cleaned.substring(0, 2)}${cleaned.substring(2, 4)}${cleaned.substring(4, 6)}${cleaned.substring(6, 8)}${cleaned.substring(8, 10)}`;
 }
 
-cli.description('Export liste CNFS pour carto txt')
+program.description('Export liste CNFS pour carto txt')
 .option('-c, --csv <path>', 'Chemin fichier CSV')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
@@ -107,6 +107,7 @@ const addressGroupSeparator = ' ';
 const addressPartSeparator = ', ';
 
 execute(__filename, async ({ logger, db }) => {
+  const options = program.opts();
   const getPermanencesByConseiller = async conseillerId => {
     return await db.collection('permanences').find({ 'conseillers': { '$in': [new ObjectId(conseillerId)] } }).toArray();
   };
@@ -193,7 +194,7 @@ execute(__filename, async ({ logger, db }) => {
   }
 
   // On commence ici
-  const structuresIds = await readCSV(cli.csv);
+  const structuresIds = await readCSV(options.csv);
   for (const structureId of structuresIds) {
     let structure = await db.collection('structures').findOne({ idPG: Number(structureId['ID SA']) });
 
