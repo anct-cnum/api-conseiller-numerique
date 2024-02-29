@@ -95,7 +95,7 @@ const validationPermanences = permanences => {
     // eslint-disable-next-line max-len
     typeAcces: Joi.array().items(Joi.string().trim().valid('libre', 'rdv', 'prive')).min(1).required().error(new Error('Au moins un type d\'accès doit obligatoirement être indiqué')),
     horaires: Joi.array().required().error(new Error('Les horaires sont invalides')),
-    emailPro: Joi.string().trim().allow('', null).pattern(regExpEmail).error(new Error('Une adresse email valide doit être saisie')),
+    emailPro: Joi.string().allow('', null).pattern(regExpEmail).error(new Error('Une adresse email valide doit être saisie')),
     telephonePro: Joi.string().allow('', null).pattern(regExpNumero).error(new Error('Un numéro de téléphone valide doit être saisi')),
     siret: Joi.string().trim().allow('', null).pattern(regExpSiret).min(14).max(14).error(new Error('Un siret valide de 14 chiffres doit être saisi')),
     email: Joi.string().trim().allow('', null).pattern(regExpEmail).error(new Error('Une adresse email valide doit être saisie')),
