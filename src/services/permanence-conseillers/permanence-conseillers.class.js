@@ -129,7 +129,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
         ...query
       };
       const conseillerId = req.params.id;
-      const { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
+      let { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
+      emailPro = emailPro?.trim();
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
@@ -175,8 +176,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
       };
       const conseillerId = req.params.id;
       const permanenceId = req.params.idPermanence;
-      const { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
-
+      let { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
+      emailPro = emailPro?.trim();
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(user._id, [Role.Conseiller], () => user)
