@@ -102,6 +102,7 @@ const searchSousThemes = db => async sousTheme => {
   const result = await db.collection('cras').aggregate([
     { $match: { 'cra.sousThemes': { '$elemMatch': { 'annotation': { '$in': [regex] } } } } },
     { $group: { '_id': '$cra.sousThemes' } },
+    { $limit: 30 },
     { $project: {
       '_id': 0,
       'sousThemes': { $map: {
@@ -109,8 +110,7 @@ const searchSousThemes = db => async sousTheme => {
         as: 'sousThemes',
         in: '$$sousThemes.annotation'
       } }
-    } },
-    { $limit: 30 }
+    } }
   ]).toArray();
 
   result.forEach(element => {
