@@ -109,7 +109,8 @@ const searchSousThemes = db => async sousTheme => {
         as: 'sousThemes',
         in: '$$sousThemes.annotation'
       } }
-    } }
+    } },
+    { $limit: 30 }
   ]).toArray();
 
   result.forEach(element => {
