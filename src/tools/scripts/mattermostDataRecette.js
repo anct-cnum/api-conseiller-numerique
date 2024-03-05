@@ -4,7 +4,7 @@
 const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
 const { execute } = require('../utils');
-const { createAccount, verifHomonymesLogin } = require('../../utils/mattermost');
+const { createAccount, fixHomonymesCreateMattermost } = require('../../utils/mattermost');
 
 // node src/tools/scripts/mattermostDataRecette.js
 
@@ -32,7 +32,7 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
     try {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-      const login = await verifHomonymesLogin(gandi, nom, prenom, db);
+      const login = await fixHomonymesCreateMattermost(nom, prenom, db);
       const email = `${login}@${gandi.domain}`;
       const password = `Mp:!;?.20#${uuidv4()}`;
       await createAccount({ mattermost, conseiller, email, login, nom, prenom, password, db, logger, Sentry });

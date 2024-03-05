@@ -555,16 +555,27 @@ const deleteAccountRuptureEchec = async (mattermostId, mattermost, conseiller, d
   }
 };
 
-const verifHomonymesLogin = async (nom, prenom, conseillerId, db) => {
+const fixHomonymesCreateMattermost = async (nom, prenom, db) => {
   let login = `${prenom}.${nom}`;
-  let conseillersHomonyme = await db.collection('conseillers').distinct('mattermost.login',
+  let conseillerNumber = await db.collection('conseillers').countDocuments(
     {
-      '_id': { $ne: conseillerId },
-      'mattermost.login': { $regex: new RegExp(login) },
+      'mattermost.login': login,
       'statut': 'RECRUTE'
     });
+  if (conseillerNumber > 0) {
+    let indexLoginConseiller = 1;
+    do {
+      login = `${prenom}.${nom}${indexLoginConseiller}`;
+      conseillerNumber = await db.collection('conseillers').countDocuments(
+        {
+          'mattermost.login': login,
+          'statut': 'RECRUTE'
+        });
+      indexLoginConseiller += 1;
+    } while (conseillerNumber !== 0);
+  }
 
-  return conseillersHomonyme.length >= 1 ? conseillersHomonyme[0] : login;
+  return login;
 };
 module.exports = {
   slugifyName,
@@ -589,5 +600,5 @@ module.exports = {
   deleteJoinTeam,
   getIdUserChannel,
   deleteAccountRuptureEchec,
-  verifHomonymesLogin
+  fixHomonymesCreateMattermost
 };
