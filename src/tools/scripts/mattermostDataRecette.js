@@ -4,7 +4,7 @@
 const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
 const { execute } = require('../utils');
-const { createAccount } = require('../../utils/mattermost');
+const { createAccount, verifHomonymesLogin } = require('../../utils/mattermost');
 
 // node src/tools/scripts/mattermostDataRecette.js
 
@@ -23,20 +23,20 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   const conseillers = await db.collection('conseillers').find({
     'statut': 'RECRUTE',
     'mattermost.id': { '$exists': true },
-    'fakerMattermost': null,
+    'createdMattermostRecette': { '$exists': false },
   }).toArray();
 
-  logger.info(`Il y a ${conseillers.length} conseiller(s) à traité.`);
+  logger.info(`Il y a ${conseillers.length} conseiller(s) à traiter.`);
 
   for (const conseiller of conseillers) {
     try {
       const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
       const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-      const login = `${prenom}.${nom}`;
+      const login = await verifHomonymesLogin(gandi, nom, prenom, db);
       const email = `${login}@${gandi.domain}`;
       const password = `Mp:!;?.20#${uuidv4()}`;
       await createAccount({ mattermost, conseiller, email, login, nom, prenom, password, db, logger, Sentry });
-      await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { fakerMattermost: false } });
+      await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { createdMattermostRecette: true } });
       await sleep(500);
     } catch (error) {
       logger.error(error);
