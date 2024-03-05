@@ -555,10 +555,11 @@ const deleteAccountRuptureEchec = async (mattermostId, mattermost, conseiller, d
   }
 };
 
-const fixHomonymesCreateMattermost = async (nom, prenom, db) => {
+const fixHomonymesCreateMattermost = async (nom, prenom, conseiller, db) => {
   let login = `${prenom}.${nom}`;
   let conseillerNumber = await db.collection('conseillers').countDocuments(
     {
+      '_id': { $ne: conseiller._id },
       'mattermost.login': login,
       'statut': 'RECRUTE'
     });
