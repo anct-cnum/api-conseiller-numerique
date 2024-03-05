@@ -24,7 +24,10 @@
   "authentication": {
     "secret": "AUTHENTICATION_SECRET",
     "jwtOptions": {
-      "audience": "AUTHENTICATION_JWTOPTIONS_AUDIENCE"
+      "audience": "AUTHENTICATION_JWTOPTIONS_AUDIENCE",
+      "issuer": "feathers",
+      "algorithm": "HS256",
+      "expiresIn": "1d"
     },
     "prefet": {
       "token": "PREFET_TOKEN"
