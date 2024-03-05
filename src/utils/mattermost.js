@@ -194,9 +194,9 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
         'Authorization': `Bearer ${token}`
       }
     });
-    logger.info(resultChannel);
+    // logger.info(resultChannel);
 
-    const resultJoinTeam = await axios({
+    await axios({
       method: 'post',
       url: `${mattermost.endPoint}/api/v4/teams/${mattermost.teamId}/members`,
       headers: {
@@ -208,14 +208,14 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
         'team_id': mattermost.teamId
       }
     });
-    logger.info(resultJoinTeam);
+    // logger.info(resultJoinTeam);
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const canaux = [resultChannel.data.id, mattermost.acceuilActuChannelId, mattermost.aideEspaceCoopChannelId,
       mattermost.aideMetierChannelId, mattermost.ressourcerieChannelId, mattermost.revuePresseChannelId];
     for (const canalId of canaux) {
       await sleep(500);
-      const resultJoinChannel = await axios({
+      await axios({
         method: 'post',
         url: `${mattermost.endPoint}/api/v4/channels/${canalId}/members`,
         headers: {
@@ -226,7 +226,7 @@ const createAccount = async ({ mattermost, conseiller, email, login, nom, prenom
           'user_id': resultCreation.data.id
         }
       });
-      logger.info(resultJoinChannel);
+      // logger.info(resultJoinChannel);
     }
     const regionName = findDepartement(structure.codeDepartement)?.region_name;
     let hub = await db.collection('hubs').findOne({ region_names: { $elemMatch: { $eq: regionName } } });
