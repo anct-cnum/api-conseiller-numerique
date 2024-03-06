@@ -9,9 +9,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.helpOption('-h', 'HELP command');
   program.parse(process.argv);
 
-  const collection = program.collection;
-  const id = ~~program.id;
-  const query = id ? { idPG: id } : {};
+  const { id, collection } = program.opts();
+  const query = id ? { idPG: ~~id } : {};
   let promises = [];
   let countTotal = 0;
   let countExistsMER = 0;
