@@ -52,7 +52,7 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
       reject();
       return;
     }
-    const { idStructure, idConseiller } = program;
+    const { idStructure, idConseiller } = program.opts();
 
     if ((~~idConseiller === 0) || (~~idStructure === 0)) {
       logger.warn(`L'id conseiller ou id structure n'est pas correct. (idStructure: ${~~idStructure}, ~~idConseiller: ${~~idConseiller}) `);

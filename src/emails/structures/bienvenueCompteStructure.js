@@ -23,7 +23,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         structure.name,
         {
-          subject: 'Bienvenue chez Conseiller Numérique France services',
+          subject: 'Bienvenue chez Conseiller Numérique',
           body: await render(structure),
         },
       )

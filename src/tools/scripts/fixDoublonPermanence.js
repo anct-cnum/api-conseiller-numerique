@@ -4,7 +4,6 @@
 require('dotenv').config();
 const path = require('path');
 const fs = require('fs');
-const cli = require('commander');
 const { program } = require('commander');
 const { execute } = require('../utils');
 
@@ -146,11 +145,12 @@ const changePermanenceIdCra = db => async (oldIds, newId) => await db.collection
   { '$set': { 'permanence.$id': newId } }
 );
 
-cli.description('Détecter et corriger les doublons de permanence')
+program.description('Détecter et corriger les doublons de permanence')
 .option('-f, --fix', 'Fusion des permanences et suppression des doublons')
 .parse(process.argv);
 
 execute(__filename, async ({ db, logger, exit }) => {
+  const options = program.opts();
   logger.info('Correction des permanences en doublon');
   const promises = [];
 
@@ -160,7 +160,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   await createCsvPermanences(permanencesDoublons);
   logger.info(`Fichier CSV déposé dans data/exports/permanences-doublons.csv`);
 
-  if (program.fix) {
+  if (options.fix) {
     permanencesDoublons.forEach(async permanencesDoublon => {
       promises.push(new Promise(async resolve => {
         await traitementDoublons(permanencesDoublon.permanences).then(async result => {

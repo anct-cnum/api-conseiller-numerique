@@ -40,7 +40,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         userHub.name,
         {
-          subject: 'Activer votre espace administrateur coop numériques France Services',
+          subject: 'Activer votre espace administrateur coop numériques',
           body: await render(userHub),
         },
       )

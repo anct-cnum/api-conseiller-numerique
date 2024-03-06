@@ -555,6 +555,29 @@ const deleteAccountRuptureEchec = async (mattermostId, mattermost, conseiller, d
   }
 };
 
+const fixHomonymesCreateMattermost = async (nom, prenom, conseiller, db) => {
+  let login = `${prenom}.${nom}`;
+  let conseillerNumber = await db.collection('conseillers').countDocuments(
+    {
+      '_id': { $ne: conseiller._id },
+      'mattermost.login': login,
+      'statut': 'RECRUTE'
+    });
+  if (conseillerNumber > 0) {
+    let indexLoginConseiller = 1;
+    do {
+      login = `${prenom}.${nom}${indexLoginConseiller}`;
+      conseillerNumber = await db.collection('conseillers').countDocuments(
+        {
+          'mattermost.login': login,
+          'statut': 'RECRUTE'
+        });
+      indexLoginConseiller += 1;
+    } while (conseillerNumber !== 0);
+  }
+
+  return login;
+};
 module.exports = {
   slugifyName,
   loginAPI,
@@ -577,5 +600,6 @@ module.exports = {
   deleteMemberChannel,
   deleteJoinTeam,
   getIdUserChannel,
-  deleteAccountRuptureEchec
+  deleteAccountRuptureEchec,
+  fixHomonymesCreateMattermost
 };

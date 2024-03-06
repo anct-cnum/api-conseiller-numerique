@@ -15,14 +15,14 @@ program.parse(process.argv);
 
 execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry }) => {
   let roles = ['conseiller', 'candidat'];
-  const { role, delayReset = 2000, log } = program;
+  const { role, delayReset = 2000, log } = program.opts();
   if (role) {
-    if (!roles.includes(program.role)) {
+    if (!roles.includes(role)) {
       logger.error('Le rôle doit être conseiller ou candidat');
       exit();
       return;
     }
-    roles = [program.role];
+    roles = [role];
   }
   if (log) {
     logger.info('Création d\'un fichier de log pour les erreurs de réinitialisation de mot de passe...');

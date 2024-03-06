@@ -9,7 +9,7 @@ const { createAccount, updateAccountPassword } = require('../../utils/mattermost
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 const { misesAJourPg, misesAJourMongo, historisationMongo,
   getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
 const { v4: uuidv4 } = require('uuid');
@@ -284,6 +284,7 @@ exports.Users = class Users extends Service {
         //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
         const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
         users.data[0].persoEmail = conseiller.email;
+        // eslint-disable-next-line camelcase
         res.send({ roles, name, persoEmail, nom, prenom, support_cnfs });
       } else {
         res.send({ roles, name });
@@ -295,7 +296,7 @@ exports.Users = class Users extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await this.find({
         query: {
           _id: new ObjectID(userId),
@@ -592,7 +593,7 @@ exports.Users = class Users extends Service {
       let hiddenEmail = '';
       if (user.roles.includes('conseiller') && user.passwordCreated === false) {
         // eslint-disable-next-line max-len
-        res.status(409).send(new Conflict(`Vous n'avez pas encore activé votre compte. Pour cela, cliquez sur le lien d'activation fourni dans le mail ayant pour objet "Activer votre compte Coop des Conseillers numériques France Services"`, {
+        res.status(409).send(new Conflict(`Vous n'avez pas encore activé votre compte. Pour cela, cliquez sur le lien d'activation fourni dans le mail ayant pour objet "Activer votre compte Coop des Conseillers numériques"`, {
           username
         }).toJSON());
         return;

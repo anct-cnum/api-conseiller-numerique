@@ -30,7 +30,6 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment');
 const departements = require('../../../../data/imports/departements-region.json');
-const cli = require('commander');
 
 const getConseillersByEmail = async db => await db.collection('conseillers').aggregate(
   [
@@ -794,17 +793,18 @@ const getConseillersWithEmail = async (db, conseillerEmail) => {
   return program.email !== undefined ? allConseillersByEmail.filter(conseillerByEmail => conseillerByEmail._id === conseillerEmail) : allConseillersByEmail;
 };
 
-cli.description('Détecte des problèmes en base qui concernent la cohérence entre un conseiller et ses doublons, ainsi que les mises en relations et les users associés')
+program.description('Détecte des problèmes en base qui concernent la cohérence entre un conseiller et ses doublons, ainsi que les mises en relations et les users associés')
 .option('-em, --email <email>', 'Adresse email du conseiller à analyser ou corriger, tous les conseillers recrutés seront pris en compte si ce paramètre n\'est pas défini')
 .option('-f, --fix', 'Correction automatique des problèmes détectés quand cela est possible')
 .helpOption('-e', 'Commande d\'aide')
 .parse(process.argv);
 
 execute(__filename, async ({ db, logger, exit }) => {
-  const conseillersByEmail = await getConseillersWithEmail(db, program.email);
+  const options = program.opts();
+  const conseillersByEmail = await getConseillersWithEmail(db, options.email);
 
-  if (program.email !== undefined && conseillersByEmail.length === 0) {
-    logger.warn(`Aucun conseiller avec l'email ${program.email} n'a été trouvé.`);
+  if (options.email !== undefined && conseillersByEmail.length === 0) {
+    logger.warn(`Aucun conseiller avec l'email ${options.email} n'a été trouvé.`);
     exit();
     return;
   }
@@ -854,7 +854,7 @@ execute(__filename, async ({ db, logger, exit }) => {
 
   const conseillersRecruteWithDuplicatesPropertiesInspectionResult = inspectConseillersRecruteProperties(recruteStatutWithDuplicates);
 
-  if (program.fix) {
+  if (options.fix) {
     const conseillersToReimport = await fix(
       db,
       usersAssociatedWithConseillersWithoutDuplicatesInspectionResult,

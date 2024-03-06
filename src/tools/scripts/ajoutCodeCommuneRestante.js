@@ -14,7 +14,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.option('-i, --ignored', 'ignored: ignorer la partie de verification incoherence');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
-  const { correction, log, analyse, comparatif, ignored } = program;
+  const { correction, log, analyse, comparatif, ignored } = program.opts();
   let countError = 0;
   let countIncoherence = 0;
   let countPermsExists = 0;

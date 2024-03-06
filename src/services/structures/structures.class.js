@@ -8,7 +8,7 @@ const Joi = require('joi');
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
-const decode = require('jwt-decode');
+const { jwtDecode } = require('jwt-decode');
 const { Pool } = require('pg');
 const utils = require('../../utils/index.js');
 const { v4: uuidv4 } = require('uuid');
@@ -33,7 +33,7 @@ exports.Structures = class Structures extends Service {
         return;
       }
       //verify user role structure
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const structureUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (!structureUser?.roles.includes('structure')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -86,7 +86,7 @@ exports.Structures = class Structures extends Service {
         return;
       }
       //verify user role
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       let rolesUserAllowed = user?.roles.filter(role => ['admin', 'structure', 'prefet'].includes(role));
       if (rolesUserAllowed.length < 1) {
@@ -146,7 +146,7 @@ exports.Structures = class Structures extends Service {
         return;
       }
       //verify user role
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       let rolesUserAllowed = user?.roles.filter(role => ['admin', 'structure', 'prefet'].includes(role));
       if (rolesUserAllowed.length < 1) {
@@ -225,7 +225,7 @@ exports.Structures = class Structures extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      let adminId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -291,7 +291,7 @@ exports.Structures = class Structures extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      let adminId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -317,7 +317,7 @@ exports.Structures = class Structures extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      let adminId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -438,7 +438,7 @@ exports.Structures = class Structures extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-      let adminId = decode(req.feathers.authentication.accessToken).sub;
+      let adminId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -490,7 +490,7 @@ exports.Structures = class Structures extends Service {
         return;
       }
       //verify user role
-      let userId = decode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
       if (user?.roles.filter(role => ['prefet'].includes(role)).length < 1) {
         res.status(403).send(new Forbidden('User not authorized', {

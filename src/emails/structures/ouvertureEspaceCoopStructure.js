@@ -20,7 +20,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         structure.contact.email,
         {
-          subject: 'Ouverture du portail de la communauté des Conseillers numériques France Services, l’Espace Coop.',
+          subject: 'Ouverture du portail de la communauté des Conseillers numériques, l’Espace Coop.',
           body: await render(),
         },
       )

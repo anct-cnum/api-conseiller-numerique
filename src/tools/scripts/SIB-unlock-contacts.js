@@ -22,12 +22,13 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const { execute } = require('../utils');
 
 execute(__filename, async ({ logger, app }) => {
+  const options = program.opts();
   const defaultClient = SibApiV3Sdk.ApiClient.instance;
   let apiKey = defaultClient.authentications['api-key'];
   apiKey.apiKey = app.get('sib_api_key');
   const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
   await new Promise(() => {
-    readCSV(program.csv).then(async emails => {
+    readCSV(options.csv).then(async emails => {
 
       // Conservation des emails sans doublon
       let emailsList = emails.map(email => email.Contact);

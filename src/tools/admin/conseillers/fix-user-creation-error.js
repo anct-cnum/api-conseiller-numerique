@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 'use strict';
 require('dotenv').config();
-const cli = require('commander');
+const { program } = require('commander');
 const { execute } = require('../../utils');
 
-cli.description('Suppression de la clé userCreationError pour un conseiller ou tous les conseillers recrutés')
+program.description('Suppression de la clé userCreationError pour un conseiller ou tous les conseillers recrutés')
 .option('-c, --conseiller <id>', 'id: id du conseiller')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
 
 execute(__filename, async ({ db, logger, exit }) => {
-
-  const idConseiller = cli.conseiller;
+  const options = program.opts();
+  const idConseiller = options.conseiller;
   await new Promise(async () => {
     if (idConseiller) {
       const conseiller = await db.collection('conseillers').findOne({

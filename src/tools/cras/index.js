@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-const cli = require('commander');
+const { program } = require('commander');
 const { execute } = require('../utils');
 const moment = require('moment');
 
 const { insertDailyCrasStatsByConseiller } = require('./tasks/dailyCrasByConseiller');
 
-cli.description('Statistiques pour les cras journaliers')
+program.description('Statistiques pour les cras journaliers')
 .option('-m, --month <mois>', 'Recalcul pour le nb de cras mensuel des conseillers avec debut mois au format 2021-06-01')
 .helpOption('-e', 'HELP command')
 .parse(process.argv);
@@ -21,13 +21,13 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   dateFin.setDate(dateFin.getDate() - 1);
   dateFin.setUTCHours(23, 59, 59, 59);
 
-  if (cli.month) {
-    if (isNaN(new Date(cli.month))) {
+  if (program.month) {
+    if (isNaN(new Date(program.month))) {
       logger.error('Paramètre month invalide');
       return;
     } else {
-      logger.info('Recalcul des stats du mois des conseillers pour le mois ' + moment(new Date(cli.month)).format('MM'));
-      let monthCustom = new Date(cli.month);
+      logger.info('Recalcul des stats du mois des conseillers pour le mois ' + moment(new Date(program.month)).format('MM'));
+      let monthCustom = new Date(program.month);
       dateDebut = new Date(monthCustom);
       let lastDayOfMonth = new Date(dateDebut.getUTCFullYear(), dateDebut.getUTCMonth() + 1, 0).getDate();
       dateFin = new Date(monthCustom);

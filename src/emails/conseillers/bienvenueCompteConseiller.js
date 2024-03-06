@@ -24,7 +24,7 @@ module.exports = (db, mailer) => {
       return mailer.createMailer().sendEmail(
         user.name,
         {
-          subject: 'Première connexion à la Coop des Conseillers numériques France Services',
+          subject: 'Première connexion à la Coop des Conseillers numériques',
           body: await render(user, conseiller),
         },
       )
