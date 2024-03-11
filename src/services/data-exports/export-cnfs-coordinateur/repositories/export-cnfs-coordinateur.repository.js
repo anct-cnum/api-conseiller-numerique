@@ -27,7 +27,7 @@ function filterByTypeCoordinateur(coordinateur) {
       typeCoordo = '_id';
   }
 
-  return { [typeCoordo]: { '$in': coordinateur?.listeSubordonnes?.liste } };
+  return { [typeCoordo]: { '$in': coordinateur?.listeSubordonnes?.liste ?? [] } };
 }
 
 const getStructureNameFromId = db => async id => {
