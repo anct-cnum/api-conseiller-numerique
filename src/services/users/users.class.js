@@ -41,7 +41,8 @@ exports.Users = class Users extends Service {
           telephone: Joi.string().required().regex(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
           // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
-          email: Joi.string().email().error(new Error('Le format de l\'email est invalide')),
+          // eslint-disable-next-line max-len
+          email: Joi.string().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
         });
         const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
         let extended = '';
