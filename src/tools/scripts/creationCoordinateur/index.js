@@ -81,12 +81,12 @@ program.parse(process.argv);
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
   let promises = [];
-
+  const { csv } = program.opts();
   logger.info('Début d\'import du fichier coordo');
   let coordoAnonyme = await anonymeCoordinateur(db);
   coordoAnonyme = coordoAnonyme.map(i => String(i));
   await new Promise(resolve => {
-    readCSV(program.csv).then(async ressources => {
+    readCSV(csv).then(async ressources => {
 
       let ok = 0;
       let error = 0;
@@ -112,7 +112,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               id: conum?.entity?.oid, nom: conum?.nom, prenom: conum?.prenom,
               nonAffichageCarto: coordoAnonyme.includes(String(idCoordinateur))
             };
-            if (mailleRegional.length > 0) {
+            if (mailleRegional?.length > 0) {
               listMaille = mailleRegional.split('/');
               await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeRegion');
               await updateSubordonnes(db)(coordinateur, listMaille, 'codeRegion');
