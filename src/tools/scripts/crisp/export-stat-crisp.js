@@ -8,8 +8,8 @@ const { program } = require('commander');
 
 const { execute } = require('../../utils');
 
-// node src/tools/scripts/crisp/export-stat-crisp.js -p 15 --type notResolved
-// node src/tools/scripts/crisp/export-stat-crisp.js -p 2 --type mensuelle -m 06 -a 2023
+// node src/tools/scripts/crisp/export-stat-crisp.js -p 50 --type notResolved
+// node src/tools/scripts/crisp/export-stat-crisp.js -p 60 --type mensuelle -m 03 -a 2024
 
 execute(__filename, async ({ logger, app, exit }) => {
   program.option('-p, --page <page>', 'page: numero de page max');
@@ -18,10 +18,7 @@ execute(__filename, async ({ logger, app, exit }) => {
   program.option('-a, --annee <annee>', 'annee: annee');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
-  const page = ~~program.page;
-  const type = program.type;
-  const mois = program.mois;
-  const annee = program.annee;
+  const { annee, mois, type, page } = program.opts();
   const crisp = app.get('crisp');
   let promises = [];
   let datas = [];
@@ -33,7 +30,7 @@ execute(__filename, async ({ logger, app, exit }) => {
     exit('Préciser le numéro de mois souhaité');
     return;
   }
-  if (page === 0) {
+  if (~~page === 0) {
     exit('Il faut préciser le nombre de page à parcourir');
     return;
   }
@@ -61,7 +58,7 @@ execute(__filename, async ({ logger, app, exit }) => {
     return;
   }
 
-  for (let i = 1; i <= page; i++) {
+  for (let i = 1; i <= ~~page; i++) {
     // eslint-disable-next-line max-len
     const stat = type === 'mensuelle' ? `?filter_date_start=${annee}-${filterMois.mois}-01T00:00:00.000Z&filter_date_end=${annee}-${filterMois.mois}-${filterMois.fin}T23:59:59.059Z` : `?filter_not_resolved=1`;
     const config = {

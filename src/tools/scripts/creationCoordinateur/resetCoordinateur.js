@@ -14,7 +14,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { id, reset } = program;
+  const { id, reset } = program.opts();
   const conseiller = await db.collection('conseillers').findOne({ idPG: ~~id });
   if (!conseiller) {
     logger.error(`Le conseiller ${~~id} n'existe pas`);
