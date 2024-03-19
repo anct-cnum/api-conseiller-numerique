@@ -906,7 +906,7 @@ exports.Conseillers = class Conseillers extends Service {
             return;
           }
         }
-        if (emailPro?.toLowerCase() !== conseiller?.emailPro) {
+        if (emailPro && emailPro?.toLowerCase() !== conseiller?.emailPro) {
           const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro.toLowerCase() });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
