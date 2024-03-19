@@ -824,9 +824,9 @@ exports.Conseillers = class Conseillers extends Service {
         const maxDate = dayjs().subtract(18, 'year');
         const schema = Joi.object({
           // eslint-disable-next-line max-len
-          email: Joi.string().trim().required().regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
+          email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
           // eslint-disable-next-line max-len
-          emailPro: Joi.string().trim().optional().allow('', null).regex(/^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email professionnellle est invalide')),
+          emailPro: Joi.string().trim().optional().allow('', null).regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email professionnellle est invalide')),
           // eslint-disable-next-line max-len
           telephonePro: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
           sexe: Joi.string().valid('Homme', 'Femme', 'Autre').required().error(new Error('Le champ sexe est invalide')),
