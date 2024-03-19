@@ -808,7 +808,13 @@ exports.Conseillers = class Conseillers extends Service {
         let initModifMailProConseiller = false;
         let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
         const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
-        const idConseiller = req.params.id;
+        let idConseiller = req.params.id;
+
+        if (!ObjectId.isValid(idConseiller)) {
+          res.status(400).json(new BadRequest('Erreur: l\'identifiant reçu est invalide. Veuillez vous reconnecter.'));
+          return;
+        }
+        
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
         const minDate = dayjs().subtract(99, 'year');
         const maxDate = dayjs().subtract(18, 'year');
