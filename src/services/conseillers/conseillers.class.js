@@ -246,11 +246,13 @@ exports.Conseillers = class Conseillers extends Service {
             app.get('sentry').captureException(error);
             logger.error(error);
             res.status(500).send(new GeneralError('La suppression du CV dans MongoDb a échoué').toJSON());
+            return;
           }
         }).catch(error => {
           logger.error(error);
           app.get('sentry').captureException(error);
           res.status(500).send(new GeneralError('La suppression du CV du dépôt a échoué, veuillez réessayer plus tard.').toJSON());
+          return;
         });
       }
       try {
@@ -279,11 +281,13 @@ exports.Conseillers = class Conseillers extends Service {
           app.get('sentry').captureException(error);
           logger.error(error);
           res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
+          return;
         });
       } catch (error) {
         logger.error(error);
         app.get('sentry').captureException(error);
         res.status(500).send(new GeneralError('Le dépôt du cv a échoué, veuillez réessayer plus tard.').toJSON());
+        return;
       }
       res.send({ isUploaded: true });
     });
@@ -808,7 +812,13 @@ exports.Conseillers = class Conseillers extends Service {
         let initModifMailProConseiller = false;
         let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
         const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
-        const idConseiller = req.params.id;
+        let idConseiller = req.params.id;
+
+        if (!ObjectId.isValid(idConseiller)) {
+          res.status(400).json(new BadRequest('Erreur: l\'identifiant reçu est invalide. Veuillez vous reconnecter.'));
+          return;
+        }
+
         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
         const minDate = dayjs().subtract(99, 'year');
         const maxDate = dayjs().subtract(18, 'year');
@@ -906,7 +916,7 @@ exports.Conseillers = class Conseillers extends Service {
             return;
           }
         }
-        if (emailPro?.toLowerCase() !== conseiller?.emailPro) {
+        if (emailPro && emailPro?.toLowerCase() !== conseiller?.emailPro) {
           const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro.toLowerCase() });
           if (verificationEmail !== 0) {
             logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
@@ -942,7 +952,7 @@ exports.Conseillers = class Conseillers extends Service {
             return;
           }
         }
-        res.send({
+        return res.send({
           'conseiller': changeInfos,
           initModifMailPersoConseiller,
           initModifMailProConseiller
