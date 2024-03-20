@@ -383,10 +383,10 @@ execute(__filename, async ({ logger, db, exit }) => {
     try {
       if (pin?.properties?.address && pin?.properties?.addressParts) {
         fileTxt.write(
-          `${pin?.properties?.addressParts?.ville && pin?.properties?.addressParts?.ville.toUpperCase() !== villePrecedente ?
+          `${pin?.properties?.addressParts?.ville && pin?.properties?.addressParts?.ville.toUpperCase() !== villePrecedente.toUpperCase() ?
             '.\n\n' + pin?.properties?.addressParts?.ville.toUpperCase() :
             ''
-          }${pin?.properties.name !== saPrecedente ?
+          }${pin?.properties.name !== saPrecedente || pin?.properties?.addressParts?.ville.toUpperCase() !== villePrecedente.toUpperCase() ?
             // eslint-disable-next-line max-len
             ' • ' + pin?.properties?.name.fixSpaces().removeSpacesParentheses().toUpperCase() + ', ' + pin?.properties?.address.fixSpaces().removeSpacesParentheses() + (pin?.properties?.telephone && pin?.properties?.telephone !== '' ? ' – ' : '') + pin?.properties?.telephone :
             ''
