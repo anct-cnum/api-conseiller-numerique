@@ -36,6 +36,9 @@ module.exports = {
       db.collection('structures').createIndex({ 'conventionnement.statut': 1 }),
       db.collection('structures').createIndex({ 'conventionnement.dossierReconventionnement.dateDeValidation': 1 }),
       db.collection('structures').createIndex({ 'conventionnement.dossierConventionnement.dateDeValidation': 1 }),
+      db.collection('structures').createIndex({ 'coselecAt': 1 }),
+      db.collection('structures').createIndex({ 'historique.date': 1 }),
+      db.collection('structures').createIndex({ 'historique.changement': 1 }),
     ]);
   },
   misesEnRelation: db => {
