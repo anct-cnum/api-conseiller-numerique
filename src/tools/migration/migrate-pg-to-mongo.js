@@ -74,7 +74,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
       $set: {
         prenom: c.first_name,
         nom: c.last_name,
-        email: c.email.toLowerCase(),
+        email: c.email.toLowerCase().trim(),
         telephone: c.phone,
         distanceMax: c.max_distance,
         disponible: c.disponible,
