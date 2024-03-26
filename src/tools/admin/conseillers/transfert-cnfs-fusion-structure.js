@@ -283,7 +283,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { id, ancienne, nouvelle } = program.opts();
+  const { id, ancienne, nouvelle, ignored } = program.opts();
 
   let idCNFS = id;
   let idAncienneSA = ancienne;
