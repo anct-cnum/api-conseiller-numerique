@@ -14,7 +14,7 @@ const Role = {
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
 
-const userIdFromRequestJwt = req => jwtDecode(req.feathers.authentication.accessToken).sub;
+const userIdFromRequestJwt = req => jwtDecode(req.feathers.authentication?.accessToken)?.sub;
 
 const idSubordonne = req => req.query?.idSubordonne === 'null' ? null : req.query?.idSubordonne;
 
