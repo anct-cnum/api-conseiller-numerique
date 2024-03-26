@@ -69,7 +69,7 @@ const patchApiMattermostLogin = ({ Sentry, logger, db, mattermost }) => ({ conse
 
 const validationEmailPrefet = Joi => async email => {
   const schema = await Joi.object({
-    email: Joi.string().required().email().error(new Error('Le format de l\'email est invalide')),
+    email: Joi.string().trim().required().email().error(new Error('Le format de l\'email est invalide')),
   }).validate({ email });
   return schema;
 };
