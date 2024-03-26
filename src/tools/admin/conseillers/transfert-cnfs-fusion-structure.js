@@ -3,7 +3,7 @@
 require('dotenv').config();
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { DBRef, ObjectID } = require('mongodb');
+const { DBRef, ObjectId } = require('mongodb');
 const utils = require('../../../utils/index');
 
 const createMiseEnRelationReconventionnement = db => async (
@@ -283,19 +283,20 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let idCNFS = program.id;
-  let idAncienneSA = program.ancienne;
-  let idNouvelleSA = program.nouvelle;
-  let ignored = program.ignored;
+  const { id, ancienne, nouvelle } = program.opts();
+
+  let idCNFS = id;
+  let idAncienneSA = ancienne;
+  let idNouvelleSA = nouvelle;
 
   if (!idCNFS || !idAncienneSA || !idNouvelleSA) {
     exit('Paramètres invalides. Veuillez préciser un id conseiller / id ancienne structure & id nouvelle structure');
     return;
   }
 
-  idCNFS = new ObjectID(program.id);
-  idAncienneSA = new ObjectID(program.ancienne);
-  idNouvelleSA = new ObjectID(program.nouvelle);
+  idCNFS = new ObjectId(idCNFS);
+  idAncienneSA = new ObjectId(ancienne);
+  idNouvelleSA = new ObjectId(nouvelle);
   const connection = app.get('mongodb');
   const database = connection.substr(connection.lastIndexOf('/') + 1);
 

@@ -232,7 +232,7 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { id, ancienne, nouvelle, rupture, dateDebutContrat, dateFinContrat, typeContrat, salaireContrat, motif, quota } = program;
+  const { id, ancienne, nouvelle, rupture, dateDebutContrat, dateFinContrat, typeContrat, salaireContrat, motif, quota } = program.opts();
   if (!id || !ancienne || !nouvelle || !rupture || !dateDebutContrat || !typeContrat || !dateFinContrat || !motif) {
     exit('Paramètres invalides. Veuillez entrer les 8 paramètres requis');
     return;
