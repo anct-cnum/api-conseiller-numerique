@@ -13,11 +13,9 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let id = ~~program.id;
-  let email = program.email;
-  let type = program.type;
-  let user = program.user;
-  let echange = program.echange ?? false;
+  let { id, email, type, user, echange } = program.opts();
+  id = ~~id;
+  echange = echange ?? false;
 
   if (id === 0 || !email) {
     exit('Paramètres invalides. Veuillez préciser un id et le nouveau email à changer');

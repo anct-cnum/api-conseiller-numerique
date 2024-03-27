@@ -32,6 +32,7 @@ exports.Users = class Users extends Service {
         const nouveauEmail = req.body.email.toLowerCase();
         let { nom, prenom, telephone, dateDisponibilite, email } = req.body;
         telephone = telephone.trim();
+        email = email.trim();
         const mongoDateDisponibilite = new Date(dateDisponibilite);
         const body = { nom, prenom, telephone, dateDisponibilite, email };
         const schema = Joi.object({
@@ -42,7 +43,7 @@ exports.Users = class Users extends Service {
           // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
           // eslint-disable-next-line max-len
-          email: Joi.string().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
+          email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
         });
         const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
         let extended = '';
@@ -385,7 +386,7 @@ exports.Users = class Users extends Service {
       const email = req.body.email;
       const structureId = req.body.structureId;
       const schema = Joi.object({
-        email: Joi.string().email().required().error(new Error('Le format de l\'email est invalide')),
+        email: Joi.string().trim().email().required().error(new Error('Le format de l\'email est invalide')),
         structureId: Joi.string().required().error(new Error('Id de la structure est invalide')),
       }).validate(req.body);
       if (schema.error) {
@@ -788,7 +789,7 @@ exports.Users = class Users extends Service {
       const { code, email } = req.body;
       const schema = Joi.object({
         code: Joi.string().required().error(new Error('Le format du code de vérification est invalide')),
-        email: Joi.string().email().required().error(new Error('Le format de l\'adresse email est invalide')),
+        email: Joi.string().trim().email().required().error(new Error('Le format de l\'adresse email est invalide')),
       }).validate(req.body);
       if (schema.error) {
         res.status(400).json(new BadRequest(schema.error));
