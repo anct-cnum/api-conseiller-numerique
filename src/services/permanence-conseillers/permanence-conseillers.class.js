@@ -77,21 +77,9 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.get('/permanences/conseiller/:id', async (req, res) => {
 
-      let db;
-      let user;
-      let conseillerId;
-
-      try {
-        db = await app.get('mongoClient');
-        const userId = userIdFromRequestJwt(req);
-        if (!userId) {
-          throw new Error('Erreur lors de la récupération de la session utilisateur.');
-        }
-        user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
-        conseillerId = req.params.id;
-      } catch (e) {
-        res.status(401).send('Accès refusé');
-      }
+      const db = await app.get('mongoClient');
+      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const conseillerId = req.params.id;
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
