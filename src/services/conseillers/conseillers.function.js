@@ -283,7 +283,7 @@ const checkFormulaire = body => {
 
 const checkRoleAdmin = async (db, req, res) => {
   return new Promise(async resolve => {
-    let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
+    let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
     const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (user?.roles.filter(role => ['admin'].includes(role)).length < 1) {
       res.status(403).send(new Forbidden('User not authorized', {
