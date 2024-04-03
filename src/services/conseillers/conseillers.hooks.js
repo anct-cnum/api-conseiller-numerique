@@ -88,10 +88,10 @@ module.exports = {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
         const user = context.params?.user;
-        const userId = user.entity.oid.toString();
+        const userId = user.entity?.oid?.toString();
         //Restreindre les permissions : les conseillers (non coordinateur) et candidats ne peuvent voir que les informations les concernant
-        if ((user?.roles.includes('conseiller') && !user?.roles.includes('coordinateur_coop')) ||
-          user?.roles.includes('candidat')) {
+        if ((user?.roles?.includes('conseiller') && !user?.roles?.includes('coordinateur_coop')) ||
+          user?.roles?.includes('candidat')) {
           if (context.id.toString() !== userId) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
