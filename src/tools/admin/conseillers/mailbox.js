@@ -19,9 +19,9 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const password = program.password;
-  const operation = program.operation;
-  const id = program.id;
+  const password = program.opts().password;
+  const operation = program.opts().operation;
+  const id = program.opts().id;
 
   if (!password || !operation || !id) {
     exit('Paramètres invalides');
@@ -57,7 +57,7 @@ execute(__filename, async ({ logger, exit, app, db, Sentry }) => {
         url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${conseiller.emailCN.id}`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Apikey ${gandi.token}`
+          'Authorization': `Bearer ${gandi.token}`
         },
         data: { 'login': login, 'password': password, 'aliases': [] }
       });

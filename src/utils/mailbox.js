@@ -7,7 +7,7 @@ const createMailbox = ({ gandi, db, logger, Sentry }) => async ({ conseillerId, 
       url: `${gandi.endPoint}/mailboxes/${gandi.domain}`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Apikey ${gandi.token}`
+        'Authorization': `Bearer ${gandi.token}`
       },
       data: { 'login': login, 'mailbox_type': gandi.type, 'password': password, 'aliases': [] }
     });
@@ -49,7 +49,7 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
       method: 'get',
       url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
       headers: {
-        'Authorization': `Apikey ${gandi.token}`
+        'Authorization': `Bearer ${gandi.token}`
       }
     });
 
@@ -60,7 +60,7 @@ const updateMailboxPassword = async (gandi, conseillerId, login, password, db, l
         url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Apikey ${gandi.token}`
+          'Authorization': `Bearer ${gandi.token}`
         },
         data: { 'password': password }
       });
@@ -108,7 +108,7 @@ const deleteMailbox = (gandi, db, logger, Sentry) => async (conseillerId, login)
       method: 'get',
       url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
       headers: {
-        'Authorization': `Apikey ${gandi.token}`
+        'Authorization': `Bearer ${gandi.token}`
       }
     });
 
@@ -119,7 +119,7 @@ const deleteMailbox = (gandi, db, logger, Sentry) => async (conseillerId, login)
         url: `${gandi.endPoint}/mailboxes/${gandi.domain}/${mailbox.data[0].id}`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Apikey ${gandi.token}`
+          'Authorization': `Bearer ${gandi.token}`
         }
       });
       logger.info(resultDeleteMailbox);
@@ -156,7 +156,7 @@ const getMailBox = async ({ gandi, login }) => {
     method: 'get',
     url: `${gandi.endPoint}/mailboxes/${gandi.domain}?login=${login}`,
     headers: {
-      'Authorization': `Apikey ${gandi.token}`
+      'Authorization': `Bearer ${gandi.token}`
     }
   });
 };
