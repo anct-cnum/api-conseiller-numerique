@@ -23,7 +23,7 @@ execute(__filename, async ({ feathers, db, logger, emails, Sentry }) => {
   let promises = [];
 
   await new Promise(resolve => {
-    readCSV(program.csv).then(async hubUsers => {
+    readCSV(program.opts().csv).then(async hubUsers => {
 
       const total = hubUsers.length;
       let count = 0;
