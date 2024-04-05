@@ -812,7 +812,7 @@ exports.Conseillers = class Conseillers extends Service {
         let initModifMailProConseiller = false;
         let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
         email = email.trim();
-        emailPro = emailPro.trim();
+        emailPro = emailPro?.trim();
         const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
         let idConseiller = req.params.id;
 
