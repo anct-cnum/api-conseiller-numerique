@@ -56,7 +56,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.get('/permanences/:id', async (req, res) => {
 
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const permanenceId = req.params.id;
 
       canActivate(
@@ -78,7 +79,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.get('/permanences/conseiller/:id', async (req, res) => {
 
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const conseillerId = req.params.id;
 
       canActivate(
@@ -100,7 +102,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.get('/permanences/structure/:id', async (req, res) => {
 
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const structureId = req.params.id;
 
       canActivate(
@@ -124,7 +127,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       let permanence = {
         ...query
       };
@@ -170,7 +174,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
       const connection = app.get('mongodb');
       const database = connection.substr(connection.lastIndexOf('/') + 1);
       const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       let permanence = {
         ...query
       };
@@ -211,7 +216,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.get('/permanences/verifySiret/:siret', async (req, res) => {
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -276,7 +282,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.get('/permanences/verifyAdresse/:adresse', async (req, res) => {
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const adresse = JSON.parse(req.params.adresse);
 
       canActivate(
@@ -299,7 +306,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.get('/permanences/getAdresse/:adresse/:structureId', async (req, res) => {
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const { adresse } = JSON.parse(req.params.adresse);
       const structureId = req.params.structureId;
 
@@ -321,7 +329,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.post('/permanences/reporter', async (req, res) => {
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -339,7 +348,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.delete('/permanence/:id', async (req, res) => {
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const idPermanence = req.params.id;
 
       canActivate(
@@ -364,7 +374,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.delete('/permanence/:id/conseiller', async (req, res) => {
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const idPermanence = req.params.id;
       const idConseiller = user.entity.oid;
 
@@ -391,7 +402,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
     app.patch('/permanences/conseiller/:id/updateAll', async (req, res) => {
       const db = await app.get('mongoClient');
       const permanences = await updatePermanencesToSchema(req.body.permanences, req.params.id);
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -409,7 +421,8 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     app.patch('/permanences/conseiller/:id/statut', async (req, res) => {
       const db = await app.get('mongoClient');
-      const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+      const userId = await userIdFromRequestJwt(app, req);
+      const user = await userAuthenticationRepository(db)(userId);
       const conseillerId = req.params.id;
 
       canActivate(

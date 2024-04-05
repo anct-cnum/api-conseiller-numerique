@@ -1,5 +1,4 @@
 const { Forbidden, NotAuthenticated, Unprocessable, NotFound } = require('@feathersjs/errors');
-const { jwtDecode } = require('jwt-decode');
 
 const Role = {
   Admin: 'admin',
@@ -14,7 +13,10 @@ const Role = {
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
 
-const userIdFromRequestJwt = req => jwtDecode(req.feathers.authentication?.accessToken)?.sub;
+const userIdFromRequestJwt = async (app, req) => {
+  const decode = await app.service('authentication').verifyAccessToken(req.feathers.authentication?.accessToken);
+  return decode.sub;
+};
 
 const idSubordonne = req => req.query?.idSubordonne === 'null' ? null : req.query?.idSubordonne;
 

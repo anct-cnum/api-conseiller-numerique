@@ -390,7 +390,7 @@ exports.DataExports = class DataExports {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.HubCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(app, req), [Role.AdminCoop, Role.HubCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportTerritoireSchema(req.query))
       ).then(async () => {
         const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
@@ -407,9 +407,10 @@ exports.DataExports = class DataExports {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.HubCoop], userAuthenticationRepository(db))
+        rolesGuard(userIdFromRequestJwt(app, req), [Role.HubCoop], userAuthenticationRepository(db))
       ).then(async () => {
-        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const userId = await userIdFromRequestJwt(app, req);
+        const user = await userAuthenticationRepository(db)(userId);
         const hubName = user.hub;
         const hub = findDepartementOrRegion(hubName);
         if (hub === undefined) {
@@ -428,7 +429,7 @@ exports.DataExports = class DataExports {
       const db = await app.get('mongoClient');
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(app, req), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
@@ -449,7 +450,7 @@ exports.DataExports = class DataExports {
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.Coordinateur], userAuthenticationRepository(db)),
+        rolesGuard(userIdFromRequestJwt(app, req), [Role.Coordinateur], userAuthenticationRepository(db)),
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
@@ -465,7 +466,7 @@ exports.DataExports = class DataExports {
       const db = await app.get('mongoClient');
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop], userAuthenticationRepository(db))
+        rolesGuard(userIdFromRequestJwt(app, req), [Role.AdminCoop], userAuthenticationRepository(db))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
         if (!user?.roles.includes('admin_coop')) {
