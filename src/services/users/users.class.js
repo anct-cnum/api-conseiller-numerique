@@ -298,7 +298,7 @@ exports.Users = class Users extends Service {
         res.status(401).send(new NotAuthenticated('User not authenticated'));
         return;
       }
-      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await this.find({
         query: {
           _id: new ObjectID(userId),

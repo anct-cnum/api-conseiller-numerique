@@ -84,10 +84,15 @@ module.exports = {
     ],
     get: [
       async context => {
+        if (!context.params.user) {
+          throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        }
+        const user = context.params?.user;
+        const userId = user.entity?.oid?.toString();
         //Restreindre les permissions : les conseillers (non coordinateur) et candidats ne peuvent voir que les informations les concernant
-        if ((context.params?.user?.roles.includes('conseiller') && !context.params?.user?.roles.includes('coordinateur_coop')) ||
-          context.params?.user?.roles.includes('candidat')) {
-          if (context.id.toString() !== context.params?.user?.entity?.oid.toString()) {
+        if ((user?.roles?.includes('conseiller') && !user?.roles?.includes('coordinateur_coop')) ||
+          user?.roles?.includes('candidat')) {
+          if (context.id.toString() !== userId) {
             throw new Forbidden('Vous n\'avez pas l\'autorisation');
           }
         }
@@ -262,7 +267,13 @@ module.exports = {
   },
 
   error: {
-    all: [],
+    all: [
+      async context => {
+        const Sentry = context.app.get('Sentry');
+        Sentry.captureException(context.error);
+        return context;
+      }
+    ],
     find: [],
     get: [],
     create: [],

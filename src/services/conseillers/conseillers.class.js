@@ -170,7 +170,7 @@ exports.Conseillers = class Conseillers extends Service {
       checkAuth(req, res);
 
       //Verification role candidat
-      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const candidatUser = await db.collection('users').findOne({ _id: new ObjectId(userId) });
 
       if (!candidatUser?.roles.includes('candidat') && !candidatUser?.roles.includes('conseiller')) {
@@ -294,7 +294,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.delete('/conseillers/:id/cv', async (req, res) => {
       checkAuth(req, res);
-      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req)) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -327,7 +327,7 @@ exports.Conseillers = class Conseillers extends Service {
       checkAuth(req, res);
 
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
-      let userId = jwtDecode(req.feathers.authentication.accessToken).sub;
+      let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req) && !user?.roles.includes('structure') && !user?.roles.includes('admin')) {
         res.status(403).send(new Forbidden('User not authorized', {
@@ -812,7 +812,7 @@ exports.Conseillers = class Conseillers extends Service {
         let initModifMailProConseiller = false;
         let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
         email = email.trim();
-        emailPro = emailPro.trim();
+        emailPro = emailPro?.trim();
         const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
         let idConseiller = req.params.id;
 
