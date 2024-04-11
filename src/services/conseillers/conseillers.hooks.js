@@ -84,11 +84,13 @@ module.exports = {
     ],
     get: [
       async context => {
+        console.log(context.params.user);
         if (!context.params.user) {
           throw new Forbidden('Vous n\'avez pas l\'autorisation');
         }
         const user = context.params?.user;
         const userId = user.entity?.oid?.toString();
+        console.log(userId);
         //Restreindre les permissions : les conseillers (non coordinateur) et candidats ne peuvent voir que les informations les concernant
         if ((user?.roles?.includes('conseiller') && !user?.roles?.includes('coordinateur_coop')) ||
           user?.roles?.includes('candidat')) {
