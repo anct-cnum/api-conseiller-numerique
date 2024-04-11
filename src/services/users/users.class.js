@@ -115,7 +115,8 @@ exports.Users = class Users extends Service {
           }
         }
         try {
-          const { idPG } = await app.service('conseillers').get(id);
+          const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
+          const { idPG } = await app.service('conseillers').get(id, { user });
           await pool.query(`UPDATE djapp_coach
             SET (
                   first_name,
@@ -284,7 +285,7 @@ exports.Users = class Users extends Service {
       const { roles, name, persoEmail, nom, prenom, support_cnfs } = users.data[0];
       if (roles.includes('conseiller')) {
         //Si le user est un conseiller, remonter son email perso pour l'afficher (cas renouvellement mot de passe)
-        const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid);
+        const conseiller = await app.service('conseillers').get(users.data[0].entity?.oid, { user: users.data[0] });
         users.data[0].persoEmail = conseiller.email;
         // eslint-disable-next-line camelcase
         res.send({ roles, name, persoEmail, nom, prenom, support_cnfs });
@@ -531,7 +532,7 @@ exports.Users = class Users extends Service {
       if (typeEmail === 'renouvellement') {
         try {
           if (user.roles.includes('conseiller')) {
-            const conseiller = await app.service('conseillers').get(user.entity?.oid);
+            const conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
             // Mise à jour du password également dans Mattermost et Gandi
             const adressCN = conseiller.emailCN?.address;
             if (adressCN === undefined) {
@@ -584,7 +585,6 @@ exports.Users = class Users extends Service {
           $limit: 1,
         }
       });
-
       if (users.total === 0) {
         res.status(404).send(new NotFound('Cette adresse e-mail n\'existe pas', {
           username
@@ -613,7 +613,7 @@ exports.Users = class Users extends Service {
             return t.charAt(0) + '*'.repeat(t.length - 2) + t.charAt(t.length - 1); // abcdef => a****f
           }
         };
-        let conseiller = await app.service('conseillers').get(user.entity?.oid);
+        let conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
         // conseiller.email : email perso du conseiller
         const regexp = /([^@]+)@([^@]+)[.](\w+)/; // Extraction des trois morceaux du mail
         let match = conseiller.email.match(regexp);
@@ -680,7 +680,7 @@ exports.Users = class Users extends Service {
 
       //Si le user est un conseiller, envoyer le mail sur son email perso
       if (user.roles.includes('conseiller')) {
-        let conseiller = await app.service('conseillers').get(user.entity?.oid);
+        let conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
         user.persoEmail = conseiller.email;
       }
 
