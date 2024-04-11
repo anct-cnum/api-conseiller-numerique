@@ -50,7 +50,7 @@ module.exports = {
               throw new Forbidden('Vous n\'avez pas l\'autorisation');
             }
           } catch (error) {
-            //logger.error(error);
+            logger.error(error);
             context.app.get('sentry').captureException(error);
           }
         }
