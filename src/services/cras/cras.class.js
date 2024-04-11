@@ -35,7 +35,7 @@ exports.Cras = class Cras extends Service {
 
     app.get('/cras/cra', async (req, res) => {
       const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const craId = req.query.id;
       if (!validate(craId)) {
@@ -63,7 +63,7 @@ exports.Cras = class Cras extends Service {
 
     app.patch('/cras', async (req, res) => {
       const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const oldDateAccompagnement = new Date(req.body.cra.oldDateAccompagnement);
       const cra = updateCraToSchema(req.body, database);
@@ -102,7 +102,7 @@ exports.Cras = class Cras extends Service {
 
     app.delete('/cras', async (req, res) => {
       const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const craId = req.query.craId;
       canActivate(
@@ -139,7 +139,7 @@ exports.Cras = class Cras extends Service {
 
     app.get('/cras/countByPermanence', async (req, res) => {
       const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const permanenceId = req.query.permanenceId;
 
@@ -159,7 +159,7 @@ exports.Cras = class Cras extends Service {
 
     app.get('/cras/searchSousThemes', async (req, res) => {
       const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const { sousTheme } = req.query;
 

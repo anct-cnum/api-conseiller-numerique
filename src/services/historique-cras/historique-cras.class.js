@@ -17,7 +17,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
 
     app.get('/historique-cras/liste', async (req, res) => {
       const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const { theme, canal, type, dateDebut, dateFin, codePostal, codeCommune, sort, page } = req.query;
       let query = {
@@ -76,7 +76,7 @@ exports.HistoriqueCras = class HistoriqueCras extends Service {
 
     app.get('/historique-cras/thematiques', async (req, res) => {
       const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const query = {
         'conseiller.$id': new ObjectId(user.entity.oid),

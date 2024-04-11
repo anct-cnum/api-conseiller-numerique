@@ -267,13 +267,7 @@ module.exports = {
   },
 
   error: {
-    all: [
-      async context => {
-        const Sentry = context.app.get('Sentry');
-        Sentry.captureException(context.error);
-        return context;
-      }
-    ],
+    all: [],
     find: [],
     get: [],
     create: [],

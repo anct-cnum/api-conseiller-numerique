@@ -147,7 +147,7 @@ exports.Conseillers = class Conseillers extends Service {
     app.post('/conseillers/createSexeAge', async (req, res) => {
       const db = await app.get('mongoClient');
       const query = createSexeAgeBodyToSchema(req.body);
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const conseillerId = user.entity.oid;
 
@@ -460,7 +460,7 @@ exports.Conseillers = class Conseillers extends Service {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
       const getUserById = userAuthenticationRepository(db);
-      const userId = userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const conseillerSubordonne = idSubordonne(req);
       let conseiller = {};
       canActivate(
@@ -509,7 +509,7 @@ exports.Conseillers = class Conseillers extends Service {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
       const getUserById = userAuthenticationRepository(db);
-      const userId = userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const conseillerSubordonne = idSubordonne(req);
       let conseiller = {};
       canActivate(
@@ -1216,7 +1216,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.get('/conseillers/subordonnes', async (req, res) => {
       checkAuth(req, res);
-      const userId = userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const getUserById = userAuthenticationRepository(db);
 
       const schema = Joi.object({
@@ -1268,7 +1268,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.get('/conseiller/isSubordonne', async (req, res) => {
       checkAuth(req, res);
-      const userId = userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const getUserById = userAuthenticationRepository(db);
       const idCoordinateur = new ObjectId(req.query.idCoordinateur);
       const idConseiller = new ObjectId(req.query.idConseiller);
@@ -1288,7 +1288,7 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.get('/conseiller/candidat/searchZoneGeographique/:adresse', async (req, res) => {
-      const userId = await userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const user = await userAuthenticationRepository(db)(userId);
       const { adresse } = JSON.parse(req.params.adresse);
 
@@ -1309,7 +1309,7 @@ exports.Conseillers = class Conseillers extends Service {
 
     app.patch('/conseiller/candidat/zoneGeographique/:id', async (req, res) => {
       checkAuth(req, res);
-      const userId = userIdFromRequestJwt(app, req);
+      const userId = await userIdFromRequestJwt(app, req, res);
       const getUserById = userAuthenticationRepository(db);
       const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(req.params.id) });
       if (!conseiller) {
