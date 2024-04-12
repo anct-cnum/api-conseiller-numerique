@@ -338,13 +338,14 @@ exports.Stats = class Stats extends Service {
       const query = exportStatistiquesQueryToSchema(req.query);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
+        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
           userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
         let userFinal = {};
-        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const userId = await userIdFromRequestJwt(app, req, res);
+        const user = await userAuthenticationRepository(db)(userId);
         let dateFin = new Date(query.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
 
@@ -382,13 +383,14 @@ exports.Stats = class Stats extends Service {
       const query = exportStatistiquesQueryToSchema(req.query);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(req), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
+        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
           userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
         let userFinal = {};
-        const user = await userAuthenticationRepository(db)(userIdFromRequestJwt(req));
+        const userId = await userIdFromRequestJwt(app, req, res);
+        const user = await userAuthenticationRepository(db)(userId);
         let dateFin = new Date(query.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
 
