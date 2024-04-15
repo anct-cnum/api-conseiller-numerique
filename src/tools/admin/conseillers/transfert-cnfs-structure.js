@@ -229,10 +229,12 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   program.option('-tc, --typeContrat <typeContrat>', 'typeContrat: le type de contrat');
   program.option('-sc, --salaireContrat <salaireContrat>', 'salaireContrat: le salaire du contrat');
   program.option('-q, --quota', 'quota: pour désactiver le bridage du nombre de poste validé en Coselec');
+  program.option('-ntf, --notificationConseiller', 'notificationConseiller: pour activer l\'envoi de la notification du mail au conseiller pour le transfert');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const { id, ancienne, nouvelle, rupture, dateDebutContrat, dateFinContrat, typeContrat, salaireContrat, motif, quota } = program.opts();
+  // eslint-disable-next-line max-len
+  const { id, ancienne, nouvelle, rupture, dateDebutContrat, dateFinContrat, typeContrat, salaireContrat, motif, quota, notificationConseiller } = program.opts();
   if (!id || !ancienne || !nouvelle || !rupture || !dateDebutContrat || !typeContrat || !dateFinContrat || !motif) {
     exit('Paramètres invalides. Veuillez entrer les 8 paramètres requis');
     return;
@@ -313,7 +315,9 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     await updatePermanences(db)(idCNFS);
     await miseAjourMattermostCanaux(db)(idCNFS, structureDestination, ancienneSA, mattermost);
     await emailsStructureAncienne(db)(emails, cnfsRecrute, ancienneSA);
-    await emailsCnfsNotification(db)(emails, idCNFS);
+    if (notificationConseiller) {
+      await emailsCnfsNotification(db)(emails, idCNFS);
+    }
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);
