@@ -14,9 +14,9 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  const idCnRupture = new ObjectID(program.id);
-  const idCnActif = new ObjectID(program.conseiller);
-  const ignored = program.ignored;
+  const { id, conseiller, ignored } = program.opts();
+  const idCnRupture = new ObjectID(id);
+  const idCnActif = new ObjectID(conseiller);
 
   try {
     const conseillerRupture = await db.collection('conseillers').findOne({ _id: idCnRupture, statut: 'RUPTURE' });
