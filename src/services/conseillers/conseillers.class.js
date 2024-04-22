@@ -1330,7 +1330,7 @@ exports.Conseillers = class Conseillers extends Service {
       if (codePostal.substr(0, 2) === 97) {
         codeDepartement = codePostal.substr(0, 3);
       }
-      let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement).region_name;
+      let nomRegion = codeDepartements.find(d => d.num_dep === codeDepartement)?.region_name;
       let codeRegion = codeRegions.find(r => r.nom === nomRegion)?.code;
       if (codePostal === 97150) {
         codeDepartement = '00';
