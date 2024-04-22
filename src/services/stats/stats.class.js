@@ -336,15 +336,15 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/admincoop/statistiques.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
+      const userId = await userIdFromRequestJwt(app, req, res);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
+        rolesGuard(userId, [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
           userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
         let userFinal = {};
-        const userId = await userIdFromRequestJwt(app, req, res);
         const user = await userAuthenticationRepository(db)(userId);
         let dateFin = new Date(query.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
@@ -381,15 +381,15 @@ exports.Stats = class Stats extends Service {
     app.get('/stats/admincoop/statistiques.xlsx', async (req, res) => {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
+      const userId = await userIdFromRequestJwt(app, req, res);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
+        rolesGuard(userId, [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
           userAuthenticationRepository(db)),
         schemaGuard(validateExportStatistiquesSchema(query))
       ).then(async () => {
         let ids = [];
         let userFinal = {};
-        const userId = await userIdFromRequestJwt(app, req, res);
         const user = await userAuthenticationRepository(db)(userId);
         let dateFin = new Date(query.dateFin);
         dateFin.setUTCHours(23, 59, 59, 59);
