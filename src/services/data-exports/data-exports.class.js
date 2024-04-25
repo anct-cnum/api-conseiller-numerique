@@ -387,10 +387,10 @@ exports.DataExports = class DataExports {
 
     app.get('/exports/territoires.csv', async (req, res) => {
       const db = await app.get('mongoClient');
-
+      const userId = await userIdFromRequestJwt(app, req, res);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.AdminCoop, Role.HubCoop], userAuthenticationRepository(db)),
+        rolesGuard(userId, [Role.AdminCoop, Role.HubCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportTerritoireSchema(req.query))
       ).then(async () => {
         const statsTerritoires = await getStatsTerritoires(req.query, statsTerritoiresRepository(db));
@@ -404,10 +404,10 @@ exports.DataExports = class DataExports {
 
     app.get('/exports/hubcoop/cnfs.csv', async (req, res) => {
       const db = await app.get('mongoClient');
-
+      const userId = await userIdFromRequestJwt(app, req, res);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.HubCoop], userAuthenticationRepository(db))
+        rolesGuard(userId, [Role.HubCoop], userAuthenticationRepository(db))
       ).then(async () => {
         const userId = await userIdFromRequestJwt(app, req, res);
         const user = await userAuthenticationRepository(db)(userId);
@@ -427,9 +427,10 @@ exports.DataExports = class DataExports {
     app.get('/exports/cnfs.csv', async (req, res) => {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
+      const userId = await userIdFromRequestJwt(app, req, res);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
+        rolesGuard(userId, [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
@@ -447,10 +448,11 @@ exports.DataExports = class DataExports {
     app.get('/exports/subordonnes.csv', async (req, res) => {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
+      const userId = await userIdFromRequestJwt(app, req, res);
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.Coordinateur], userAuthenticationRepository(db)),
+        rolesGuard(userId, [Role.Coordinateur], userAuthenticationRepository(db)),
         schemaGuard(validateExportCnfsSchema(query))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
@@ -464,9 +466,10 @@ exports.DataExports = class DataExports {
 
     app.get('/exports-without-cra/cnfs.csv', async (req, res) => {
       const db = await app.get('mongoClient');
+      const userId = await userIdFromRequestJwt(app, req, res);
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(userIdFromRequestJwt(app, req, res), [Role.AdminCoop], userAuthenticationRepository(db))
+        rolesGuard(userId, [Role.AdminCoop], userAuthenticationRepository(db))
       ).then(async authentication => {
         const user = await userConnected(db, authentication);
         if (!user?.roles.includes('admin_coop')) {
