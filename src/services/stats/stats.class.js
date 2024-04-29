@@ -34,6 +34,7 @@ const departementsRegion = require('../../../data/imports/departements-region.js
 const {
   buildExportStatistiquesExcelFileContent
 } = require('../../common/document-templates/statistiques-accompagnement-excel/statistiques-accompagnement-excel');
+const { ObjectId } = require('mongodb');
 
 exports.Stats = class Stats extends Service {
   constructor(options, app) {
@@ -337,6 +338,9 @@ exports.Stats = class Stats extends Service {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],
@@ -382,6 +386,9 @@ exports.Stats = class Stats extends Service {
       const db = await app.get('mongoClient');
       const query = exportStatistiquesQueryToSchema(req.query);
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.AdminCoop, Role.StructureCoop, Role.HubCoop, Role.Prefet, Role.Coordinateur, Role.Conseiller],

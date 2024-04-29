@@ -43,6 +43,7 @@ const { getStatsCnfsHubs } = require('./export-cnfs-hub/core/export-cnfs-hub.cor
 
 const { exportCnfsCoordinateurRepository } = require('./export-cnfs-coordinateur/repositories/export-cnfs-coordinateur.repository');
 const { getStatsCnfsCoordinateur } = require('./export-cnfs-coordinateur/core/export-cnfs-coordinateur.core');
+const { ObjectId } = require('mongodb');
 
 exports.DataExports = class DataExports {
   constructor(options, app) {
@@ -388,6 +389,9 @@ exports.DataExports = class DataExports {
     app.get('/exports/territoires.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.AdminCoop, Role.HubCoop], userAuthenticationRepository(db)),
@@ -405,11 +409,17 @@ exports.DataExports = class DataExports {
     app.get('/exports/hubcoop/cnfs.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.HubCoop], userAuthenticationRepository(db))
       ).then(async () => {
         const userId = await userIdFromRequestJwt(app, req, res);
+        if (!ObjectId.isValid(userId)) {
+          return res.status(401).send({ message: 'Accès non autorisé' });
+        }
         const user = await userAuthenticationRepository(db)(userId);
         const hubName = user.hub;
         const hub = findDepartementOrRegion(hubName);
@@ -428,6 +438,9 @@ exports.DataExports = class DataExports {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.AdminCoop, Role.StructureCoop], userAuthenticationRepository(db)),
@@ -449,6 +462,9 @@ exports.DataExports = class DataExports {
       const query = exportCnfsQueryToSchema(req.query);
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
 
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
@@ -467,6 +483,9 @@ exports.DataExports = class DataExports {
     app.get('/exports-without-cra/cnfs.csv', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       canActivate(
         authenticationGuard(authenticationFromRequest(req)),
         rolesGuard(userId, [Role.AdminCoop], userAuthenticationRepository(db))

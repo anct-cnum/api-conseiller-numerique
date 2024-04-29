@@ -13,12 +13,12 @@ const Role = {
 
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
 
-const userIdFromRequestJwt = async (app, req, res) => {
+const userIdFromRequestJwt = async (app, req) => {
   try {
     const decode = await app.service('authentication').verifyAccessToken(req.feathers.authentication?.accessToken);
     return decode.sub;
   } catch (error) {
-    return res.status(401).send({ message: 'Accès non autorisé' });
+    return null;
   }
 };
 

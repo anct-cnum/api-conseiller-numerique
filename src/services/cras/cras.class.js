@@ -21,6 +21,7 @@ const {
 const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
 const { validationCra } = require('./cra/utils/validationCra');
 const { v4: validate } = require('uuid');
+const { ObjectId } = require('mongodb');
 
 exports.Cras = class Cras extends Service {
   constructor(options, app) {
@@ -36,6 +37,9 @@ exports.Cras = class Cras extends Service {
     app.get('/cras/cra', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       const user = await userAuthenticationRepository(db)(userId);
       const craId = req.query.id;
       if (!validate(craId)) {
@@ -64,6 +68,9 @@ exports.Cras = class Cras extends Service {
     app.patch('/cras', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       const user = await userAuthenticationRepository(db)(userId);
       const oldDateAccompagnement = new Date(req.body.cra.oldDateAccompagnement);
       const cra = updateCraToSchema(req.body, database);
@@ -103,6 +110,9 @@ exports.Cras = class Cras extends Service {
     app.delete('/cras', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       const user = await userAuthenticationRepository(db)(userId);
       const craId = req.query.craId;
       canActivate(
@@ -140,6 +150,9 @@ exports.Cras = class Cras extends Service {
     app.get('/cras/countByPermanence', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       const user = await userAuthenticationRepository(db)(userId);
       const permanenceId = req.query.permanenceId;
 
@@ -160,6 +173,9 @@ exports.Cras = class Cras extends Service {
     app.get('/cras/searchSousThemes', async (req, res) => {
       const db = await app.get('mongoClient');
       const userId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(userId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
       const user = await userAuthenticationRepository(db)(userId);
       const { sousTheme } = req.query;
 
