@@ -87,9 +87,6 @@ exports.PermanenceConseillers = class Sondages extends Service {
       if (!ObjectId.isValid(userId)) {
         return res.status(401).send({ message: 'Accès non autorisé' });
       }
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
       const user = await userAuthenticationRepository(db)(userId);
       const conseillerId = req.params.id;
 
