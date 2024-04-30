@@ -11,8 +11,8 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let id = ~~program.id;
-  let distance = program.distance;
+  let id = ~~program.opts().id;
+  let distance = program.opts().distance;
 
   if (id === 0 || !distance) {
     exit('Paramètres invalides. Veuillez préciser un id et un nombre en kilomètre');

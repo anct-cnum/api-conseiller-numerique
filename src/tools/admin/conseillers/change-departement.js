@@ -13,9 +13,9 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  let id = ~~program.id;
-  let codePostal = program.codePostal;
-  let codeCommune = program.codeCommune;
+  let id = ~~program.opts().id;
+  let codePostal = program.opts().codePostal;
+  let codeCommune = program.opts().codeCommune;
 
   if (id === 0 || !codeCommune) {
     exit('Paramètres invalides. Veuillez préciser un id et un code Commune');
