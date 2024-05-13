@@ -497,6 +497,7 @@ exports.Users = class Users extends Service {
                   name: email
                 }
               });
+              user.name = email;
               // La boite mail a été créée dans import-recrutes.js
               await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
               await createAccount({

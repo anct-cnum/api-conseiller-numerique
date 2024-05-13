@@ -43,7 +43,7 @@ module.exports = {
           if (context.data.strategy === 'local') {
             const db = await context.app.get('mongoClient');
 
-            const user = await db.collection('users').findOne({ name: context.data.name });
+            const user = await db.collection('users').findOne({ name: context.data.name.toLowerCase().trim() });
             if (user?.attemptFail === 3) {
               user.numberLoginUnblock = Math.floor(100000 + Math.random() * 900000);
               await db.collection('users')
@@ -79,9 +79,9 @@ module.exports = {
             }
 
             await db.collection('accessLogs')
-            .insertOne({ name: context.data.name, createdAt: new Date(), ip: context.params.ip });
+            .insertOne({ name: context.data.name.toLowerCase().trim(), createdAt: new Date(), ip: context.params.ip });
             await db.collection('users')
-            .updateOne({ name: context.data.name }, { $set: { lastLogin: new Date() } });
+            .updateOne({ name: context.data.name.toLowerCase().trim() }, { $set: { lastLogin: new Date() } });
 
           }
         } catch (error) {
