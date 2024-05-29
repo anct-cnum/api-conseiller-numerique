@@ -57,6 +57,11 @@ const updateSubordonnes = db => async (coordinateur, list, type) => {
       // eslint-disable-next-line max-len
       await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
+    case 'codeCommune':
+      const structureIdList = await db.collection('structures').distinct('_id', { 'codeCommune': { '$in': list } });
+      // eslint-disable-next-line max-len
+      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'structureId': { '$in': structureIdList } }, { $push: { 'coordinateurs': coordinateur } });
+      break;
     default: // conseillers
       await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
@@ -101,6 +106,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           const listCustom = ressource['Adresse mail CNFS'];
           const mailleRegional = ressource['Code région'];
           const mailleDepartement = ressource['Code département'];
+          const mailleCommune = ressource['Code commune'];
 
           const conum = await isConum(db)(adresseCoordo.trim().toLowerCase());
 
@@ -112,7 +118,11 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               id: conum?.entity?.oid, nom: conum?.nom, prenom: conum?.prenom,
               nonAffichageCarto: coordoAnonyme.includes(String(idCoordinateur))
             };
-            if (mailleRegional?.length > 0) {
+            if (mailleCommune?.length > 0) {
+              listMaille = mailleCommune.split('/');
+              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeCommune');
+              await updateSubordonnes(db)(coordinateur, listMaille, 'codeCommune');
+            } else if (mailleRegional?.length > 0) {
               listMaille = mailleRegional.split('/');
               await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeRegion');
               await updateSubordonnes(db)(coordinateur, listMaille, 'codeRegion');
