@@ -21,7 +21,7 @@ module.exports = {
     get: [
       authenticate('jwt'),
       checkPermissions({
-        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'candidat', 'hub_coop', 'coordinateur_coop'],
+        roles: ['admin', 'structure', 'prefet', 'conseiller', 'admin_coop', 'candidat', 'hub_coop', 'hub', 'coordinateur_coop'],
         field: 'roles',
       }),
       async context => {
