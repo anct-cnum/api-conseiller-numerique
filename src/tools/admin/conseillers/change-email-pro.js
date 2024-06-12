@@ -14,9 +14,9 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
   program.helpOption('-h', 'HELP command');
   program.parse(process.argv);
 
-  const id = ~~program.id;
-  let nom = program.nom;
-  let prenom = program.prenom;
+  const id = ~~program.opts().id;
+  let nom = program.opts().nom;
+  let prenom = program.opts().prenom;
   let login;
   if (id === 0 || (!nom && !prenom)) {
     exit('Paramètres invalides. Veuillez préciser un id et un nom et/ou prenom');

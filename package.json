@@ -1,6 +1,7 @@
 {
   "name": "api-conseiller-numerique",
   "version": "0.0.2",
+  "license": "AGPL-3.0",
   "description": "API Conseiller Numérique",
   "main": "index.js",
   "author": "Loïc Guillois <loic@fitlab.fr>",
@@ -8,7 +9,6 @@
     "Loïc Guillois <loic@fitlab.fr>",
     "Jean-Yves Stervinou <jy@stervinou.com>"
   ],
-  "license": "MIT",
   "directories": {
     "lib": "src",
     "test": "test/",

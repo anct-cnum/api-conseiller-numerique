@@ -20,7 +20,7 @@ execute(__filename, async ({ logger, exit, app, db }) => {
   program.parse(process.argv);
 
   let query = {};
-  const nameHub = program.hub;
+  const nameHub = program.opts().hub;
   if (!nameHub) {
     exit('Paramètres invalides, veuillez saisir un nom de HUB');
     return;

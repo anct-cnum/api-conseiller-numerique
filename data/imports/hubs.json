@@ -24,8 +24,16 @@
         "departements": ["971", "976"]
     },
     {
-        "name": "Hub Antilles-Guyane",
-        "departements": ["973"]
+      "name": "Mednum Antilles",
+      "departements": ["971", "972"]
+    },
+    {
+      "name": "Guyaclic",
+      "departements": ["973"]
+    },
+    {
+      "name": "Solidarnum",
+      "departements": ["974", "976"]
     },
     {
       "name": "RhinOcc",
