@@ -1,21 +1,26 @@
-module.exports = async db => {
-  let collections = await db.listCollections().toArray();
+module.exports = async function dropUnusedIndexes(db) {
+  const collections = await db.listCollections().toArray();
 
-  let results = await Promise.all(
+  return await Promise.all(
     collections
-    .filter(collection => collection.idIndex)
     .map(async collection => {
-
-      let name = collection.name;
-      let results = await db.collection(name).aggregate([
+      const unusedIndexes = await db.collection(collection.name)
+      .aggregate([
         { $indexStats: {} },
-        { $match: { 'accesses.ops': { $lt: 1 } } },
-      ]).toArray();
+        { $match: { 'accesses.ops': { $eq: 0 } } },
+      ])
+      .toArray();
 
-      let unused = results.filter(r => r.name !== '_id_').map(r => r.name);
-      return { collection: name, unusedIndexes: unused };
+      Promise.all(
+        unusedIndexes
+        .filter(unusedIndex => unusedIndex.name !== '_id_')
+        .map(unusedIndex => {
+          console.log(`Suppression de l'index ${unusedIndex.name.replace('_1', '')} dans la collection ${collection.name}`);
+          return db.collection(collection.name).dropIndex(unusedIndex.name);
+        })
+      );
+
+      return true;
     })
   );
-
-  return results.filter(r => r.unusedIndexes.length > 0);
 };

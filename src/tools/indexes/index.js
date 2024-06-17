@@ -5,7 +5,7 @@ const { program } = require('commander');
 const { execute } = require('../utils');
 const dropIndexes = require('./tasks/dropIndexes');
 const createIndexes = require('./tasks/createIndexes');
-const findUnusedIndexes = require('./tasks/findUnusedIndexes');
+const dropUnusedIndexes = require('./tasks/findUnusedIndexes');
 
 program.description('Manage indexes')
 .option('-f, --find', 'Find unused indexes')
@@ -15,8 +15,12 @@ program.description('Manage indexes')
 
 execute(__filename, async ({ db, logger }) => {
   const options = program.opts();
+
   if (options.find) {
-    return await findUnusedIndexes(db);
+    logger.info('Dropping unused indexes...');
+    await dropUnusedIndexes(db);
+    logger.info('Ci-dessus, les index à supprimer dans le fichier mongoIndexes.js.');
+    return true;
   }
 
   if (options.drop) {
@@ -25,5 +29,5 @@ execute(__filename, async ({ db, logger }) => {
   }
 
   logger.info('Creating indexes...');
-  return createIndexes(db);
+  await createIndexes(db);
 });
