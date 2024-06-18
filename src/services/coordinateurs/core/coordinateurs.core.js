@@ -59,6 +59,8 @@ const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination }) =>
       nom: formatTexte(coordinateur.nom),
       commune: coordinateur.permanence?.adresse?.ville ?? coordinateur.structure.nomCommune,
       codePostal: coordinateur.permanence?.adresse?.codePostal ?? coordinateur.structure.codePostal,
+      codeCommuneStructure: coordinateur.permanence?.adresse?.codeCommune ?? coordinateur.structure.codeCommune,
+      nomStructure: coordinateur.permanence?.nomEnseigne ?? coordinateur.structure.nom,
       adresse:
         coordinateur.permanence?.adresse ?
           formatAddressFromPermanence(coordinateur.permanence?.adresse) :
