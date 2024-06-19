@@ -5,8 +5,10 @@
 const { execute } = require('../../utils');
 const { program } = require('commander');
 const CSVToJSON = require('csvtojson');
+const axios = require('axios');
 
 const getListCoordinateurs = async db => await db.collection('users').distinct('name', { roles: { '$in': ['coordinateur_coop', 'coordinateur'] } });
+const getListCodeCommune = db => async listCodePostaux => await db.collection('structures').distinct('codeCommune', { codePostal: { '$in': listCodePostaux } });
 
 const isConum = db => async emailConseiller => await db.collection('users').findOne({
   'name': emailConseiller.replace(/\s/g, ''),
@@ -24,6 +26,7 @@ const getIdSubordonneByMail = db => async emailConseiller => {
 };
 
 const addListSubordonnes = db => async (idConseiller, list, type) => {
+  console.log('list:', list);
   await db.collection('conseillers').updateOne(
     { '_id': idConseiller },
     { $set: {
@@ -45,6 +48,7 @@ const addListSubordonnes = db => async (idConseiller, list, type) => {
 };
 
 const updateSubordonnes = db => async (coordinateur, list, type) => {
+  console.log('type:', type);
   const updateCnSubordonnes = db => async (match, queryUpdate) =>
     await db.collection('conseillers').updateMany({ statut: 'RECRUTE', ...match }, queryUpdate);
   // Maj du tag coordinateur dans le cas d'un changement de la liste custom ou autre (exemple coordo d'une region qui change en coordo departement)
@@ -106,7 +110,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
           const listCustom = ressource['Adresse mail CNFS'];
           const mailleRegional = ressource['Code région'];
           const mailleDepartement = ressource['Code département'];
-          const mailleCommune = ressource['Code commune'];
+          const mailleCodePostaux = ressource['Code postaux'] ?? ressource['Bassins de vie - codes postaux'];
 
           const conum = await isConum(db)(adresseCoordo.trim().toLowerCase());
 
@@ -118,8 +122,20 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               id: conum?.entity?.oid, nom: conum?.nom, prenom: conum?.prenom,
               nonAffichageCarto: coordoAnonyme.includes(String(idCoordinateur))
             };
-            if (mailleCommune?.length > 0) {
-              listMaille = mailleCommune.split('/');
+            if (mailleCodePostaux?.length > 0) {
+              const listCodePostaux = mailleCodePostaux.split('/')?.map(e => e.trim());
+              let arrayConflictCodeCommune = [];
+              for (const codePostal of listCodePostaux) {
+                const urlAPI = `https://geo.api.gouv.fr/communes?codePostal=${codePostal}&format=geojson&geometry=centre`;
+                const { data } = await axios.get(urlAPI);
+                if (data?.features.length >= 2) {
+                  arrayConflictCodeCommune.push(codePostal);
+                }
+              }
+              if (arrayConflictCodeCommune.length >= 1) {
+                logger.warn(`Liste code Postaux ${arrayConflictCodeCommune} du coordinateur ${adresseCoordo} a plusieurs code commune !`);
+              }
+              listMaille = await getListCodeCommune(db)(listCodePostaux);
               await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeCommune');
               await updateSubordonnes(db)(coordinateur, listMaille, 'codeCommune');
             } else if (mailleRegional?.length > 0) {
