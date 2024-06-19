@@ -18,15 +18,15 @@ jobs:
       env:
         CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
         CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
-    - uses: actions/checkout@v4
-    - name: Create Sentry release
-      uses: getsentry/action-release@v1
-      env:
-        SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_BETA_AUTH_TOKEN }}
-        SENTRY_ORG: ${{ secrets.SENTRY_BETA_ORG }}
-        SENTRY_PROJECT: ${{ secrets.SENTRY_API_PROJECT }}
-        SENTRY_URL: ${{ secrets.SENTRY_BETA_URL }}
-      with:
-        environment: recette
-        ignore_missing: true
-        ignore_empty: true
+    # - uses: actions/checkout@v4
+    # - name: Create Sentry release
+    #   uses: getsentry/action-release@v1
+    #   env:
+    #     SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_BETA_AUTH_TOKEN }}
+    #     SENTRY_ORG: ${{ secrets.SENTRY_BETA_ORG }}
+    #     SENTRY_PROJECT: ${{ secrets.SENTRY_API_PROJECT }}
+    #     SENTRY_URL: ${{ secrets.SENTRY_BETA_URL }}
+    #   with:
+    #     environment: recette
+    #     ignore_missing: true
+    #     ignore_empty: true
