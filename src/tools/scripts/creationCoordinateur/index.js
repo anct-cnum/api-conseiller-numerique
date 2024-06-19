@@ -26,7 +26,6 @@ const getIdSubordonneByMail = db => async emailConseiller => {
 };
 
 const addListSubordonnes = db => async (idConseiller, list, type) => {
-  console.log('list:', list);
   await db.collection('conseillers').updateOne(
     { '_id': idConseiller },
     { $set: {
