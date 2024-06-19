@@ -1,10 +1,6 @@
 name: Tests d'intégration
 
-on:
-  push:
-    branches: [main, recette]
-  pull_request:
-    branches: [main, recette]
+on: pull_request
 
 jobs:
   build:

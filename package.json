@@ -16,7 +16,7 @@
   },
   "scripts": {
     "test": "jest",
-    "lint": "eslint src/. test/. --config .eslintrc.json --fix",
+    "lint": "eslint src test --max-warnings=0 --cache --cache-location node_modules/.cache/eslint",
     "dev": "nodemon src/",
     "start": "node src/",
     "test:integration": "mocha test/integration --recursive --exit",
