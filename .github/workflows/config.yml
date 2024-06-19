@@ -1,10 +1,6 @@
 name: Validation des fichiers de configuration
 
-on:
-  push:
-    branches: [main, recette]
-  pull_request:
-    branches: [main, recette]
+on: pull_request
 
 jobs:
   build:
