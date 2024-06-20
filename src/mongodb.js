@@ -3,11 +3,9 @@ const util = require('util');
 
 let explaining = false;
 
-const isLogAggregateMode = process.env.NODE_ENV === 'aggregate';
-
 const connectionOptions = {
   useUnifiedTopology: true,
-  monitorCommands: isLogAggregateMode,
+  monitorCommands: false,
 };
 
 async function logExplain(client, event, requestId) {

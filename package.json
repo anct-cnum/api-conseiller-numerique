@@ -1,38 +1,19 @@
 {
   "name": "api-conseiller-numerique",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "license": "AGPL-3.0",
-  "description": "API Conseiller Numérique",
-  "main": "index.js",
-  "author": "Loïc Guillois <loic@fitlab.fr>",
-  "contributors": [
-    "Loïc Guillois <loic@fitlab.fr>",
-    "Jean-Yves Stervinou <jy@stervinou.com>"
-  ],
-  "directories": {
-    "lib": "src",
-    "test": "test/",
-    "config": "config/"
-  },
   "scripts": {
-    "test": "jest",
+    "dev": "NODE_ENV=development nodemon src",
+    "husky:init": "husky add .husky/pre-commit 'npx --no-install git-precommit-checks'",
+    "husky:install": "husky install",
+    "husky:uninstall": "git config --unset core.hooksPath",
     "lint": "eslint src test --max-warnings=0 --cache --cache-location node_modules/.cache/eslint",
-    "dev": "nodemon src/",
-    "start": "node src/",
-    "test:integration": "mocha test/integration --recursive --exit",
-    "test:config": "mocha test/config --recursive --exit",
     "smtp:start": "docker rm cnum-smtp; docker run -d --name cnum-smtp -p 1025:1025 -p 8025:8025 mailhog/mailhog",
     "smtp:stop": "docker stop cnum-smtp",
-    "aggregate": "NODE_ENV=aggregate node src/ > output.log 2>&1",
-    "husky:install": "husky install",
-    "husky:init": "husky add .husky/pre-commit 'npx --no-install git-precommit-checks'",
-    "husky:uninstall": "git config --unset core.hooksPath"
-  },
-  "standard": {
-    "env": [
-      "mocha"
-    ],
-    "ignore": []
+    "start": "node src",
+    "test": "jest",
+    "test:config": "mocha test/config --recursive --exit",
+    "test:integration": "mocha test/integration --recursive --exit"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.515.0",
