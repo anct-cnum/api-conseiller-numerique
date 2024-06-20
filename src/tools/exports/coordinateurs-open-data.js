@@ -5,7 +5,7 @@ const fs = require('fs');
 const { program } = require('commander');
 
 const { execute } = require('../utils');
-const { getCoordinateurs, getStatsCoordination } = require('../../services/coordinateurs/repository/coordinateurs.repository.js');
+const { getCoordinateurs, getStatsCoordination, getIdStructures } = require('../../services/coordinateurs/repository/coordinateurs.repository.js');
 const { listeCoordinateurs } = require('../../services/coordinateurs/core/coordinateurs.core.js');
 
 program.description('Export coordinateurs open data')
@@ -25,6 +25,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   await listeCoordinateurs({
     getCoordinateurs: getCoordinateurs(db),
     getStatsCoordination: getStatsCoordination(db),
+    getIdStructures: getIdStructures(db),
   }).then(coordinateurs => {
     const fileHeaders = [
       'Nom',

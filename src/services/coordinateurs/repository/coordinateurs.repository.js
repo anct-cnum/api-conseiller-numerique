@@ -170,9 +170,13 @@ const getPermanences = db => async id => await db.collection('permanences').aggr
   }
 }]).toArray();
 
+const getIdStructures = db => async list =>
+  await db.collection('structures').distinct('_id', { 'statut': 'VALIDATION_COSELEC', 'codeCommune': { '$in': list } });
+
 module.exports = {
   getCoordinateurs,
   getStatsCoordination,
   getConseillers,
   getPermanences,
+  getIdStructures
 };
