@@ -8,7 +8,7 @@ const CSVToJSON = require('csvtojson');
 const axios = require('axios');
 
 const getListCoordinateurs = async db => await db.collection('users').distinct('name', { roles: { '$in': ['coordinateur_coop', 'coordinateur'] } });
-const getListCodeCommune = db => async listCodePostaux => await db.collection('structures').distinct('codeCommune', { codePostal: { '$in': listCodePostaux } });
+const getListCodeCommune = db => async codePostaux => await db.collection('structures').distinct('codeCommune', { codePostal: { '$in': codePostaux } });
 
 const isConum = db => async emailConseiller => await db.collection('users').findOne({
   'name': emailConseiller.replace(/\s/g, ''),
@@ -25,7 +25,7 @@ const getIdSubordonneByMail = db => async emailConseiller => {
   return conseiller?._id ?? null;
 };
 
-const addListSubordonnes = db => async (idConseiller, list, type) => {
+const addSubordonnes = db => async (idConseiller, list, type) => {
   await db.collection('conseillers').updateOne(
     { '_id': idConseiller },
     { $set: {
@@ -47,29 +47,29 @@ const addListSubordonnes = db => async (idConseiller, list, type) => {
 };
 
 const updateSubordonnes = db => async (coordinateur, list, type) => {
-  console.log('type:', type);
-  const updateCnSubordonnes = db => async (match, queryUpdate) =>
+  const updateConumSubordonnes = db => async (match, queryUpdate) =>
     await db.collection('conseillers').updateMany({ statut: 'RECRUTE', ...match }, queryUpdate);
   // Maj du tag coordinateur dans le cas d'un changement de la liste custom ou autre (exemple coordo d'une region qui change en coordo departement)
-  await updateCnSubordonnes(db)({ 'coordinateurs': { $elemMatch: { id: coordinateur.id } } }, { $pull: { 'coordinateurs': { id: coordinateur.id } } });
+  await updateConumSubordonnes(db)({ 'coordinateurs': { $elemMatch: { id: coordinateur.id } } }, { $pull: { 'coordinateurs': { id: coordinateur.id } } });
   switch (type) {
     case 'codeRegion':
-      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeRegionStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      // eslint-disable-next-line max-len
+      await updateConumSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeRegionStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     case 'codeDepartement':
       // eslint-disable-next-line max-len
-      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      await updateConumSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     case 'codeCommune':
       const structureIdList = await db.collection('structures').distinct('_id', { 'codeCommune': { '$in': list } });
       // eslint-disable-next-line max-len
-      await updateCnSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'structureId': { '$in': structureIdList } }, { $push: { 'coordinateurs': coordinateur } });
+      await updateConumSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'structureId': { '$in': structureIdList } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     default: // conseillers
-      await updateCnSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
+      await updateConumSubordonnes(db)({ '_id': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
   }
-  await updateCnSubordonnes(db)({ 'coordinateurs.0': { $exists: false } }, { $unset: { 'coordinateurs': '' } });
+  await updateConumSubordonnes(db)({ 'coordinateurs.0': { $exists: false } }, { $unset: { 'coordinateurs': '' } });
 };
 
 // CSV importé
@@ -122,28 +122,28 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               nonAffichageCarto: coordoAnonyme.includes(String(idCoordinateur))
             };
             if (mailleCodePostaux?.length > 0) {
-              const listCodePostaux = mailleCodePostaux.split('/')?.map(e => e.trim());
-              let arrayConflictCodeCommune = [];
-              for (const codePostal of listCodePostaux) {
+              const codePostaux = mailleCodePostaux.split('/')?.map(code => code.trim());
+              const conflictCodesCommunes = [];
+              for (const codePostal of codePostaux) {
                 const urlAPI = `https://geo.api.gouv.fr/communes?codePostal=${codePostal}&format=geojson&geometry=centre`;
                 const { data } = await axios.get(urlAPI);
                 if (data?.features.length >= 2) {
-                  arrayConflictCodeCommune.push(codePostal);
+                  conflictCodesCommunes.push(codePostal);
                 }
               }
-              if (arrayConflictCodeCommune.length >= 1) {
-                logger.warn(`Liste code Postaux ${arrayConflictCodeCommune} du coordinateur ${adresseCoordo} a plusieurs code commune !`);
+              if (conflictCodesCommunes.length >= 1) {
+                logger.warn(`Liste code Postaux ${conflictCodesCommunes} du coordinateur ${adresseCoordo} a plusieurs codes commune !`);
               }
-              listMaille = await getListCodeCommune(db)(listCodePostaux);
-              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeCommune');
+              listMaille = await getListCodeCommune(db)(codePostaux);
+              await addSubordonnes(db)(idCoordinateur, listMaille, 'codeCommune');
               await updateSubordonnes(db)(coordinateur, listMaille, 'codeCommune');
             } else if (mailleRegional?.length > 0) {
               listMaille = mailleRegional.split('/');
-              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeRegion');
+              await addSubordonnes(db)(idCoordinateur, listMaille, 'codeRegion');
               await updateSubordonnes(db)(coordinateur, listMaille, 'codeRegion');
             } else if (mailleDepartement.length > 0) {
               listMaille = mailleDepartement.split('/');
-              await addListSubordonnes(db)(idCoordinateur, listMaille, 'codeDepartement');
+              await addSubordonnes(db)(idCoordinateur, listMaille, 'codeDepartement');
               await updateSubordonnes(db)(coordinateur, listMaille, 'codeDepartement');
             } else if (listCustom.length > 0) {
               const emailsSubordonnes = listCustom.split('/');
@@ -165,7 +165,7 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
               await Promise.allSettled(promisesEmails);
 
               //Maj avec la nouvelle liste des subordonnés directement (au cas où rupture entre temps par exemple)
-              await addListSubordonnes(db)(idCoordinateur, idSubordonnes, 'conseillers');
+              await addSubordonnes(db)(idCoordinateur, idSubordonnes, 'conseillers');
               await updateSubordonnes(db)(coordinateur, idSubordonnes, 'conseillers');
 
             } else {
