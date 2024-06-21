@@ -47,6 +47,9 @@
     }
   },
   "mongodb": "mongodb://localhost:27017/conseiller-numerique",
+  "mongodb_monitor_commands": false,
+  "mongodb_logger_level_options_utiles_en_dessous": "error|warn|info|debug",
+  "mongodb_logger_level": "error",
   "cors": {
     "whitelist": "*"
   },
