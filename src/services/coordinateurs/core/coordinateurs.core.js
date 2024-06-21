@@ -40,7 +40,7 @@ const getStats = async (getStatsCoordination, getIdStructures, subordonnes, coor
       query = { codeRegionStructure: { $in: subordonnes.liste }, _id: { $ne: coordinateurId } };
       break;
     case 'codeCommune':
-      const structures = getIdStructures(subordonnes.liste);
+      const structures = await getIdStructures(subordonnes.liste);
       query = { structureId: { $in: structures }, _id: { $ne: coordinateurId } };
       break;
     default: //type conseillers
