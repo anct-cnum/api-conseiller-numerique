@@ -1,11 +1,9 @@
-name: Déploiement sur l'espace demo
+name: Déploiement en demo
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-env:
-  branch:
+
 jobs:
   preparation:
     runs-on: ubuntu-latest
@@ -26,7 +24,6 @@ jobs:
             "0 0 * * * \$ROOT/src/tools/jobs/stats-daily-cras.sh",
             "0 6 * * * \$ROOT/src/tools/jobs/stats-territoires.sh"
           ]
-
           EOF
       - name: Add and commit cron modification
         run: |
@@ -34,7 +31,7 @@ jobs:
           git config --global user.name ClevercloudDeployer
           git commit -am "Modification cron"
       - name: Upload release api as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: api
           path: .
@@ -49,7 +46,7 @@ jobs:
         CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
     steps:
       - name: Retrieve api
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: api
       - name: Link the application

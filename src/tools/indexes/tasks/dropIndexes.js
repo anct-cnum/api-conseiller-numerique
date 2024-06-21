@@ -1,5 +1,5 @@
 module.exports = async db => {
-  let collections = await db.listCollections().toArray();
+  const collections = await db.listCollections().toArray();
 
   return Promise.all(
     collections

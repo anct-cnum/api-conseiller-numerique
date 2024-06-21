@@ -30,7 +30,7 @@ const getGeometryPositions = conseiller => {
   return { latitude, longitude };
 };
 
-const getStats = async (getStatsCoordination, subordonnes, coordinateurId) => {
+const getStats = async (getStatsCoordination, getIdStructures, subordonnes, coordinateurId) => {
   let query;
   switch (subordonnes.type) {
     case 'codeDepartement':
@@ -38,6 +38,10 @@ const getStats = async (getStatsCoordination, subordonnes, coordinateurId) => {
       break;
     case 'codeRegion':
       query = { codeRegionStructure: { $in: subordonnes.liste }, _id: { $ne: coordinateurId } };
+      break;
+    case 'codeCommune':
+      const structures = getIdStructures(subordonnes.liste);
+      query = { structureId: { $in: structures }, _id: { $ne: coordinateurId } };
       break;
     default: //type conseillers
       query = { _id: { $in: subordonnes.liste } };
@@ -50,7 +54,7 @@ const getStats = async (getStatsCoordination, subordonnes, coordinateurId) => {
   };
 };
 
-const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination }) => {
+const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination, getIdStructures }) => {
   let coordinateurs = await getCoordinateurs();
   return await Promise.all(coordinateurs.map(async coordinateur => {
     return {
@@ -59,6 +63,8 @@ const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination }) =>
       nom: formatTexte(coordinateur.nom),
       commune: coordinateur.permanence?.adresse?.ville ?? coordinateur.structure.nomCommune,
       codePostal: coordinateur.permanence?.adresse?.codePostal ?? coordinateur.structure.codePostal,
+      codeCommuneStructure: coordinateur.permanence?.adresse?.codeCommune ?? coordinateur.structure.codeCommune,
+      nomStructure: coordinateur.permanence?.nomEnseigne ?? coordinateur.structure.nom,
       adresse:
         coordinateur.permanence?.adresse ?
           formatAddressFromPermanence(coordinateur.permanence?.adresse) :
@@ -66,7 +72,7 @@ const listeCoordinateurs = async ({ getCoordinateurs, getStatsCoordination }) =>
       ...courrielIfAny(coordinateur.emailPro),
       ...telephoneIfAny(coordinateur.telephonePro),
       ...formatPerimetre(coordinateur.listeSubordonnes.type),
-      ...await getStats(getStatsCoordination, coordinateur.listeSubordonnes, coordinateur._id),
+      ...await getStats(getStatsCoordination, getIdStructures, coordinateur.listeSubordonnes, coordinateur._id),
       dispositif: 'CnFS',
       ...getGeometryPositions(coordinateur),
     };

@@ -34,6 +34,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   const maille = [
     { type: 'codeRegion', message: `à la maille Régionale ${conseiller?.listeSubordonnes?.liste}` },
     { type: 'codeDepartement', message: `à la maille Départementale ${conseiller?.listeSubordonnes?.liste}` },
+    { type: 'codeCommune', message: `à la maille Commune ${conseiller?.listeSubordonnes?.liste}` },
     { type: 'conseillers', message: `avec une liste custom => au total ${conseiller?.listeSubordonnes?.liste.length} conseillers` },
   ];
   // eslint-disable-next-line max-len

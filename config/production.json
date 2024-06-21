@@ -34,6 +34,8 @@
     }
   },
   "mongodb": "MONGODB_ADDON_URI",
+  "mongodb_monitor_commands": false,
+  "mongodb_logger_level": "error",
   "cors": {
     "whitelist": "CORS_WHITELIST"
   },
