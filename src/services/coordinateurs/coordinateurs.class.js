@@ -1,6 +1,6 @@
 const { Service } = require('feathers-mongodb');
 const { listeCoordinateurs, listeConseillers } = require('./core/coordinateurs.core');
-const { getCoordinateurs, getStatsCoordination, getConseillers, getPermanences } = require('./repository/coordinateurs.repository');
+const { getCoordinateurs, getStatsCoordination, getConseillers, getPermanences, getIdStructures } = require('./repository/coordinateurs.repository');
 const logger = require('../../logger');
 
 exports.Coordinateurs = class Coordinateurs extends Service {
@@ -13,6 +13,7 @@ exports.Coordinateurs = class Coordinateurs extends Service {
       await listeCoordinateurs({
         getCoordinateurs: getCoordinateurs(db),
         getStatsCoordination: getStatsCoordination(db),
+        getIdStructures: getIdStructures(db),
       }).then(coordinateurs => res.send(coordinateurs)).catch(error => {
         app.get('sentry').captureException(error);
         logger.error(error);

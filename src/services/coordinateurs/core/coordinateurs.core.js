@@ -10,7 +10,7 @@ const PHONE_REGEX = /^(?:(?:\+)(33|590|596|594|262|269))(?:\d{3}){3}$/;
 const checkLengthPhone = telephone => PHONE_REGEX.test(telephone) || (telephone.startsWith('0') && telephone.length === 10);
 const telephoneIfAny = telephone => telephone && checkLengthPhone(telephone) ? { telephone } : {};
 
-const PERIMETRES_LIST = { 'conseillers': 'Bassin de vie', 'codeDepartement': 'Départemental', 'codeRegion': 'Régional' };
+const PERIMETRES_LIST = { 'conseillers': 'Bassin de vie', 'codeCommune': 'Bassin de vie', 'codeDepartement': 'Départemental', 'codeRegion': 'Régional' };
 const formatPerimetre = type => PERIMETRES_LIST[type] ? { perimetre: PERIMETRES_LIST[type] } : {};
 
 const getGeometryPositions = conseiller => {
@@ -40,7 +40,7 @@ const getStats = async (getStatsCoordination, getIdStructures, subordonnes, coor
       query = { codeRegionStructure: { $in: subordonnes.liste }, _id: { $ne: coordinateurId } };
       break;
     case 'codeCommune':
-      const structures = getIdStructures(subordonnes.liste);
+      const structures = await getIdStructures(subordonnes.liste);
       query = { structureId: { $in: structures }, _id: { $ne: coordinateurId } };
       break;
     default: //type conseillers
