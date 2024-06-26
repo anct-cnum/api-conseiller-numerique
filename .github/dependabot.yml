@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    target-branch: "recette"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    ignore:
+      - dependency-name: "eslint*"
+      - dependency-name: "@feathersjs/*"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "patch"
+          - "minor"
