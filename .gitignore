@@ -2,6 +2,7 @@ node_modules/
 coverage/
 .env
 config/local.json
+config/development.json
 data/exports/*
 data/exports-historique/*
 .DS_Store
