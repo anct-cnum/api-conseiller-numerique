@@ -28,7 +28,7 @@
     "@gouvfr-anct/lieux-de-mediation-numerique": "1.22.1",
     "@sentry/node": "7.102.0",
     "@sentry/tracing": "7.102.0",
-    "@turf/circle": "6.5.0",
+    "@turf/circle": "7.0.0",
     "axios": "1.6.7",
     "commander": "12.0.0",
     "compression": "1.7.4",
