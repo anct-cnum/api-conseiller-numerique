@@ -108,7 +108,7 @@ exports.Users = class Users extends Service {
             let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
             await message.send(user);
           } catch (error) {
-            context.app.get('sentry').captureException(error);
+            app.get('sentry').captureException(error);
             logger.error(error);
             res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
             return;
@@ -429,7 +429,7 @@ exports.Users = class Users extends Service {
 
           res.send({ status: 'Invitation à rejoindre la structure envoyée !' });
         } catch (error) {
-          context.app.get('sentry').captureException(error);
+          app.get('sentry').captureException(error);
           logger.error(error);
           res.send('Une erreur est survenue lors de l\'envoi de l\'invitation !');
         }

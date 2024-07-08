@@ -922,7 +922,7 @@ exports.Conseillers = class Conseillers extends Service {
             await message.send(conseiller);
             initModifMailPersoConseiller = true;
           } catch (error) {
-            context.app.get('sentry').captureException(error);
+            app.get('sentry').captureException(error);
             logger.error(error);
             res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
             return;
@@ -958,7 +958,7 @@ exports.Conseillers = class Conseillers extends Service {
             await message.send(conseiller);
             initModifMailProConseiller = true;
           } catch (error) {
-            context.app.get('sentry').captureException(error);
+            app.get('sentry').captureException(error);
             logger.error(error);
             res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
             return;
