@@ -859,7 +859,7 @@ exports.Conseillers = class Conseillers extends Service {
         }
 
         if (extended.error) {
-          res.status(400).json(new BadRequest(schema.error));
+          res.status(400).json(new BadRequest(extended.error));
           return;
         }
 
