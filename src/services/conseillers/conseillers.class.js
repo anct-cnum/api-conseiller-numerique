@@ -608,6 +608,7 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
     app.delete('/conseillers/:id/candidature', async (req, res) => {
+      checkAuth(req, res);
       const roles = ['admin', 'candidat'];
       let user;
       const actionUser = req.query.actionUser;
