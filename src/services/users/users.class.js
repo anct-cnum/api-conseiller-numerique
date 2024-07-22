@@ -28,6 +28,10 @@ exports.Users = class Users extends Service {
     const emails = createEmails(db, mailer, app);
 
     app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
+      if (req.feathers?.authentication === undefined) {
+        res.status(401).send(new NotAuthenticated('User not authenticated'));
+        return;
+      }
       app.get('mongoClient').then(async db => {
         const nouveauEmail = req.body.email.toLowerCase();
         let { nom, prenom, telephone, dateDisponibilite, email } = req.body;
