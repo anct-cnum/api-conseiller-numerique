@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const _ = require('lodash');
+const merge = require('lodash.merge');
 const htmlToText = require('nodemailer-html-to-text').htmlToText;
 const nodemailer = require('nodemailer');
 const moment = require('moment');
@@ -98,7 +98,7 @@ module.exports = app => {
             body: Joi.string().required(),
           }, { abortEarly: false });
           let { subject, body } = schema.validate(message).value;
-          return transporter.sendMail(_.merge({}, {
+          return transporter.sendMail(merge({}, {
             to: emailAddress,
             subject,
             from: `Conseiller Numérique <${configuration.from}>`,

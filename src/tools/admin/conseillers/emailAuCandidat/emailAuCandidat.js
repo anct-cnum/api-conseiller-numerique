@@ -2,7 +2,7 @@
 'use strict';
 
 const { program } = require('commander');
-const _ = require('lodash');
+const capitalize = require('lodash.capitalize');
 const sendCandidatEmail = require('./tasks/sendCandidatEmail');
 const { capitalizeFirstLetter, execute } = require('../../../utils');
 
@@ -18,7 +18,7 @@ execute(__filename, async ({ logger, db, app, emails, Sentry, exit }) => {
 
   logger.info('Envoi de l\'email de point sur le recrutement du candidat...');
 
-  let ActionClass = require(`./tasks/actions/${_.capitalize(type)}Action`);
+  let ActionClass = require(`./tasks/actions/${capitalize(type)}Action`);
   let action = new ActionClass(app);
 
   try {
