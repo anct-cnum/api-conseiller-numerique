@@ -1,5 +1,5 @@
 const { execute } = require('../../utils');
-const { isEqual } = require('lodash');
+const isEqual = require('lodash.isequal');
 
 execute(__filename, async ({ db, logger, exit }) => {
   let promises = [];

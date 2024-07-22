@@ -1,5 +1,5 @@
 const { execute } = require('../../utils');
-const { isEqual } = require('lodash');
+const isEqual = require('lodash.isequal');
 const { program } = require('commander');
 
 execute(__filename, async ({ db, logger, exit }) => {
