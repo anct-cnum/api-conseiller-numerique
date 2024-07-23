@@ -170,8 +170,7 @@ exports.Conseillers = class Conseillers extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.post('/conseillers/cv', upload.single('file'), async (req, res) => {
-      checkAuth(req, res);
+    app.post('/conseillers/cv', checkAuth, upload.single('file'), async (req, res) => {
 
       //Verification role candidat
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
@@ -296,8 +295,7 @@ exports.Conseillers = class Conseillers extends Service {
       res.send({ isUploaded: true });
     });
 
-    app.delete('/conseillers/:id/cv', async (req, res) => {
-      checkAuth(req, res);
+    app.delete('/conseillers/:id/cv', checkAuth, async (req, res) => {
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
       if (!checkRoleCandidat(user, req) && !checkRoleConseiller(user, req)) {
@@ -327,8 +325,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
     });
 
-    app.get('/conseillers/:id/cv', async (req, res) => {
-      checkAuth(req, res);
+    app.get('/conseillers/:id/cv', checkAuth, async (req, res) => {
 
       //Verification rôle candidat / structure / admin pour accéder au CV : si candidat alors il ne peut avoir accès qu'à son CV
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
@@ -564,8 +561,7 @@ exports.Conseillers = class Conseillers extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.get('/conseillers/:id/employeur', async (req, res) => {
-      checkAuth(req, res);
+    app.get('/conseillers/:id/employeur', checkAuth, async (req, res) => {
 
       const accessToken = req.feathers?.authentication?.accessToken;
 
@@ -705,8 +701,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.post('/conseillers/:id/relance-invitation', async (req, res) => {
-      await checkAuth(req, res);
+    app.post('/conseillers/:id/relance-invitation', checkAuth, async (req, res) => {
       await checkRoleAdmin(db, req, res);
       const conseillerId = new ObjectId(req.params.id);
       let user;
@@ -815,8 +810,7 @@ exports.Conseillers = class Conseillers extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.patch('/conseillers/updateInfosConseiller/:id', async (req, res) => {
-      checkAuth(req, res);
+    app.patch('/conseillers/updateInfosConseiller/:id', checkAuth, async (req, res) => {
       app.get('mongoClient').then(async db => {
         let initModifMailPersoConseiller = false;
         let initModifMailProConseiller = false;
@@ -972,8 +966,7 @@ exports.Conseillers = class Conseillers extends Service {
       });
 
     });
-    app.patch('/conseillers/superieur_hierarchique/:id', async (req, res) => {
-      checkAuth(req, res);
+    app.patch('/conseillers/superieur_hierarchique/:id', checkAuth, async (req, res) => {
       const accessToken = req.feathers?.authentication?.accessToken;
       const userId = jwtDecode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -1039,8 +1032,7 @@ exports.Conseillers = class Conseillers extends Service {
       }
       res.send({ ...conseiller, supHierarchique });
     });
-    app.patch('/conseillers/update_disponibilite/:id', async (req, res) => {
-      checkAuth(req, res);
+    app.patch('/conseillers/update_disponibilite/:id', checkAuth, async (req, res) => {
       const accessToken = req.feathers?.authentication?.accessToken;
       const userId = jwtDecode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -1098,8 +1090,7 @@ exports.Conseillers = class Conseillers extends Service {
       res.send({ disponible });
     });
 
-    app.patch('/conseillers/update_date_disponibilite/:id', async (req, res) => {
-      checkAuth(req, res);
+    app.patch('/conseillers/update_date_disponibilite/:id', checkAuth, async (req, res) => {
       const accessToken = req.feathers?.authentication?.accessToken;
       const userId = jwtDecode(accessToken).sub;
       const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -1223,8 +1214,7 @@ exports.Conseillers = class Conseillers extends Service {
     });
 
 
-    app.get('/conseillers/subordonnes', async (req, res) => {
-      checkAuth(req, res);
+    app.get('/conseillers/subordonnes', checkAuth, async (req, res) => {
       const userId = await userIdFromRequestJwt(app, req, res);
       if (!ObjectId.isValid(userId)) {
         return res.status(401).send({ message: 'Accès non autorisé' });
@@ -1278,8 +1268,7 @@ exports.Conseillers = class Conseillers extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.get('/conseiller/isSubordonne', async (req, res) => {
-      checkAuth(req, res);
+    app.get('/conseiller/isSubordonne', checkAuth, async (req, res) => {
       const userId = await userIdFromRequestJwt(app, req, res);
       if (!ObjectId.isValid(userId)) {
         return res.status(401).send({ message: 'Accès non autorisé' });
@@ -1325,8 +1314,7 @@ exports.Conseillers = class Conseillers extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.patch('/conseiller/candidat/zoneGeographique/:id', async (req, res) => {
-      checkAuth(req, res);
+    app.patch('/conseiller/candidat/zoneGeographique/:id', checkAuth, async (req, res) => {
       const userId = await userIdFromRequestJwt(app, req, res);
       if (!ObjectId.isValid(userId)) {
         return res.status(401).send({ message: 'Accès non autorisé' });
