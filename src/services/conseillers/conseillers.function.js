@@ -12,11 +12,12 @@ const createMailer = require('../../mailer');
 const { Role } = require('../../common/utils/feathers.utils');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-const checkAuth = (req, res) => {
+const checkAuth = (req, res, next) => {
   if (req.feathers?.authentication === undefined) {
     res.status(401).send(new NotAuthenticated('User not authenticated'));
     return;
   }
+  next();
 };
 
 const checkRoleCandidat = (user, req) => {
