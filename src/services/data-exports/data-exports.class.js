@@ -19,6 +19,7 @@ const {
   rolesGuard,
   schemaGuard,
   Role,
+  checkAuth,
   authenticationFromRequest,
   userIdFromRequestJwt,
   abort,
@@ -55,11 +56,7 @@ exports.DataExports = class DataExports {
       db = mongoDB;
     });
 
-    app.get('/exports/candidats.csv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/exports/candidats.csv', checkAuth, async (req, res) => {
       //verify user role admin
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -93,11 +90,7 @@ exports.DataExports = class DataExports {
       res.send();
     });
 
-    app.get('/exports/candidatsValidesStructure.csv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/exports/candidatsValidesStructure.csv', checkAuth, async (req, res) => {
       //verify user role admin
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -132,11 +125,7 @@ exports.DataExports = class DataExports {
       res.send();
     });
 
-    app.get('/exports/ruptures.csv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/exports/ruptures.csv', checkAuth, async (req, res) => {
       //verify user role admin
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -170,11 +159,7 @@ exports.DataExports = class DataExports {
       res.send();
     });
 
-    app.get('/exports/embauches.csv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/exports/embauches.csv', checkAuth, async (req, res) => {
       //verify user role admin
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -224,11 +209,7 @@ exports.DataExports = class DataExports {
       res.send();
     });
 
-    app.get('/exports/candidatsByStructure.csv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/exports/candidatsByStructure.csv', checkAuth, async (req, res) => {
       //verify user role structure
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const structureUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -269,11 +250,7 @@ exports.DataExports = class DataExports {
       res.send();
     });
 
-    app.get('/exports/structures.csv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/exports/structures.csv', checkAuth, async (req, res) => {
       //verify user role admin
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -326,11 +303,7 @@ exports.DataExports = class DataExports {
       res.send();
     });
 
-    app.get('/exports/structuresPrefet.csv', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/exports/structuresPrefet.csv', checkAuth, async (req, res) => {
       //verify user role prefet
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const prefetUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
