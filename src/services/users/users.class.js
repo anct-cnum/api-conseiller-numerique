@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict, BadRequest, GeneralError, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadRequest, GeneralError, Forbidden } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
@@ -12,6 +12,7 @@ const Joi = require('joi');
 const { jwtDecode } = require('jwt-decode');
 const { misesAJourPg, misesAJourMongo, historisationMongo,
   getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
+const { checkAuth } = require('../../common/utils/feathers.utils');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -27,11 +28,7 @@ exports.Users = class Users extends Service {
     let mailer = createMailer(app);
     const emails = createEmails(db, mailer, app);
 
-    app.patch('/candidat/updateInfosCandidat/:id', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.patch('/candidat/updateInfosCandidat/:id', checkAuth, async (req, res) => {
       app.get('mongoClient').then(async db => {
         const nouveauEmail = req.body.email.toLowerCase();
         let { nom, prenom, telephone, dateDisponibilite, email } = req.body;
@@ -298,11 +295,7 @@ exports.Users = class Users extends Service {
       }
     });
 
-    app.post('/users/inviteAccountsPrefet', async (req, res) => {
-      if (req?.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.post('/users/inviteAccountsPrefet', checkAuth, async (req, res) => {
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await this.find({
         query: {

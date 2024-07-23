@@ -1,6 +1,6 @@
 const { ObjectID, DBRef } = require('mongodb');
 
-const { BadRequest, NotFound, Forbidden, NotAuthenticated, GeneralError, Conflict } = require('@feathersjs/errors');
+const { BadRequest, NotFound, Forbidden, GeneralError, Conflict } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
 
@@ -12,6 +12,7 @@ const { jwtDecode } = require('jwt-decode');
 const { Pool } = require('pg');
 const utils = require('../../utils/index.js');
 const { v4: uuidv4 } = require('uuid');
+const { checkAuth } = require('../../common/utils/feathers.utils');
 const { getRaisonSocialeBySiretEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
 
 const pool = new Pool();
@@ -27,11 +28,7 @@ exports.Structures = class Structures extends Service {
       this.Model = db.collection('structures');
     });
 
-    app.post('/structures/:id/preSelectionner/:conseillerId', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.post('/structures/:id/preSelectionner/:conseillerId', checkAuth, async (req, res) => {
       //verify user role structure
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const structureUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -80,11 +77,7 @@ exports.Structures = class Structures extends Service {
       res.status(201).send({ misEnRelation: miseEnRelation.ops[0] });
     });
 
-    app.get('/structures/:id/misesEnRelation/stats', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/structures/:id/misesEnRelation/stats', checkAuth, async (req, res) => {
       //verify user role
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -140,11 +133,7 @@ exports.Structures = class Structures extends Service {
       }));
     });
 
-    app.get('/structures/:id/misesEnRelation', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/structures/:id/misesEnRelation', checkAuth, async (req, res) => {
       //verify user role
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -220,11 +209,7 @@ exports.Structures = class Structures extends Service {
       res.send(misesEnRelation);
     });
 
-    app.post('/structures/:id/relance-inscription', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.post('/structures/:id/relance-inscription', checkAuth, async (req, res) => {
       let adminId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
@@ -285,12 +270,7 @@ exports.Structures = class Structures extends Service {
 
     });
 
-    app.post('/structures/verifyStructureSiret', async (req, res) => {
-
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.post('/structures/verifyStructureSiret', checkAuth, async (req, res) => {
       let adminId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
@@ -310,13 +290,9 @@ exports.Structures = class Structures extends Service {
       }
     });
 
-    app.patch('/structures/:id/email', async (req, res) => {
+    app.patch('/structures/:id/email', checkAuth, async (req, res) => {
       const { email } = req.body;
       const structureId = req.params.id;
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
       let adminId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
@@ -433,11 +409,7 @@ exports.Structures = class Structures extends Service {
       await updateStructure(structure.idPG, email, structure.contact?.inactivite, structure.statut);
     });
 
-    app.post('/structures/updateStructureSiret', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.post('/structures/updateStructureSiret', checkAuth, async (req, res) => {
       let adminId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await db.collection('users').findOne({ _id: new ObjectID(adminId) });
       if (adminUser?.roles.filter(role => ['admin'].includes(role)).length < 1) {
@@ -484,11 +456,7 @@ exports.Structures = class Structures extends Service {
       await updateStructure(structure.idPG, req.body.siret);
     });
 
-    app.get('/structures/getAvancementRecrutement', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/structures/getAvancementRecrutement', checkAuth, async (req, res) => {
       //verify user role
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });

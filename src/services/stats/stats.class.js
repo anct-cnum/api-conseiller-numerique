@@ -18,7 +18,8 @@ const {
   userIdFromRequestJwt,
   abort,
   csvFileResponse,
-  Role
+  Role,
+  checkAuth
 } = require('../../common/utils/feathers.utils');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const {
@@ -44,12 +45,8 @@ exports.Stats = class Stats extends Service {
       this.Model = db.collection('stats');
     });
 
-    app.get('/stats/conseillers/finalisees', async (req, res) => {
+    app.get('/stats/conseillers/finalisees', checkAuth, async (req, res) => {
       app.get('mongoClient').then(async db => {
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
-          return;
-        }
         let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
         if (!['structure'].includes(user?.roles[0])) {
@@ -100,12 +97,8 @@ exports.Stats = class Stats extends Service {
       res.send(stats);
     });
 
-    app.get('/stats/dashboard', async (req, res) => {
+    app.get('/stats/dashboard', checkAuth, async (req, res) => {
       app.get('mongoClient').then(async db => {
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
-          return;
-        }
         //verify user role admin
         let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -260,14 +253,9 @@ exports.Stats = class Stats extends Service {
       });
     });
 
-    app.get('/stats/admincoop/statistiques.pdf', async (req, res) => {
+    app.get('/stats/admincoop/statistiques.pdf', checkAuth, async (req, res) => {
       app.get('mongoClient').then(async db => {
         const accessToken = req.feathers?.authentication?.accessToken;
-
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
-          return;
-        }
         try {
           let userId = jwtDecode(accessToken).sub;
           let userFinal = {};
@@ -430,11 +418,7 @@ exports.Stats = class Stats extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.get('/stats/admincoop/dashboard', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/stats/admincoop/dashboard', checkAuth, async (req, res) => {
       //verify user role admin_coop
       app.get('mongoClient').then(async db => {
         let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
@@ -707,13 +691,9 @@ exports.Stats = class Stats extends Service {
       });
     });
 
-    app.get('/stats/territoire/cra', async (req, res) => {
+    app.get('/stats/territoire/cra', checkAuth, async (req, res) => {
 
       app.get('mongoClient').then(async db => {
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
-          return;
-        }
         //Verification role admin_coop
         let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -752,12 +732,8 @@ exports.Stats = class Stats extends Service {
       });
     });
 
-    app.get('/stats/structure/cra', async (req, res) => {
+    app.get('/stats/structure/cra', checkAuth, async (req, res) => {
       app.get('mongoClient').then(async db => {
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
-          return;
-        }
         //Verification role structure_coop
         let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -799,14 +775,9 @@ exports.Stats = class Stats extends Service {
       });
     });
 
-    app.get('/stats/nationales/cra', async (req, res) => {
+    app.get('/stats/nationales/cra', checkAuth, async (req, res) => {
 
       app.get('mongoClient').then(async db => {
-
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
-          return;
-        }
         //Verification role admin_coop
         let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
         const user = await db.collection('users').findOne({ _id: new ObjectID(userId) });
@@ -837,11 +808,7 @@ exports.Stats = class Stats extends Service {
       });
     });
 
-    app.get('/stats/admincoop/territoire', async (req, res) => {
-      if (req.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.get('/stats/admincoop/territoire', checkAuth, async (req, res) => {
       app.get('mongoClient').then(async db => {
         let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
         const adminUser = await db.collection('users').findOne({ _id: new ObjectID(userId) });
