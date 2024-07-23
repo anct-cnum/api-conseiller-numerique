@@ -295,11 +295,7 @@ exports.Users = class Users extends Service {
       }
     });
 
-    app.post('/users/inviteAccountsPrefet', async (req, res) => {
-      if (req?.feathers?.authentication === undefined) {
-        res.status(401).send(new NotAuthenticated('User not authenticated'));
-        return;
-      }
+    app.post('/users/inviteAccountsPrefet', checkAuth, async (req, res) => {
       let userId = jwtDecode(req.feathers.authentication?.accessToken)?.sub;
       const adminUser = await this.find({
         query: {
