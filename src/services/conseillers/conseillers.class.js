@@ -400,16 +400,11 @@ exports.Conseillers = class Conseillers extends Service {
       });
     });
 
-    app.get('/conseillers/:id/statistiques.pdf', async (req, res) => {
+    app.get('/conseillers/:id/statistiques.pdf', checkAuth, async (req, res) => {
 
       app.get('mongoClient').then(async db => {
 
         const accessToken = req.feathers?.authentication?.accessToken;
-
-        if (req.feathers?.authentication === undefined) {
-          res.status(401).send(new NotAuthenticated('User not authenticated'));
-          return;
-        }
         let userId = jwtDecode(accessToken).sub;
         const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
         const rolesAllowed = [Role.Conseiller, Role.AdminCoop, Role.StructureCoop, Role.Coordinateur];
