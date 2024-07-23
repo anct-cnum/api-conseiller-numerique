@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { NotFound, Conflict, BadRequest, GeneralError, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
+const { NotFound, Conflict, BadRequest, GeneralError, Forbidden } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');

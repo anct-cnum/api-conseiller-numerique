@@ -1,6 +1,6 @@
 const { ObjectID, DBRef } = require('mongodb');
 
-const { BadRequest, NotFound, Forbidden, NotAuthenticated, GeneralError, Conflict } = require('@feathersjs/errors');
+const { BadRequest, NotFound, Forbidden, GeneralError, Conflict } = require('@feathersjs/errors');
 
 const { Service } = require('feathers-mongodb');
 
