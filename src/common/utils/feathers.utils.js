@@ -11,6 +11,14 @@ const Role = {
   Prefet: 'prefet',
 };
 
+const checkAuth = (req, res, next) => {
+  if (req.feathers?.authentication === undefined) {
+    res.status(401).send(new NotAuthenticated('User not authenticated'));
+    return;
+  }
+  next();
+};
+
 const authenticationFromRequest = req => req.feathers?.authentication ?? {};
 
 const userIdFromRequestJwt = async (app, req) => {
@@ -60,6 +68,7 @@ const canActivate = (...activationChecks) => Promise.all(activationChecks);
 
 module.exports = {
   Role,
+  checkAuth,
   authenticationFromRequest,
   userIdFromRequestJwt,
   idSubordonne,
