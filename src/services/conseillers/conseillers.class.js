@@ -16,7 +16,6 @@ const createMailer = require('../../mailer');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const {
-  checkAuth,
   checkRoleCandidat,
   checkRoleConseiller,
   checkRoleAdminCoop,
@@ -44,6 +43,7 @@ const {
   userIdFromRequestJwt,
   idSubordonne,
   Role,
+  checkAuth,
   schemaGuard,
   abort,
   csvFileResponse, existGuard
