@@ -42,7 +42,6 @@ const writeConseillersToExcelInCSVFile = conseillersToExcel => {
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const conseillersList = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     return conseillersList;
   } catch (err) {

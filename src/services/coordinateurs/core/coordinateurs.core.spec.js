@@ -84,7 +84,6 @@ describe('liste des coordinateurs', () => {
     ]);
   });
 
-  // eslint-disable-next-line max-len
   it(`devrait avoir les informations de base (id, nom, prénom) avec les informations de sa structure si la permanence principale n'est pas renseignée`, async () => {
     const coordinateur = {
       _id: 'abf48891b3f44bdf86bb7bc2601d3d5b',

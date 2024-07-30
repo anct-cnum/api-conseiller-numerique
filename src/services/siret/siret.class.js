@@ -2,7 +2,6 @@ const Joi = require('joi');
 const { NotFound, BadRequest } = require('@feathersjs/errors');
 const { getEtablissementBySiretEntrepriseApiV3, getEntrepriseBySirenEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
 
-/* eslint-disable no-unused-vars */
 exports.Siret = class Siret {
   constructor(options, app) {
     this.options = options || {};

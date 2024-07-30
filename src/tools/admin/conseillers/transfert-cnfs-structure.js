@@ -33,6 +33,7 @@ const majMiseEnRelationStructureRupture = db => async (idCNFS, nouvelleSA, ancie
   );
 };
 const historiseCollectionRupture = db => async (idCNFS, ancienneSA, dateRupture, motifRupture) => {
+
   await db.collection('conseillersRuptures').insertOne({
     conseillerId: idCNFS,
     structureId: ancienneSA,
@@ -40,7 +41,7 @@ const historiseCollectionRupture = db => async (idCNFS, ancienneSA, dateRupture,
     motifRupture
   });
 };
-// eslint-disable-next-line max-len
+
 const majMiseEnRelationStructureNouvelle = (db, app) => async (idCNFS, nouvelleSA, structureDestination, dateDebutDeContrat, dateFinDeContrat, typeDeContrat, salaireContrat) => {
   const misesEnrelationNouvelleSA = await db.collection('misesEnRelation').findOne({ 'conseiller.$id': idCNFS, 'structure.$id': nouvelleSA });
   const objectContrat = {
@@ -233,7 +234,6 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 
-  // eslint-disable-next-line max-len
   const { id, ancienne, nouvelle, rupture, dateDebutContrat, dateFinContrat, typeContrat, salaireContrat, motif, quota, notificationConseiller } = program.opts();
   if (!id || !ancienne || !nouvelle || !rupture || !dateDebutContrat || !typeContrat || !dateFinContrat || !motif) {
     exit('Paramètres invalides. Veuillez entrer les 8 paramètres requis');
@@ -285,7 +285,6 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
     'structure.$id': structureDestination._id
   });
   if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec && !quota) {
-    //eslint-disable-next-line max-len
     exit(`La structure destinataire est seulement autorisé à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recruté(s)`);
     return;
   }

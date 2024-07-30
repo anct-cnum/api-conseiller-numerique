@@ -47,7 +47,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     return;
   }
 
-  // eslint-disable-next-line max-len
   logger.info(`Date de naissance mis à jour pour le conseiller avec l'idPG: ${conseiller.idPG} qui avait une date: ${formatDate(conseiller.dateDeNaissance)} remplacer par ${date}`);
   exit();
 });

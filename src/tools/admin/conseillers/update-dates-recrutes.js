@@ -9,7 +9,6 @@ program.parse(process.argv);
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     return users;
   } catch (err) {
@@ -37,7 +36,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
         let p = new Promise(async (resolve, reject) => {
           const email = conseiller['Mail CNFS'].toLowerCase();
           //Dates dans le fichier au format DD/MM/YYYY
-          // eslint-disable-next-line max-len
           const dateFinFormation = conseiller['Date de fin de formation'] !== '#N/D' ? conseiller['Date de fin de formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1') : null;
           const datePrisePoste = conseiller['Date de départ en formation'].replace(/^(.{2})(.{1})(.{2})(.{1})(.{4})$/, '$5-$3-$1');
           const conseillerCoop = await db.collection('conseillers').findOne({ email, statut: 'RECRUTE', estRecrute: true });
@@ -45,7 +43,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             logger.warn(`Aucun conseiller recruté avec l'email '${email}' n'a été trouvé`);
             errors++;
             reject();
-          // eslint-disable-next-line max-len
           } else if (conseillerCoop.dateFinFormation !== null && dayjs(conseillerCoop.datePrisePoste).format('YYYY') !== '1970' && dayjs(conseillerCoop.dateFinFormation).format('YYYY') !== '1970') {
             alreadyOk++;
             reject();

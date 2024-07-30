@@ -35,7 +35,6 @@ const checkSiren = async siren => {
 // CSV LimeSurvey
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const users = await CSVToJSON().fromFile(filePath);
     return users;
   } catch (err) {

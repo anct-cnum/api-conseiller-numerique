@@ -28,7 +28,6 @@ const updatePermanenceAndCRAS = db => async (logger, matchLocation, coordinates,
   const verificationDateCreateCras = await db.collection('cras').distinct('createdAt', { 'permanence.$id': _id });
   const verifDateUpdatePermanence = await db.collection('permanences').distinct('updatedAt', { '_id': _id });
   if (verificationDateCreateCras[verificationDateCreateCras.length - 1] <= verifDateUpdatePermanence[0]) {
-    // eslint-disable-next-line max-len
     logger.error(`- Vérification : perm ${_id} vérification nescessaire côté cras ${incoherenceCodePostal} ${incoherenceNomCommune} => ${matchLocation.codePostal} ${matchLocation.ville}`);
     return;
   }
@@ -93,7 +92,6 @@ const resultApi = obj => ({
 const exportCsvPermanences = (exportsCSv, lot, logger) => {
   const exportCsvColonnes = [
     { label: 'permMatchOK', colonne: 'id permanence;Adresse permanence;matchOK\n' },
-    // eslint-disable-next-line max-len
     { label: 'permNotOK', colonne: 'nombre CN;id permanence;Adresse permanence;nombre résultat Api adresse (query lat/lon); Resultat Api Adresse (query lat/lon)\n' },
     { label: 'diffCityAndCodePostal', colonne: 'nombre CN;total de diff;id permanence;Adresse permanence;Resultat Api Adresse;STATUT;TRIE\n' },
     { label: 'permError', colonne: 'id permanence;message;detail\n' },
@@ -111,7 +109,6 @@ const exportCsvPermanences = (exportsCSv, lot, logger) => {
         return;
       }
       if (key === 'permNotOK') {
-        // eslint-disable-next-line max-len
         file.write(`${i.cnfsCount};${i._id};${objectCsv(i.adresse)}[${i.adresse.coordinates}];${i.resultApi?.total};${i.resultApi.fields.map(i => `${objectCsv(i)}[${i.coordinates}]`)}\n`);
         return;
       }
@@ -175,7 +172,6 @@ execute(__filename, async ({ logger, db, exit }) => {
   }
   if (partie === 'permanences') {
     logger.info(`Partie Permanences , par défaut la vérification ${acte ? 'AVEC' : 'SANS'} correction`);
-    // eslint-disable-next-line max-len
     const permanences = await db.collection('permanences').find({
       'adresse.codeCommune': { '$exists': false }
     }).limit(limit).project({ adresse: 1, location: 1, conseillers: 1, structure: 1 }).toArray();
@@ -233,23 +229,19 @@ execute(__filename, async ({ logger, db, exit }) => {
           return;
         }
         const adresseControleDiff = {
-          // eslint-disable-next-line max-len
           diffNumber: matchLocation?.properties?.housenumber?.toUpperCase() !== (adresse?.numeroRue?.toUpperCase())?.replace(' BIS', 'BIS') && ![null, '', 'null'].includes(adresse?.numeroRue),
-          // eslint-disable-next-line max-len
           diffRue: articleRue(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase()) !== articleRue(adressePerm(formatText(adresse.rue)?.toUpperCase())),
           diffCodePostal: matchLocation?.properties?.postcode?.toUpperCase() !== adresse?.codePostal?.toUpperCase(),
           diffville: formatText(district)?.toUpperCase() !== adressePerm(formatText(adresse.ville)?.toUpperCase()) &&
           adressePerm(formatText(matchLocation?.properties?.city)?.toUpperCase()) !== adressePerm(formatText(adresse.ville)?.toUpperCase())
         };
         if (adresseControleDiff?.diffRue === true) {// gérer le cas où l'api adresse à des nom "raccourdie" "bd ou Pl etc..."
-          // eslint-disable-next-line max-len
           adresseControleDiff.diffRue = articleRue(adressePerm(formatText(matchLocation?.properties?.street ?? matchLocation?.properties?.locality)?.toUpperCase())) !== articleRue(adressePerm(formatText(adresse.rue)?.toUpperCase()));
         }
         if (adresseControleDiff?.diffville === true) {// dans le cas où "SAINT" est écrit entièrement pour la ville
           adresseControleDiff.diffville = formatText(district)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase() &&
           formatText(matchLocation?.properties?.city)?.toUpperCase() !== formatText(adresse.ville)?.toUpperCase();
           if (adresseControleDiff?.diffville === true) {
-            // eslint-disable-next-line max-len
             adresseControleDiff.diffville = ![formatText(district)?.split(' ')[0]?.toUpperCase(), formatText(matchLocation?.properties?.city)?.toUpperCase()].includes(formatText(adresse.ville)?.split(' ')[0]?.toUpperCase());
           }
         }

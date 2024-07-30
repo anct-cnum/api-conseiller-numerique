@@ -25,7 +25,6 @@ program.parse(process.argv);
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     let users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     users = users.slice(~~program.ligne ?? 0);
     return users;
@@ -85,7 +84,6 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
     readCSV(program.csv).then(async conseillers => {
       const arrayDoublon = await verificationDoublonFichier(conseillers);
       if (program.verif || arrayDoublon.length > 0) {
-        // eslint-disable-next-line max-len
         exit(`Le fichier comporte ${arrayDoublon.length} doublon(s). ${arrayDoublon.length > 0 ? ` Et concerne(nt) le(s) couple(s) Id conseiller & Id structure => [${arrayDoublon}]` : ''}`);
         return;
       }
@@ -131,12 +129,10 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
             errors++;
             reject();
           } else if (!regexDateRupture.test(conseiller['Date de démission'])) {
-            // eslint-disable-next-line max-len
             logger.warn(`Format date rupture invalide : attendu DD/MM/YYYY pour le conseiller id ${conseillerId}`);
             errors++;
             reject();
           } else if (formatDateDb(dateRupture) > new Date()) {
-            // eslint-disable-next-line max-len
             logger.warn(`RUPTURE en STAND BY en raison d'un anti-daté => Date de rupture ${conseiller['Date de démission']} pour le CnFS ${conseiller['Mail du CNFS']} (${conseillerId})`);
             errors++;
             reject();

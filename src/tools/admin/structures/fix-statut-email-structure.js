@@ -27,7 +27,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     }));
   });
   await Promise.all(promises);
-  // eslint-disable-next-line max-len
   logger.info(`${countTotalStructure} structures ont été traitées, ${countActionMAJ} structures qui ont au moins une misesEnRelation && ${countNonMAJ} qui n'était pas à jour dans les misesEnRelations `);
 
   exit();

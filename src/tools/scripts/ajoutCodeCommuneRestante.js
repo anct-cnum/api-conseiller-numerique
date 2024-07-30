@@ -22,7 +22,6 @@ execute(__filename, async ({ db, logger, exit }) => {
   let countMaj = 0;
   logger.info(`Stat : ${dayjs(new Date(), 'YYYY-MM-DDTh:mm A').toDate()}`);
 
-  // eslint-disable-next-line max-len
   const idPermsInCrasSansCodeCommune = await db.collection('cras').distinct('permanence.$id', { 'cra.codeCommune': { '$exists': false }, 'permanence.$id': { '$exists': true } });
   const idsPermsSansCodeCommune = await db.collection('permanences').distinct('_id', { 'adresse.codeCommune': { '$exists': false } });
   const idsPermsTotal = await db.collection('permanences').distinct('_id');
@@ -56,7 +55,6 @@ execute(__filename, async ({ db, logger, exit }) => {
       countIncoherence++;
     } else if ((verificationDateCreateCras[verificationDateCreateCras.length - 1] <= verifDateUpdatePermanence[0]) && !ignored) {
       if (log || comparatif) {
-        // eslint-disable-next-line max-len
         logger.error(`- Vérification : perm ${idPerm} vérification nescessaire côté cras ${incoherenceCodePostal} ${incoherenceNomCommune} => ${permanenceCorriger?.adresse?.codePostal} ${permanenceCorriger?.adresse?.ville}`);
       }
       countIncoherence++;
@@ -69,18 +67,15 @@ execute(__filename, async ({ db, logger, exit }) => {
           'cra.codeCommune': permanenceCorriger?.adresse?.codeCommune,
         }
         });
-      // eslint-disable-next-line max-len
       logger.info(`- ${idPerm} => ${incoherenceCodePostal[0]} ${incoherenceNomCommune[0]} / ${permanenceCorriger?.adresse?.codePostal} ${permanenceCorriger?.adresse?.ville} (${updateCras.modifiedCount} cras corrigés)`);
       countMaj++;
     } else {
       if (log || analyse) {
-        // eslint-disable-next-line max-len
         logger.info(`- ${idPerm} => ${incoherenceCodePostal[0]} ${incoherenceNomCommune[0]} / ${permanenceCorriger?.adresse?.codePostal} ${permanenceCorriger?.adresse?.ville}`);
       }
       countMaj++;
     }
   }
-  // eslint-disable-next-line max-len
   logger.info(`${countError} en erreurs dont ${countPermsExists} pas encore corrigées & ${countPermsNotExists} qui n'existent pas (${countError - countPermsNotExists} restante(s))`);
   logger.info(`${countIncoherence} incoherence(s)`);
   logger.info(`${countMaj} qui sont Ok`);

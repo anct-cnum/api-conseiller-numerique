@@ -119,7 +119,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
   } else {
     // CHANGER LE STATUS DISPONIBLE OU NON DISPONIBLE dans 'conseillers' + 'PG djapp_coach' + 'misesEnrelation'
     if (!(disponible ^ nonDisponible)) {
-      // eslint-disable-next-line max-len
       exit('Paramètres invalides. Veuillez préciser la disponibilité ou la non disponibilité ou alors lancer la commande --supprimer pour supprimer la totalité d\'un conseiller');
       return;
     }

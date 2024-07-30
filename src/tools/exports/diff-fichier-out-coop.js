@@ -16,7 +16,6 @@ program.parse(process.argv);
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const conseillers = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
     return conseillers;
   } catch (err) {
@@ -33,7 +32,6 @@ execute(__filename, async ({ logger, db }) => {
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
-  // eslint-disable-next-line max-len
   file.write('Nom;Prenom;Mail CNFS;Date de départ en formation;Date de fin de formation;ID structure;ID conseiller\n');
 
   const csv = await readCSV(program.csv);
@@ -46,7 +44,6 @@ execute(__filename, async ({ logger, db }) => {
     promises.push(new Promise(async resolve => {
       const { structureId, nom, prenom, email, datePrisePoste, dateFinFormation, idPG } = conseiller;
       const idStructure = await db.collection('structures').findOne({ _id: structureId });
-      // eslint-disable-next-line max-len
       file.write(`${nom};${prenom};${email};${formatDate(datePrisePoste)};${formatDate(dateFinFormation)};${idStructure?.idPG};${idPG}\n`);
       resolve();
     }));
