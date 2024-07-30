@@ -5,7 +5,6 @@ const { searchUsersEmail, joinChannel } = require('../../../utils/mattermost');
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const users = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
     return users;
   } catch (err) {

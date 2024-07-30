@@ -31,13 +31,11 @@ execute(__filename, async ({ logger, db, exit }) => {
     flags: 'w'
   });
 
-  // eslint-disable-next-line max-len
   file.write('id du conseiller; Nom; Prenom; Email perso du candidat; date de recrutement prévisionelle; id de la structure; Nom de la structure; SIRET; email de contact\n');
   candidatValidee.forEach(relation => {
     promises.push(new Promise(async resolve => {
       const conseiller = await db.collection('conseillers').findOne({ _id: relation.conseiller.oid });
       const structure = await db.collection('structures').findOne({ _id: relation.structure.oid });
-      // eslint-disable-next-line max-len
       file.write(`${conseiller.idPG};${conseiller.nom};${conseiller.prenom};${conseiller.email};${dayjs(relation?.dateRecrutement).format('DD/MM/YYYY') ?? 'non renseigné'};${structure.idPG};${structure.nom};${structure?.siret ?? 'non renseigné'};${structure.contact.email}\n`);
       resolve();
     }));

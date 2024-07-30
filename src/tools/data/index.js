@@ -41,8 +41,7 @@ program.helpOption('-e', 'HELP command');
 program.parse(process.argv);
 
 execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
-  // eslint-disable-next-line no-unused-vars
-  await new Promise(async (resolve, reject) => {
+  await new Promise(async resolve => {
     const limit = ~~program.limit;
     const collection = program.collection;
     const deleteDataNonDispoAndUsersExterne = program.delete;
@@ -54,7 +53,6 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
       exit(`ATTENTION : les 6 vars d'env PG n'ont pas été configurées`);
       return;
     }
-    // eslint-disable-next-line max-len
     if ((!process.env.PGHOST.includes('local') && !process.env.PGHOST.includes('test')) || !whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra')) || (process.env.CAN_ANONYMIZE_FAKER !== 'true')) {
       exit('Ce script ne peut être lancé qu\'en local ou en recette !');
       return;

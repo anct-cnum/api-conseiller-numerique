@@ -27,7 +27,6 @@ execute(__filename, async ({ db, logger, exit }) => {
       logger.error(`Conseiller RECRUTE mais sans contrat id: ${conum.idPG} (id: ${conum._id})`);
     } else if (terminee[0]?.dateRupture) {
       logger.error(`Conseiller id: ${conum.idPG} a un terminee avec des infos de ruptures (id: ${conum._id})`);
-    // eslint-disable-next-line max-len
     } else if (renouvellementInitiee.length === 1 && (nouvelleRupture.length === 1 || finaliseeRupture.find(i => String(i.structure.oid) === String(renouvellementInitiee[0]?.structure.oid)))) {
       logger.error(`Conseiller id: ${conum.idPG} a un contrat en rupture avec en parallèle un renouvellement en cours (id: ${conum._id})`);
     } else {

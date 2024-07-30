@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-/* eslint-disable no-undef */
-
 const { isValidObjectId, getStructureIdsOldUrl } = require('./populate-rdv-aide-numerique.utils');
 
 describe('Vérification de la validité d\'une chaîne reçue en tant que OID', () => {

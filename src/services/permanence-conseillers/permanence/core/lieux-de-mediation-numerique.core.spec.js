@@ -1,7 +1,6 @@
 const { lieuxDeMediationNumerique } = require('./lieux-de-mediation-numerique.core');
 const { ConditionAcces, Service, LabelNational } = require('@gouvfr-anct/lieux-de-mediation-numerique');
 
-// eslint-disable-next-line max-len
 const TEST_SERVICES = `${Service.PrendreEnMainUnSmartphoneOuUneTablette};${Service.PrendreEnMainUnOrdinateur};${Service.UtiliserLeNumerique};${Service.ApprofondirMaCultureNumerique}`;
 
 describe('lieux de médiation numérique', () => {
@@ -35,7 +34,6 @@ describe('lieux de médiation numérique', () => {
         commune: 'Reims',
         code_postal: '51100',
         adresse: '12 BIS RUE DE LECLERCQ',
-        // eslint-disable-next-line max-len
         services: TEST_SERVICES,
         source: 'conseiller-numerique',
         date_maj: '2022-12-01',
@@ -2306,7 +2304,6 @@ describe('lieux de médiation numérique', () => {
       aidants: [
         { _id: 'aaa88891b3f44bdf86bb7bc2601d3fff', prenom: 'JEAN claude', nom: 'de la rivière', emailPro: 'jean-claude@gouv.fr', telephonePro: '+33112341234' },
         { _id: 'bbb88891b3f44bdf86bb7bc2601d3ggg', prenom: 'jean', nom: 'DUPOND', emailPro: 'jean.dupond@gouv.fr', telephonePro: '+33112341234' },
-        // eslint-disable-next-line max-len
         { _id: 'ccc88891b3f44bdf86bb7bc2601d3hhh', prenom: 'jean-pierre', nom: 'dupont-dupond', emailPro: 'jean-pierre.dupont@gouv.fr', telephonePro: '+33112341234' }
       ]
     };

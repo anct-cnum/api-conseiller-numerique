@@ -53,16 +53,13 @@ const updateSubordonnes = db => async (coordinateur, list, type) => {
   await updateConumSubordonnes(db)({ 'coordinateurs': { $elemMatch: { id: coordinateur.id } } }, { $pull: { 'coordinateurs': { id: coordinateur.id } } });
   switch (type) {
     case 'codeRegion':
-      // eslint-disable-next-line max-len
       await updateConumSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeRegionStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     case 'codeDepartement':
-      // eslint-disable-next-line max-len
       await updateConumSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'codeDepartementStructure': { '$in': list } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     case 'codeCommune':
       const structureIdList = await db.collection('structures').distinct('_id', { 'codeCommune': { '$in': list } });
-      // eslint-disable-next-line max-len
       await updateConumSubordonnes(db)({ '_id': { $ne: coordinateur.id }, 'structureId': { '$in': structureIdList } }, { $push: { 'coordinateurs': coordinateur } });
       break;
     default: // conseillers
@@ -75,7 +72,6 @@ const updateSubordonnes = db => async (coordinateur, list, type) => {
 // CSV importé
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const lines = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
     return lines;
   } catch (err) {
@@ -179,7 +175,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
             reject();
           }
           if (total === ok + error) {
-            // eslint-disable-next-line max-len
             logger.warn(`Liste des ${listCoordinateurs.filter(i => !coordoFichier.includes(i))?.length} coordos manquante dans le fichier => ${listCoordinateurs.filter(i => !coordoFichier.includes(i)).map(i => i + '\r\n')}`);
             logger.info(`Fin de la création du rôle coordinateur_ pour les conseillers du fichier d'import : ${ok} traité(s) & ${error} en erreur`);
             exit();

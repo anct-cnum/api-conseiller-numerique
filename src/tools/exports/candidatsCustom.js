@@ -17,12 +17,10 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  // eslint-disable-next-line max-len
   file.write('prenom;nom;email\n');
   miseEnrelations.forEach(miseEnrelation => {
     promises.push(new Promise(async resolve => {
       let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
-      // eslint-disable-next-line max-len
       file.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email}\n`);
       resolve();
     }));
