@@ -20,11 +20,9 @@ execute(__filename, async ({ logger, db, exit }) => {
 
     if (verifSAStatut || verifQuotaSA) {
       if (verifSAStatut) {
-        // eslint-disable-next-line max-len
         logger.error(`La structure ${structure.nom} (id: ${structure.idPG}) à un statut "${structure.statut}" mais a pourtant au moins 1 conseiller SELECTIONNE || RECRUTE`);
       }
       if (verifQuotaSA) {
-      // eslint-disable-next-line max-len
         logger.error(`La structure ${structure.idPG} a dépassé le quota (${countMiseEnrelation} misesEnRelation > ${dernierCoselec.nombreConseillersCoselec} poste(s) autorisé) `);
       }
       countError++;

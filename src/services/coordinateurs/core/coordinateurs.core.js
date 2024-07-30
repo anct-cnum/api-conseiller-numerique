@@ -2,7 +2,6 @@ const { formatAddressFromInsee, formatAddressFromPermanence } = require('../../c
 
 const formatTexte = texte => texte.toLowerCase().replace(/(^\w{1})|([\s,-]+\w{1})/g, letter => letter.toUpperCase());
 
-// eslint-disable-next-line max-len
 const COURRIEL_REGEXP = /^(?:(?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@(?:(?:\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}])|(?:(?:[A-Za-zÀ-ÖØ-öø-ÿ\-\d]+\.)+[a-zA-Z]{2,}))$/;
 const courrielIfAny = courriel => courriel && COURRIEL_REGEXP.test(courriel) ? { courriel } : {};
 

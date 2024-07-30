@@ -28,9 +28,7 @@ execute(__filename, async ({ db, logger, exit }) => {
     }
     // Partie controle éligibilité :
     if (conseillerRupture?.email !== conseillerActif?.email && !ignored) {
-      // eslint-disable-next-line max-len
       if ((conseillerRupture?.nom.toUpperCase() !== conseillerActif?.nom?.toUpperCase()) || (conseillerRupture?.prenom.toUpperCase() !== conseillerActif?.prenom.toUpperCase())) {
-        // eslint-disable-next-line max-len
         exit(`Non éligible à la fusion de compte => ${conseillerRupture?.nom} ${conseillerRupture?.prenom} !== ${conseillerActif?.nom} ${conseillerActif?.prenom}`);
         return;
       }

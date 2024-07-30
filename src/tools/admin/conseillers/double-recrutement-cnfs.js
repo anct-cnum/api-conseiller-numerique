@@ -17,7 +17,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   let datePrevisionnelle = program.date;
   let statut = program.statut;
 
-  // eslint-disable-next-line max-len
   if ((idPGStructure === 0) || (idPGConseiller === 0) || (statut === 'recrutee' && !controleDate.test(datePrevisionnelle)) || !['recrutee', 'interessee'].includes(statut)) {
     exit('Paramètres invalides. Veuillez préciser un statut, un id conseiller & id structure ainsi que la date prévisionnelle si statut recrutee');
     return;

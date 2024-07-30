@@ -14,7 +14,6 @@ program.parse(process.argv);
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const conseillers = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
     return conseillers;
   } catch (err) {
@@ -30,7 +29,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
-  // eslint-disable-next-line max-len
   file.write('ID CNFS;Id ou email CNFS;Prénom;Nom;Raison sociale;Commune;Département;Date de fin de formation;Lot;Parcours;Palier PIX;ID structure;Type de structure;email Pro\n');
   await new Promise(resolve => {
     readCSV(program.csv).then(async conseillers => {
@@ -38,7 +36,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
         promises.push(new Promise(async resolve => {
           const conseillerId = parseInt(conseiller['ID CNFS']);
           const cnfs = await db.collection('conseillers').findOne({ idPG: conseillerId });
-          // eslint-disable-next-line max-len
           file.write(`${conseillerId};${conseiller['Id ou email CNFS']};${conseiller['Prénom']};${conseiller['Nom']};${conseiller['Raison sociale']};${conseiller['Commune']};${conseiller['Département']};${conseiller['Date de fin de formation']};${conseiller['Lot']};${conseiller['Parcours']};${conseiller['Palier PIX']};${conseiller['ID structure']};${conseiller['Type de structure']};${cnfs?.mattermost?.id ? cnfs?.emailCN?.address : 'COOP non activé'}\n`);
           resolve();
         }));

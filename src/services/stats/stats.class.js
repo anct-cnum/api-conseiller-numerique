@@ -364,7 +364,6 @@ exports.Stats = class Stats extends Service {
         );
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, dateFin, type, idType, query.codePostal)}.csv`,
-          // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, dateFin, type, idType, query.codePostal, query.ville, statsFct.checkRole(userFinal?.roles, Role.AdminCoop))
         );
       }).catch(routeActivationError => abort(res, routeActivationError));

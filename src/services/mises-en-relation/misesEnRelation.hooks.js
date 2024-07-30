@@ -74,7 +74,6 @@ module.exports = {
               paginate: false //important pour ne pas être limité par la pagination
             });
             if (misesEnRelationRecrutees.length >= dernierCoselec.nombreConseillersCoselec) {
-              //eslint-disable-next-line max-len
               throw new Forbidden('Action non autorisée : quota atteint de conseillers validés par rapport au nombre de postes attribués', dernierCoselec.nombreConseillersCoselec);
             }
           }
@@ -120,7 +119,6 @@ module.exports = {
               paginate: false //important pour ne pas être limité par la pagination
             });
             if (misesEnRelationRecrutees.length >= dernierCoselec.nombreConseillersCoselec) {
-              //eslint-disable-next-line max-len
               throw new Forbidden('Action non autorisée : quota atteint de conseillers validés par rapport au nombre de postes attribués', dernierCoselec.nombreConseillersCoselec);
             }
           }

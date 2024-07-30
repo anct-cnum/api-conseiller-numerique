@@ -54,7 +54,6 @@ const insertDailyCrasStatsByConseiller = async (db, query, logger) => {
       await db.collection('stats_conseillers_cras').updateOne(queryUpd, remove, options);
 
       //Ajout ou mise à jour de la nouvelle stat correspondante au mois et à l'annee
-      // eslint-disable-next-line max-len
       const update = { $push: { [String(statsToUpdate.annee)]: { 'mois': statsToUpdate.mois, 'totalCras': totalCras, 'indication': listMois[statsToUpdate.mois] } } };
       const result = await db.collection('stats_conseillers_cras').updateOne(queryUpd, update, options);
 

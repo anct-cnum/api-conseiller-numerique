@@ -1,4 +1,3 @@
-/* eslint-disable comma-spacing */
 const { ObjectID } = require('mongodb');
 
 function filterUserActif(isUserActif) {

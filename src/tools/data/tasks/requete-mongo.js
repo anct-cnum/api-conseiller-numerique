@@ -35,7 +35,6 @@ const updateUserMulticompteStructure = db => async (id, idMongoUser, email, toke
   await db.collection(`users${suffix}`).updateOne({ '_id': idMongoUser, 'entity.$id': id }, { $set: { name: email, token, password, tokenCreatedAt } });
 
 const updateIdMongoStructureMisesEnRelation = db => async (idOriginal, newIdMongo) =>
-  // eslint-disable-next-line max-len
   await db.collection(`misesEnRelation${suffix}`).updateMany({ 'structure.$id': idOriginal }, { $set: { 'structure.$id': newIdMongo, 'structureObj._id': newIdMongo } });
 
 const updateIdMongoStructureUser = db => async (idOriginal, newIdMongo) =>

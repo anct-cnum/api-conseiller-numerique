@@ -240,7 +240,6 @@ exports.Conseillers = class Conseillers extends Service {
       if (conseiller.cv?.file) {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
-        // eslint-disable-next-line no-unused-vars
         const command = new DeleteObjectCommand(paramsDelete);
         await client.send(command).then(async () => {
           try {
@@ -497,7 +496,6 @@ exports.Conseillers = class Conseillers extends Service {
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, dateFin)}.csv`,
-          // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
@@ -824,21 +822,16 @@ exports.Conseillers = class Conseillers extends Service {
         const minDate = dayjs().subtract(99, 'year');
         const maxDate = dayjs().subtract(18, 'year');
         const schema = Joi.object({
-          // eslint-disable-next-line max-len
           email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
-          // eslint-disable-next-line max-len
           emailPro: Joi.string().trim().optional().allow('', null).regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email professionnellle est invalide')),
-          // eslint-disable-next-line max-len
           telephonePro: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
           sexe: Joi.string().valid('Homme', 'Femme', 'Autre').required().error(new Error('Le champ sexe est invalide')),
-          // eslint-disable-next-line max-len
           dateDeNaissance: Joi.date().required().min(minDate).max(maxDate).error(new Error('La date de naissance est invalide'))
         });
         const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
         let extended = '';
         if (!regexOldTelephone.test(conseiller.telephone) || conseiller.telephone !== telephone) {
           extended = schema.keys({
-            // eslint-disable-next-line max-len
             telephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
           }).validate(body);
         } else {
@@ -972,9 +965,7 @@ exports.Conseillers = class Conseillers extends Service {
         nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),
         prenom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ prénom est obligatoire')),
         fonction: Joi.string().trim().min(2).max(100).required().error(new Error('Le champ fonction est obligatoire')),
-        // eslint-disable-next-line max-len
         email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
-        // eslint-disable-next-line max-len
         numeroTelephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone est invalide')),
       }).validate(supHierarchique);
       if (superieurHierarchiqueValidation.error) {

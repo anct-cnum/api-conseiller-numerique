@@ -41,7 +41,6 @@ execute(__filename, async ({ logger, db }) => {
   conseillers.forEach(e => {
     promises.push(new Promise(async resolve => {
       const typeDeContrat = !typeContratOfficial.includes(e.typeDeContrat) ? '' : e.typeDeContrat;
-      // eslint-disable-next-line max-len
       file.write(`${e.conseillerObj.nom};${e.conseillerObj.prenom};${e.conseillerObj.idPG};${e.structureObj.idPG};${e.dateDebutDeContrat ? formatDate(e.dateDebutDeContrat) : ''};${e.dateFinDeContrat ? formatDate(e.dateFinDeContrat) : ''};${typeDeContrat};\n`);
       resolve();
     }));

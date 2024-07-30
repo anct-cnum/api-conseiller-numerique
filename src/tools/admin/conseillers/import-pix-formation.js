@@ -14,7 +14,6 @@ program.parse(process.argv);
 // CSV PIX
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const conseillers = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     return conseillers;
   } catch (err) {

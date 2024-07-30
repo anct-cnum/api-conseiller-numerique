@@ -39,18 +39,14 @@ exports.Users = class Users extends Service {
         const schema = Joi.object({
           prenom: Joi.string().error(new Error('Le nom est invalide')),
           nom: Joi.string().error(new Error('Le nom est invalide')),
-          // eslint-disable-next-line max-len
           telephone: Joi.string().required().regex(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
-          // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
-          // eslint-disable-next-line max-len
           email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
         });
         const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
         let extended = '';
         if (!regexOldTelephone.test(telephone)) {
           extended = schema.keys({
-            // eslint-disable-next-line max-len
             telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
           }).validate(body);
         } else {
@@ -448,7 +444,6 @@ exports.Users = class Users extends Service {
       const token = req.params.token;
       const password = req.body.password;
       const typeEmail = req.body.typeEmail;
-      // eslint-disable-next-line max-len
       const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
       if (passwordValidation.error) {
         res.status(400).json(new BadRequest(passwordValidation.error));
@@ -592,7 +587,6 @@ exports.Users = class Users extends Service {
       const user = users.data[0];
       let hiddenEmail = '';
       if (user.roles.includes('conseiller') && user.passwordCreated === false) {
-        // eslint-disable-next-line max-len
         res.status(409).send(new Conflict(`Vous n'avez pas encore activé votre compte. Pour cela, cliquez sur le lien d'activation fourni dans le mail ayant pour objet "Activer votre compte Coop des Conseillers numériques"`, {
           username
         }).toJSON());
@@ -722,7 +716,6 @@ exports.Users = class Users extends Service {
         return;
       }
       const password = req.body.password;
-      // eslint-disable-next-line max-len
       const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
       if (passwordValidation.error) {
         res.status(400).json(new BadRequest(passwordValidation.error));
@@ -753,7 +746,6 @@ exports.Users = class Users extends Service {
 
         if (conseiller?.emailCN?.address) {
           await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
-            // eslint-disable-next-line max-len
             return patchApiMattermostLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);

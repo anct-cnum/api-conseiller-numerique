@@ -32,7 +32,6 @@ execute(__filename, async ({ db, logger, exit }) => {
   }
   logger.info(`Stat : ${dayjs(new Date(), 'YYYY-MM-DDTh:mm A').toDate()}`);
   const idPermanence = new ObjectId(permanence);
-  // eslint-disable-next-line max-len
   const idPermsInCrasSansCodeCommune = await db.collection('cras').distinct('permanence.$id', { 'cra.codeCommune': { '$exists': false }, 'permanence.$id': { '$exists': true } });
   const idsPermsTotal = await db.collection('permanences').distinct('_id');
   const idPermsInexistante = idPermsInCrasSansCodeCommune.map(i => String(i)).filter(i => !idsPermsTotal.map(i => String(i)).includes(i))?.length;
@@ -57,7 +56,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     }
 
     if (partie === 'sauvegarde') {
-    // eslint-disable-next-line max-len
       logger.info(`Il y a ${countCrasPermanence} (${codePostal} ${ville} => ${getPermanence.adresse.codePostal} ${getPermanence.adresse.ville}) qui auront bien la permanence.$id (SAUVEGARDE)`);
       if (correction) {
         if (!getPermanence.adresse?.codeCommune) {
@@ -84,7 +82,6 @@ execute(__filename, async ({ db, logger, exit }) => {
       if (((incoherenceNomCommune.length >= 2) || (incoherenceCodePostal.length >= 2))) {
         logger.error(`Permanence id : ${idPerm} a des différences dans les cras ${incoherenceCodePostal} / ${incoherenceNomCommune}`);
       } else if ((verificationDateCreateCras[verificationDateCreateCras.length - 1] <= verifDateUpdatePermanence[0])) {
-        // eslint-disable-next-line max-len
         logger.error(`- Vérification : perm ${idPerm} (${permanenceCorriger?.adresse?.codePostal} ${permanenceCorriger?.adresse?.ville}) vérification nescessaire côté cras ${incoherenceCodePostal} ${incoherenceNomCommune} => ${permanenceCorriger?.adresse?.codePostal} ${permanenceCorriger?.adresse?.ville}`);
       }
     }

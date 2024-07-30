@@ -13,7 +13,6 @@ program
 // CSV PIX
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const users = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     return users;
   } catch (err) {
