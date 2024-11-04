@@ -34,6 +34,11 @@ execute(__filename, async ({ logger, db }) => {
                 countEmailPerso++;
                 idCoordoEmailPerso.push(conseiller.idPG);
             }
+            const checkUserExist = await db.collection('users').findOne({ name: query.email });
+            if (checkUserExist) {
+                logger.error(`Coordinateur id: ${conseiller.idPG} (${conseiller.emailCN.adress}) : conflit, email déjà existante => ${query.email}`);
+                return resolve();
+            }
             await db.collection('users').updateOne({ _id: user._id }, { $set: { name: query.email }, $unset: { sub: '' } });
             count++;
             resolve();
