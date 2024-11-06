@@ -185,7 +185,7 @@ exports.Users = class Users extends Service {
           res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
           return;
         }
-        if (conseiller?.statut === 'RECRUTE' &&  nouveauEmailPro !== conseiller?.emailPro) {
+        if (conseiller?.statut === 'RECRUTE' && nouveauEmailPro !== conseiller?.emailPro) {
           const gandi = app.get('gandi');
           if (nouveauEmail.includes(gandi.domain)) {
             res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
@@ -207,7 +207,7 @@ exports.Users = class Users extends Service {
               tokenChangementMailProCreatedAt: new Date(),
               mailProAModifier: emailPro.toLowerCase()
             };
-            await db.collection('conseillers').updateOne({_id: id}, { $set: setMailProAConfirmer });
+            await db.collection('conseillers').updateOne({ _id: id }, { $set: setMailProAConfirmer });
             await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id },
               { '$set': {
                 'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
@@ -261,7 +261,7 @@ exports.Users = class Users extends Service {
             return;
           }
         }
-        res.send({ success: true, sendmail: nouveauEmail === userConnected.data[0].name ||  nouveauEmailPro !== conseiller?.emailPro });
+        res.send({ success: true, sendmail: nouveauEmail === userConnected.data[0].name || nouveauEmailPro !== conseiller?.emailPro });
       });
     });
 

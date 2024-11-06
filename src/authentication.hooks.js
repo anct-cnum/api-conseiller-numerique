@@ -57,6 +57,7 @@ module.exports = {
                 });
               let mailer = createMailer(context.app);
               const emails = createEmails(db, mailer);
+              let emailUser = user.name;
               let message = emails.getEmailMessageByTemplateName('codeVerificationMotDePasseConseiller');
               await message.send(user, emailUser);
               throw new Error('PROCESS_LOGIN_UNBLOCKED');
