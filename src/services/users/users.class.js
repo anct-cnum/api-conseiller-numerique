@@ -135,6 +135,136 @@ exports.Users = class Users extends Service {
 
     });
 
+    app.patch('/conseiller/updateInfosConseiller/:id', checkAuth, async (req, res) => {
+      app.get('mongoClient').then(async db => {
+        const nouveauEmail = req.body.email.toLowerCase();
+        const nouveauEmailPro = req.body.emailPro?.toLowerCase();
+        let { telephone, dateDisponibilite, email, emailPro } = req.body;
+        telephone = telephone.trim();
+        email = email.trim();
+        emailPro = emailPro?.trim();
+        const mongoDateDisponibilite = new Date(dateDisponibilite);
+        const body = { telephone, dateDisponibilite, email, emailPro };
+        const schema = Joi.object({
+          telephone: Joi.string().required().regex(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
+          dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
+          email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
+          emailPro: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
+        });
+        const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
+        let extended = '';
+        if (!regexOldTelephone.test(telephone)) {
+          extended = schema.keys({
+            telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
+          }).validate(body);
+        } else {
+          extended = schema.keys({
+            telephone: Joi.string().required().regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
+          }).validate(body);
+        }
+
+        if (extended.error) {
+          res.status(400).json(new BadRequest(extended.error));
+          return;
+        }
+        const idUser = req.params.id;
+        const userConnected = await this.find({ query: { _id: idUser } });
+        const id = userConnected?.data[0].entity?.oid;
+        const conseiller = await db.collection('conseillers').findOne({ _id: id });
+        const changeInfos = { telephone, 'dateDisponibilite': mongoDateDisponibilite };
+        const changeInfosMisesEnRelation = {
+          'conseillerObj.telephone': telephone,
+          'conseillerObj.dateDisponibilite': mongoDateDisponibilite
+        };
+        try {
+          await app.service('conseillers').patch(id, changeInfos);
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id }, { $set: changeInfosMisesEnRelation });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+          return;
+        }
+        if (conseiller?.statut === 'RECRUTE' &&  nouveauEmailPro !== conseiller?.emailPro) {
+          const gandi = app.get('gandi');
+          if (nouveauEmail.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
+          const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: nouveauEmailPro });
+          if (verificationEmail !== 0) {
+            logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
+            res.status(409).send(new Conflict('Erreur: l\'email professionnelle est déjà utilisé par un autre utilisateur', {
+              emailPro
+            }).toJSON());
+            return;
+          }
+          try {
+            const setMailProAConfirmer = {
+              tokenChangementMailPro: uuidv4(),
+              tokenChangementMailProCreatedAt: new Date(),
+              mailProAModifier: emailPro.toLowerCase()
+            };
+            await db.collection('conseillers').updateOne({_id: id}, { $set: setMailProAConfirmer });
+            await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id },
+              { '$set': {
+                'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
+                'conseillerObj.tokenChangementMailProCreatedAt': setMailProAConfirmer.tokenChangementMailProCreatedAt,
+                'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
+              } });
+            const conseiller = await db.collection('conseillers').findOne({ _id: id });
+            conseiller.nouveauEmailPro = emailPro.toLowerCase();
+            let mailer = createMailer(app, emailPro);
+            const emails = createEmails(db, mailer);
+            let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmailPro');
+            await message.send(conseiller);
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+            return;
+          }
+        }
+
+        if (nouveauEmail !== userConnected.data[0].name) {
+          const gandi = app.get('gandi');
+          if (nouveauEmail.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
+          const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
+          // vérification si le nouvel email est déjà utilisé par un conseiller
+          const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: { $exists: true }, email: nouveauEmail });
+          if (verificationEmail !== 0 || hasUserCoop !== 0) {
+            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé.`);
+            res.status(409).send(new Conflict('Erreur: l\'email saisi est déjà utilisé', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
+          try {
+            await this.patch(idUser, { $set: { token: uuidv4(), tokenCreatedAt: new Date(), mailAModifier: nouveauEmail } });
+            const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
+            user.nouveauEmail = nouveauEmail;
+            let mailer = createMailer(app, nouveauEmail);
+            const emails = createEmails(db, mailer);
+            let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
+            await message.send(user);
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+            return;
+          }
+        }
+        res.send({ success: true, sendmail: nouveauEmail === userConnected.data[0].name ||  nouveauEmailPro !== conseiller?.emailPro });
+      });
+    });
+
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {
       app.get('mongoClient').then(async db => {
         const token = req.params.token;

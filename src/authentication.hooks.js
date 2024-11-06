@@ -57,11 +57,6 @@ module.exports = {
                 });
               let mailer = createMailer(context.app);
               const emails = createEmails(db, mailer);
-              let emailUser = user.name;
-              if (user.roles.includes('conseiller')) {
-                const conum = await db.collection('conseillers').findOne({ _id: user?.entity.oid });
-                emailUser = conum.email;
-              }
               let message = emails.getEmailMessageByTemplateName('codeVerificationMotDePasseConseiller');
               await message.send(user, emailUser);
               throw new Error('PROCESS_LOGIN_UNBLOCKED');
