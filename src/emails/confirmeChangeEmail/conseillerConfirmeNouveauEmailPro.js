@@ -8,7 +8,7 @@ module.exports = (db, mailer) => {
 
     return mailer.render(__dirname, templateName, {
       conseiller,
-      link: utils.getEspaceCoopUrl(`/conseillers/confirmation-email/${(conseiller.tokenChangementMailPro)}`),
+      link: utils.getEspaceCandidatUrl(`/conseillers/confirmation-email/${(conseiller.tokenChangementMailPro)}`),
     });
   };
 
