@@ -261,7 +261,7 @@ exports.Users = class Users extends Service {
             return;
           }
         }
-        res.send({ success: true, sendmail: nouveauEmail === userConnected.data[0].name || nouveauEmailPro !== conseiller?.emailPro });
+        res.send({ success: true, sendmail: nouveauEmail !== userConnected.data[0].name || nouveauEmailPro !== conseiller?.emailPro });
       });
     });
 
