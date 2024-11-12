@@ -3,6 +3,8 @@
   "30 0 * * * $ROOT/src/tools/jobs/mises-en-relation.sh",
   "*/15 * * * * $ROOT/src/tools/jobs/create-account-structures.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh",
+  "0 0 * * * $ROOT/src/tools/jobs/stats-daily-cras.sh",
+  "0 6 * * * $ROOT/src/tools/jobs/stats-territoires.sh",
   "0 7 * * * $ROOT/src/tools/jobs/unset-token-modification-email",
   "*/1 * * * * $ROOT/src/tools/jobs/create-account-candidats.sh",
   "*/1 * * * * $ROOT/src/tools/jobs/send-email-candidats.sh",
