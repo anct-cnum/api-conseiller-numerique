@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { Conflict, GeneralError, BadRequest, NotFound } = require('@feathersjs/errors');
+const { Conflict, GeneralError, NotFound } = require('@feathersjs/errors');
 const logger = require('../../logger');
 
 const {
@@ -13,20 +13,21 @@ const {
 } = require('../../common/utils/feathers.utils');
 
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
-const {
-  updatePermanenceToSchema,
-  updatePermanencesToSchema,
-  validationPermamences,
-  locationDefault
-} = require('./permanence/utils/update-permanence.utils');
+// const {
+//   updatePermanenceToSchema,
+//   updatePermanencesToSchema,
+//   validationPermamences,
+//   locationDefault
+// } = require('./permanence/utils/update-permanence.utils');
 
 const {
   getPermanenceById, getPermanencesByConseiller, getPermanencesByStructure,
-  createPermanence, setPermanence, setReporterInsertion, deletePermanence,
-  deleteConseillerPermanence, updatePermanences, updateConseillerStatut,
-  getPermanences, deleteCraPermanence, deleteCraConseillerPermanence,
+  // createPermanence, setPermanence, setReporterInsertion, deletePermanence,
+  // deleteConseillerPermanence, updatePermanences, updateConseillerStatut,
+  getPermanences,
+  // deleteCraPermanence, deleteCraConseillerPermanence,
   checkPermanenceExistsBySiret, getAdressesCheckedByLocation,
-  checkPermanenceExistsByLocation,
+  // checkPermanenceExistsByLocation,
 } = require('./permanence/repositories/permanence-conseiller.repository');
 
 const axios = require('axios');
@@ -132,103 +133,103 @@ exports.PermanenceConseillers = class Sondages extends Service {
 
     });
 
-    app.post('/permanences/conseiller/:id/create', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const connection = app.get('mongodb');
-      const database = connection.substr(connection.lastIndexOf('/') + 1);
-      const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
-      let permanence = {
-        ...query
-      };
-      const conseillerId = req.params.id;
-      let { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
-      emailPro = emailPro?.trim();
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro });
-        if (error) {
-          logger.error(error);
-          return res.status(400).send(new BadRequest(error).toJSON());
-        }
-        const existsPermanence = await checkPermanenceExistsByLocation(db)(permanence.location, permanence.adresse, permanence.structureId);
-        if (existsPermanence) {
-          return res.status(500).send(new GeneralError('La création de permanence est impossible : l\'adresse est déjà enregistrer en base.').toJSON());
-        }
-        await locationDefault(permanence);
-        await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro).then(async idPermanence => {
-          if (idOldPermanence) {
-            return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
-              return res.send({ isCreated: true, idPermanence, existsPermanence });
-            }).catch(error => {
-              app.get('sentry').captureException(error);
-              logger.error(error);
-              return res.status(500).send(new GeneralError('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
-            });
-          } else {
-            return res.send({ isCreated: true, idPermanence, existsPermanence });
-          }
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(409).send(new Conflict('La création de permanence a échoué, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    // app.post('/permanences/conseiller/:id/create', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const connection = app.get('mongodb');
+    //   const database = connection.substr(connection.lastIndexOf('/') + 1);
+    //   const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
+    //   let permanence = {
+    //     ...query
+    //   };
+    //   const conseillerId = req.params.id;
+    //   let { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
+    //   emailPro = emailPro?.trim();
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro });
+    //     if (error) {
+    //       logger.error(error);
+    //       return res.status(400).send(new BadRequest(error).toJSON());
+    //     }
+    //     const existsPermanence = await checkPermanenceExistsByLocation(db)(permanence.location, permanence.adresse, permanence.structureId);
+    //     if (existsPermanence) {
+    //       return res.status(500).send(new GeneralError('La création de permanence est impossible : l\'adresse est déjà enregistrer en base.').toJSON());
+    //     }
+    //     await locationDefault(permanence);
+    //     await createPermanence(db)(permanence, conseillerId, hasPermanence, telephonePro, emailPro).then(async idPermanence => {
+    //       if (idOldPermanence) {
+    //         return deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(async () => {
+    //           return res.send({ isCreated: true, idPermanence, existsPermanence });
+    //         }).catch(error => {
+    //           app.get('sentry').captureException(error);
+    //           logger.error(error);
+    //           return res.status(500).send(new GeneralError('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+    //         });
+    //       } else {
+    //         return res.send({ isCreated: true, idPermanence, existsPermanence });
+    //       }
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(409).send(new Conflict('La création de permanence a échoué, veuillez réessayer.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
-    app.patch('/permanences/conseiller/:id/update/:idPermanence', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const connection = app.get('mongodb');
-      const database = connection.substr(connection.lastIndexOf('/') + 1);
-      const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
-      let permanence = {
-        ...query
-      };
-      const conseillerId = req.params.id;
-      const permanenceId = req.params.idPermanence;
-      let { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
-      emailPro = emailPro?.trim();
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro });
-        if (error) {
-          logger.error(error);
-          return res.status(400).send(new BadRequest(error).toJSON());
-        }
-        await locationDefault(permanence);
-        await setPermanence(db)(permanenceId, permanence, conseillerId, hasPermanence,
-          telephonePro, emailPro).then(() => {
-          if (idOldPermanence) {
-            deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
-              return res.send({ isUpdated: true });
-            }).catch(error => {
-              app.get('sentry').captureException(error);
-              logger.error(error);
-              return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
-            });
-          } else {
-            return res.send({ isUpdated: true });
-          }
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    // app.patch('/permanences/conseiller/:id/update/:idPermanence', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const connection = app.get('mongodb');
+    //   const database = connection.substr(connection.lastIndexOf('/') + 1);
+    //   const query = updatePermanenceToSchema(req.body.permanence, req.params.id, database);
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
+    //   let permanence = {
+    //     ...query
+    //   };
+    //   const conseillerId = req.params.id;
+    //   const permanenceId = req.params.idPermanence;
+    //   let { hasPermanence, telephonePro, emailPro, idOldPermanence } = req.body.permanence;
+    //   emailPro = emailPro?.trim();
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     const error = await validationPermamences({ ...query, hasPermanence, telephonePro, emailPro });
+    //     if (error) {
+    //       logger.error(error);
+    //       return res.status(400).send(new BadRequest(error).toJSON());
+    //     }
+    //     await locationDefault(permanence);
+    //     await setPermanence(db)(permanenceId, permanence, conseillerId, hasPermanence,
+    //       telephonePro, emailPro).then(() => {
+    //       if (idOldPermanence) {
+    //         deleteConseillerPermanence(db)(idOldPermanence, conseillerId).then(() => {
+    //           return res.send({ isUpdated: true });
+    //         }).catch(error => {
+    //           app.get('sentry').captureException(error);
+    //           logger.error(error);
+    //           return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+    //         });
+    //       } else {
+    //         return res.send({ isUpdated: true });
+    //       }
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
     app.get('/permanences/verifySiret/:siret', async (req, res) => {
       const db = await app.get('mongoClient');
@@ -352,132 +353,132 @@ exports.PermanenceConseillers = class Sondages extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.post('/permanences/reporter', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
+    // app.post('/permanences/reporter', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
 
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        await setReporterInsertion(db)(user._id).then(() => {
-          return res.send({ isReporter: true });
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(409).send(new Conflict('Une erreur est survenue au moment du report du formulaire, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     await setReporterInsertion(db)(user._id).then(() => {
+    //       return res.send({ isReporter: true });
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(409).send(new Conflict('Une erreur est survenue au moment du report du formulaire, veuillez réessayer.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
-    app.delete('/permanence/:id', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
-      const idPermanence = req.params.id;
+    // app.delete('/permanence/:id', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
+    //   const idPermanence = req.params.id;
 
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        await deletePermanence(db)(idPermanence).then(async () => {
-          await deleteCraPermanence(db)(idPermanence).then(() => {
-            return res.send({ isDeleted: true });
-          }).catch(error => {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            return res.status(409).send(new Conflict('La suppression de la permanence dans les cras existants a échoué, veuillez réessayer.').toJSON());
-          });
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(409).send(new Conflict('La suppression de la permanence a échoué, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     await deletePermanence(db)(idPermanence).then(async () => {
+    //       await deleteCraPermanence(db)(idPermanence).then(() => {
+    //         return res.send({ isDeleted: true });
+    //       }).catch(error => {
+    //         app.get('sentry').captureException(error);
+    //         logger.error(error);
+    //         return res.status(409).send(new Conflict('La suppression de la permanence dans les cras existants a échoué, veuillez réessayer.').toJSON());
+    //       });
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(409).send(new Conflict('La suppression de la permanence a échoué, veuillez réessayer.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
-    app.delete('/permanence/:id/conseiller', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
-      const idPermanence = req.params.id;
-      const idConseiller = user.entity.oid;
+    // app.delete('/permanence/:id/conseiller', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
+    //   const idPermanence = req.params.id;
+    //   const idConseiller = user.entity.oid;
 
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        await deleteConseillerPermanence(db)(idPermanence, idConseiller).then(async () => {
-          await deleteCraConseillerPermanence(db)(idPermanence, idConseiller).then(() => {
-            return res.send({ isConseillerDeleted: true });
-          }).catch(error => {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            return res.status(409).send(new Conflict('La suppression de la permanence dans les cras existants a échoué, veuillez réessayer.').toJSON());
-          });
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     await deleteConseillerPermanence(db)(idPermanence, idConseiller).then(async () => {
+    //       await deleteCraConseillerPermanence(db)(idPermanence, idConseiller).then(() => {
+    //         return res.send({ isConseillerDeleted: true });
+    //       }).catch(error => {
+    //         app.get('sentry').captureException(error);
+    //         logger.error(error);
+    //         return res.status(409).send(new Conflict('La suppression de la permanence dans les cras existants a échoué, veuillez réessayer.').toJSON());
+    //       });
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(409).send(new Conflict('La suppression du conseiller de la permanence a échoué, veuillez réessayer.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
-    app.patch('/permanences/conseiller/:id/updateAll', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const permanences = await updatePermanencesToSchema(req.body.permanences, req.params.id);
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
+    // app.patch('/permanences/conseiller/:id/updateAll', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const permanences = await updatePermanencesToSchema(req.body.permanences, req.params.id);
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
 
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        await updatePermanences(db)(permanences).then(() => {
-          return res.send({ isUpdated: true });
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     await updatePermanences(db)(permanences).then(() => {
+    //       return res.send({ isUpdated: true });
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(409).send(new Conflict('La mise à jour de la permanence a échoué, veuillez réessayer.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
-    app.patch('/permanences/conseiller/:id/statut', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
-      const conseillerId = req.params.id;
+    // app.patch('/permanences/conseiller/:id/statut', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
+    //   const conseillerId = req.params.id;
 
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        await updateConseillerStatut(db)(conseillerId).then(() => {
-          return res.send({ isUpdated: true });
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(409).send(new Conflict('La mise à jour des statuts du conseillers a échoué, veuillez réessayer.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     await updateConseillerStatut(db)(conseillerId).then(() => {
+    //       return res.send({ isUpdated: true });
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(409).send(new Conflict('La mise à jour des statuts du conseillers a échoué, veuillez réessayer.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
   }
 };
 

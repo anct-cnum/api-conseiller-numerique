@@ -1,13 +1,13 @@
 const { authenticate } = require('@feathersjs/authentication').hooks;
-const { BadRequest, Forbidden } = require('@feathersjs/errors');
-const { DBRef, ObjectId } = require('mongodb');
-const configuration = require('@feathersjs/configuration');
-const feathers = require('@feathersjs/feathers');
-const app = feathers().configure(configuration());
-const connection = app.get('mongodb');
-const database = connection.substr(connection.lastIndexOf('/') + 1);
+const { Forbidden } = require('@feathersjs/errors');
+// const { DBRef, ObjectId } = require('mongodb');
+// const configuration = require('@feathersjs/configuration');
+// const feathers = require('@feathersjs/feathers');
+// const app = feathers().configure(configuration());
+// const connection = app.get('mongodb');
+// const database = connection.substr(connection.lastIndexOf('/') + 1);
 const checkPermissions = require('feathers-permissions');
-const { validationCra } = require('./cra/utils/validationCra');
+// const { validationCra } = require('./cra/utils/validationCra');
 
 module.exports = {
   before: {
@@ -36,45 +36,46 @@ module.exports = {
       }
     ],
     create: [
-      context => {
-        //vérification du role conseiller du user
-        if (!context.params?.user?.roles.includes('conseiller')) {
-          throw new Forbidden('Vous n\'avez pas l\'autorisation');
-        }
-        // vérification du tag idStructure si elle est bien présente
-        if (!context.data?.idStructure) {
-          throw new BadRequest('Une erreur est survenue, veuillez rafraîchir la page et réessayer');
-        }
+      () => {
+        throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        // //vérification du role conseiller du user
+        // if (!context.params?.user?.roles.includes('conseiller')) {
+        //   throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        // }
+        // // vérification du tag idStructure si elle est bien présente
+        // if (!context.data?.idStructure) {
+        //   throw new BadRequest('Une erreur est survenue, veuillez rafraîchir la page et réessayer');
+        // }
 
-        //Creation DBRef conseillers et suppression de l'idConseiller plus utile
-        context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.idConseiller), database);
-        context.data.structure = new DBRef('structures', new ObjectId(context.data.idStructure), database);
-        if (context.data.cra.idPermanence) {
-          context.data.permanence = new DBRef('permanences', new ObjectId(context.data.cra.idPermanence), database);
-        }
+        // //Creation DBRef conseillers et suppression de l'idConseiller plus utile
+        // context.data.conseiller = new DBRef('conseillers', new ObjectId(context.data.idConseiller), database);
+        // context.data.structure = new DBRef('structures', new ObjectId(context.data.idStructure), database);
+        // if (context.data.cra.idPermanence) {
+        //   context.data.permanence = new DBRef('permanences', new ObjectId(context.data.cra.idPermanence), database);
+        // }
 
-        //Separation CP / ville et suppression de cp plus utile
-        context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
-        context.data.cra.nomCommune = context.data.cra.cp.slice(6).toUpperCase();
+        // //Separation CP / ville et suppression de cp plus utile
+        // context.data.cra.codePostal = context.data.cra.cp.slice(0, 5);
+        // context.data.cra.nomCommune = context.data.cra.cp.slice(6).toUpperCase();
 
-        //Ajout de la date de création
-        context.data.createdAt = new Date();
-        delete context.data.cra.datePickerStatus;
-        context.data.cra.dateAccompagnement = new Date(context.data.cra.dateAccompagnement);
+        // //Ajout de la date de création
+        // context.data.createdAt = new Date();
+        // delete context.data.cra.datePickerStatus;
+        // context.data.cra.dateAccompagnement = new Date(context.data.cra.dateAccompagnement);
 
-        //Suppression des champs en trop
-        delete context.data.idConseiller;
-        delete context.data.cra.idPermanence;
-        delete context.data.idStructure;
-        delete context.data.cra.cp;
+        // //Suppression des champs en trop
+        // delete context.data.idConseiller;
+        // delete context.data.cra.idPermanence;
+        // delete context.data.idStructure;
+        // delete context.data.cra.cp;
 
-        //Validation des données cra
-        const error = validationCra(context.data.cra);
-        if (error) {
-          throw new BadRequest(error);
-        } else {
-          return context;
-        }
+        // //Validation des données cra
+        // const error = validationCra(context.data.cra);
+        // if (error) {
+        //   throw new BadRequest(error);
+        // } else {
+        //   return context;
+        // }
       }
     ],
     update: [
