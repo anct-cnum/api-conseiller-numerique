@@ -1,4 +1,4 @@
-const { Conflict, BadRequest, GeneralError, Forbidden, NotFound } = require('@feathersjs/errors');
+const { Conflict, GeneralError, Forbidden, NotFound } = require('@feathersjs/errors');
 const logger = require('../../logger');
 const { Service } = require('feathers-mongodb');
 const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
@@ -12,14 +12,14 @@ const {
 } = require('../../common/utils/feathers.utils');
 const {
   getCraById,
-  updateCra,
-  updateStatistiquesCra,
+  // updateCra,
+  // updateStatistiquesCra,
   countCraByPermanenceId,
-  deleteCra,
-  deleteStatistiquesCra,
+  // deleteCra,
+  // deleteStatistiquesCra,
   searchSousThemes } = require('./cra/repositories/cra.repository');
-const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
-const { validationCra } = require('./cra/utils/validationCra');
+// const { updateCraToSchema } = require('./cra/utils/update-cra.utils');
+// const { validationCra } = require('./cra/utils/validationCra');
 const { v4: validate } = require('uuid');
 const { ObjectId } = require('mongodb');
 
@@ -27,8 +27,8 @@ exports.Cras = class Cras extends Service {
   constructor(options, app) {
     super(options);
 
-    const connection = app.get('mongodb');
-    const database = connection.substr(connection.lastIndexOf('/') + 1);
+    // const connection = app.get('mongodb');
+    // const database = connection.substr(connection.lastIndexOf('/') + 1);
 
     app.get('mongoClient').then(db => {
       this.Model = db.collection('cras');
@@ -65,87 +65,87 @@ exports.Cras = class Cras extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.patch('/cras', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
-      const oldDateAccompagnement = new Date(req.body.cra.oldDateAccompagnement);
-      const cra = updateCraToSchema(req.body, database);
-      const conseillerId = req.body.conseillerId;
+    // app.patch('/cras', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
+    //   const oldDateAccompagnement = new Date(req.body.cra.oldDateAccompagnement);
+    //   const cra = updateCraToSchema(req.body, database);
+    //   const conseillerId = req.body.conseillerId;
 
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user)
-      ).then(async () => {
-        const getCra = await getCraById(db)(cra._id);
-        if (!getCra) {
-          return res.status(404).send(new NotFound('Le cra que vous voulez modifier n\'existe pas.').toJSON());
-        }
-        if (JSON.stringify(getCra?.conseiller?.oid) !== JSON.stringify(user?.entity?.oid)) {
-          return res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation de modifier ce cra.').toJSON());
-        }
-        if (!validationCra(cra.cra)) {
-          await updateCra(db)(cra).then(async () => {
-            await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId, getCra.createdAt).then(() => {
-              return res.send({ cra });
-            }).catch(error => {
-              app.get('sentry').captureException(error);
-              logger.error(error);
-              return res.status(409).send(new Conflict('La mise à jour des statistiques associées au cra a échoué, veuillez réessayer.').toJSON());
-            });
-          }).catch(error => {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            return res.status(409).send(new Conflict('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
-          });
-        } else {
-          return res.status(400).send(new BadRequest(validationCra(cra)));
-        }
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user)
+    //   ).then(async () => {
+    //     const getCra = await getCraById(db)(cra._id);
+    //     if (!getCra) {
+    //       return res.status(404).send(new NotFound('Le cra que vous voulez modifier n\'existe pas.').toJSON());
+    //     }
+    //     if (JSON.stringify(getCra?.conseiller?.oid) !== JSON.stringify(user?.entity?.oid)) {
+    //       return res.status(403).send(new Forbidden('Vous n\'avez pas l\'autorisation de modifier ce cra.').toJSON());
+    //     }
+    //     if (!validationCra(cra.cra)) {
+    //       await updateCra(db)(cra).then(async () => {
+    //         await updateStatistiquesCra(db)(cra, oldDateAccompagnement, conseillerId, getCra.createdAt).then(() => {
+    //           return res.send({ cra });
+    //         }).catch(error => {
+    //           app.get('sentry').captureException(error);
+    //           logger.error(error);
+    //           return res.status(409).send(new Conflict('La mise à jour des statistiques associées au cra a échoué, veuillez réessayer.').toJSON());
+    //         });
+    //       }).catch(error => {
+    //         app.get('sentry').captureException(error);
+    //         logger.error(error);
+    //         return res.status(409).send(new Conflict('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
+    //       });
+    //     } else {
+    //       return res.status(400).send(new BadRequest(validationCra(cra)));
+    //     }
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
-    app.delete('/cras', async (req, res) => {
-      const db = await app.get('mongoClient');
-      const userId = await userIdFromRequestJwt(app, req, res);
-      if (!ObjectId.isValid(userId)) {
-        return res.status(401).send({ message: 'Accès non autorisé' });
-      }
-      const user = await userAuthenticationRepository(db)(userId);
-      const craId = req.query.craId;
-      canActivate(
-        authenticationGuard(authenticationFromRequest(req)),
-        rolesGuard(user._id, [Role.Conseiller], () => user),
-      ).then(async () => {
-        await getCraById(db)(craId).then(async cra => {
-          if (String(cra?.conseiller?.oid) === String(user.entity.oid)) {
-            await deleteStatistiquesCra(db)(cra).then(async () => {
-              return;
-            }).catch(error => {
-              app.get('sentry').captureException(error);
-              logger.error(error);
-              return res.status(500).send(new GeneralError('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
-            });
-            await deleteCra(db)(craId, user.entity.oid, cra).then(() => {
-              return res.send({ isDeleted: true });
-            }).catch(error => {
-              error.message = `${error.message} (conseillerId: ${user.entity.oid})`;
-              app.get('sentry').captureException(error);
-              logger.error(error);
-              return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
-            });
-          } else {
-            return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra ou il a déjà été supprimé.').toJSON());
-          }
-        }).catch(error => {
-          app.get('sentry').captureException(error);
-          logger.error(error);
-          return res.status(404).send(new Conflict('Le cra que vous voulez supprimer n\'existe pas.').toJSON());
-        });
-      }).catch(routeActivationError => abort(res, routeActivationError));
-    });
+    // app.delete('/cras', async (req, res) => {
+    //   const db = await app.get('mongoClient');
+    //   const userId = await userIdFromRequestJwt(app, req, res);
+    //   if (!ObjectId.isValid(userId)) {
+    //     return res.status(401).send({ message: 'Accès non autorisé' });
+    //   }
+    //   const user = await userAuthenticationRepository(db)(userId);
+    //   const craId = req.query.craId;
+    //   canActivate(
+    //     authenticationGuard(authenticationFromRequest(req)),
+    //     rolesGuard(user._id, [Role.Conseiller], () => user),
+    //   ).then(async () => {
+    //     await getCraById(db)(craId).then(async cra => {
+    //       if (String(cra?.conseiller?.oid) === String(user.entity.oid)) {
+    //         await deleteStatistiquesCra(db)(cra).then(async () => {
+    //           return;
+    //         }).catch(error => {
+    //           app.get('sentry').captureException(error);
+    //           logger.error(error);
+    //           return res.status(500).send(new GeneralError('La mise à jour du cra a échoué, veuillez réessayer.').toJSON());
+    //         });
+    //         await deleteCra(db)(craId, user.entity.oid, cra).then(() => {
+    //           return res.send({ isDeleted: true });
+    //         }).catch(error => {
+    //           error.message = `${error.message} (conseillerId: ${user.entity.oid})`;
+    //           app.get('sentry').captureException(error);
+    //           logger.error(error);
+    //           return res.status(500).send(new GeneralError('Le cra n\'a pas pu être supprimé, veuillez réessayer plus tard.').toJSON());
+    //         });
+    //       } else {
+    //         return res.status(403).send(new Forbidden('Vous n\'avez pas le droit de supprimer ce cra ou il a déjà été supprimé.').toJSON());
+    //       }
+    //     }).catch(error => {
+    //       app.get('sentry').captureException(error);
+    //       logger.error(error);
+    //       return res.status(404).send(new Conflict('Le cra que vous voulez supprimer n\'existe pas.').toJSON());
+    //     });
+    //   }).catch(routeActivationError => abort(res, routeActivationError));
+    // });
 
     app.get('/cras/countByPermanence', async (req, res) => {
       const db = await app.get('mongoClient');
