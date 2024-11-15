@@ -605,46 +605,46 @@ exports.Users = class Users extends Service {
 
       if (typeEmail === 'bienvenue') {
         try {
-          if (user.roles.includes('conseiller')) {
-            return app.get('mongoClient').then(async db => {
-              const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-              const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
-              const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-              const email = conseiller.emailCN.address;
-              const login = email.substring(0, email.lastIndexOf('@'));
-              const gandi = app.get('gandi');
-              const mattermost = app.get('mattermost');
-              await db.collection('users').updateOne({ _id: user._id }, {
-                $set: {
-                  name: email
-                }
-              });
-              user.name = email;
-              // La boite mail a été créée dans import-recrutes.js
-              await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
-              await createAccount({
-                mattermost,
-                conseiller,
-                email,
-                login,
-                nom,
-                prenom,
-                password,
-                db,
-                logger,
-                Sentry: app.get('sentry')
-              });
+          // if (user.roles.includes('conseiller')) {
+          //   return app.get('mongoClient').then(async db => {
+          //     const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+          //     const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+          //     const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+          //     const email = conseiller.emailCN.address;
+          //     const login = email.substring(0, email.lastIndexOf('@'));
+          //     const gandi = app.get('gandi');
+          //     const mattermost = app.get('mattermost');
+          //     await db.collection('users').updateOne({ _id: user._id }, {
+          //       $set: {
+          //         name: email
+          //       }
+          //     });
+          //     user.name = email;
+          //     // La boite mail a été créée dans import-recrutes.js
+          //     await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
+          //     await createAccount({
+          //       mattermost,
+          //       conseiller,
+          //       email,
+          //       login,
+          //       nom,
+          //       prenom,
+          //       password,
+          //       db,
+          //       logger,
+          //       Sentry: app.get('sentry')
+          //     });
 
-              let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-              await message.send(user, conseiller);
+          //     let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+          //     await message.send(user, conseiller);
 
-              // Envoi d'un deuxième email pour l'inscription à Pix Orga
-              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-              await messagePix.send(user, conseiller);
-              res.send({ ...user, name: email });
-            });
-          }
-          const nomTemplate = user.roles.includes('candidat') ? 'bienvenueCompteCandidat' : 'bienvenueCompteHub';
+          //     // Envoi d'un deuxième email pour l'inscription à Pix Orga
+          //     let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+          //     await messagePix.send(user, conseiller);
+          //     res.send({ ...user, name: email });
+          //   });
+          // }
+          const nomTemplate = 'bienvenueCompteCandidat';
           const message = emails.getEmailMessageByTemplateName(nomTemplate);
           await message.send(user);
         } catch (err) {
@@ -689,7 +689,7 @@ exports.Users = class Users extends Service {
               }
             });
           }
-          const templateMail = user.roles.some(role => role === 'conseiller' || 'hub_coop') ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
+          const templateMail = user.roles.some(role => role === 'conseiller') ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
           const message = emails.getEmailMessageByTemplateName(templateMail);
           await message.send(user);
         } catch (err) {
