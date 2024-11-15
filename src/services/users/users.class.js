@@ -654,23 +654,23 @@ exports.Users = class Users extends Service {
       }
       if (typeEmail === 'renouvellement') {
         try {
-          if (user.roles.includes('conseiller')) {
-            const conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
-            // Mise à jour du password également dans Mattermost et Gandi
-            const adressCN = conseiller.emailCN?.address;
-            if (adressCN === undefined) {
-              logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
-              res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
-              return;
-            }
-            const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
-            app.get('mongoClient').then(async db => {
-              await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
-              await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
-            });
-            //Renouvellement conseiller => envoi email perso
-            user.persoEmail = conseiller.email;
-          }
+          // if (user.roles.includes('conseiller')) {
+          //   const conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
+          //   // Mise à jour du password également dans Mattermost et Gandi
+          //   const adressCN = conseiller.emailCN?.address;
+          //   if (adressCN === undefined) {
+          //     logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
+          //     res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
+          //     return;
+          //   }
+          //   const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
+          //   app.get('mongoClient').then(async db => {
+          //     await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
+          //     await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
+          //   });
+          //   //Renouvellement conseiller => envoi email perso
+          //   user.persoEmail = conseiller.email;
+          // }
           if (user?.resetPasswordCnil) {
             app.get('mongoClient').then(async db => {
               const userUpdated = await db.collection('users').updateOne(
