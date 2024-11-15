@@ -954,6 +954,7 @@ exports.Conseillers = class Conseillers extends Service {
     //   });
 
     // });
+
     app.patch('/conseillers/superieur_hierarchique/:id', checkAuth, async (req, res) => {
       const accessToken = req.feathers?.authentication?.accessToken;
       const userId = jwtDecode(accessToken).sub;
