@@ -85,12 +85,13 @@ module.exports = {
       })
     ],
     patch: [
-      context => {
+      () => {
+        throw new Forbidden('Vous n\'avez pas l\'autorisation');
         //vérification du rôle conseiller du user
-        if (!context.params?.user?.roles.includes('conseiller')) {
-          throw new Forbidden('Vous n\'avez pas l\'autorisation');
-        }
-        return context;
+        // if (!context.params?.user?.roles.includes('conseiller')) {
+        //   throw new Forbidden('Vous n\'avez pas l\'autorisation');
+        // }
+        // return context;
       }
     ],
     remove: [
