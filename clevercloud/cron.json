@@ -1,5 +1,4 @@
 [
-  "0 * * * * $ROOT/src/tools/jobs/migrate-pg-to-mongo.sh",
   "30 0 * * * $ROOT/src/tools/jobs/mises-en-relation.sh",
   "*/15 * * * * $ROOT/src/tools/jobs/create-account-structures.sh",
   "0 4 * * * $ROOT/src/tools/jobs/update-disponibilite-sondage.sh",
