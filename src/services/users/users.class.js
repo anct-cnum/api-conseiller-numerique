@@ -3,9 +3,13 @@ const { NotFound, Conflict, BadRequest, GeneralError, Forbidden } = require('@fe
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
-const slugify = require('slugify');
-const { createMailbox, updateMailboxPassword, deleteMailbox } = require('../../utils/mailbox');
-const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
+// const slugify = require('slugify');
+const { createMailbox,
+  // updateMailboxPassword,
+  deleteMailbox } = require('../../utils/mailbox');
+const {
+  // createAccount,
+  updateAccountPassword } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
