@@ -1,26 +1,26 @@
 #!/usr/bin/env node
-"use strict";
+/** @format */
 
-const { execute } = require("../utils");
+'use strict';
+
+const { execute } = require('../utils');
 
 // node src/tools/scripts/candidature-structure-update-annulee.js
 
 execute(__filename, async ({ logger, db }) => {
-  const date = new Date("2023-12-31");
-  await db.collection("structures").updateMany(
+  const date = new Date('2023-12-31');
+  await db.collection('structures').updateMany(
     {
-      statut: {
-        $in: ["CREEE", "EXAMEN_COMPLEMENTAIRE_COSELEC"],
+      'statut': {
+        $in: ['CREEE', 'EXAMEN_COMPLEMENTAIRE_COSELEC'],
       },
-      coordinateurCandidature: false,
-      createdAt: { $lte: date },
-      "coselec.nombreConseillersCoselec": { $nin: [1] },
+      'coordinateurCandidature': false,
+      'createdAt': { $lte: date },
+      'coselec.nombreConseillersCoselec': { $nin: [1] },
     },
     {
-      $set: { statut: "ANNULEE" },
+      $set: { statut: 'ANNULEE' },
     }
   );
-  logger.info(
-    `Annulation des candidatures structures avant le ${date}`
-  );
+  logger.info(`Annulation des candidatures structures avant le ${date}`);
 });
