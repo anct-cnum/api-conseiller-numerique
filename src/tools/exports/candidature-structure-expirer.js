@@ -6,7 +6,7 @@ const dayjs = require('dayjs');
 
 const { execute } = require('../utils');
 
-// node src/tools/exports/candidature-structure-exiprer.js
+// node src/tools/exports/candidature-structure-expirer.js
 
 execute(__filename, async ({ logger, db }) => {
   const date = new Date('2023-12-31');
@@ -39,7 +39,7 @@ execute(__filename, async ({ logger, db }) => {
   });
 
   file.write(
-    'idPG;nom de la structure;siret;Date de candidature;Email de contact\n'
+    'idPG;nom de la structure;siret;Date de candidature;Email de contact;Nom;Prénom\n'
   );
   structuresExpired.forEach(structure => {
     promises.push(
@@ -47,7 +47,7 @@ execute(__filename, async ({ logger, db }) => {
         file.write(
           `${structure.idPG};${structure.nom};${structure.siret};${dayjs(
             structure.createdAt
-          ).format('DD/MM/YYYY')};${structure.contact.email};\n`
+          ).format('DD/MM/YYYY')};${structure.contact.email};${structure.contact.nom};${structure.contact.prenom}\n`
         );
         resolve();
       })
