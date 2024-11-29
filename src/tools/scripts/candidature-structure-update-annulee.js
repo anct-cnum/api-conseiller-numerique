@@ -19,7 +19,7 @@ execute(__filename, async ({ logger, db }) => {
       'coselec.nombreConseillersCoselec': { $nin: [1] },
     },
     {
-      $set: { statut: 'ANNULEE' },
+      $set: { statut: 'ANNULEE', siret: null },
     }
   );
   logger.info(`Annulation des candidatures structures avant le ${date}`);
