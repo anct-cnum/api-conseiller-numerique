@@ -34,8 +34,7 @@ execute(__filename, async ({ app, db, logger, Sentry, exit }) => {
         await db.collection('conseillers').find({ 'email': email }).forEach(profil => {
           promises.push(new Promise(async resolve => {
             try {
-            // eslint-disable-next-line no-unused-vars
-              const { email, telephone, nom, prenom, ...conseiller } = profil;
+              const { ...conseiller } = profil;
               const objAnonyme = {
                 deletedAt: new Date(),
                 motif: motif,
@@ -64,14 +63,14 @@ execute(__filename, async ({ app, db, logger, Sentry, exit }) => {
       Sentry.captureException(error);
     }
   };
-  
+
   await db.collection('users').find({
     'roles': { $elemMatch: { '$eq': 'candidat' } },
     'passwordCreated': false
   }).forEach(async user => {
     promises.push(new Promise(async resolve => {
       const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-      
+
       if (conseiller.createdAt < DATE) {
         archiverLaSuppression({ email: conseiller.email, user, Sentry, motif: 'archivage', actionUser: 'script' });
 
@@ -81,7 +80,7 @@ execute(__filename, async ({ app, db, logger, Sentry, exit }) => {
 
         count++;
       }
-      
+
       resolve();
     }));
   });

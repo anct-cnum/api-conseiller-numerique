@@ -27,7 +27,6 @@ execute(__filename, async ({ db, logger, exit }) => {
   }
   // CONSTAT du coordo ciblé
   const contratFinalisee = await db.collection('misesEnRelation').findOne({ 'statut': 'finalisee', 'conseiller.$id': conseiller._id });
-  // eslint-disable-next-line max-len
   const coordoOfficiel = await db.collection('structures').countDocuments({ '_id': conseiller.structureId, 'demandesCoordinateur.miseEnRelationId': contratFinalisee._id });
   const statut = coordoOfficiel > 0 ? 'officiel' : 'demi-officiel';
 
@@ -37,7 +36,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     { type: 'codeCommune', message: `à la maille Commune ${conseiller?.listeSubordonnes?.liste}` },
     { type: 'conseillers', message: `avec une liste custom => au total ${conseiller?.listeSubordonnes?.liste.length} conseillers` },
   ];
-  // eslint-disable-next-line max-len
   logger.info(`- Le conseiller ${conseiller?.emailCN?.address} (id: ${conseiller.idPG}) est un coordo ${statut} rattaché à la SA ${contratFinalisee.structureObj.nom} \r\n => Qui coordonne : ${maille.find(i => i.type === conseiller?.listeSubordonnes?.type)?.message ?? 'personne...'}`);
 
 

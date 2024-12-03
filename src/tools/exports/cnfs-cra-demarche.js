@@ -29,7 +29,6 @@ execute(__filename, async ({ logger, db }) => {
         // eslint-disable-next-line camelcase
           `${numero_voie ?? ''} ${type_voie ?? ''} ${libelle_voie ?? ''} ${complement_adresse ?? ''} ${code_postal ?? ''} ${libelle_commune ?? ''}`;
         const craFiltre = await db.collection('cras').countDocuments({ 'conseiller.$id': id, 'cra.themes': { $in: ['demarche en ligne'] } });
-        // eslint-disable-next-line max-len
         file.write(`${conseiller.nom};${conseiller.prenom};${conseiller?.emailCN?.address};${craFiltre};${structure.nom.replace(/["',]/g, '')};${structure.siret};${adresse.replace(/["',]/g, '')}\n`);
       }
       resolve();

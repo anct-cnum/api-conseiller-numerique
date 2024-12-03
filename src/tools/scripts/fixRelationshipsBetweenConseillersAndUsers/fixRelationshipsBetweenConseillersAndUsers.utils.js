@@ -403,19 +403,9 @@ const inspectConseillersAndDuplicatesProperties = conseillersWithMatchingMiseEnR
   });
 
 const resetConseiller = conseiller => {
-  /* eslint-disable no-unused-vars */
   const {
-    dateFinFormation,
-    datePrisePoste,
-    emailCN,
-    emailCNError,
-    estRecrute,
-    mattermost,
-    statut,
-    structureId,
     ...newConseiller
   } = conseiller;
-  /* eslint-enable no-unused-vars */
 
   return {
     ...newConseiller,

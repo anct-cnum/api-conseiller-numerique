@@ -1,17 +1,13 @@
-/* eslint-disable new-cap */
-
 const { toOsmOpeningHours, OSM_DAYS_OF_WEEK } = require('../utils/osm-opening-hours/osm-opening-hours');
 const { Pivot, Adresse, Localisation, Contact, ConditionsAcces, Services, LabelsNationaux, Url, Service,
   LabelNational, ConditionAcces, toSchemaLieuMediationNumerique, Id, Nom, NomError, IdError, CommuneError, CodePostalError, VoieError
 } = require('@gouvfr-anct/lieux-de-mediation-numerique');
 const { AidantsError } = require('./aidants-error');
 
-// eslint-disable-next-line max-len
 const URL_REGEXP = /^(?:https?:\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4])|(?:[a-z0-9@:%._\\+~#=]-*))*\.[a-zA-Z@:%._\\+~#=]{2,}(?::\d{2,5})?(?:\/\S*)?$/;
 
 const PHONE_REGEX = /^(?:(?:\+)(33|590|596|594|262|269))(?:\d{3}){3}$/;
 
-// eslint-disable-next-line max-len
 const COURRIEL_REGEXP = /^(?:(?:[^<>()[\]\\.,;:\s@"]+(?:\.[^<>()[\]\\.,;:\s@"]+)*)|(?:".+"))@(?:(?:\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}])|(?:(?:[A-Za-zÀ-ÖØ-öø-ÿ\-\d]+\.)+[a-zA-Z]{2,}))$/;
 
 const removeAllSpaces = string => string?.replaceAll(' ', '') ?? null;

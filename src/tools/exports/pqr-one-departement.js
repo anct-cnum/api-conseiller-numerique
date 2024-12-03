@@ -136,7 +136,6 @@ execute(__filename, async ({ logger, db, exit }) => {
       nom: '',
       prenom: '',
       telephone: '',
-      // eslint-disable-next-line max-len
       address: uniformiseAdresse(s?.adresseInsee2Ban?.name ?? `${s?.insee?.adresse?.numero_voie} ${s?.insee?.adresse?.type_voie} ${s?.insee?.adresse?.libelle_voie}`),
       addressParts: {
         numeroRue: s?.adresseInsee2Ban?.housenumber ?? s?.insee?.adresse?.numero_voie,
@@ -279,7 +278,6 @@ execute(__filename, async ({ logger, db, exit }) => {
 
         if (permanencesConseiller.length > 0 && permanencePrincipaleConseiller) {
           try {
-            // eslint-disable-next-line max-len
             let depReg = codePostal2departementRegion(String(permanencePrincipaleConseiller.adresse.codePostal), String(permanencePrincipaleConseiller.adresse.codeCommune));
             if (depReg?.num_dep === options.departement) {
               // on prend le lien de la permanence principale
@@ -290,7 +288,6 @@ execute(__filename, async ({ logger, db, exit }) => {
                 pinsDepartementElargi[depReg.num_dep].push(toGeoJsonFromPermanence(c, p));
               }
             } else {
-              // eslint-disable-next-line max-len
               logger.warn(`Reject de la permanence qui est situé dans le ${depReg?.num_dep} idPerm: ${permanencePrincipaleConseiller._id} (idCN : ${c.idPG}/ idStructure: ${structure.idPG})`);
             }
           } catch (error) {
@@ -301,7 +298,6 @@ execute(__filename, async ({ logger, db, exit }) => {
           pinsDepartement[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
           pinsDepartementElargi[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
         } else {
-          // eslint-disable-next-line max-len
           logger.warn(`Le code departement Insee ${codeDepartementInsee2Ban} !== à celle de la structure ${structure.codeDepartement} (idCN: ${c.idPG}/ idStructure: ${structure.idPG})`);
         }
       }
@@ -312,7 +308,6 @@ execute(__filename, async ({ logger, db, exit }) => {
       pinsDepartementElargi[structure.codeDepartement].push(toGeoJsonFromStructure(structure));
     } else {
 
-      // eslint-disable-next-line max-len
       logger.warn(`Le code departement Insee ${codeDepartementInsee2Ban} !== à celle de la structure ${structure.codeDepartement} (0 conseiller/ idStructure: ${structure.idPG})`);
     }
 
@@ -387,7 +382,6 @@ execute(__filename, async ({ logger, db, exit }) => {
             '.\n\n' + pin?.properties?.addressParts?.ville.toUpperCase() :
             ''
           }${pin?.properties.name !== saPrecedente || pin?.properties?.addressParts?.ville?.toUpperCase() !== villePrecedente?.toUpperCase() ?
-            // eslint-disable-next-line max-len
             ' • ' + pin?.properties?.name.fixSpaces().removeSpacesParentheses().toUpperCase() + ', ' + pin?.properties?.address.fixSpaces().removeSpacesParentheses() + (pin?.properties?.telephone && pin?.properties?.telephone !== '' ? ' – ' : '') + pin?.properties?.telephone :
             ''
           }`);

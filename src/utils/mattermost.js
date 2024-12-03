@@ -391,7 +391,6 @@ const deleteArchivedChannels = async (mattermost, token) => {
 };
 
 
-// eslint-disable-next-line max-len
 const patchLogin = ({ Sentry, logger, db, mattermost, patchLoginMattermostMongo, patchLoginMattermostMongoError }) => async ({ conseiller, userIdentity }) => {
 
   const token = await loginAPI({ mattermost });

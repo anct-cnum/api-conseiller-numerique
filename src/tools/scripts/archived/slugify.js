@@ -17,7 +17,6 @@ program.parse(process.argv);
 // CSV importé
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const lines = await CSVToJSON().fromFile(filePath);
     return lines;
   } catch (err) {
