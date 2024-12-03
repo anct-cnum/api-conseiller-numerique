@@ -26,7 +26,6 @@ program.parse(process.argv);
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const users = await CSVToJSON({ delimiter: ';' }).fromFile(filePath);
     return users;
   } catch (err) {
@@ -70,7 +69,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
           const idPGConseiller = parseInt(conseiller['ID conseiller']);
           const alreadyRecruted = await db.collection('conseillers').countDocuments({ idPG: idPGConseiller, estRecrute: true });
           const conseillerOriginal = await db.collection('conseillers').findOne({ idPG: idPGConseiller });
-          // eslint-disable-next-line max-len
           const conseillerDoublon = await db.collection('conseillers').findOne({ idPG: { '$ne': idPGConseiller }, email: conseillerOriginal?.email, statut: { '$exists': true } });
           const structureId = parseInt(conseiller['ID structure']);
           const structure = await db.collection('structures').findOne({ idPG: structureId });
@@ -113,14 +111,11 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             if (formatDate(datePrisePoste) === formatDate(dateFinFormation) && commentaire === '') {
               logger.error(`Conseiller ${idPGConseiller} semble non formé => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
             } else if (formatDate(datePrisePoste) !== formatDate(dateFinFormation) && commentaire !== '') {
-              // eslint-disable-next-line max-len
               logger.error(`Conseiller ${idPGConseiller} semble ne pas etre en attente/exempté => ${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)} (RECRUTE)`);
             } else if (commentaire === '') {
-              // eslint-disable-next-line max-len
               if ((formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation)) || (formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste))) {
                 const loggerDateFormationAvant = `${formatDate(conseillerOriginal.datePrisePoste)}-${formatDate(conseillerOriginal.dateFinFormation)}`;
                 const loggerDatePrisePosteApres = `${formatDate(datePrisePoste)}-${formatDate(dateFinFormation)}`;
-                // eslint-disable-next-line max-len
                 if ((formatDate(conseillerOriginal.datePrisePoste) !== formatDate(datePrisePoste)) || (formatDate(conseillerOriginal.dateFinFormation) !== formatDate(dateFinFormation))) {
                   logger.info(`Update : ${loggerDateFormationAvant} => ${loggerDatePrisePosteApres} pour le conseiller avec l'id: ${idPGConseiller} (RECRUTE)`);
                 }
@@ -169,7 +164,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             Sentry.captureException(`Mise en relation introuvable pour la structure avec l'idPG '${structureId}'`);
             errors++;
           } else if (dateRupture && (dateRupture > miseEnRelation?.dateRecrutement)) {
-            // eslint-disable-next-line max-len
             logger.error(`Un conseiller avec l'id: ${idPGConseiller} a une date de Rupture ${formatDate(dateRupture)} supérieure à la date de recrutement ${formatDate(miseEnRelation.dateRecrutement)}`);
             errors++;
           } else if (structure?.statut !== 'VALIDATION_COSELEC') {
@@ -293,7 +287,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             );
 
             if (countCras >= 1) {
-              // eslint-disable-next-line max-len
               logger.info(`Maj de ${countCras} CRAS pour le conseiller avec l'id: ${idPGConseiller}, cras => après la date ${query['$gte'] ? 'recrutement' : 'de rupture'}`);
               await db.collection('cras').updateMany(matchCras, {
                 $set: {

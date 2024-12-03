@@ -315,7 +315,6 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     exit(`La structure destinataire n'est pas 'VALIDATION_COSELEC' mais ${structureDestination.statut}`);
     return;
   }
-  // eslint-disable-next-line max-len
   if (structureDestination?.conventionnement?.statut !== 'RECONVENTIONNEMENT_VALIDÉ' && structureOriginelle?.conventionnement?.statut === 'RECONVENTIONNEMENT_VALIDÉ') {
     exit(`La structure destinataire n'est pas en 'RECONVENTIONNEMENT_VALIDÉ' mais ${structureDestination?.conventionnement?.statut}`);
     return;
@@ -333,9 +332,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
       return;
     }
 
-    // eslint-disable-next-line max-len
     if (!ignored && (cnfsRecrute?.conseillerObj?.codeRegionStructure !== structureDestination?.codeRegion || cnfsRecrute?.conseillerObj?.codeDepartementStructure !== structureDestination?.codeDepartement)) {
-      // eslint-disable-next-line max-len
       exit(`Une différence de departement ou région a été détecté ! Region:${cnfsRecrute?.conseillerObj?.codeRegionStructure} vs ${structureDestination?.codeRegion} / departement: ${cnfsRecrute?.conseillerObj?.codeDepartementStructure} vs ${structureDestination?.codeDepartement}`);
       return;
     }
@@ -353,7 +350,6 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     const permNouvelleSA = await getPermsNouvelleSA(db)(idNouvelleSA);
 
     for (let permanence of permAncienneSA) {
-      // eslint-disable-next-line max-len
       const verifDoublon = permNouvelleSA.filter(i => String(Object.values(i.location?.coordinates)) === String(Object.values(permanence.location?.coordinates)) && String(Object.values(i.adresse)) === String(Object.values(permanence.adresse)));
       if (verifDoublon.length === 0 && permanence.conseillers.length === 1) {
         await updateIdStructurePerm(db)(permanence, idNouvelleSA);

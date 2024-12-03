@@ -1,11 +1,9 @@
-/* eslint-disable no-unused-vars */
-
 const { ObjectID } = require('mongodb');
 const dayjs = require('dayjs');
 
 const utils = require('../../utils/index.js');
 const { jwtDecode } = require('jwt-decode');
-const { NotFound, Forbidden, NotAuthenticated } = require('@feathersjs/errors');
+const { NotFound, Forbidden } = require('@feathersjs/errors');
 const {
   validateExportTerritoireSchema,
   buildExportTerritoiresCsvFileContent,
@@ -71,7 +69,6 @@ exports.DataExports = class DataExports {
         $or: [{ 'statut': { $eq: 'recrutee' } }, { 'statut': { $eq: 'finalisee' } }, { 'statut': { $eq: 'nouvelle_rupture' } }]
       }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
-      // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection; Demande de rupture; Date de la rupture; Motif de la rupture\n');
 
       const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
@@ -80,7 +77,6 @@ exports.DataExports = class DataExports {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
-          // eslint-disable-next-line max-len
           res.write(`${conseiller?.createdAt ? formatDate(conseiller?.createdAt) : 'non renseignée'};${miseEnrelation?.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${conseiller?.prenom};${conseiller?.nom};${conseiller?.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller?.telephone};${conseiller?.email};${conseiller?.codePostal};${conseiller?.nomCommune};${conseiller?.codeDepartement};${conseiller?.estDiplomeMedNum ? 'oui' : 'non'};${conseiller?.pix ? conseiller?.pix?.palier : ''};${structure?.siret};${structure?.idPG};${structure?.nom};${structure?.type};${structure?.codePostal};${structure?.codeCommune};${structure?.codeDepartement};${structure?.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller?.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};${miseEnrelation.statut === 'nouvelle_rupture' ? 'oui' : 'non'};${miseEnrelation.dateRupture ? formatDate(miseEnrelation.dateRupture) : 'non renseignée'};${miseEnrelation.motifRupture ?? 'non renseignée'}\n`);
           resolve();
         }));
@@ -106,7 +102,6 @@ exports.DataExports = class DataExports {
       }).sort({ 'miseEnrelation.structure.oid': 1 }).toArray();
       let promises = [];
 
-      // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
 
       const formatDate = date => dayjs(new Date(date?.getTime() + 120 * 60000)).format('DD/MM/YYYY');
@@ -115,7 +110,6 @@ exports.DataExports = class DataExports {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
-          // eslint-disable-next-line max-len
           res.write(`${formatDate(conseiller.createdAt)};${miseEnrelation?.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${conseiller.prenom};${conseiller.nom};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.telephone};${conseiller.email};${conseiller.codePostal};${conseiller.nomCommune};${conseiller.codeDepartement};${conseiller.estDiplomeMedNum ? 'oui' : 'non'};${conseiller.pix ? conseiller.pix.palier : ''};${structure.siret};${structure.idPG};${structure.nom};${structure.type};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
           resolve();
         }));
@@ -149,7 +143,6 @@ exports.DataExports = class DataExports {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
           let structure = await db.collection('structures').findOne({ _id: miseEnrelation.structure.oid });
-          // eslint-disable-next-line max-len
           res.write(`${conseiller.prenom};${conseiller.nom};${conseiller.email};${conseiller.idPG};${structure.nom};${structure.idPG};${miseEnrelation?.dateRupture ? formatDate(miseEnrelation.dateRupture) : 'Non renseignée'};${miseEnrelation.motifRupture}\n`);
           resolve();
         }));
@@ -190,7 +183,6 @@ exports.DataExports = class DataExports {
 
       let promises = [];
 
-      // eslint-disable-next-line max-len
       res.write('Date candidature;Date prévisionnelle de recrutement;Date d’entrée en formation;Date de sortie de formation;prenom;nom;expérience;téléphone;email;Code Postal;Nom commune;Département;diplômé;palier pix;SIRET structure;ID Structure;Dénomination;Type;Code postal;Code commune;Code département;Code région;Prénom contact SA;Nom contact SA;Téléphone contact SA;Email contact SA;ID conseiller;Nom du comité de sélection;Nombre de conseillers attribués en comité de sélection\n');
 
       const formatDate = date => dayjs(new Date(date.getTime() + 120 * 60000)).format('DD/MM/YYYY');
@@ -199,7 +191,6 @@ exports.DataExports = class DataExports {
           let conseiller = await db.collection('conseillers').findOne({ _id: new ObjectID(miseEnrelation.conseiller.oid) });
           let structure = await db.collection('structures').findOne({ _id: new ObjectID(miseEnrelation.structure.oid) });
           let coselec = utils.getCoselec(structure);
-          // eslint-disable-next-line max-len
           res.write(`${conseiller?.createdAt ? formatDate(conseiller?.createdAt) : 'non renseignée'};${miseEnrelation.dateRecrutement ? formatDate(miseEnrelation.dateRecrutement) : 'non renseignée'};${conseiller?.datePrisePoste ? formatDate(conseiller?.datePrisePoste) : 'non renseignée'};${conseiller?.dateFinFormation ? formatDate(conseiller?.dateFinFormation) : 'non renseignée'};${conseiller?.prenom};${conseiller?.nom};${conseiller?.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller?.telephone};${conseiller?.email};${conseiller?.codePostal};${conseiller?.nomCommune};${conseiller?.codeDepartement};${conseiller?.estDiplomeMedNum ? 'oui' : 'non'};${conseiller?.pix ? conseiller?.pix?.palier : ''};${structure?.siret};${structure?.idPG};${structure?.nom};${structure?.type};${structure?.codePostal};${structure?.codeCommune};${structure?.codeDepartement};${structure?.codeRegion};${structure?.contact?.prenom};${structure?.contact?.nom};${structure?.contact?.telephone};${structure?.contact?.email};${conseiller?.idPG};${coselec !== null ? coselec?.numero : ''};${coselec !== null ? coselec?.nombreConseillersCoselec : 0};\n`);
           resolve();
         }));
@@ -232,7 +223,6 @@ exports.DataExports = class DataExports {
         app.get('sentry').captureException(error);
       }
 
-      // eslint-disable-next-line max-len
       const miseEnrelations = await db.collection('misesEnRelation').find({ 'structure.$id': structureUser.entity.oid, 'statut': { $ne: 'finalisee_non_disponible' } }).collation({ locale: 'fr' }).sort({ 'conseillerObj.nom': 1, 'conseillerObj.prenom': 1 }).toArray();
       let promises = [];
 
@@ -240,7 +230,6 @@ exports.DataExports = class DataExports {
       miseEnrelations.forEach(miseEnrelation => {
         promises.push(new Promise(async resolve => {
           let conseiller = await db.collection('conseillers').findOne({ _id: miseEnrelation.conseiller.oid });
-          // eslint-disable-next-line max-len
           res.write(`${conseiller.nom};${conseiller.prenom};${conseiller.email};${conseiller.codePostal};${conseiller.aUneExperienceMedNum ? 'oui' : 'non'};${conseiller.pix === undefined ? 'non' : 'oui'};${conseiller.cv === undefined ? 'non' : 'oui'}\n`);
           resolve();
         }));
@@ -263,7 +252,6 @@ exports.DataExports = class DataExports {
 
       const structures = await db.collection('structures').find().toArray();
       let promises = [];
-      // eslint-disable-next-line max-len
       res.write('SIRET structure;ID Structure;Dénomination;Type;Statut;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Nombre de conseillers souhaités;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;QPV;Nombre de quartiers QPV;Labelisée France Services;Raison sociale;Nom commune INSEE;Code commune INSEE;Adresse postale;Libellé catégorie juridique niv III;Grand Réseau;Nom Grand Réseau\n');
       structures.forEach(structure => {
         promises.push(new Promise(async resolve => {
@@ -290,7 +278,6 @@ exports.DataExports = class DataExports {
 
             adresse = adresse.replace(/["']/g, '');
 
-            // eslint-disable-next-line max-len
             res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${user !== null && user.passwordCreated ? 'oui' : 'non'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ? structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale : ''};${structure?.insee?.adresse?.libelle_commune ? structure?.insee?.adresse?.libelle_commune : ''};${structure?.insee?.adresse?.code_commune ? structure?.insee?.adresse?.code_commune : ''};"${adresse}";${structure?.insee?.unite_legale?.forme_juridique?.libelle ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
           } catch (e) {
             // TODO : logger
@@ -323,7 +310,6 @@ exports.DataExports = class DataExports {
       }
 
       let promises = [];
-      //eslint-disable-next-line max-len
       res.write('SIRET structure;ID Structure;Dénomination;Type;Statut;Code postal;Code commune;Code département;Code région;Téléphone;Email;Compte créé;Mot de passe choisi;Nombre de mises en relation;Nombre de conseillers souhaités;Validée en COSELEC;Nombre de conseillers validés par le COSELEC;Numéro COSELEC;ZRR;QPV;Nombre de quartiers QPV;Labelisée France Services;Raison sociale;Nom commune INSEE;Code commune INSEE;Adresse postale;Libellé catégorie juridique niv III;Grand Réseau;Nom Grand Réseau\n');
 
       structures.forEach(structure => {
@@ -349,7 +335,6 @@ exports.DataExports = class DataExports {
 
           adresse = adresse.replace(/["']/g, '');
 
-          // eslint-disable-next-line max-len
           res.write(`${structure.siret};${structure.idPG};${structure.nom};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.statut};${structure.codePostal};${structure.codeCommune};${structure.codeDepartement};${structure.codeRegion};${structure?.contact?.telephone};${structure?.contact?.email};${structure.userCreated ? 'oui' : 'non'};${isActiveStructure >= 1 ? 'OUI' : 'NON'};${matchings};${structure.nombreConseillersSouhaites ?? 0};${structure.statut === 'VALIDATION_COSELEC' ? 'oui' : 'non'};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.nombreConseillersCoselec : 0};${structure.statut === 'VALIDATION_COSELEC' ? coselec?.numero : ''};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ?? 'Non défini'};${structure?.qpvListe ? structure.qpvListe.length : 0};${label};${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale ? structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale : ''};${structure?.insee?.adresse?.libelle_commune ? structure?.insee?.adresse?.libelle_commune : ''};${structure?.insee?.adresse?.code_commune ? structure?.insee?.adresse?.code_commune : ''};"${adresse}";${structure?.insee?.unite_legale?.forme_juridique?.libelle ?? ''};${structure?.reseau ? 'oui' : 'non'};${structure?.reseau ?? ''}\n`);
           resolve();
         }));
@@ -480,11 +465,11 @@ exports.DataExports = class DataExports {
     });
   }
 
-  async find(params) {
+  async find() {
     return [];
   }
 
-  async get(id, params) {
+  async get(id) {
     return {
       id, text: `A new message with ID: ${id}!`
     };
@@ -498,15 +483,15 @@ exports.DataExports = class DataExports {
     return data;
   }
 
-  async update(id, data, params) {
+  async update(id, data) {
     return data;
   }
 
-  async patch(id, data, params) {
+  async patch(id, data) {
     return data;
   }
 
-  async remove(id, params) {
+  async remove(id) {
     return { id };
   }
 };

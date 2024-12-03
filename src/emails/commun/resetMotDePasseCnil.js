@@ -4,7 +4,6 @@ module.exports = (db, mailer) => {
   const { utils } = mailer;
 
   let render = async user => {
-    // eslint-disable-next-line max-len
     const link = user.roles.includes('conseiller') ? utils.getEspaceCoopUrl(`/renouveler-mot-de-passe/${(user.token)}`) : utils.getEspaceCandidatUrl(`/renouveler-mot-de-passe/${(user.token)}`);
     return mailer.render(__dirname, templateName, {
       user,

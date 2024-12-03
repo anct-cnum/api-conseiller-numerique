@@ -116,7 +116,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
   let file = fs.createWriteStream(csvFile, {
     flags: 'w'
   });
-  // eslint-disable-next-line max-len
   file.write('id;Raison sociale;Commune INSEE;Département;Région;Nombre de conseillers validés par le COSELEC;Date de validation en comité de sélection;Type;SIRET;Code département;Adresse;Code commune INSEE;Code postal;Investissement financier estimatif total de l’Etat;ZRR;QPV;France services\n');
 
   structures.forEach(structure => {
@@ -188,7 +187,6 @@ execute(__filename, async ({ logger, db, Sentry }) => {
           structureRegion = toms.get(structure.codeDepartement).tom_name;
         }
 
-        // eslint-disable-next-line max-len
         file.write(`${structure?.idPG};${structure?.insee?.unite_legale?.personne_morale_attributs?.raison_sociale?.replace(/[,]/g, '') ?? structure.nom};${structure?.insee?.adresse?.libelle_commune ?? ''};${structureDepartement};${structureRegion};${coselec?.nombreConseillersCoselec};${formatDate(coselec)};${structure.type === 'PRIVATE' ? 'privée' : 'publique'};${structure.siret};${structure.codeDepartement};"${adresse}";${structure?.insee?.adresse?.code_commune};${structure.codePostal};${investissement.toString()};${structure.estZRR ? 'oui' : 'non'};${structure.qpvStatut ? structure.qpvStatut.toLowerCase() : 'Non défini'};${label};\n`);
       } catch (e) {
         Sentry.captureException(`Une erreur est survenue sur la structure idPG=${structure.idPG} : ${e}`);

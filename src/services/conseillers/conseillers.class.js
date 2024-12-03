@@ -240,7 +240,6 @@ exports.Conseillers = class Conseillers extends Service {
       if (conseiller.cv?.file) {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'cv.suppressionEnCours': true } });
         let paramsDelete = { Bucket: awsConfig.cv_bucket, Key: conseiller.cv.file };
-        // eslint-disable-next-line no-unused-vars
         const command = new DeleteObjectCommand(paramsDelete);
         await client.send(command).then(async () => {
           try {
@@ -497,7 +496,6 @@ exports.Conseillers = class Conseillers extends Service {
 
         csvFileResponse(res,
           `${getExportStatistiquesFileName(query.dateDebut, dateFin)}.csv`,
-          // eslint-disable-next-line max-len
           buildExportStatistiquesCsvFileContent(stats, query.dateDebut, query.dateFin, `${conseiller.prenom} ${conseiller.nom}`, query.idType, query.codePostal, query.ville, isAdminCoop)
         );
       }).catch(routeActivationError => abort(res, routeActivationError));
@@ -805,162 +803,158 @@ exports.Conseillers = class Conseillers extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    app.patch('/conseillers/updateInfosConseiller/:id', checkAuth, async (req, res) => {
-      app.get('mongoClient').then(async db => {
-        let initModifMailPersoConseiller = false;
-        let initModifMailProConseiller = false;
-        let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
-        email = email.trim();
-        emailPro = emailPro?.trim();
-        const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
-        let idConseiller = req.params.id;
+    // app.patch('/conseillers/updateInfosConseiller/:id', checkAuth, async (req, res) => {
+    //   app.get('mongoClient').then(async db => {
+    //     let initModifMailPersoConseiller = false;
+    //     let initModifMailProConseiller = false;
+    //     let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
+    //     email = email.trim();
+    //     emailPro = emailPro?.trim();
+    //     const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
+    //     let idConseiller = req.params.id;
 
-        if (!ObjectId.isValid(idConseiller)) {
-          res.status(400).json(new BadRequest('Erreur: l\'identifiant reçu est invalide. Veuillez vous reconnecter.'));
-          return;
-        }
+    //     if (!ObjectId.isValid(idConseiller)) {
+    //       res.status(400).json(new BadRequest('Erreur: l\'identifiant reçu est invalide. Veuillez vous reconnecter.'));
+    //       return;
+    //     }
 
-        const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-        const minDate = dayjs().subtract(99, 'year');
-        const maxDate = dayjs().subtract(18, 'year');
-        const schema = Joi.object({
-          // eslint-disable-next-line max-len
-          email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
-          // eslint-disable-next-line max-len
-          emailPro: Joi.string().trim().optional().allow('', null).regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email professionnellle est invalide')),
-          // eslint-disable-next-line max-len
-          telephonePro: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
-          sexe: Joi.string().valid('Homme', 'Femme', 'Autre').required().error(new Error('Le champ sexe est invalide')),
-          // eslint-disable-next-line max-len
-          dateDeNaissance: Joi.date().required().min(minDate).max(maxDate).error(new Error('La date de naissance est invalide'))
-        });
-        const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
-        let extended = '';
-        if (!regexOldTelephone.test(conseiller.telephone) || conseiller.telephone !== telephone) {
-          extended = schema.keys({
-            // eslint-disable-next-line max-len
-            telephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
-          }).validate(body);
-        } else {
-          extended = schema.keys({
-            telephone: Joi.string().optional().allow('', null).regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
-          }).validate(body);
-        }
+    //     const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+    //     const minDate = dayjs().subtract(99, 'year');
+    //     const maxDate = dayjs().subtract(18, 'year');
+    //     const schema = Joi.object({
+    //       email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
+    //       emailPro: Joi.string().trim().optional().allow('', null).regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email professionnellle est invalide')),
+    //       telephonePro: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
+    //       sexe: Joi.string().valid('Homme', 'Femme', 'Autre').required().error(new Error('Le champ sexe est invalide')),
+    //       dateDeNaissance: Joi.date().required().min(minDate).max(maxDate).error(new Error('La date de naissance est invalide'))
+    //     });
+    //     const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
+    //     let extended = '';
+    //     if (!regexOldTelephone.test(conseiller.telephone) || conseiller.telephone !== telephone) {
+    //       extended = schema.keys({
+    //         telephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
+    //       }).validate(body);
+    //     } else {
+    //       extended = schema.keys({
+    //         telephone: Joi.string().optional().allow('', null).regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
+    //       }).validate(body);
+    //     }
 
-        if (extended.error) {
-          res.status(400).json(new BadRequest(extended.error));
-          return;
-        }
+    //     if (extended.error) {
+    //       res.status(400).json(new BadRequest(extended.error));
+    //       return;
+    //     }
 
-        telephone = telephone !== null ? telephone : ''; // contrainte not null côté PG => string vide
-        const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
+    //     telephone = telephone !== null ? telephone : ''; // contrainte not null côté PG => string vide
+    //     const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
 
-        try {
-          await pool.query(`UPDATE djapp_coach
-          SET phone = $2 WHERE id = $1`,
-          [conseiller.idPG, telephone]);
-          await app.service('conseillers').patch(idConseiller, changeInfos);
-          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
-            { '$set': {
-              'conseillerObj.dateDeNaissance': dateDeNaissance,
-              'conseillerObj.telephonePro': telephonePro,
-              'conseillerObj.telephone': telephone,
-              'conseillerObj.sexe': sexe,
-            } });
-        } catch (err) {
-          app.get('sentry').captureException(err);
-          logger.error(err);
-          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
-          return;
-        }
-        const gandi = app.get('gandi');
-        if (email.toLowerCase() !== conseiller.email) {
-          if (email.includes(gandi.domain)) {
-            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
-              email
-            }).toJSON());
-            return;
-          }
-          const verificationEmail = await db.collection('conseillers').countDocuments({ email: email.toLowerCase() });
-          if (verificationEmail !== 0) {
-            logger.error(`Erreur: l'email ${email} est déjà utilisé par un autre utilisateur`);
-            res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par un autre utilisateur', {
-              email
-            }).toJSON());
-            return;
-          }
-          try {
-            const setMailAConfirmer = {
-              tokenChangementMail: uuidv4(),
-              tokenChangementMailCreatedAt: new Date(),
-              mailAModifier: email.toLowerCase()
-            };
-            await this.patch(idConseiller, { $set: setMailAConfirmer });
-            await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
-              { '$set': {
-                'conseillerObj.tokenChangementMail': setMailAConfirmer.tokenChangementMail,
-                'conseillerObj.tokenChangementMailCreatedAt': setMailAConfirmer.tokenChangementMailCreatedAt,
-                'conseillerObj.mailAModifier': setMailAConfirmer.mailAModifier
+    //     try {
+    //       await pool.query(`UPDATE djapp_coach
+    //       SET phone = $2 WHERE id = $1`,
+    //       [conseiller.idPG, telephone]);
+    //       await app.service('conseillers').patch(idConseiller, changeInfos);
+    //       await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
+    //         { '$set': {
+    //           'conseillerObj.dateDeNaissance': dateDeNaissance,
+    //           'conseillerObj.telephonePro': telephonePro,
+    //           'conseillerObj.telephone': telephone,
+    //           'conseillerObj.sexe': sexe,
+    //         } });
+    //     } catch (err) {
+    //       app.get('sentry').captureException(err);
+    //       logger.error(err);
+    //       res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+    //       return;
+    //     }
+    //     const gandi = app.get('gandi');
+    //     if (email.toLowerCase() !== conseiller.email) {
+    //       if (email.includes(gandi.domain)) {
+    //         res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+    //           email
+    //         }).toJSON());
+    //         return;
+    //       }
+    //       const verificationEmail = await db.collection('conseillers').countDocuments({ email: email.toLowerCase() });
+    //       if (verificationEmail !== 0) {
+    //         logger.error(`Erreur: l'email ${email} est déjà utilisé par un autre utilisateur`);
+    //         res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par un autre utilisateur', {
+    //           email
+    //         }).toJSON());
+    //         return;
+    //       }
+    //       try {
+    //         const setMailAConfirmer = {
+    //           tokenChangementMail: uuidv4(),
+    //           tokenChangementMailCreatedAt: new Date(),
+    //           mailAModifier: email.toLowerCase()
+    //         };
+    //         await this.patch(idConseiller, { $set: setMailAConfirmer });
+    //         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
+    //           { '$set': {
+    //             'conseillerObj.tokenChangementMail': setMailAConfirmer.tokenChangementMail,
+    //             'conseillerObj.tokenChangementMailCreatedAt': setMailAConfirmer.tokenChangementMailCreatedAt,
+    //             'conseillerObj.mailAModifier': setMailAConfirmer.mailAModifier
 
-              } });
-            const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-            conseiller.nouveauEmail = email.toLowerCase();
-            let mailer = createMailer(app, email);
-            const emails = createEmails(db, mailer);
-            let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmail');
-            await message.send(conseiller);
-            initModifMailPersoConseiller = true;
-          } catch (error) {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
-            return;
-          }
-        }
-        if (emailPro && emailPro?.toLowerCase() !== conseiller?.emailPro) {
-          const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro.toLowerCase() });
-          if (verificationEmail !== 0) {
-            logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
-            res.status(409).send(new Conflict('Erreur: l\'email professionnelle est déjà utilisé par un autre utilisateur', {
-              emailPro
-            }).toJSON());
-            return;
-          }
-          try {
-            const setMailProAConfirmer = {
-              tokenChangementMailPro: uuidv4(),
-              tokenChangementMailProCreatedAt: new Date(),
-              mailProAModifier: emailPro.toLowerCase()
-            };
-            await this.patch(idConseiller, { $set: setMailProAConfirmer });
-            await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
-              { '$set': {
-                'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
-                'conseillerObj.tokenChangementMailProCreatedAt': setMailProAConfirmer.tokenChangementMailProCreatedAt,
-                'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
-              } });
-            const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-            conseiller.nouveauEmailPro = emailPro.toLowerCase();
-            let mailer = createMailer(app, emailPro);
-            const emails = createEmails(db, mailer);
-            let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmailPro');
-            await message.send(conseiller);
-            initModifMailProConseiller = true;
-          } catch (error) {
-            app.get('sentry').captureException(error);
-            logger.error(error);
-            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
-            return;
-          }
-        }
-        return res.send({
-          'conseiller': changeInfos,
-          initModifMailPersoConseiller,
-          initModifMailProConseiller
-        });
-      });
+    //           } });
+    //         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+    //         conseiller.nouveauEmail = email.toLowerCase();
+    //         let mailer = createMailer(app, email);
+    //         const emails = createEmails(db, mailer);
+    //         let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmail');
+    //         await message.send(conseiller);
+    //         initModifMailPersoConseiller = true;
+    //       } catch (error) {
+    //         app.get('sentry').captureException(error);
+    //         logger.error(error);
+    //         res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+    //         return;
+    //       }
+    //     }
+    //     if (emailPro && emailPro?.toLowerCase() !== conseiller?.emailPro) {
+    //       const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro.toLowerCase() });
+    //       if (verificationEmail !== 0) {
+    //         logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
+    //         res.status(409).send(new Conflict('Erreur: l\'email professionnelle est déjà utilisé par un autre utilisateur', {
+    //           emailPro
+    //         }).toJSON());
+    //         return;
+    //       }
+    //       try {
+    //         const setMailProAConfirmer = {
+    //           tokenChangementMailPro: uuidv4(),
+    //           tokenChangementMailProCreatedAt: new Date(),
+    //           mailProAModifier: emailPro.toLowerCase()
+    //         };
+    //         await this.patch(idConseiller, { $set: setMailProAConfirmer });
+    //         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
+    //           { '$set': {
+    //             'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
+    //             'conseillerObj.tokenChangementMailProCreatedAt': setMailProAConfirmer.tokenChangementMailProCreatedAt,
+    //             'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
+    //           } });
+    //         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
+    //         conseiller.nouveauEmailPro = emailPro.toLowerCase();
+    //         let mailer = createMailer(app, emailPro);
+    //         const emails = createEmails(db, mailer);
+    //         let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmailPro');
+    //         await message.send(conseiller);
+    //         initModifMailProConseiller = true;
+    //       } catch (error) {
+    //         app.get('sentry').captureException(error);
+    //         logger.error(error);
+    //         res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+    //         return;
+    //       }
+    //     }
+    //     return res.send({
+    //       'conseiller': changeInfos,
+    //       initModifMailPersoConseiller,
+    //       initModifMailProConseiller
+    //     });
+    //   });
 
-    });
+    // });
+
     app.patch('/conseillers/superieur_hierarchique/:id', checkAuth, async (req, res) => {
       const accessToken = req.feathers?.authentication?.accessToken;
       const userId = jwtDecode(accessToken).sub;
@@ -972,9 +966,7 @@ exports.Conseillers = class Conseillers extends Service {
         nom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ nom est obligatoire')),
         prenom: Joi.string().trim().min(2).max(50).required().error(new Error('Le champ prénom est obligatoire')),
         fonction: Joi.string().trim().min(2).max(100).required().error(new Error('Le champ fonction est obligatoire')),
-        // eslint-disable-next-line max-len
         email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
-        // eslint-disable-next-line max-len
         numeroTelephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone est invalide')),
       }).validate(supHierarchique);
       if (superieurHierarchiqueValidation.error) {

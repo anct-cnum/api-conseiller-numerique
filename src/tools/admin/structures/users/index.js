@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable guard-for-in */
 'use strict';
 
 const ObjectID = require('mongodb').ObjectID;

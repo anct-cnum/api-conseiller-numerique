@@ -23,7 +23,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     exit('collection invalide. Veuillez choisir entre conseillers ou structures');
     return;
   }
-  // eslint-disable-next-line max-len
   logger.info(`MAJ de tous les mises en relation de ${!id ? `de tous les ${collection}` : `1 ${collection === 'conseillers' ? 'conseiller' : 'strcutres'} idPG: ${id}`}`);
   const arrayData = await db.collection(collection).find(query).toArray();
 
@@ -46,7 +45,6 @@ execute(__filename, async ({ db, logger, exit }) => {
     }));
   });
   await Promise.all(promises);
-  // eslint-disable-next-line max-len
   logger.info(`${countTotal} ${collection} ont été traitées, ${countExistsMER} ${collection} qui ont au moins une misesEnRelation && ${countMAJ} qui n'était pas à jour dans les misesEnRelations.`);
 
   exit();

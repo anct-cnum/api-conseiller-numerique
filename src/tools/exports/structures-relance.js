@@ -38,7 +38,6 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  // eslint-disable-next-line max-len
   file.write('Email\n');
 
   structures.forEach(structure => {

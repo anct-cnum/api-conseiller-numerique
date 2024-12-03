@@ -17,7 +17,6 @@ for (const value of departements) {
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const structuresIds = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     return structuresIds;
   } catch (err) {
@@ -382,7 +381,6 @@ execute(__filename, async ({ logger, db }) => {
               '.\n\n' + pin?.properties?.addressParts?.ville.toUpperCase() :
               ''
             }${pin?.properties.name !== saPrecedente ?
-            // eslint-disable-next-line max-len
               ' • ' + pin?.properties?.name.fixSpaces().removeSpacesParentheses().toUpperCase() + ', ' + pin?.properties?.address.fixSpaces().removeSpacesParentheses() + (pin?.properties?.telephone && pin?.properties?.telephone !== '' ? ' – ' : '') + pin?.properties?.telephone :
               ''
             }`);
