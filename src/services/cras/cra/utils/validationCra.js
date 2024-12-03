@@ -21,17 +21,14 @@ const validationCra = ObjectCra => {
       sansEmploi: Joi.number().integer().required().min(0).max(100).error(new Error('Le nombre de personnes sans emploi est invalide')),
       enEmploi: Joi.number().integer().required().min(0).max(100).error(new Error('Le nombre de personnes en emploi est invalide')),
       retraite: Joi.number().integer().required().min(0).max(100).error(new Error('Le nombre de retraités est invalide')),
-      // eslint-disable-next-line max-len
       heterogene: Joi.number().integer().required().min(0).max(100).error(new Error('Le nombre de personnes non-renseignées ou groupe hétérogène est invalide')),
     }),
-    // eslint-disable-next-line max-len
     themes: Joi.array().required().min(1).max(20).items(Joi.string().required().valid('equipement informatique', 'vocabulaire', 'internet', 'securite', 'courriel', 'echanger', 'traitement texte', 'contenus numeriques', 'trouver emploi', 'tpe/pme', 'accompagner enfant', 'demarche en ligne', 'fraude et harcelement', 'sante', 'smartphone', 'budget', 'scolaire', 'diagnostic', 'autre')).error(new Error('Le thème est invalide')),
     sousThemes: Joi.array().allow(null).error(new Error('Le sous thème est invalide')),
     duree: Joi.any().required().error(new Error('La durée est invalide')),
     accompagnement: Joi.object({
       individuel: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements poursuivis en individuel est invalide')),
       atelier: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements poursuivis en atelier est invalide')),
-      // eslint-disable-next-line max-len
       redirection: Joi.number().integer().min(0).max(100).error(new Error('Le nombre d\'accompagnements redirigés vers un autre établissement est invalide')),
     }),
     dateAccompagnement: Joi.date().min(new Date('2020-01-01T00:00:00.000Z')).required().error(new Error('La date est invalide')),

@@ -43,12 +43,10 @@ execute(__filename, async ({ logger, db, exit }) => {
     flags: 'w'
   });
 
-  // eslint-disable-next-line max-len
   file.write('Nom; Prénom; Email Perso; Email @conseiller-numerique.fr\n');
   cnfsFinalisee.forEach(conseiller => {
     promises.push(new Promise(async resolve => {
       const cnfs = await db.collection('conseillers').findOne({ _id: conseiller.conseiller.oid });
-      // eslint-disable-next-line max-len
       file.write(`${cnfs?.nom ?? 'non renseigné'};${cnfs?.prenom ?? 'non renseigné'};${cnfs?.email ?? 'non renseigné'};${cnfs?.mattermost?.id ? cnfs?.emailCN?.address : 'compte non créé'}\n`);
       resolve();
     }));

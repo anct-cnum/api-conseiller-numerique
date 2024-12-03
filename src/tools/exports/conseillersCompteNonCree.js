@@ -19,12 +19,10 @@ execute(__filename, async ({ logger, db }) => {
     flags: 'w'
   });
 
-  // eslint-disable-next-line max-len
   file.write('prenom;nom;date d\'envoi de l\'invitation;email;téléphone\n');
   conseillers.forEach(user => {
     promises.push(new Promise(async resolve => {
       let conseiller = await db.collection('conseillers').findOne({ nom: user.nom, prenom: user.prenom });
-      // eslint-disable-next-line max-len
       file.write(`${conseiller.prenom};${conseiller.nom};${moment(user.mailSentDate).format('DD/MM/yyyy')};${conseiller.email};${conseiller.telephone}\n`);
       resolve();
     }));

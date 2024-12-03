@@ -6,12 +6,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        cache: npm
-        node-version-file: package.json
-    - name: Install modules
-      run: npm i
-    - name: Lint
-      run: npm run lint
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          node-version-file: package.json
+      - name: Install modules
+        run: npm i --no-audit --prefer-offline
+      - name: Lint
+        run: npm run lint

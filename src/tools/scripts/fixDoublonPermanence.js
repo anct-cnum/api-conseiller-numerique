@@ -54,7 +54,6 @@ const createCsvPermanences = async permanencesDoublons => {
     let writePermanence = '';
     doublon.permanences.forEach((permanence, i) => {
       if (i === 0) {
-        // eslint-disable-next-line max-len
         writePermanence = `${permanence._id};${permanence.estStructure};${permanence.nomEnseigne};${permanence.numeroTelephone};${permanence.email};${permanence.siteWeb};${permanence.siret};${permanence.adresse};${permanence.location};${permanence.horaires};${permanence.typeAcces};${permanence.conseillers};${permanence.lieuPrincipalPour};${permanence.conseillersItinerants};${permanence.structure.oid};${permanence.updatedAt};${permanence.updatedBy};`;
       } else {
         writePermanence += permanence._id;

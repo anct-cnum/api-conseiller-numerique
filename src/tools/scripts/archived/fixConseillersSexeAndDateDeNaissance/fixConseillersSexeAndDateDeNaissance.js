@@ -18,7 +18,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     exit('db error');
   }
 
-  // eslint-disable-next-line max-len
   logger.info('Les informations sur la date de naissance et le sexe des conseillers ont été mises à jour sur tous les doublons et toutes les mises en relations.');
   exit();
 });

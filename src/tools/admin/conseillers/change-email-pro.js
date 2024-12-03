@@ -61,7 +61,6 @@ execute(__filename, async ({ app, db, logger, Sentry, exit, gandi }) => {
       let message = emails.getEmailMessageByTemplateName('conseillerChangeEmailCnfs');
       await message.send(conseiller);
       await db.collection('users').updateOne({ 'entity.$id': conseiller._id }, { $set: { 'support_cnfs': conseiller.support_cnfs } });
-      // eslint-disable-next-line max-len
       logger.info(`Envoi e-mail pour la demande de changement d'email professionnel : ${conseiller?.emailCN?.address} par => ${login}@${gandi.domain} pour le conseiller avec l'id ${id}`);
     } else {
       logger.error(`une adresse mail existe déjà pour: ${mailbox.data[0].address}`);

@@ -2,10 +2,7 @@
   "rules": {
     "no-var": "error",
     "prefer-const": "off",
-    "max-len": [
-      "warn",
-      160
-    ],
+    "max-len": "off",
     "quotes": [
       "warn",
       "single",
@@ -226,13 +223,7 @@
       4
     ],
     "max-statements-per-line": "error",
-    "new-cap": [
-      "error",
-      {
-        "newIsCap": true,
-        "capIsNew": true
-      }
-    ],
+    "new-cap": "off",
     "new-parens": "error",
     "no-array-constructor": "error",
     "no-lonely-if": "error",
@@ -347,6 +338,7 @@
     {
       "files": [
         "**/*.spec.js",
+        "**/*.test.js",
         "**/*.spec.jsx"
       ],
       "env": {

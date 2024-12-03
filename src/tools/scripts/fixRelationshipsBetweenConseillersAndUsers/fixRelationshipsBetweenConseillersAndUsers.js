@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-/* eslint-disable max-len */
-
 const { execute } = require('../../utils');
 const { Pool } = require('pg');
 const {
@@ -349,7 +347,6 @@ const fixMisesEnRelationsAssociatedWithAConseillerWithoutFinaliseeStatusWithoutD
 
 const resetAllConseillers = async (db, conseillers, disponible, userCreated) =>
   await Promise.all(conseillers.map(async conseiller => {
-    // eslint-disable-next-line no-unused-vars
     const conseillerReset = resetConseiller(await getConseillerById(db, conseiller._id));
     await replaceConseiller(db, conseiller._id, { ...conseillerReset, disponible, userCreated: userCreated ?? conseiller.userCreated });
     await updateConseillerInMisesEnRelations(db, conseiller._id);

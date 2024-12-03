@@ -21,7 +21,6 @@ const statistiquesDepartementalRegional = async (dateDebut, dateFin, idType, typ
   idType
 });
 
-// eslint-disable-next-line max-len
 const statistiquesDepartementalRegionalWithCodePostal = async (dateDebut, dateFin, idType, type, codePostal, ids, { getStatsDepartementalRegionalWithCodePostal }, isAdminCoop) => ({
   stats: await getStatsDepartementalRegionalWithCodePostal(dateDebut, dateFin, codePostal, ids, isAdminCoop),
   type,
@@ -45,7 +44,6 @@ const getStatistiquesToExport = async (
   }
   // ici c'est forcément de type codedepartement ou codeRegion
   if (codePostal) {
-    // eslint-disable-next-line max-len
     return await statistiquesDepartementalRegionalWithCodePostal(dateDebut, dateFin, idType, type, codePostal, ids, { getStatsDepartementalRegionalWithCodePostal }, isAdminCoop);
   } else {
     return await statistiquesDepartementalRegional(dateDebut, dateFin, idType, type, ids, { getStatsDepartementalRegional }, isAdminCoop);

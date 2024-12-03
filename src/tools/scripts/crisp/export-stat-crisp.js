@@ -59,7 +59,6 @@ execute(__filename, async ({ logger, app, exit }) => {
   }
 
   for (let i = 1; i <= ~~page; i++) {
-    // eslint-disable-next-line max-len
     const stat = type === 'mensuelle' ? `?filter_date_start=${annee}-${filterMois.mois}-01T00:00:00.000Z&filter_date_end=${annee}-${filterMois.mois}-${filterMois.fin}T23:59:59.059Z` : `?filter_not_resolved=1`;
     const config = {
       method: 'get',
@@ -73,7 +72,6 @@ execute(__filename, async ({ logger, app, exit }) => {
     datas = datas.concat(result.data.data);
   }
   const formatDate = date => dayjs(date).format('DD/MM/YYYY');
-  // eslint-disable-next-line max-len
   logger.info(`Au total ${datas.length} conversations fait le ${new Date()} (${type} : ${type}-${(mois ? filterMois?.name : formatDate(new Date()))?.replaceAll('/', '-')})`);
 
   let count = 0;
@@ -121,7 +119,6 @@ execute(__filename, async ({ logger, app, exit }) => {
     'email',
     'chat'
   ];
-  // eslint-disable-next-line max-len
   file.write('Instructeurs;Demandeur;Source;Thématique;Problématique;Détail CRA;Traitement de la demande;Détail problématique;Date de dépôt;Date de traitement;Date de résolution;Etat;ID CNFS;Nom;Prénom;Mail cnfs;Structure d\'accueil;Mail contact;ID-SIRET-DS;Infos supp;Lien CRISP/ Mail;Infos supp 2\n');
   datas.forEach(c => {
     promises.push(new Promise(async resolve => {
@@ -130,18 +127,14 @@ execute(__filename, async ({ logger, app, exit }) => {
         userIdAssigned[0].count++;
       }
       const intitule = {
-        // eslint-disable-next-line max-len
         Instructeurs: !c?.assigned?.user_id ? '-' : userIdAssigned.find((i, index) => {
           if (i.id === c?.assigned?.user_id) {
             userIdAssigned[index].count++;
           }
           return i.id === c?.assigned?.user_id;
         })?.user,
-        // eslint-disable-next-line max-len
         Demandeur: c?.meta?.segments?.filter(i => demandeurCrisp.map(e => e.toLocaleUpperCase()).includes(i.toUpperCase()))?.toString()?.replaceAll(',', '>')?.replaceAll('cnfs', 'Conseiller numérique'),
-        // eslint-disable-next-line max-len
         Source: ['crisp', ...c?.meta?.segments?.filter(i => orignineCrisp.map(e => e.toLocaleUpperCase()).includes(i.toUpperCase()))]?.toString()?.replaceAll(',', '>'),
-        // eslint-disable-next-line max-len
         Thematique: c?.meta?.segments?.filter(i => thematiqueCrisp.map(e => e.toLocaleUpperCase()).includes(String(i.toUpperCase())))?.toString()?.replaceAll(',', '>'),
         Problématique: '',
         DetailCRA: '',

@@ -3,9 +3,13 @@ const { NotFound, Conflict, BadRequest, GeneralError, Forbidden } = require('@fe
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
-const slugify = require('slugify');
-const { createMailbox, updateMailboxPassword, deleteMailbox } = require('../../utils/mailbox');
-const { createAccount, updateAccountPassword } = require('../../utils/mattermost');
+// const slugify = require('slugify');
+const { createMailbox,
+  // updateMailboxPassword,
+  deleteMailbox } = require('../../utils/mailbox');
+const {
+  // createAccount,
+  updateAccountPassword } = require('../../utils/mattermost');
 const { Pool } = require('pg');
 const pool = new Pool();
 const Joi = require('joi');
@@ -39,18 +43,14 @@ exports.Users = class Users extends Service {
         const schema = Joi.object({
           prenom: Joi.string().error(new Error('Le nom est invalide')),
           nom: Joi.string().error(new Error('Le nom est invalide')),
-          // eslint-disable-next-line max-len
           telephone: Joi.string().required().regex(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
-          // eslint-disable-next-line max-len
           dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
-          // eslint-disable-next-line max-len
           email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
         });
         const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
         let extended = '';
         if (!regexOldTelephone.test(telephone)) {
           extended = schema.keys({
-            // eslint-disable-next-line max-len
             telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
           }).validate(body);
         } else {
@@ -137,6 +137,136 @@ exports.Users = class Users extends Service {
         res.send({ success: true, sendmail: nouveauEmail !== userConnected.data[0].name });
       });
 
+    });
+
+    app.patch('/conseiller/updateInfosConseiller/:id', checkAuth, async (req, res) => {
+      app.get('mongoClient').then(async db => {
+        const nouveauEmail = req.body.email.toLowerCase();
+        const nouveauEmailPro = req.body.emailPro?.toLowerCase();
+        let { telephone, dateDisponibilite, email, emailPro } = req.body;
+        telephone = telephone.trim();
+        email = email.trim();
+        emailPro = emailPro?.trim();
+        const mongoDateDisponibilite = new Date(dateDisponibilite);
+        const body = { telephone, dateDisponibilite, email, emailPro };
+        const schema = Joi.object({
+          telephone: Joi.string().required().regex(new RegExp(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/)).error(new Error('Le format du téléphone est invalide')),
+          dateDisponibilite: Joi.date().error(new Error('La date est invalide, veuillez choisir une date supérieur ou égale à la date du jour')),
+          email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
+          emailPro: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('Le format de l\'email est invalide')),
+        });
+        const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
+        let extended = '';
+        if (!regexOldTelephone.test(telephone)) {
+          extended = schema.keys({
+            telephone: Joi.string().required().regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
+          }).validate(body);
+        } else {
+          extended = schema.keys({
+            telephone: Joi.string().required().regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
+          }).validate(body);
+        }
+
+        if (extended.error) {
+          res.status(400).json(new BadRequest(extended.error));
+          return;
+        }
+        const idUser = req.params.id;
+        const userConnected = await this.find({ query: { _id: idUser } });
+        const id = userConnected?.data[0].entity?.oid;
+        const conseiller = await db.collection('conseillers').findOne({ _id: id });
+        const changeInfos = { telephone, 'dateDisponibilite': mongoDateDisponibilite };
+        const changeInfosMisesEnRelation = {
+          'conseillerObj.telephone': telephone,
+          'conseillerObj.dateDisponibilite': mongoDateDisponibilite
+        };
+        try {
+          await app.service('conseillers').patch(id, changeInfos);
+          await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id }, { $set: changeInfosMisesEnRelation });
+        } catch (err) {
+          app.get('sentry').captureException(err);
+          logger.error(err);
+          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+          return;
+        }
+        if (conseiller?.statut === 'RECRUTE' && nouveauEmailPro !== conseiller?.emailPro) {
+          const gandi = app.get('gandi');
+          if (nouveauEmail.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
+          const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: nouveauEmailPro });
+          if (verificationEmail !== 0) {
+            logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
+            res.status(409).send(new Conflict('Erreur: l\'email professionnelle est déjà utilisé par un autre utilisateur', {
+              emailPro
+            }).toJSON());
+            return;
+          }
+          try {
+            const setMailProAConfirmer = {
+              tokenChangementMailPro: uuidv4(),
+              tokenChangementMailProCreatedAt: new Date(),
+              mailProAModifier: emailPro.toLowerCase()
+            };
+            await db.collection('conseillers').updateOne({ _id: id }, { $set: setMailProAConfirmer });
+            await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': id },
+              { '$set': {
+                'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
+                'conseillerObj.tokenChangementMailProCreatedAt': setMailProAConfirmer.tokenChangementMailProCreatedAt,
+                'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
+              } });
+            const conseiller = await db.collection('conseillers').findOne({ _id: id });
+            conseiller.nouveauEmailPro = emailPro.toLowerCase();
+            let mailer = createMailer(app, emailPro);
+            const emails = createEmails(db, mailer);
+            let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmailPro');
+            await message.send(conseiller);
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+            return;
+          }
+        }
+
+        if (nouveauEmail !== userConnected.data[0].name) {
+          const gandi = app.get('gandi');
+          if (nouveauEmail.includes(gandi.domain)) {
+            res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
+          const verificationEmail = await db.collection('users').countDocuments({ name: nouveauEmail });
+          // vérification si le nouvel email est déjà utilisé par un conseiller
+          const hasUserCoop = await db.collection('conseillers').countDocuments({ statut: { $exists: true }, email: nouveauEmail });
+          if (verificationEmail !== 0 || hasUserCoop !== 0) {
+            logger.error(`Erreur: l'email ${nouveauEmail} est déjà utilisé.`);
+            res.status(409).send(new Conflict('Erreur: l\'email saisi est déjà utilisé', {
+              nouveauEmail
+            }).toJSON());
+            return;
+          }
+          try {
+            await this.patch(idUser, { $set: { token: uuidv4(), tokenCreatedAt: new Date(), mailAModifier: nouveauEmail } });
+            const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
+            user.nouveauEmail = nouveauEmail;
+            let mailer = createMailer(app, nouveauEmail);
+            const emails = createEmails(db, mailer);
+            let message = emails.getEmailMessageByTemplateName('candidatConfirmeNouveauEmail');
+            await message.send(user);
+          } catch (error) {
+            app.get('sentry').captureException(error);
+            logger.error(error);
+            res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
+            return;
+          }
+        }
+        res.send({ success: true, sendmail: nouveauEmail !== userConnected.data[0].name || nouveauEmailPro !== conseiller?.emailPro });
+      });
     });
 
     app.patch('/candidat/confirmation-email/:token', async (req, res) => {
@@ -448,7 +578,6 @@ exports.Users = class Users extends Service {
       const token = req.params.token;
       const password = req.body.password;
       const typeEmail = req.body.typeEmail;
-      // eslint-disable-next-line max-len
       const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
       if (passwordValidation.error) {
         res.status(400).json(new BadRequest(passwordValidation.error));
@@ -480,46 +609,46 @@ exports.Users = class Users extends Service {
 
       if (typeEmail === 'bienvenue') {
         try {
-          if (user.roles.includes('conseiller')) {
-            return app.get('mongoClient').then(async db => {
-              const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-              const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
-              const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-              const email = conseiller.emailCN.address;
-              const login = email.substring(0, email.lastIndexOf('@'));
-              const gandi = app.get('gandi');
-              const mattermost = app.get('mattermost');
-              await db.collection('users').updateOne({ _id: user._id }, {
-                $set: {
-                  name: email
-                }
-              });
-              user.name = email;
-              // La boite mail a été créée dans import-recrutes.js
-              await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
-              await createAccount({
-                mattermost,
-                conseiller,
-                email,
-                login,
-                nom,
-                prenom,
-                password,
-                db,
-                logger,
-                Sentry: app.get('sentry')
-              });
+          // if (user.roles.includes('conseiller')) {
+          //   return app.get('mongoClient').then(async db => {
+          //     const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
+          //     const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
+          //     const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
+          //     const email = conseiller.emailCN.address;
+          //     const login = email.substring(0, email.lastIndexOf('@'));
+          //     const gandi = app.get('gandi');
+          //     const mattermost = app.get('mattermost');
+          //     await db.collection('users').updateOne({ _id: user._id }, {
+          //       $set: {
+          //         name: email
+          //       }
+          //     });
+          //     user.name = email;
+          //     // La boite mail a été créée dans import-recrutes.js
+          //     await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
+          //     await createAccount({
+          //       mattermost,
+          //       conseiller,
+          //       email,
+          //       login,
+          //       nom,
+          //       prenom,
+          //       password,
+          //       db,
+          //       logger,
+          //       Sentry: app.get('sentry')
+          //     });
 
-              let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-              await message.send(user, conseiller);
+          //     let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
+          //     await message.send(user, conseiller);
 
-              // Envoi d'un deuxième email pour l'inscription à Pix Orga
-              let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-              await messagePix.send(user, conseiller);
-              res.send({ ...user, name: email });
-            });
-          }
-          const nomTemplate = user.roles.includes('candidat') ? 'bienvenueCompteCandidat' : 'bienvenueCompteHub';
+          //     // Envoi d'un deuxième email pour l'inscription à Pix Orga
+          //     let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
+          //     await messagePix.send(user, conseiller);
+          //     res.send({ ...user, name: email });
+          //   });
+          // }
+          const nomTemplate = 'bienvenueCompteCandidat';
           const message = emails.getEmailMessageByTemplateName(nomTemplate);
           await message.send(user);
         } catch (err) {
@@ -529,23 +658,23 @@ exports.Users = class Users extends Service {
       }
       if (typeEmail === 'renouvellement') {
         try {
-          if (user.roles.includes('conseiller')) {
-            const conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
-            // Mise à jour du password également dans Mattermost et Gandi
-            const adressCN = conseiller.emailCN?.address;
-            if (adressCN === undefined) {
-              logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
-              res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
-              return;
-            }
-            const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
-            app.get('mongoClient').then(async db => {
-              await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
-              await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
-            });
-            //Renouvellement conseiller => envoi email perso
-            user.persoEmail = conseiller.email;
-          }
+          // if (user.roles.includes('conseiller')) {
+          //   const conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
+          //   // Mise à jour du password également dans Mattermost et Gandi
+          //   const adressCN = conseiller.emailCN?.address;
+          //   if (adressCN === undefined) {
+          //     logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
+          //     res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
+          //     return;
+          //   }
+          //   const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
+          //   app.get('mongoClient').then(async db => {
+          //     await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
+          //     await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
+          //   });
+          //   //Renouvellement conseiller => envoi email perso
+          //   user.persoEmail = conseiller.email;
+          // }
           if (user?.resetPasswordCnil) {
             app.get('mongoClient').then(async db => {
               const userUpdated = await db.collection('users').updateOne(
@@ -564,7 +693,7 @@ exports.Users = class Users extends Service {
               }
             });
           }
-          const templateMail = user.roles.some(role => role === 'conseiller' || 'hub_coop') ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
+          const templateMail = user.roles.some(role => role === 'conseiller') ? 'renouvellementCompte' : 'renouvellementCompteCandidat';
           const message = emails.getEmailMessageByTemplateName(templateMail);
           await message.send(user);
         } catch (err) {
@@ -592,7 +721,6 @@ exports.Users = class Users extends Service {
       const user = users.data[0];
       let hiddenEmail = '';
       if (user.roles.includes('conseiller') && user.passwordCreated === false) {
-        // eslint-disable-next-line max-len
         res.status(409).send(new Conflict(`Vous n'avez pas encore activé votre compte. Pour cela, cliquez sur le lien d'activation fourni dans le mail ayant pour objet "Activer votre compte Coop des Conseillers numériques"`, {
           username
         }).toJSON());
@@ -722,7 +850,6 @@ exports.Users = class Users extends Service {
         return;
       }
       const password = req.body.password;
-      // eslint-disable-next-line max-len
       const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
       if (passwordValidation.error) {
         res.status(400).json(new BadRequest(passwordValidation.error));
@@ -753,7 +880,6 @@ exports.Users = class Users extends Service {
 
         if (conseiller?.emailCN?.address) {
           await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
-            // eslint-disable-next-line max-len
             return patchApiMattermostLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
