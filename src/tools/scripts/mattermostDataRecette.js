@@ -15,7 +15,6 @@ execute(__filename, async ({ db, logger, Sentry, exit, app }) => {
   const gandi = app.get('gandi');
   const whiteList = ['local', 'recette'];
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  // eslint-disable-next-line max-len
   if ((!process.env.PGHOST.includes('local') && !process.env.PGHOST.includes('test')) || !whiteList.includes(process.env.SENTRY_ENVIRONMENT.toLowerCase()) || (!mongodb.includes('local') && !mongodb.includes('bezikra')) || (process.env.CAN_ANONYMIZE_FAKER !== 'true')) {
     exit('Ce script ne peut être lancé qu\'en local ou en recette !');
     return;

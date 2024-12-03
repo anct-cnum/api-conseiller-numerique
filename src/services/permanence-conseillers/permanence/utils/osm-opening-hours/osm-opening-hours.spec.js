@@ -82,7 +82,6 @@ describe('osm opening hours', () => {
 
     const osmOpeningHours = toOsmOpeningHours(openingHours);
 
-    // eslint-disable-next-line max-len
     expect(osmOpeningHours).toStrictEqual('Mo 09:30-10:45; Tu 11:15-12:45; We 13:30-14:25; Th 8:00-9:25,15:00-16:05; Fr 16:20-17:15; Sa 18:30-19:00; Su 19:50-23:55');
   });
 

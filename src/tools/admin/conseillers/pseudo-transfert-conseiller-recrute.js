@@ -51,7 +51,6 @@ execute(__filename, async ({ db, logger, exit, app }) => {
     'structure.$id': structureDestination._id
   });
   if (misesEnRelationRecrutees >= dernierCoselec.nombreConseillersCoselec) {
-    //eslint-disable-next-line max-len
     exit(`La structure destinataire est seulement autorisé  à avoir ${dernierCoselec.nombreConseillersCoselec} conseillers et en a déjà ${misesEnRelationRecrutees} validé(s)/recrutée(s)`);
     return;
   }

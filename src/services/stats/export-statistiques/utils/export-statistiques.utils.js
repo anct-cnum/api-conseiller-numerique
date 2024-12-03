@@ -25,7 +25,6 @@ const validateExportStatistiquesSchema = exportTerritoiresInput => Joi.object({
 const formatDate = (date, separator = '/') => dayjs(new Date(date)).format(`DD${separator}MM${separator}YYYY`);
 
 const getExportStatistiquesFileName = (dateDebut, dateFin, type, idType, codePostal) =>
-  // eslint-disable-next-line max-len
   `Statistiques_${type}${codePostal ? `_${codePostal}` : ''}${idType !== undefined ? `_${idType}` : ''}_${formatDate(dateDebut, '-')}_${formatDate(dateFin, '-')}`;
 
 const sortByValueThenName = (a, b) => {

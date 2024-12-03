@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable quote-props */
 'use strict';
 
 const { execute } = require('../utils');
@@ -20,34 +19,34 @@ execute(__filename, async ({ db, logger, Sentry }) => {
 
     const updateDoc = {
       $set: {
-        type: s.type,
-        nom: s.name,
-        siret: s.siret === null ? null : `${s.siret}`,
-        aIdentifieCandidat: s.has_candidate,
-        dateDebutMission: s.start_date,
+        'type': s.type,
+        'nom': s.name,
+        'siret': s.siret === null ? null : `${s.siret}`,
+        'aIdentifieCandidat': s.has_candidate,
+        'dateDebutMission': s.start_date,
         'contact.prenom': s.contact_first_name,
         'contact.nom': s.contact_last_name,
         'contact.fonction': s.contact_job,
         'contact.email': s.contact_email,
         'contact.telephone': s.contact_phone,
-        codePostal: s.zip_code,
-        location: s.location,
-        nomCommune: s.geo_name,
-        codeCommune: s.commune_code,
-        codeDepartement: s.departement_code === null ? null : `${s.departement_code}`,
-        codeRegion: s.region_code,
-        codeCom: s.com_code,
-        emailConfirmedAt: s.email_confirmed,
-        emailConfirmationKey: s.email_confirmation_key,
-        unsubscribedAt: s.unsubscribed, // "cliquez ici pour ne plus recevoir de propositions"
-        unsubscribeExtras: s.unsubscribe_extras, // JSON, pas utilisé
-        nombreConseillersSouhaites: s.coaches_requested,
-        coordinateurCandidature: s.wants_coordinators,
-        coordinateurTypeContrat: s.coordinator_type,
-        createdAt: s.created,
-        updatedAt: s.updated,
-        validatedAt: s.validated, // pas utilisé ?
-        deleted_at: s.blocked,
+        'codePostal': s.zip_code,
+        'location': s.location,
+        'nomCommune': s.geo_name,
+        'codeCommune': s.commune_code,
+        'codeDepartement': s.departement_code === null ? null : `${s.departement_code}`,
+        'codeRegion': s.region_code,
+        'codeCom': s.com_code,
+        'emailConfirmedAt': s.email_confirmed,
+        'emailConfirmationKey': s.email_confirmation_key,
+        'unsubscribedAt': s.unsubscribed, // "cliquez ici pour ne plus recevoir de propositions"
+        'unsubscribeExtras': s.unsubscribe_extras, // JSON, pas utilisé
+        'nombreConseillersSouhaites': s.coaches_requested,
+        'coordinateurCandidature': s.wants_coordinators,
+        'coordinateurTypeContrat': s.coordinator_type,
+        'createdAt': s.created,
+        'updatedAt': s.updated,
+        'validatedAt': s.validated, // pas utilisé ?
+        'deleted_at': s.blocked,
       },
       $setOnInsert: {
         idPG: s.id,

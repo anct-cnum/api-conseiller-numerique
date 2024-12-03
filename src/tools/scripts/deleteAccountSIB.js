@@ -17,7 +17,6 @@ const deleteMailSib = async (email, logger, apiInstance) => {
 
 const readCSV = async filePath => {
   try {
-    // eslint-disable-next-line new-cap
     const contactsList = await CSVToJSON({ delimiter: 'auto' }).fromFile(filePath);
     return contactsList;
   } catch (err) {

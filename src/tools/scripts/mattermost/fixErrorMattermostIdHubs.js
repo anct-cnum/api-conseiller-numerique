@@ -83,7 +83,6 @@ execute(__filename, async ({ app, db, logger, Sentry }) => {
     await sleep(500);
   }
   logger.info('Suppression des mattermost.errorMessage pour les mattermost.error qui sont à false');
-  // eslint-disable-next-line max-len
   await db.collection('conseillers').updateMany({ 'mattermost.error': false, 'mattermost.errorMessage': '' }, { $unset: { 'mattermost.errorMessage': '' } });
 
   logger.info(`[MATTERMOST] ${count} conseillers corrigés et ${countError} en erreur(s)`);

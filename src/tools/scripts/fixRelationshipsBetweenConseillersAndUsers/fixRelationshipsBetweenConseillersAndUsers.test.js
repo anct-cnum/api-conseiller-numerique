@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-/* eslint-disable max-len */
-/* eslint-disable no-undef */
-
 const {
   MisesEnRelationStatut,
   ConseillerStatut,
