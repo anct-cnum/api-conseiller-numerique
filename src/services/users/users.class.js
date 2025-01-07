@@ -3,17 +3,9 @@ const { NotFound, Conflict, BadRequest, GeneralError, Forbidden } = require('@fe
 const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
-// const slugify = require('slugify');
-const { createMailbox,
-  // updateMailboxPassword,
-  deleteMailbox } = require('../../utils/mailbox');
-const {
-  // createAccount,
-  updateAccountPassword } = require('../../utils/mattermost');
 const Joi = require('joi');
 const { jwtDecode } = require('jwt-decode');
-const { misesAJourMongo, historisationMongo,
-  getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
+const { validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
 const { checkAuth } = require('../../common/utils/feathers.utils');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
@@ -579,45 +571,6 @@ exports.Users = class Users extends Service {
 
       if (typeEmail === 'bienvenue') {
         try {
-          // if (user.roles.includes('conseiller')) {
-          //   return app.get('mongoClient').then(async db => {
-          //     const conseiller = await db.collection('conseillers').findOne({ _id: user.entity.oid });
-          //     const nom = slugify(`${conseiller.nom}`, { replacement: '-', lower: true, strict: true });
-          //     const prenom = slugify(`${conseiller.prenom}`, { replacement: '-', lower: true, strict: true });
-          //     const email = conseiller.emailCN.address;
-          //     const login = email.substring(0, email.lastIndexOf('@'));
-          //     const gandi = app.get('gandi');
-          //     const mattermost = app.get('mattermost');
-          //     await db.collection('users').updateOne({ _id: user._id }, {
-          //       $set: {
-          //         name: email
-          //       }
-          //     });
-          //     user.name = email;
-          //     // La boite mail a été créée dans import-recrutes.js
-          //     await updateMailboxPassword(gandi, user.entity.oid, login, password, db, logger, app.get('sentry'));
-          //     await createAccount({
-          //       mattermost,
-          //       conseiller,
-          //       email,
-          //       login,
-          //       nom,
-          //       prenom,
-          //       password,
-          //       db,
-          //       logger,
-          //       Sentry: app.get('sentry')
-          //     });
-
-          //     let message = emails.getEmailMessageByTemplateName('bienvenueCompteConseiller');
-          //     await message.send(user, conseiller);
-
-          //     // Envoi d'un deuxième email pour l'inscription à Pix Orga
-          //     let messagePix = emails.getEmailMessageByTemplateName('pixOrgaConseiller');
-          //     await messagePix.send(user, conseiller);
-          //     res.send({ ...user, name: email });
-          //   });
-          // }
           const nomTemplate = 'bienvenueCompteCandidat';
           const message = emails.getEmailMessageByTemplateName(nomTemplate);
           await message.send(user);
@@ -628,23 +581,6 @@ exports.Users = class Users extends Service {
       }
       if (typeEmail === 'renouvellement') {
         try {
-          // if (user.roles.includes('conseiller')) {
-          //   const conseiller = await app.service('conseillers').get(user.entity?.oid, { user });
-          //   // Mise à jour du password également dans Mattermost et Gandi
-          //   const adressCN = conseiller.emailCN?.address;
-          //   if (adressCN === undefined) {
-          //     logger.error(`AdressCN not found for conseiller id id=${conseiller._id}`);
-          //     res.status(404).send(new NotFound('Adresse email Conseiller Numérique non trouvée').toJSON());
-          //     return;
-          //   }
-          //   const login = adressCN.substring(0, adressCN.lastIndexOf('@'));
-          //   app.get('mongoClient').then(async db => {
-          //     await updateMailboxPassword(app.get('gandi'), conseiller._id, login, password, db, logger, app.get('sentry'));
-          //     await updateAccountPassword(app.get('mattermost'), db, logger, app.get('sentry'))(conseiller, password);
-          //   });
-          //   //Renouvellement conseiller => envoi email perso
-          //   user.persoEmail = conseiller.email;
-          // }
           if (user?.resetPasswordCnil) {
             app.get('mongoClient').then(async db => {
               const userUpdated = await db.collection('users').updateOne(
@@ -796,85 +732,6 @@ exports.Users = class Users extends Service {
         res.status(500).json(new GeneralError('Erreur mot de passe oublié.'));
         return;
       }
-    });
-
-    app.patch('/users/changement-email-pro/:token', async (req, res) => {
-
-      const { total, data } = await this.find({
-        query: {
-          token: req.params.token,
-          $limit: 1,
-        }
-      });
-      const user = data[0];
-      if (total === 0) {
-        res.status(404).send(new NotFound('Compte non trouvé', {
-          id: user._id
-        }).toJSON());
-        return;
-      }
-      if (!user?.roles.includes('conseiller') || !user?.support_cnfs) {
-        res.status(409).send(new Conflict('Vous n\'avez pas l\'autorisation', {
-          id: user._id
-        }).toJSON());
-        return;
-      }
-      const password = req.body.password;
-      const passwordValidation = Joi.string().required().regex(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{12,199})/).error(new Error('Le mot de passe ne correspond pas aux exigences de sécurité.')).validate(password);
-      if (passwordValidation.error) {
-        res.status(400).json(new BadRequest(passwordValidation.error));
-        return;
-      }
-      const conseillerId = user?.entity?.oid;
-      const gandi = app.get('gandi');
-      const Sentry = app.get('sentry');
-      const mattermost = app.get('mattermost');
-
-      app.get('mongoClient').then(async db => {
-        const conseiller = await getConseiller(db)(conseillerId);
-        const lastLogin = conseiller?.emailCN?.address.substring(0, conseiller?.emailCN?.address.lastIndexOf('@'));
-        const email = `${user.support_cnfs.login}@${gandi.domain}`;
-        const userIdentity = {
-          email: user?.support_cnfs?.nouveauEmail,
-          nom: user?.support_cnfs?.nom,
-          prenom: user?.support_cnfs?.prenom,
-          login: user?.support_cnfs?.login
-        };
-        conseiller.message_email = {
-          email_future: user?.support_cnfs?.nouveauEmail
-        };
-        const login = user?.support_cnfs?.login;
-        const mailer = createMailer(app);
-        const emails = createEmails(db, mailer, app, logger);
-        const message = emails.getEmailMessageByTemplateName('confirmationChangeEmailCnfs');
-
-        if (conseiller?.emailCN?.address) {
-          await deleteMailbox(gandi, db, logger, Sentry)(conseillerId, lastLogin).then(async () => {
-            return patchApiMattermostLogin({ Sentry, logger, db, mattermost })({ conseiller, userIdentity });
-          }).then(() => {
-            return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
-          }).then(async () => {
-            return await misesAJourMongo(db, app)(conseillerId, email, userIdentity, password);
-          }).then(async () => {
-            try {
-              await createMailbox({ gandi, db, logger, Sentry })({ conseillerId, login, password });
-              await message.send(conseiller);
-              await historisationMongo(db)(conseillerId, conseiller, user);
-              return res.status(200).send({ messageCreationMail: 'Votre nouvel email a été créé avec succès' });
-            } catch (error) {
-              logger.error(error);
-              app.get('sentry').captureException(error);
-              res.status(500).send(new GeneralError('Erreur lors de la création de la boîte mail, veuillez contacter le support'));
-              return;
-            }
-          }).catch(error => {
-            logger.error(error);
-            app.get('sentry').captureException(error);
-            res.status(500).send(new GeneralError('Une erreur s\'est produite., veuillez réessayer plus tard.'));
-            return;
-          });
-        }
-      });
     });
 
     app.patch('/users/verify-code', async (req, res) => {
