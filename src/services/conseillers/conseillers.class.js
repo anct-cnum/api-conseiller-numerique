@@ -5,8 +5,6 @@ const logger = require('../../logger');
 const { jwtDecode } = require('jwt-decode');
 const { S3Client, DeleteObjectCommand, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
-const { Pool } = require('pg');
-const pool = new Pool();
 const crypto = require('crypto');
 const statsPdf = require('../stats/stats.pdf');
 const dayjs = require('dayjs');
@@ -803,158 +801,6 @@ exports.Conseillers = class Conseillers extends Service {
       }).catch(routeActivationError => abort(res, routeActivationError));
     });
 
-    // app.patch('/conseillers/updateInfosConseiller/:id', checkAuth, async (req, res) => {
-    //   app.get('mongoClient').then(async db => {
-    //     let initModifMailPersoConseiller = false;
-    //     let initModifMailProConseiller = false;
-    //     let { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe } = req.body;
-    //     email = email.trim();
-    //     emailPro = emailPro?.trim();
-    //     const body = { telephone, telephonePro, emailPro, email, dateDeNaissance, sexe };
-    //     let idConseiller = req.params.id;
-
-    //     if (!ObjectId.isValid(idConseiller)) {
-    //       res.status(400).json(new BadRequest('Erreur: l\'identifiant reçu est invalide. Veuillez vous reconnecter.'));
-    //       return;
-    //     }
-
-    //     const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-    //     const minDate = dayjs().subtract(99, 'year');
-    //     const maxDate = dayjs().subtract(18, 'year');
-    //     const schema = Joi.object({
-    //       email: Joi.string().trim().required().regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email est invalide')),
-    //       emailPro: Joi.string().trim().optional().allow('', null).regex(/^([a-zA-Z0-9]+(?:[\\._-][a-zA-Z0-9]+)*)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/).error(new Error('L\'adresse email professionnellle est invalide')),
-    //       telephonePro: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone professionnel est invalide')),
-    //       sexe: Joi.string().valid('Homme', 'Femme', 'Autre').required().error(new Error('Le champ sexe est invalide')),
-    //       dateDeNaissance: Joi.date().required().min(minDate).max(maxDate).error(new Error('La date de naissance est invalide'))
-    //     });
-    //     const regexOldTelephone = new RegExp('^((06)|(07))[0-9]{8}$');
-    //     let extended = '';
-    //     if (!regexOldTelephone.test(conseiller.telephone) || conseiller.telephone !== telephone) {
-    //       extended = schema.keys({
-    //         telephone: Joi.string().optional().allow('', null).regex(/^(?:(?:\+)(33|590|596|594|262|269))(?:[\s.-]*\d{3}){3,4}$/).error(new Error('Le numéro de téléphone personnel est invalide')),
-    //       }).validate(body);
-    //     } else {
-    //       extended = schema.keys({
-    //         telephone: Joi.string().optional().allow('', null).regex(/^((06)|(07))[0-9]{8}$/).error(new Error('Le numéro de téléphone personnel est invalide'))
-    //       }).validate(body);
-    //     }
-
-    //     if (extended.error) {
-    //       res.status(400).json(new BadRequest(extended.error));
-    //       return;
-    //     }
-
-    //     telephone = telephone !== null ? telephone : ''; // contrainte not null côté PG => string vide
-    //     const changeInfos = { telephone, telephonePro, sexe, dateDeNaissance };
-
-    //     try {
-    //       await pool.query(`UPDATE djapp_coach
-    //       SET phone = $2 WHERE id = $1`,
-    //       [conseiller.idPG, telephone]);
-    //       await app.service('conseillers').patch(idConseiller, changeInfos);
-    //       await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
-    //         { '$set': {
-    //           'conseillerObj.dateDeNaissance': dateDeNaissance,
-    //           'conseillerObj.telephonePro': telephonePro,
-    //           'conseillerObj.telephone': telephone,
-    //           'conseillerObj.sexe': sexe,
-    //         } });
-    //     } catch (err) {
-    //       app.get('sentry').captureException(err);
-    //       logger.error(err);
-    //       res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
-    //       return;
-    //     }
-    //     const gandi = app.get('gandi');
-    //     if (email.toLowerCase() !== conseiller.email) {
-    //       if (email.includes(gandi.domain)) {
-    //         res.status(400).send(new BadRequest('Erreur: l\'email saisi est invalide', {
-    //           email
-    //         }).toJSON());
-    //         return;
-    //       }
-    //       const verificationEmail = await db.collection('conseillers').countDocuments({ email: email.toLowerCase() });
-    //       if (verificationEmail !== 0) {
-    //         logger.error(`Erreur: l'email ${email} est déjà utilisé par un autre utilisateur`);
-    //         res.status(409).send(new Conflict('Erreur: l\'email est déjà utilisé par un autre utilisateur', {
-    //           email
-    //         }).toJSON());
-    //         return;
-    //       }
-    //       try {
-    //         const setMailAConfirmer = {
-    //           tokenChangementMail: uuidv4(),
-    //           tokenChangementMailCreatedAt: new Date(),
-    //           mailAModifier: email.toLowerCase()
-    //         };
-    //         await this.patch(idConseiller, { $set: setMailAConfirmer });
-    //         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
-    //           { '$set': {
-    //             'conseillerObj.tokenChangementMail': setMailAConfirmer.tokenChangementMail,
-    //             'conseillerObj.tokenChangementMailCreatedAt': setMailAConfirmer.tokenChangementMailCreatedAt,
-    //             'conseillerObj.mailAModifier': setMailAConfirmer.mailAModifier
-
-    //           } });
-    //         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-    //         conseiller.nouveauEmail = email.toLowerCase();
-    //         let mailer = createMailer(app, email);
-    //         const emails = createEmails(db, mailer);
-    //         let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmail');
-    //         await message.send(conseiller);
-    //         initModifMailPersoConseiller = true;
-    //       } catch (error) {
-    //         app.get('sentry').captureException(error);
-    //         logger.error(error);
-    //         res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
-    //         return;
-    //       }
-    //     }
-    //     if (emailPro && emailPro?.toLowerCase() !== conseiller?.emailPro) {
-    //       const verificationEmail = await db.collection('conseillers').countDocuments({ emailPro: emailPro.toLowerCase() });
-    //       if (verificationEmail !== 0) {
-    //         logger.error(`Erreur: l'email professionnelle ${emailPro} est déjà utilisé par un autre utilisateur`);
-    //         res.status(409).send(new Conflict('Erreur: l\'email professionnelle est déjà utilisé par un autre utilisateur', {
-    //           emailPro
-    //         }).toJSON());
-    //         return;
-    //       }
-    //       try {
-    //         const setMailProAConfirmer = {
-    //           tokenChangementMailPro: uuidv4(),
-    //           tokenChangementMailProCreatedAt: new Date(),
-    //           mailProAModifier: emailPro.toLowerCase()
-    //         };
-    //         await this.patch(idConseiller, { $set: setMailProAConfirmer });
-    //         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': new ObjectId(idConseiller) },
-    //           { '$set': {
-    //             'conseillerObj.tokenChangementMailPro': setMailProAConfirmer.tokenChangementMailPro,
-    //             'conseillerObj.tokenChangementMailProCreatedAt': setMailProAConfirmer.tokenChangementMailProCreatedAt,
-    //             'conseillerObj.mailProAModifier': setMailProAConfirmer.mailProAModifier
-    //           } });
-    //         const conseiller = await db.collection('conseillers').findOne({ _id: new ObjectId(idConseiller) });
-    //         conseiller.nouveauEmailPro = emailPro.toLowerCase();
-    //         let mailer = createMailer(app, emailPro);
-    //         const emails = createEmails(db, mailer);
-    //         let message = emails.getEmailMessageByTemplateName('conseillerConfirmeNouveauEmailPro');
-    //         await message.send(conseiller);
-    //         initModifMailProConseiller = true;
-    //       } catch (error) {
-    //         app.get('sentry').captureException(error);
-    //         logger.error(error);
-    //         res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
-    //         return;
-    //       }
-    //     }
-    //     return res.send({
-    //       'conseiller': changeInfos,
-    //       initModifMailPersoConseiller,
-    //       initModifMailProConseiller
-    //     });
-    //   });
-
-    // });
-
     app.patch('/conseillers/superieur_hierarchique/:id', checkAuth, async (req, res) => {
       const accessToken = req.feathers?.authentication?.accessToken;
       const userId = jwtDecode(accessToken).sub;
@@ -1045,14 +891,6 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        await pool.query(`UPDATE djapp_coach
-        SET (disponible, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, disponible, updatedAt]);
-      } catch (err) {
-        logger.error(err);
-        app.get('sentry').captureException(err);
-      }
-      try {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
           { $set: {
@@ -1105,10 +943,6 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        await pool.query(`UPDATE djapp_coach
-        SET (start_date, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, dayjs(dateDisponibilite).format('YYYY-MM-DD'), dayjs(updatedAt).format('YYYY-MM-DD')]);
-
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'dateDisponibilite': mongoDateDisponibilite, updatedAt } });
 
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
@@ -1149,10 +983,6 @@ exports.Conseillers = class Conseillers extends Service {
       }
       if (existTokenMail) {
         try {
-          await pool.query(`UPDATE djapp_coach
-          SET email = LOWER($2)
-              WHERE LOWER(email) = LOWER($1)`,
-          [conseiller.email, conseiller.mailAModifier]);
           await db.collection('conseillers').updateMany({ email: conseiller.email }, {
             $set: { email: conseiller.mailAModifier.toLowerCase() },
             $unset: {
@@ -1351,24 +1181,6 @@ exports.Conseillers = class Conseillers extends Service {
         rolesGuard(userId, [Role.Conseiller, Role.Coordinateur], getUserById)
       ).then(async () => {
         try {
-          await pool.query(`UPDATE djapp_coach
-          SET (
-            max_distance,
-            zip_code,
-            commune_code,
-            departement_code,
-            region_code,
-            geo_name,
-            location,
-            updated,
-            com_code
-           )
-            =
-            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9, $10)
-            WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement,
-            codeRegion, nomCommune, location, updatedAt, codeCom]);
-
           await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
           });

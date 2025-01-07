@@ -9,13 +9,10 @@ const logger = require('../../logger');
 const createEmails = require('../../emails/emails');
 const createMailer = require('../../mailer');
 const { jwtDecode } = require('jwt-decode');
-const { Pool } = require('pg');
 const utils = require('../../utils/index.js');
 const { v4: uuidv4 } = require('uuid');
 const { checkAuth } = require('../../common/utils/feathers.utils');
 const { getRaisonSocialeBySiretEntrepriseApiV3 } = require('../../utils/entreprise.api.gouv');
-
-const pool = new Pool();
 
 exports.Structures = class Structures extends Service {
   constructor(options, app) {
@@ -327,11 +324,6 @@ exports.Structures = class Structures extends Service {
 
       const updateStructure = async (id, email, inactivite, statut) => {
         try {
-          await pool.query(`
-          UPDATE djapp_hostorganization
-          SET contact_email = $2
-          WHERE id = $1`,
-          [id, email]);
           await db.collection('structures').updateOne(
             { _id: new ObjectID(structureId) },
             { $set: { 'contact.email': email },
@@ -426,34 +418,26 @@ exports.Structures = class Structures extends Service {
         }).toJSON());
       }
 
-      const updateStructure = async (id, siret) => {
-        try {
-          await pool.query(`
-            UPDATE djapp_hostorganization
-            SET siret = $2
-            WHERE id = $1`,
-          [id, siret]);
-          await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret },
-            $push: {
-              historique: {
-                data: {
-                  ancienSiret: structure?.siret === '' ? 'non renseigné' : structure?.siret,
-                  nouveauSiret: req.body.siret
-                },
-                changement: 'siret',
-                date: new Date(),
-                idAdmin: adminUser?._id
+      try {
+        await db.collection('structures').updateOne({ _id: new ObjectID(req.body.structureId) }, { $set: { siret: req.body.siret },
+          $push: {
+            historique: {
+              data: {
+                ancienSiret: structure?.siret === '' ? 'non renseigné' : structure?.siret,
+                nouveauSiret: req.body.siret
+              },
+              changement: 'siret',
+              date: new Date(),
+              idAdmin: adminUser?._id
 
-              }
-            } });
-          res.send({ siretUpdated: true });
-        } catch (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
-          res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
-        }
-      };
-      await updateStructure(structure.idPG, req.body.siret);
+            }
+          } });
+        res.send({ siretUpdated: true });
+      } catch (error) {
+        logger.error(error);
+        app.get('sentry').captureException(error);
+        res.status(500).send(new GeneralError('Un problème avec la base de données est survenu ! Veuillez recommencer.'));
+      }
     });
 
     app.get('/structures/getAvancementRecrutement', checkAuth, async (req, res) => {

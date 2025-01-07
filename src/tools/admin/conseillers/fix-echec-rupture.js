@@ -4,8 +4,6 @@ const { execute } = require('../../utils');
 const dayjs = require('dayjs');
 const { program } = require('commander');
 const { v4: uuidv4 } = require('uuid');
-const { Pool } = require('pg');
-const pool = new Pool();
 const { ObjectID } = require('mongodb');
 const slugify = require('slugify');
 
@@ -21,17 +19,6 @@ const configPG = {
 const formatDateDb = date => dayjs(date, 'YYYY-MM-DD').toDate();
 const getConseiller = db => async idCNFS => await db.collection('conseillers').findOne({ _id: idCNFS });
 const getStructure = db => async idStructure => await db.collection('structures').findOne({ _id: idStructure });
-const updateConseillersPG = pool => async (email, disponible, datePG) =>
-  await pool.query(`
-        UPDATE djapp_coach
-        SET (
-          disponible,
-          updated
-        )
-        =
-        ($2,$3)
-        WHERE LOWER(email) = LOWER($1)`,
-  [email, disponible, datePG]);
 const getMisesEnRelation = db => async (idCNFS, idStructure) => await db.collection('misesEnRelation').find(
   {
     'conseiller.$id': idCNFS,
@@ -289,8 +276,6 @@ execute(__filename, async ({ db, logger, exit, gandi, mattermost, emails, Sentry
       if (doublon) {
         logger.info(`Correction Doublon disponible false à true`);
       }
-      const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
-      await updateConseillersPG(pool)(conseiller.email, true, datePG);
     }
     const verifConseiller = { // verif si tout a été effectué true==Ok / false==NotOK
       statut: conseiller?.statut === 'RUPTURE',

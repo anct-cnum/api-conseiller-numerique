@@ -1,8 +1,5 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { Pool } = require('pg');
-const pool = new Pool();
-const dayjs = require('dayjs');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
@@ -30,7 +27,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   }
   distance = parseInt(distance, 10);
   const updatedAt = new Date();
-  const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
 
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: { distanceMax: distance, updatedAt } });
@@ -43,21 +39,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
         'conseiller.$id': conseiller._id,
         'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] } });
     }
-  } catch (error) {
-    logger.error(error);
-    Sentry.captureException(error);
-    return;
-  }
-  try {
-    await pool.query(`UPDATE djapp_coach
-    SET (
-      max_distance,
-      updated
-    )
-    =
-    ($2,$3)
-    WHERE id = $1`,
-    [id, distance, datePG]);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);

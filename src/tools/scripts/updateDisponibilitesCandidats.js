@@ -2,9 +2,7 @@
 'use strict';
 
 const { execute } = require('../utils');
-const { Pool } = require('pg');
 const CSVToJSON = require('csvtojson');
-const pool = new Pool();
 const { program } = require('commander');
 
 program.option('-c, --csv <path>', 'CSV file path');
@@ -22,19 +20,6 @@ const readCSV = async filePath => {
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
   const options = program.opts();
-  const updateConseillerPG = async (email, disponible) => {
-    try {
-      const row = await pool.query(`
-        UPDATE djapp_coach
-        SET disponible = $2
-        WHERE LOWER(email) = LOWER($1)`,
-      [email, disponible]);
-      return row;
-    } catch (error) {
-      Sentry.captureException(error);
-    }
-  };
-
   logger.info('Mise à jour des candidats non disponibles');
 
   let count = 0;
@@ -45,8 +30,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       await new Promise(async () => {
         for (const candidat of candidats) {
           try {
-            // PG en premier, attention synchro
-            await updateConseillerPG(candidat.email, false);
             await db.collection('conseillers').updateMany({ email: candidat.email }, { $set: { disponible: false } });
             await db.collection('misesEnRelation').updateMany({ 'conseillerObj.email': candidat.email }, {
               $set: {

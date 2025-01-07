@@ -2,8 +2,6 @@ const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
-const { Pool } = require('pg');
-const pool = new Pool();
 const { createMailbox, fixHomonymesCreateMailbox } = require('../../../utils/mailbox');
 const slugify = require('slugify');
 const { DBRef } = require('mongodb');
@@ -45,19 +43,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
   logger.info('Import des conseillers recrutés');
   let count = 0;
   let errors = 0;
-
-  const updateConseillersPG = async (email, disponible) => {
-    try {
-      await pool.query(`
-        UPDATE djapp_coach
-        SET disponible = $2
-        WHERE LOWER(email) = LOWER($1)`,
-      [email, disponible]);
-    } catch (error) {
-      logger.error(error);
-      Sentry.captureException(error.message);
-    }
-  };
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -187,9 +172,6 @@ execute(__filename, async ({ feathers, app, db, logger, exit, Sentry }) => {
             logger.error(`Conseiller ${idPGConseiller} a un doublon avec un statut ${conseillerDoublon?.statut} ${conseillerDoublon?.idPG}`);
             errors++;
           } else {
-            //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
-            await updateConseillersPG(conseillerOriginal.email, false);
-
             const role = 'conseiller';
             const dbName = db.serverConfig.s.options.dbName;
             const userAccount = await db.collection('users').findOne({ name: conseillerOriginal.email, roles: { $in: ['candidat'] } });

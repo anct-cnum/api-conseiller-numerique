@@ -3,8 +3,6 @@
 
 const { execute } = require('../utils');
 const dayjs = require('dayjs');
-const { Pool } = require('pg');
-const pool = new Pool();
 
 // node src/tools/scripts/fixMailAModifier.js
 
@@ -26,12 +24,6 @@ execute(__filename, async ({ logger, db, Sentry, app }) => {
       let listUnset = {};
       let listSet = {};
       if (conseiller?.tokenChangementMailCreatedAt < queryDate && !conseiller.mailAModifier.includes(gandi.domain)) {
-        // Partie PG
-        await pool.query(`UPDATE djapp_coach
-        SET email = LOWER($2)
-            WHERE id = $1`,
-        [conseiller.idPG, conseiller.mailAModifier]);
-
         listSet = {
           ...listSet,
           email: conseiller.mailAModifier.toLowerCase(),

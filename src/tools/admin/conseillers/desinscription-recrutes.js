@@ -4,8 +4,6 @@ const dayjs = require('dayjs');
 const CSVToJSON = require('csvtojson');
 const { program } = require('commander');
 const { v4: uuidv4 } = require('uuid');
-const { Pool } = require('pg');
-const pool = new Pool();
 
 const configPG = {
   user: process.env.PGUSER,
@@ -41,24 +39,6 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
     logger.warn(`ATTENTION : les 6 vars d'env PG n'ont pas été configurées`);
     return exit();
   }
-
-  const updateConseillersPG = async (email, disponible, datePG) => {
-    try {
-      await pool.query(`
-        UPDATE djapp_coach
-        SET (
-          disponible,
-          updated
-        )
-        =
-        ($2,$3)
-        WHERE LOWER(email) = LOWER($1)`,
-      [email, disponible, datePG]);
-    } catch (error) {
-      logger.error(error);
-      Sentry.captureException(error.message);
-    }
-  };
 
   const formatDateDb = date => {
     return dayjs(date, 'YYYY-MM-DD').toDate();
@@ -143,9 +123,6 @@ execute(__filename, async ({ db, logger, exit, emails, Sentry, gandi, mattermost
           } else {
             const motifRupture = conseiller['Motif de la sortie du dispositif (QCM)'];
             const updatedAt = new Date();
-            const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
-            //Maj PG en premier lieu pour éviter la resynchro PG > Mongo (avec email pour tous les doublons potentiels)
-            await updateConseillersPG(conseillerCoop.email, true, datePG);
 
             try {
               //Historisation de la rupture

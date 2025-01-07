@@ -46,20 +46,6 @@ const updateIdMongoStructureConseillerRecrute = db => async (idOriginal, newIdMo
 const updateIdMongoStructureConseillerRupture = db => async (idOriginal, newIdMongo) =>
   await db.collection(`conseillers${suffix}`).updateMany({ 'ruptures.structureId': idOriginal }, { $set: { 'ruptures.$.structureId': newIdMongo } });
 
-const structurePG = pool => async dataAnonyme => {
-  const { prenom, nom, fonction, email, telephone } = dataAnonyme.contact;
-  await pool.query(`UPDATE djapp_hostorganization
-            SET (contact_first_name,
-              contact_last_name,
-              contact_job,
-              contact_email,
-              contact_phone)
-                  =
-                  ($2,$3,$4,$5,$6)
-                WHERE id = $1`,
-  [dataAnonyme.idPG, prenom, nom, fonction, email, telephone]);
-};
-
 // ...............................................
 // Concernant les CONSEILLERS
 // ...............................................
@@ -120,22 +106,6 @@ const updateIdMongoPermanencesItinerant = db => async (idOriginal, newIdMongo) =
   await db.collection(`permanences${suffix}`).updateMany({ 'conseillersItinerants': { '$in': [idOriginal] } },
     { $set: { 'conseillersItinerants.$': newIdMongo } });
 
-const conseillerPG = pool => async dataAnonyme => {
-  const { idPG, prenom, nom, email, telephone, dateDisponibilite, distanceMax } = dataAnonyme;
-  await pool.query(`UPDATE djapp_coach
-            SET (
-                  first_name,
-                  last_name,
-                  email,
-                  phone,
-                  start_date,
-                  max_distance)
-                  =
-                  ($2,$3,$4,$5,$6,$7)
-                WHERE id = $1`,
-  [idPG, prenom, nom, email, telephone, dateDisponibilite, distanceMax]);
-};
-
 // ...............................................
 // Concernant des requetes spécifiques
 // ...............................................
@@ -165,7 +135,6 @@ module.exports = {
   updateIdMongoStructureUser,
   updateIdMongoStructureConseillerRecrute,
   updateIdMongoStructureConseillerRupture,
-  structurePG,
   // Conseillers
   getCnfsRecrute,
   getCnfsNonRecrute,
@@ -187,7 +156,6 @@ module.exports = {
   updateIdMongoSondages,
   updateIdMongoPermanenceConseiller,
   updateIdMongoPermanencesItinerant,
-  conseillerPG,
   // requetes spécifiques
   deleteUsersSolo,
   createUser,
