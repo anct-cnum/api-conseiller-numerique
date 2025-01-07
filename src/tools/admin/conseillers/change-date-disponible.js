@@ -1,7 +1,5 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { Pool } = require('pg');
-const pool = new Pool();
 const dayjs = require('dayjs');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
@@ -33,17 +31,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       { 'conseillerObj._id': conseiller._id },
       { $set: { 'conseillerObj.dateDisponibilite': disponible, 'conseillerObj.updatedAt': new Date() }
       });
-
-  } catch (error) {
-    logger.error(error);
-    Sentry.captureException(error);
-    return;
-  }
-  // Update dans PG
-  try {
-    await pool.query(`UPDATE djapp_coach
-      SET start_date = $2 WHERE id = $1`,
-    [conseiller.idPG, disponible]);
 
   } catch (error) {
     logger.error(error);

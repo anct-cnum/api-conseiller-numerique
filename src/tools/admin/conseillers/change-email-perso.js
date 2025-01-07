@@ -1,7 +1,5 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { Pool } = require('pg');
-const pool = new Pool();
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
@@ -50,16 +48,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
     exit(`Le conseiller id=${id} n'est pas de type ${type} mais ${roles[0]}`);
     return;
   }
-  try {
-    await pool.query(`UPDATE djapp_coach
-    SET email = $2 WHERE id = $1`,
-    [id, email]);
-  } catch (error) {
-    logger.error(error);
-    Sentry.captureException(error);
-    return;
-  }
-
   try {
     await db.collection('conseillers').updateOne({ idPG: id }, { $set: { email: email } });
     await db.collection('misesEnRelation').updateMany(

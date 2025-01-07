@@ -5,8 +5,6 @@ const logger = require('../../logger');
 const { jwtDecode } = require('jwt-decode');
 const { S3Client, DeleteObjectCommand, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
-const { Pool } = require('pg');
-const pool = new Pool();
 const crypto = require('crypto');
 const statsPdf = require('../stats/stats.pdf');
 const dayjs = require('dayjs');
@@ -1045,14 +1043,6 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        await pool.query(`UPDATE djapp_coach
-        SET (disponible, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, disponible, updatedAt]);
-      } catch (err) {
-        logger.error(err);
-        app.get('sentry').captureException(err);
-      }
-      try {
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { disponible, updatedAt } });
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id },
           { $set: {
@@ -1105,10 +1095,6 @@ exports.Conseillers = class Conseillers extends Service {
         return;
       }
       try {
-        await pool.query(`UPDATE djapp_coach
-        SET (start_date, updated) = ($2, $3) WHERE id = $1`,
-        [conseiller.idPG, dayjs(dateDisponibilite).format('YYYY-MM-DD'), dayjs(updatedAt).format('YYYY-MM-DD')]);
-
         await db.collection('conseillers').updateOne({ _id: conseiller._id }, { $set: { 'dateDisponibilite': mongoDateDisponibilite, updatedAt } });
 
         await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, {
@@ -1149,10 +1135,6 @@ exports.Conseillers = class Conseillers extends Service {
       }
       if (existTokenMail) {
         try {
-          await pool.query(`UPDATE djapp_coach
-          SET email = LOWER($2)
-              WHERE LOWER(email) = LOWER($1)`,
-          [conseiller.email, conseiller.mailAModifier]);
           await db.collection('conseillers').updateMany({ email: conseiller.email }, {
             $set: { email: conseiller.mailAModifier.toLowerCase() },
             $unset: {
@@ -1351,24 +1333,6 @@ exports.Conseillers = class Conseillers extends Service {
         rolesGuard(userId, [Role.Conseiller, Role.Coordinateur], getUserById)
       ).then(async () => {
         try {
-          await pool.query(`UPDATE djapp_coach
-          SET (
-            max_distance,
-            zip_code,
-            commune_code,
-            departement_code,
-            region_code,
-            geo_name,
-            location,
-            updated,
-            com_code
-           )
-            =
-            ($2,$3,$4, $5, $6 ,$7, ST_GeomFromGeoJSON ($8), $9, $10)
-            WHERE id = $1`,
-          [conseiller.idPG, distanceMax, codePostal, codeCommune, codeDepartement,
-            codeRegion, nomCommune, location, updatedAt, codeCom]);
-
           await this.patch(conseiller._id, {
             $set: { nomCommune, codePostal, codeCommune, codeDepartement, codeRegion, location, distanceMax, updatedAt, codeCom },
           });

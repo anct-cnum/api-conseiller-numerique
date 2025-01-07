@@ -12,12 +12,9 @@ const {
   updateIdMongoStructureUser,
   updateIdMongoStructureConseillerRecrute,
   updateIdMongoStructureConseillerRupture,
-  structurePG
 } = require('./requete-mongo');
 const fakeData = require('./fake-data');
 const { ObjectId } = require('mongodb');
-const { Pool } = require('pg');
-const pool = new Pool();
 
 const anonymisationStructure = async (db, logger, limit) => {
   const getStructure = await getTotalStructures(db, limit)({});
@@ -39,8 +36,6 @@ const anonymisationStructure = async (db, logger, limit) => {
       faker: true,
       seed: false
     };
-    // Update Côté PG
-    await structurePG(pool)(dataAnonyme);
     // update seulement nom, prenom, telephone, email + idMongo
     await updateIdMongoStructure(db)(idOriginal, dataAnonyme);
     await updateIdMongoStructureMisesEnRelation(db)(idOriginal, newIdMongo);

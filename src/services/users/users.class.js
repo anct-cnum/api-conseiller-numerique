@@ -10,11 +10,9 @@ const { createMailbox,
 const {
   // createAccount,
   updateAccountPassword } = require('../../utils/mattermost');
-const { Pool } = require('pg');
-const pool = new Pool();
 const Joi = require('joi');
 const { jwtDecode } = require('jwt-decode');
-const { misesAJourPg, misesAJourMongo, historisationMongo,
+const { misesAJourMongo, historisationMongo,
   getConseiller, patchApiMattermostLogin, validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
 const { checkAuth } = require('../../common/utils/feathers.utils');
 const { v4: uuidv4 } = require('uuid');
@@ -114,25 +112,6 @@ exports.Users = class Users extends Service {
             res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
             return;
           }
-        }
-        try {
-          const user = await db.collection('users').findOne({ _id: new ObjectID(idUser) });
-          const { idPG } = await app.service('conseillers').get(id, { user });
-          await pool.query(`UPDATE djapp_coach
-            SET (
-                  first_name,
-                  last_name,
-                  phone,
-                  start_date)
-                  =
-                  ($2,$3,$4,$5)
-                WHERE id = $1`,
-          [idPG, prenom, nom, telephone, dateDisponibilite]);
-        } catch (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
-          res.status(500).json(new GeneralError('Une erreur s\'est produite, veuillez réessayez plus tard !'));
-          return;
         }
         res.send({ success: true, sendmail: nouveauEmail !== userConnected.data[0].name });
       });
@@ -289,15 +268,6 @@ exports.Users = class Users extends Service {
         if (!userInfo?.mailAModifier) {
           res.status(404).send(new NotFound('mailAModifier not found').toJSON());
           return;
-        }
-        try {
-          await pool.query(`UPDATE djapp_coach
-            SET email = LOWER($2)
-                WHERE LOWER(email) = LOWER($1)`,
-          [userInfo.name, userInfo.mailAModifier]);
-        } catch (error) {
-          logger.error(error);
-          app.get('sentry').captureException(error);
         }
         try {
           await this.patch(userInfo._id, { $set: { name: userInfo.mailAModifier.toLowerCase() } });
@@ -884,7 +854,6 @@ exports.Users = class Users extends Service {
           }).then(() => {
             return updateAccountPassword(mattermost, db, logger, Sentry)(conseiller, password);
           }).then(async () => {
-            await misesAJourPg(pool)(conseiller.idPG, user.support_cnfs.nom, user.support_cnfs.prenom);
             return await misesAJourMongo(db, app)(conseillerId, email, userIdentity, password);
           }).then(async () => {
             try {

@@ -1,9 +1,6 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { Pool } = require('pg');
-const pool = new Pool();
 const axios = require('axios');
-const dayjs = require('dayjs');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
@@ -37,7 +34,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   }
   const cp = codePostal === undefined ? data.properties.codesPostaux[0] : codePostal;
   const updatedAt = new Date();
-  const datePG = dayjs(updatedAt).format('YYYY-MM-DD');
 
   const miseAJour = {
     location: data.geometry,
@@ -64,28 +60,6 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
       'statut': { '$in': ['nouvelle', 'nonInteressee', 'interessee'] }
     });
     await db.collection('misesEnRelation').updateMany({ 'conseiller.$id': conseiller._id }, { $set: miseAJourMiseEnRelation });
-
-    await pool.query(`UPDATE djapp_coach
-      SET (
-      location,
-      zip_code,
-      geo_name,
-      commune_code,
-      departement_code,
-      region_code,
-      updated
-      ) = (ST_GeomFromGeoJSON ($2),$3,$4,$5,$6,$7,$8)
-       WHERE id = $1`,
-    [
-      id,
-      data.geometry,
-      cp,
-      data.properties.nom,
-      data.properties.code,
-      data.properties.codeDepartement,
-      data.properties.codeRegion,
-      datePG
-    ]);
   } catch (error) {
     logger.error(error);
     Sentry.captureException(error);

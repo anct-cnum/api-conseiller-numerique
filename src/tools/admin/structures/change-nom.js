@@ -1,7 +1,5 @@
 const { program } = require('commander');
 const { execute } = require('../../utils');
-const { Pool } = require('pg');
-const pool = new Pool();
 
 execute(__filename, async ({ db, logger, exit, Sentry }) => {
 
@@ -28,18 +26,6 @@ execute(__filename, async ({ db, logger, exit, Sentry }) => {
     await db.collection('misesEnRelation').updateMany({ 'structureObj._id': structure._id }, { $set: { 'structureObj.nom': nouveauNom } });
   } catch (error) {
     logger.error(error);
-    Sentry.captureException(error);
-    return;
-  }
-
-
-  try {
-    await pool.query(`UPDATE djapp_hostorganization
-      SET name = $2 WHERE id = $1`,
-    [structure.idPG, nouveauNom]);
-
-  } catch (error) {
-    logger.error(error.message);
     Sentry.captureException(error);
     return;
   }

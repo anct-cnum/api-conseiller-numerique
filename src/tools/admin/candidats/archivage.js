@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
-const { Pool } = require('pg');
 require('dotenv').config();
 const dayjs = require('dayjs');
-const pool = new Pool();
 
 const { execute } = require('../utils');
 
@@ -14,18 +12,6 @@ execute(__filename, async ({ app, db, logger, Sentry, exit }) => {
   logger.info(`Supprime les candidats qui n'ont pas choisi leur mot de passe depuis le ${dayjs(DATE).format('DD/MM/YYYY')}...`);
   let count = 0;
   let promises = [];
-
-  const deleteConseillerPG = async id => {
-    try {
-      const row = await pool.query(`
-        DELETE djapp_coach
-        WHERE id = $1`,
-      [id]);
-      return row;
-    } catch (error) {
-      Sentry.captureException(error);
-    }
-  };
 
   const archiverLaSuppression = async ({ email, user, Sentry, motif, actionUser }) => {
     try {
@@ -75,7 +61,6 @@ execute(__filename, async ({ app, db, logger, Sentry, exit }) => {
         archiverLaSuppression({ email: conseiller.email, user, Sentry, motif: 'archivage', actionUser: 'script' });
 
         await db.collection('conseillers').deleteMany({ email: conseiller.email });
-        await deleteConseillerPG(conseiller.idPG);
         await db.collection('misesEnRelation').deleteMany({ 'conseillerObj.email': conseiller.email });
 
         count++;

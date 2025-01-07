@@ -2,7 +2,6 @@
 'use strict';
 
 const { execute } = require('../../utils');
-const { Pool } = require('pg');
 const {
   MisesEnRelationStatut,
   UserRole,
@@ -180,24 +179,8 @@ const setRolesToCandidatOnly = async (db, userId) => await db.collection('users'
 
 const getStructureById = async (db, structureId) => await db.collection('structures').findOne({ _id: structureId });
 
-const pool = new Pool();
-
-const updateConseillerPG = async conseiller => {
-  try {
-    await pool.query(`UPDATE djapp_coach
-    SET disponible = $2
-    WHERE id = $1`,
-    [
-      conseiller.idPG,
-      conseiller.disponible
-    ]);
-  } catch (error) {
-    console.error(error);
-  }
-};
 
 const replaceConseiller = async (db, conseillerId, conseillerObj) => {
-  await updateConseillerPG(conseillerObj);
 
   await db.collection('conseillers').replaceOne({
     _id: new ObjectId(conseillerId)
@@ -205,16 +188,12 @@ const replaceConseiller = async (db, conseillerId, conseillerObj) => {
 };
 
 const setConseillerDisponibleToFalse = async (db, conseillerId) => {
-  await updateConseillerPG({ ...(await getConseillerById(db, conseillerId)), disponible: false });
-
   await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
     $set: { disponible: false }
   });
 };
 
 const setConseillerEstRecruteToTrue = async (db, conseillerId) => {
-  await updateConseillerPG({ ...(await getConseillerById(db, conseillerId)), estRecrute: true });
-
   await db.collection('conseillers').updateOne({ _id: new ObjectId(conseillerId) }, {
     $set: { estRecrute: true }
   });

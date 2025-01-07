@@ -22,12 +22,6 @@ const misesAJourMongo = (db, app) => async (conseillerId, email, userIdentity, p
   });
 };
 
-const misesAJourPg = pool => async (idPG, nom, prenom) => {
-  await pool.query(`UPDATE djapp_coach
-        SET (first_name, last_name) = ($2, $3) WHERE id = $1`,
-  [idPG, prenom, nom]);
-};
-
 const historisationMongo = db => async (conseillerId, conseiller, user) => {
   await db.collection('users').updateOne({ 'entity.$id': conseillerId }, { $unset: { support_cnfs: {} } });
   await db.collection('conseillers').updateOne({ _id: conseillerId }, {
@@ -89,7 +83,6 @@ const validationCodeDepartement = Joi => niveau => {
 
 module.exports = {
   misesAJourMongo,
-  misesAJourPg,
   historisationMongo,
   getConseiller,
   patchLoginMattermostMongo,

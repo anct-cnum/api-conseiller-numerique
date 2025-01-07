@@ -1,5 +1,3 @@
-const { Pool } = require('pg');
-const pool = new Pool();
 const { ObjectId } = require('mongodb');
 const logger = require('../../logger');
 const { NotFound, Conflict, NotAuthenticated, Forbidden } = require('@feathersjs/errors');
@@ -202,17 +200,6 @@ const suppressionTotalCandidat = app => async tableauCandidat => {
     await app.get('mongoClient').then(async db => {
       tableauCandidat.forEach(profil => {
         promises.push(new Promise(async resolve => {
-          try {
-            await pool.query(`
-            DELETE FROM djapp_matching WHERE coach_id = $1`,
-            [profil.idPG]);
-            await pool.query(`
-            DELETE FROM djapp_coach WHERE id = $1`,
-            [profil.idPG]);
-          } catch (error) {
-            logger.info(error);
-            app.get('sentry').captureException(error);
-          }
           try {
             await db.collection('misesEnRelation').deleteMany({ 'conseiller.$id': profil._id });
             await db.collection('users').deleteOne({ 'entity.$id': profil._id });
