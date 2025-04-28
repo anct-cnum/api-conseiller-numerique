@@ -126,5 +126,7 @@
     "expiration_default_months": "USER_ACCOUNTS_EXPIRATION_DEFAULT",
     "expiration_admin_months": "USER_ACCOUNTS_EXPIRATION_ADMIN"
   },
-  "limit_relance_cra": "LIMIT_RELANCE_CRA"
+  "limit_relance_cra": "LIMIT_RELANCE_CRA",
+  "token_coop_numerique":"TOKEN_COOP_NUMERIQUE",
+  "api_lieux_activite_coop_numerique": "API_LIEUX_ACTIVITE_COOP_NUMERIQUE"
 }
