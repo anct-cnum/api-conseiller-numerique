@@ -10,6 +10,5 @@
   "0 0 * * * $ROOT/src/tools/jobs/delete-cv-six-mois.sh",
   "15 0 * * * $ROOT/src/tools/jobs/delete-inactive-accounts.sh",
   "0 3 * * * $ROOT/src/tools/jobs/delete-inactive-candidats.sh",
-  "*/30 * * * * $ROOT/src/tools/jobs/populate-rdv-aide-numerique.sh",
   "0 3 * * * $ROOT/src/tools/jobs/update-token-mot-de-passe.sh"
 ]
