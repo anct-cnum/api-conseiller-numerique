@@ -21,7 +21,7 @@
     "@feathersjs/errors": "4.5.11",
     "@feathersjs/express": "4.5.11",
     "@feathersjs/feathers": "4.5.11",
-    "@sentry/node": "7.102.0",
+    "@sentry/node": "9.24.0",
     "@turf/circle": "7.2.0",
     "axios": "1.9.0",
     "commander": "12.1.0",
