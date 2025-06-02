@@ -13,7 +13,7 @@
     "test:integration": "mocha test/integration --recursive --exit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.806.0",
+    "@aws-sdk/client-s3": "3.821.0",
     "@feathersjs/authentication": "4.5.16",
     "@feathersjs/authentication-local": "4.5.11",
     "@feathersjs/authentication-oauth": "4.5.11",
