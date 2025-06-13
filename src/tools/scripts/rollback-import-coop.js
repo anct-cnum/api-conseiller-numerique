@@ -6,7 +6,6 @@ require('dotenv').config();
 const { execute } = require('../utils');
 const { program } = require('commander');
 const { v4: uuidv4 } = require('uuid');
-const { deleteMailbox } = require('../../utils/mailbox');
 const { deleteAccount } = require('../../utils/mattermost');
 
 program.option('-c, --idConseiller <idConseiller>', 'IdPG du conseiller', parseInt);
@@ -22,7 +21,7 @@ const configPG = {
   host: process.env.PGHOST
 };
 
-execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
+execute(__filename, async ({ db, logger, Sentry, mattermost }) => {
 
   await new Promise(async (resolve, reject) => {
 
@@ -63,8 +62,13 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
         },
         $unset: {
           dateRecrutement: '',
+          dateDebutDeContrat: '',
+          dateFinDeContrat: '',
+          typeDeContrat: '',
+          salaire: '',
         }
       });
+
     //Modification des doublons potentiels
     await db.collection('conseillers').updateMany(
       {
@@ -128,11 +132,6 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
         });
       }
     }
-    const login = conseiller.emailCN?.address.substring(0, conseiller.emailCN?.address?.lastIndexOf('@'));
-    //Suppression compte Gandi
-    if (login !== undefined) {
-      await deleteMailbox(gandi, db, logger, Sentry)(conseiller._id, login);
-    }
     //Suppression compte Mattermost
     if (conseiller.mattermost?.id !== undefined) {
       await deleteAccount(mattermost, conseiller, db, logger, Sentry);
@@ -149,6 +148,7 @@ execute(__filename, async ({ db, logger, Sentry, gandi, mattermost }) => {
           structureId: '',
           emailCNError: '',
           emailCN: '',
+          emailPro: '',
           mattermost: '',
           resetPasswordCNError: '',
           codeRegionStructure: '',
