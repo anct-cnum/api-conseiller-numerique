@@ -41,7 +41,18 @@ exports.PermanenceConseillers = class Sondages extends Service {
           },
           params: { 'filter[dispositif_programmes_nationaux]': 'Conseillers numériques' }
         });
-        res.send(lieux.data);
+        const regexSiret = /^\d{14}$/u;
+        const regexRidet = /^\d{6,7}$/u;
+        const regexRna = /^W[a-zA-Z0-9]{9}$/u;
+        const regexTelephone = /^(?:(?:\+|00)(?:33|262|269|508|590|594|596|681|687|689)[\s.-]{0,3}(?:\(0\)[\s.-]{0,3})?|0)(?:(?:[1-9](?:[\s.-]?\d{2}){4}|\d{2}(?:[\s.-]\d{3}){2})|\d{6}|\s\d{3}(?:\s\d{2}){3})$/u;
+        const data = lieux.data.map(lieu => {
+          return {
+            ...lieu,
+            pivot: regexSiret.test(lieu.pivot) || regexRidet.test(lieu.pivot) || regexRna.test(lieu.pivot) ? lieu.pivot : '00000000000000',
+            ...(lieu.aidants && { aidants: lieu?.aidants?.filter(aidant => regexTelephone.test(aidant.telephone)) })
+          };
+        });
+        res.send(data);
       } catch (error) {
         app.get('sentry').captureException(error);
         logger.error(error);
