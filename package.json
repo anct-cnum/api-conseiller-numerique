@@ -23,7 +23,7 @@
     "@feathersjs/feathers": "4.5.11",
     "@sentry/node": "7.102.0",
     "@turf/circle": "7.2.0",
-    "axios": "1.10.0",
+    "axios": "1.12.0",
     "commander": "12.1.0",
     "compression": "1.8.1",
     "cors": "2.8.5",
