@@ -13,7 +13,7 @@
     "test:integration": "mocha test/integration --recursive --exit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.899.0",
+    "@aws-sdk/client-s3": "3.922.0",
     "@feathersjs/authentication": "4.5.16",
     "@feathersjs/authentication-local": "4.5.11",
     "@feathersjs/authentication-oauth": "4.5.11",
@@ -23,12 +23,12 @@
     "@feathersjs/feathers": "4.5.11",
     "@sentry/node": "7.102.0",
     "@turf/circle": "7.2.0",
-    "axios": "1.12.2",
+    "axios": "1.13.1",
     "commander": "12.1.0",
     "compression": "1.8.1",
     "cors": "2.8.5",
     "csv-parser": "3.2.0",
-    "csvtojson": "2.0.10",
+    "csvtojson": "2.0.14",
     "dotenv": "16.5.0",
     "ejs": "3.1.10",
     "excel4node": "1.8.2",
