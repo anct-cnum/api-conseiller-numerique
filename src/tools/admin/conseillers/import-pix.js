@@ -111,15 +111,14 @@ execute(__filename, async ({ db, logger, Sentry }) => {
           const p = new Promise(async resolve => {
             logger.debug(`OK;${c.nom};${c.prenom};${pix.nom};${pix.prenom};${pix.id};${c.idPG};${c._id}`);
 
-            const filter = {
-              '_id': c._id,
-            };
+            const filter = { '_id': c._id };
+            const [, d, m, y, h, min] = pix.datePartage.match(/(\d{2})\/(\d{2})\/(\d{4}).*?(\d{2}):(\d{2})/);
 
             const updateDoc = {
               $set: {
                 pix: {
                   partage: pix.partage === 'Oui',
-                  datePartage: new Date(pix.datePartage),
+                  datePartage: new Date(y, m - 1, d, h, min),
                   palier: ~~pix.palier,
                   competence1: pix.competence1 === 'Oui',
                   competence2: pix.competence2 === 'Oui',
@@ -148,7 +147,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
         k++;
 
         // 3- Chercher dans la whitelist
-        if (program.whitelist) {
+        if (program.opts().whitelist) {
           checkWhitelist(pix);
         }
       }
@@ -158,9 +157,9 @@ execute(__filename, async ({ db, logger, Sentry }) => {
     }
   };
 
-  const replies = await readCSV(program.csv);
-  if (program.whitelist) {
-    whitelist = await readCSV(program.whitelist);
+  const replies = await readCSV(program.opts().csv);
+  if (program.opts().whitelist) {
+    whitelist = await readCSV(program.opts().whitelist);
   }
 
   let i = 0;
@@ -170,7 +169,7 @@ execute(__filename, async ({ db, logger, Sentry }) => {
     const prenom = reply['Prénom du Participant'].replace(/\s/g, '');
     const id = ~~(reply['identifiant CN'].replace(/\s/g, ''));
     const partage = reply['Partage (O/N)'].replace(/\s/g, '');
-    const datePartage = reply['Date du partage'].replace(/\s/g, '');
+    const datePartage = reply['Date et heure du partage (Europe/Paris)'].replace(/\s/g, '');
     const palier = reply['Palier obtenu (/3)'].replace(/\s/g, '');
     const competence1 = reply['Utilisation du numérique dans la vie professionnelle obtenu (O/N)'].replace(/\s/g, '');
     const competence2 = reply['Production de ressources obtenu (O/N)'].replace(/\s/g, '');
