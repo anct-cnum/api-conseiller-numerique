@@ -50,18 +50,7 @@ module.exports = app => {
   const getSupportMail = () => configuration.replyTo;
 
   const setSentryError = err => {
-    if (config().sentry.enabled === 'true') {
-      Sentry.init({
-        dsn: config().sentry.dsn,
-        environment: config().sentry.environment,
-        tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
-      });
-      app.use(Sentry.Handlers.requestHandler());
-      app.use(Sentry.Handlers.errorHandler());
-      app.set('sentry', Sentry);
-
-      app.get('sentry').captureException(err);
-    }
+    app.get('sentry').captureException(err);
   };
 
   let getHelpUrl = app.get('help_url');

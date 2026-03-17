@@ -38,8 +38,6 @@ const app = express(feathers());
 app.configure(config);
 
 if (config().sentry.enabled === 'true') {
-  app.use(Sentry.Handlers.requestHandler());
-  app.use(Sentry.Handlers.errorHandler());
   app.set('sentry', Sentry);
 } else {
   app.set('sentry', { captureException: () => { } });
@@ -75,6 +73,10 @@ app.configure(middleware);
 app.configure(authentication);
 app.configure(services);
 app.configure(channels);
+
+if (config().sentry.enabled === 'true') {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 app.use(express.notFound());
 app.use(express.errorHandler({ logger }));

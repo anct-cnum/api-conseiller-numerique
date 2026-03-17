@@ -53,11 +53,10 @@ module.exports = {
         // We recommend adjusting this value in production
         tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
       });
-      transaction = Sentry.startTransaction({
+      transaction = Sentry.startInactiveSpan({
         op: 'Lancement de script',
         name: name,
       });
-      app.use(Sentry.Handlers.errorHandler());
       process.on('unhandledRejection', e => Sentry.captureException(e));
       process.on('uncaughtException', e => Sentry.captureException(e));
     } else {
@@ -67,12 +66,14 @@ module.exports = {
 
     const exit = async error => {
       if (error) {
-        Sentry.captureException(error);
+        if (config().sentry.enabled === 'true') {
+          Sentry.captureException(error);
+        }
         logger.error(error);
         process.exitCode = 1;
       }
       if (transaction !== null) {
-        transaction.finish();
+        transaction.end();
       }
       setTimeout(() => {
         process.exit();
@@ -89,8 +90,8 @@ module.exports = {
       let launchTime = new Date().getTime();
       await job(jobComponents);
       let duration = dayjs
-      .utc(new Date().getTime() - launchTime)
-      .format('HH:mm:ss.SSS');
+        .utc(new Date().getTime() - launchTime)
+        .format('HH:mm:ss.SSS');
       logger.info(`Completed in ${duration}`);
       exit();
     } catch (e) {
