@@ -36,7 +36,7 @@
     "feathers-mongodb": "6.4.1",
     "feathers-mongodb-fuzzy-search": "2.0.1",
     "feathers-permissions": "2.1.4",
-    "file-type": "19.6.0",
+    "file-type": "21.3.2",
     "helmet": "7.1.0",
     "joi": "17.13.3",
     "json2csv": "5.0.6",
