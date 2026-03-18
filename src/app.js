@@ -25,11 +25,14 @@ if (config().sentry.enabled === 'true') {
   Sentry.init({
     dsn: config().sentry.dsn,
     environment: config().sentry.environment,
-
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
     tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
+    beforeSend(event, hint) {
+      const error = hint.originalException;
+      if (error?.code === 401 || error?.code === 404) {
+        return null;
+      }
+      return event;
+    },
   });
 }
 
