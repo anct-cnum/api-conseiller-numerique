@@ -9,10 +9,6 @@ const ejs = require('ejs');
 const { promisify } = require('util');
 const renderFile = promisify(ejs.renderFile);
 
-const configuration = require('@feathersjs/configuration');
-const config = configuration();
-const Sentry = require('@sentry/node');
-
 module.exports = app => {
 
   const configuration = app.get('smtp');
