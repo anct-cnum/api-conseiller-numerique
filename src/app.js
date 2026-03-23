@@ -28,7 +28,7 @@ if (config().sentry.enabled === 'true') {
     tracesSampleRate: parseFloat(config().sentry.traceSampleRate),
     beforeSend(event, hint) {
       const error = hint.originalException;
-      if (error?.code === 401 || error?.code === 404 || (error?.code === 403 && error?.message === 'ERROR_ATTEMPT_LOGIN')) {
+      if (error?.code === 401 || error?.code === 404 || error?.code === 403) {
         return null;
       }
       return event;
