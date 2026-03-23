@@ -13,19 +13,19 @@
     "test:integration": "mocha test/integration --recursive --exit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1010.0",
+    "@aws-sdk/client-s3": "3.1014.0",
     "@feathersjs/authentication": "4.5.16",
     "@feathersjs/authentication-local": "4.5.11",
     "@feathersjs/configuration": "4.5.11",
     "@feathersjs/errors": "4.5.11",
     "@feathersjs/express": "4.5.11",
     "@feathersjs/feathers": "4.5.11",
-    "@sentry/node": "10.44.0",
-    "@turf/circle": "7.3.1",
-    "axios": "1.13.5",
+    "@sentry/node": "10.45.0",
+    "@turf/circle": "7.3.4",
+    "axios": "1.13.6",
     "commander": "14.0.3",
     "compression": "1.8.1",
-    "cors": "2.8.5",
+    "cors": "2.8.6",
     "csv-parser": "3.2.0",
     "csvtojson": "2.0.14",
     "dotenv": "16.5.0",
@@ -35,7 +35,7 @@
     "feathers-mongodb": "6.4.1",
     "feathers-mongodb-fuzzy-search": "2.0.1",
     "feathers-permissions": "2.1.4",
-    "file-type": "21.3.2",
+    "file-type": "21.3.4",
     "helmet": "7.1.0",
     "joi": "17.13.3",
     "json2csv": "5.0.6",
@@ -43,7 +43,7 @@
     "lodash.capitalize": "^4.2.1",
     "lodash.isequal": "^4.5.0",
     "lodash.merge": "^4.6.2",
-    "mjml": "4.17.2",
+    "mjml": "4.18.0",
     "moment": "2.30.1",
     "mongodb": "3.7.4",
     "multer": "2.1.1",
@@ -52,7 +52,7 @@
     "puppeteer": "22.14.0",
     "serve-favicon": "2.5.1",
     "sib-api-v3-sdk": "8.5.0",
-    "slugify": "1.6.6",
+    "slugify": "1.6.8",
     "uuid": "10.0.0",
     "winston": "3.19.0",
     "winston-logstash": "1.2.1"
@@ -61,8 +61,8 @@
     "@faker-js/faker": "8.4.1",
     "eslint": "8.56.0",
     "jest": "29.7.0",
-    "mocha": "10.7.3",
-    "nodemon": "3.1.11"
+    "mocha": "10.8.2",
+    "nodemon": "3.1.14"
   },
   "engines": {
     "node": "^22.12.0"
