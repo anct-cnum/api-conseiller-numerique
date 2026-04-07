@@ -9,6 +9,10 @@ updates:
     ignore:
       - dependency-name: "eslint*"
       - dependency-name: "@feathersjs/*"
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
     groups:
       minor-and-patch:
         update-types:
