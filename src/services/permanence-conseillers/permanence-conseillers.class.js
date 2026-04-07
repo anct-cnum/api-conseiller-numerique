@@ -1,5 +1,5 @@
 const { Service } = require('feathers-mongodb');
-const { Conflict, GeneralError, NotFound } = require('@feathersjs/errors');
+const { Conflict, GeneralError } = require('@feathersjs/errors');
 const logger = require('../../logger');
 
 const {
