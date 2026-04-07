@@ -52,7 +52,7 @@
     "puppeteer": "22.14.0",
     "serve-favicon": "2.5.1",
     "sib-api-v3-sdk": "8.5.0",
-    "slugify": "1.6.8",
+    "slugify": "1.6.9",
     "uuid": "10.0.0",
     "winston": "3.19.0",
     "winston-logstash": "1.2.1"
