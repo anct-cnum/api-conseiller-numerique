@@ -10,7 +10,7 @@ const { ObjectID } = require('mongodb');
 execute(__filename, async ({ db, logger, exit }) => {
   program.option('-i, --id <id>', 'id: id Mongo du profil en erreur');
   program.option('-c, --conseiller <conseiller>', 'conseiller: id Mongo du profil actif');
-  program.option('-ig, --ignored', 'ignored: ignorer la partie controle éligibilité'); // A utiliser uniquement si on est sure que c'est le meme user
+  program.option('-g, --ignored', 'ignored: ignorer la partie controle éligibilité'); // A utiliser uniquement si on est sure que c'est le meme user
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 

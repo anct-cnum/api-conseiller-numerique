@@ -279,7 +279,7 @@ execute(__filename, async ({ db, logger, exit, app }) => {
   program.option('-i, --id <id>', 'id: id Mongo du conseiller à transférer');
   program.option('-a, --ancienne <ancienne>', 'ancienne: id mongo structure qui deviendra ancienne structure du conseiller');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: structure de destination');
-  program.option('-ig, --ignored', 'ignored: ignorer la partie controle diff région et departement entre les 2 structures');
+  program.option('-g, --ignored', 'ignored: ignorer la partie controle diff région et departement entre les 2 structures');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 

@@ -225,12 +225,12 @@ execute(__filename, async ({ db, logger, exit, app, emails, Sentry }) => {
   program.option('-r, --rupture <rupture>', 'rupture: date de rupture DD/MM/AAAA');
   program.option('-m, --motif <motif>', 'motif: motif de la rupture');
   program.option('-n, --nouvelle <nouvelle>', 'nouvelle: id mongo structure de destination');
-  program.option('-ddc, --dateDebutContrat <dateDebutContrat>', 'dateDebutContrat: la date de début de contrat DD/MM/AAAA');
-  program.option('-dfc, --dateFinContrat <dateFinContrat>', 'dateFinContrat: la date de fin de contrat DD/MM/AAAA');
-  program.option('-tc, --typeContrat <typeContrat>', 'typeContrat: le type de contrat');
-  program.option('-sc, --salaireContrat <salaireContrat>', 'salaireContrat: le salaire du contrat');
+  program.option('-d, --dateDebutContrat <dateDebutContrat>', 'dateDebutContrat: la date de début de contrat DD/MM/AAAA');
+  program.option('-f, --dateFinContrat <dateFinContrat>', 'dateFinContrat: la date de fin de contrat DD/MM/AAAA');
+  program.option('-t, --typeContrat <typeContrat>', 'typeContrat: le type de contrat');
+  program.option('-s, --salaireContrat <salaireContrat>', 'salaireContrat: le salaire du contrat');
   program.option('-q, --quota', 'quota: pour désactiver le bridage du nombre de poste validé en Coselec');
-  program.option('-ntf, --notificationConseiller', 'notificationConseiller: pour activer l\'envoi de la notification du mail au conseiller pour le transfert');
+  program.option('-b, --notificationConseiller', 'notificationConseiller: pour activer l\'envoi de la notification du mail au conseiller pour le transfert');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 

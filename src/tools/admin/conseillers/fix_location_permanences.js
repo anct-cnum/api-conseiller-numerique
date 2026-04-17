@@ -13,7 +13,7 @@ execute(__filename, async ({ logger, exit, db }) => {
 
   program.option('-a, --adresse <adresse>', 'adresse: "clear text"');
   program.option('-i, --id <id>', 'id: MongoDB ObjecID');
-  program.option('-idx, --index <index>', 'index: index');
+  program.option('-x, --index <index>', 'index: index');
   program.option('-v, --verif', 'verif: pour vérifier que l\'adresse est bien à l\'adresse indiqué');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);

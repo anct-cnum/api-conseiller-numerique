@@ -3,7 +3,7 @@ const { execute } = require('../../utils');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
-  program.option('-distance, --distance <distance>', 'distance max en km : 5 ou 10 ou 15 ou 20 ou 40 ou 100 ou 2000 (France entière)');
+  program.option('-d, --distance <distance>', 'distance max en km : 5 ou 10 ou 15 ou 20 ou 40 ou 100 ou 2000 (France entière)');
   program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);

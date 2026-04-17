@@ -7,7 +7,7 @@ execute(__filename, async ({ db, logger, Sentry, exit }) => {
   program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.option('-t, --type <type>', `type: candidat ou conseiller`);
   program.option('-u, --user', `user: changement également dans user`);
-  program.option('-ech, --echange', `echange: echange des emails entre les 2 profils`);
+  program.option('-x, --echange', `echange: echange des emails entre les 2 profils`);
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 

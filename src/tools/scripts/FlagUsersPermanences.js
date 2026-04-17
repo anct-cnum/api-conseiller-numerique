@@ -6,8 +6,8 @@ require('dotenv').config();
 const { execute } = require('../utils');
 const { program } = require('commander');
 
-program.option('-limit, --limit <limit>', 'Nombre de users pour les lots 1 2 et 3', parseInt)
-.option('-lot, --lot <lot>', 'Numéro de lot 1 à 5', parseInt)
+program.option('-l, --limit <limit>', 'Nombre de users pour les lots 1 2 et 3', parseInt)
+.option('-t, --lot <lot>', 'Numéro de lot 1 à 5', parseInt)
 .parse(process.argv);
 
 const groupUsersConseillerByStructure = async db => {

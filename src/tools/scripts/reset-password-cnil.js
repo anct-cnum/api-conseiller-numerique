@@ -10,7 +10,7 @@ const winston = require('winston');
 
 program.option('-l, --log', 'Création d\'un fichier de log pour les erreurs');
 program.option('-r, --role <role>', 'Rôle des utilisateurs à réinitialiser (conseiller ou candidat');
-program.option('-dr, --delayReset <delayReset>', 'Délai entre chaque réinitialisation de mot de passe (en ms)', parseInt);
+program.option('-d, --delayReset <delayReset>', 'Délai entre chaque réinitialisation de mot de passe (en ms)', parseInt);
 program.parse(process.argv);
 
 execute(__filename, async ({ exit, gandi, mattermost, logger, db, app, Sentry }) => {

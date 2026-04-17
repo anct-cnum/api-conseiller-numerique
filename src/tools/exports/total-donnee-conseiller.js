@@ -7,7 +7,7 @@ const { execute } = require('../utils');
 const dayjs = require('dayjs');
 
 execute(__filename, async ({ logger, db, exit }) => {
-  program.option('-em, --email <email>', 'email: adresse mail du conseiller');
+  program.option('-m, --email <email>', 'email: adresse mail du conseiller');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 

@@ -5,8 +5,8 @@ const { getEtablissementBySiretEntrepriseApiV3 } = require('../../utils/entrepri
 const { execute } = require('../utils');
 const { program } = require('commander');
 
-program.option('-limit, --limit <limit>', 'Nombre de structures traitées', parseInt)
-.option('-versionDb, --versionDb <limit>', 'Version de Mongodb', parseInt).parse(process.argv);
+program.option('-l, --limit <limit>', 'Nombre de structures traitées', parseInt)
+.option('-v, --versionDb <limit>', 'Version de Mongodb', parseInt).parse(process.argv);
 
 const getStructureApiEntrepriseV2 = db => async limit => {
   return await db.collection('structures').find({ 'insee.etablissement': { '$exists': true }, 'insee.adresse': { '$exists': false } }).limit(limit).toArray();

@@ -10,7 +10,7 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.option('-c, --correction', 'correction: correction des cas restants');
   program.option('-l, --log', 'log: rendre visible les logs');
   program.option('-a, --analyse', 'analyse: analyse des permanences ok');
-  program.option('-cp, --comparatif', 'comparatif: comparatif des permanences qui ont une incoherence');
+  program.option('-p, --comparatif', 'comparatif: comparatif des permanences qui ont une incoherence');
   program.option('-i, --ignored', 'ignored: ignorer la partie de verification incoherence');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);

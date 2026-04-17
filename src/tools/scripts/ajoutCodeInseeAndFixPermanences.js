@@ -135,7 +135,7 @@ execute(__filename, async ({ logger, db, exit }) => {
   program.option('-p, --partie <partie>', 'partie: cras ou permanences');
   program.option('-f, --fichier <fichier>', 'fichier: choix 1 : tous les codes postaux ou 2: fichier personnalisé');
   program.option('-a, --acte <acte>', 'acte: correction');
-  program.option('-lt, --lot <lot>', 'lot: numero lot');
+  program.option('-t, --lot <lot>', 'lot: numero lot');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
 

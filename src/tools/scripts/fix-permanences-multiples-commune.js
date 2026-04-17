@@ -7,8 +7,8 @@ const { execute } = require('../utils');
 const { ObjectId } = require('mongodb');
 
 // node src/tools/scripts/fix-permanences-multiples-commune.js --analyse
-// node src/tools/scripts/fix-permanences-multiples-commune.js --partie xxx -i xxx -cp xxx -v xxx -cm xxx
-// node src/tools/scripts/fix-permanences-multiples-commune.js --partie xxx -i xxx -cp xxx -v xxx -cm xxx --correction
+// node src/tools/scripts/fix-permanences-multiples-commune.js --partie xxx -i xxx -o xxx -v xxx -m xxx
+// node src/tools/scripts/fix-permanences-multiples-commune.js --partie xxx -i xxx -o xxx -v xxx -m xxx --correction
 
 execute(__filename, async ({ db, logger, exit }) => {
 
@@ -17,8 +17,8 @@ execute(__filename, async ({ db, logger, exit }) => {
   program.option('-a, --analyse', 'analyse: analyse des permanences not ok');
   program.option('-i, --permanence <permanence>', 'permanence: id permanence mongo');
   program.option('-v, --ville <ville>', 'ville');
-  program.option('-cp, --codePostal <codePostal>', 'codePostal');
-  program.option('-cm, --codeCommune <codeCommune>', 'codeCommune');
+  program.option('-o, --codePostal <codePostal>', 'codePostal');
+  program.option('-m, --codeCommune <codeCommune>', 'codeCommune');
   program.helpOption('-e', 'HELP command');
   program.parse(process.argv);
   const { correction, partie, analyse, permanence, ville, codePostal, codeCommune } = program.opts();

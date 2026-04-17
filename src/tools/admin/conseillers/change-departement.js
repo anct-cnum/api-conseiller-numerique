@@ -4,7 +4,7 @@ const axios = require('axios');
 
 execute(__filename, async ({ db, logger, Sentry, exit }) => {
 
-  program.option('-cp, --codePostal <codePostal>', 'indiquez le code postal');
+  program.option('-p, --codePostal <codePostal>', 'indiquez le code postal');
   program.option('-c, --codeCommune <codeCommune>', 'indiquez le code Commune');
   program.option('-i, --id <id>', 'id: id PG du conseiller');
   program.helpOption('-e', 'HELP command');
