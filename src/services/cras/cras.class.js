@@ -14,7 +14,7 @@ const {
   getCraById,
   countCraByPermanenceId,
   searchSousThemes } = require('./cra/repositories/cra.repository');
-const { v4: validate } = require('uuid');
+const { validate } = require('uuid');
 const { ObjectId } = require('mongodb');
 
 exports.Cras = class Cras extends Service {
