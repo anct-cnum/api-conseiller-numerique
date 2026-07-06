@@ -72,7 +72,7 @@ module.exports = app => {
         templateName,
         utils: { moment, ...utils },
       });
-      return mjml(mjmlTemplate, { }).html;
+      return (await mjml(mjmlTemplate, {})).html;
     },
     createMailer: () => {
       return {
