@@ -6,7 +6,8 @@ const createMailer = require('../../mailer');
 const Joi = require('joi');
 const { jwtDecode } = require('jwt-decode');
 const { validationEmailPrefet, validationCodeRegion, validationCodeDepartement } = require('./users.repository');
-const { checkAuth } = require('../../common/utils/feathers.utils');
+const { checkAuth, Role, userIdFromRequestJwt } = require('../../common/utils/feathers.utils');
+const { userAuthenticationRepository } = require('../../common/repositories/user-authentication.repository');
 const { v4: uuidv4 } = require('uuid');
 const { DBRef, ObjectId, ObjectID } = require('mongodb');
 
@@ -328,6 +329,17 @@ exports.Users = class Users extends Service {
     app.patch('/users/sendEmailUpdate/:id', async (req, res) => {
       const nouveauEmail = req.body.name.toLowerCase();
       const idUser = req.params.id;
+      const requesterId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(requesterId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
+      if (requesterId !== idUser) {
+        const dbAuth = await app.get('mongoClient');
+        const requester = await userAuthenticationRepository(dbAuth)(requesterId);
+        if (!requester?.roles?.includes(Role.Admin)) {
+          return res.status(403).send({ message: 'Accès non autorisé' });
+        }
+      }
       const emailValidation = Joi.string().email().required().error(new Error('Le format de l\'email est invalide')).validate(nouveauEmail);
       if (emailValidation.error) {
         res.status(400).json(new BadRequest(emailValidation.error));
@@ -473,6 +485,15 @@ exports.Users = class Users extends Service {
       res.send({ status: 'compte créé' });
     });
     app.post('/users/inviteStructure', async (req, res) => {
+      const requesterId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(requesterId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
+      const dbAuth = await app.get('mongoClient');
+      const requester = await userAuthenticationRepository(dbAuth)(requesterId);
+      if (!requester?.roles?.includes(Role.Admin)) {
+        return res.status(403).send({ message: 'Accès non autorisé' });
+      }
       const email = req.body.email;
       const structureId = req.body.structureId;
       const schema = Joi.object({
@@ -527,6 +548,16 @@ exports.Users = class Users extends Service {
 
     app.get('/users/listByIdStructure/:id', async (req, res) => {
       const idStructure = req.params.id;
+      const requesterId = await userIdFromRequestJwt(app, req, res);
+      if (!ObjectId.isValid(requesterId)) {
+        return res.status(401).send({ message: 'Accès non autorisé' });
+      }
+      const dbAuth = await app.get('mongoClient');
+      const requester = await userAuthenticationRepository(dbAuth)(requesterId);
+      const isOwnStructure = requester?.entity?.oid?.toString() === idStructure;
+      if (!isOwnStructure && !requester?.roles?.includes(Role.Admin)) {
+        return res.status(403).send({ message: 'Accès non autorisé' });
+      }
       app.get('mongoClient').then(async db => {
         const users = await db.collection('users').aggregate([
           { '$match': { 'entity.$id': new ObjectId(idStructure) } },

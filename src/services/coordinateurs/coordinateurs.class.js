@@ -2,12 +2,13 @@ const { Service } = require('feathers-mongodb');
 const { listeCoordinateurs, listeConseillers } = require('./core/coordinateurs.core');
 const { getCoordinateurs, getStatsCoordination, getConseillers, getPermanences, getIdStructures } = require('./repository/coordinateurs.repository');
 const logger = require('../../logger');
+const { checkAuth } = require('../../common/utils/feathers.utils');
 
 exports.Coordinateurs = class Coordinateurs extends Service {
   constructor(options, app) {
     super(options);
 
-    app.get('/coordinateurs', async (req, res) => {
+    app.get('/coordinateurs', checkAuth, async (req, res) => {
       const db = await app.get('mongoClient');
 
       await listeCoordinateurs({
@@ -20,7 +21,7 @@ exports.Coordinateurs = class Coordinateurs extends Service {
       });
     });
 
-    app.get('/coordination-conseillers', async (req, res) => {
+    app.get('/coordination-conseillers', checkAuth, async (req, res) => {
       const db = await app.get('mongoClient');
 
       await listeConseillers({
